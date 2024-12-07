@@ -5,6 +5,8 @@ import { promises as fs } from "fs";
 import Header from "@/components/header";
 import clsx from "clsx";
 
+
+
 async function getData(): Promise<ProductGroup[]> {
   const file = await fs.readFile(
     process.cwd() + "/public/categories.json",
@@ -79,6 +81,7 @@ export default async function Home({
                   <div className="text-center mt-2 text-2xl font-semibold">
                     {product.name}
                   </div>
+                  <div className="text-center text-xl text-gray-600">{product.price.toLocaleString("en-US", { style: "currency", currency: "USD" })}</div>
                 </div>
               </a>
             ))}
