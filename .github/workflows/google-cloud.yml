@@ -3,17 +3,22 @@ name: Deploy to Google Cloud Run
 on:
   push:
     branches:
-      - main
+      - feat/google-cloud-deployment
   workflow_dispatch:
 
 env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  PROJECT_ID: contoso-outdoor
+  REGION: us-central1
   SERVICE_NAME: contoso-web
-  REGION: us-central1 # Choose a region that suits you
+  REPO_NAME: contoso-outdoor-repo
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,20 +32,35 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var="nextauth_secret=${{ secrets.NEXTAUTH_SECRET }}"
+        working-directory: ./terraform
+
       - name: Docker Login to Artifact Registry
         run: gcloud auth configure-docker ${REGION}-docker.pkg.dev
 
       - name: Build and Push Docker Image
+        id: build-push
         run: |
-          docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:${GITHUB_SHA} .
-          docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:${GITHUB_SHA}
+          IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${SERVICE_NAME}:${GITHUB_SHA}"
+          docker build -t ${IMAGE_PATH} .
+          docker push ${IMAGE_PATH}
+          echo "image_path=${IMAGE_PATH}" >> $GITHUB_OUTPUT
 
       - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy ${SERVICE_NAME} \
-            --image ${REGION}-docker.pkg.dev/${PROJECT_ID}/${SERVICE_NAME}/${SERVICE_NAME}:${GITHUB_SHA} \
-            --region ${REGION} \
-            --platform managed \
-            --allow-unauthenticated \
-            --set-env-vars DATABASE_URL=${{ secrets.DATABASE_URL }},NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }} \
-            --project ${PROJECT_ID}
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ steps.build-push.outputs.image_path }}
+
+      - name: Show Output
+        run: echo "Successfully deployed to ${{ steps.deploy.outputs.url }}"
