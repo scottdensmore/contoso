@@ -4,11 +4,12 @@
 set -e
 
 # --- Configuration ---
-# This bucket name should be globally unique.
-# Update this if you are deploying to a new project with a different name.
-BUCKET_NAME="contoso-outdoor-tf-state"
+# The script uses the following environment variables:
+# BUCKET_NAME: The name of the GCS bucket for Terraform state. Must be globally unique.
+# LOCATION: The location of the GCS bucket.
+BUCKET_NAME=${BUCKET_NAME:-"contoso-outdoor-tf-state"}
 PROJECT_ID=$(gcloud config get-value project)
-LOCATION="US"
+LOCATION=${LOCATION:-"US"}
 
 echo "Using project: ${PROJECT_ID}"
 echo "Checking for GCS bucket: gs://${BUCKET_NAME}..."

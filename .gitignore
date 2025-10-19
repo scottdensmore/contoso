@@ -37,5 +37,10 @@ next-env.d.ts
 
 # environment variable
 .env
-push.ps1
+
+# terraform
+terraform/*.json
+terraform/.terraform.lock.hcl
+terraform/.terraform/
+
 /src/generated/prisma

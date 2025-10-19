@@ -4,8 +4,9 @@
 set -e
 
 # --- Configuration ---
-# IMPORTANT: Replace this with your GCP Project ID
-PROJECT_ID="contoso-outdoor"
+# The script uses the following environment variables:
+# PROJECT_ID: The GCP Project ID.
+PROJECT_ID=${PROJECT_ID:-"contoso-outdoor"}
 SERVICE_ACCOUNT_NAME="terraform-deployer"
 
 # --- Pre-flight Checks ---
@@ -35,9 +36,9 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
 
 # --- Create and Download Key ---
 echo "Creating and downloading service account key..."
-gcloud iam service-accounts keys create "terraform-credentials.json" \
+gcloud iam service-accounts keys create "../terraform/terraform-credentials.json" \
   --iam-account="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 echo "\n✅ Setup complete!"
-echo "A service account key has been saved to 'terraform-credentials.json'."
+echo "A service account key has been saved to '../terraform/terraform-credentials.json'."
 echo "You will use the contents of this file for the GCP_SA_KEY GitHub secret."
