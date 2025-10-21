@@ -44,6 +44,12 @@ gcloud services enable iam.googleapis.com
 gcloud services enable sqladmin.googleapis.com
 gcloud services enable run.googleapis.com
 gcloud services enable artifactregistry.googleapis.com
+gcloud services enable compute.googleapis.com
+gcloud services enable servicenetworking.googleapis.com
+gcloud services enable vpcaccess.googleapis.com
+
+echo "Waiting for services to be enabled..."
+sleep 30
 
 # --- Run Setup Scripts ---
 echo "Running setup scripts..."
@@ -57,23 +63,36 @@ terraform init
 terraform apply -auto-approve -var="nextauth_secret=${NEXTAUTH_SECRET}"
 cd ..
 
+DB_NAME=$(cd terraform && terraform output -raw db_name)
+DB_USER=$(cd terraform && terraform output -raw db_user)
+DB_PASSWORD=$(cd terraform && terraform output -raw db_password)
+INSTANCE_CONNECTION_NAME=$(cd terraform && terraform output -raw instance_connection_name)
+
+# URL encode special characters for DATABASE_URL
+# For Cloud SQL unix sockets with Prisma, the socket path goes in the hostname position
+SOCKET_PATH="/cloudsql/${INSTANCE_CONNECTION_NAME}"
+SOCKET_ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('${SOCKET_PATH}', safe=''))")
+
+# Construct DATABASE_URL for Cloud SQL unix socket connection
+# Format: postgresql://USER:PASSWORD@%2Fcloudsql%2FINSTANCE/DATABASE
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${SOCKET_ENCODED}/${DB_NAME}"
+
+echo "Database migrations will run automatically on application startup"
+
 # --- Deploy Application ---
 echo "Deploying application..."
-DATABASE_URL=$(cd terraform && terraform output -raw db_instance_name)
+# For Cloud Run with Cloud SQL unix socket, use localhost with host parameter
+# Cloud Run will mount the socket when --add-cloudsql-instances is used
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost/${DB_NAME}?host=/cloudsql/${INSTANCE_CONNECTION_NAME}"
+VPC_CONNECTOR=$(cd terraform && terraform output -raw vpc_connector)
 docker buildx build --platform linux/amd64 -t "us-central1-docker.pkg.dev/${PROJECT_ID}/contoso-outdoor-repo/contoso-web:latest" .
 docker push "us-central1-docker.pkg.dev/${PROJECT_ID}/contoso-outdoor-repo/contoso-web:latest"
 gcloud run deploy contoso-web \
   --image "us-central1-docker.pkg.dev/${PROJECT_ID}/contoso-outdoor-repo/contoso-web:latest" \
-  --set-env-vars=DATABASE_URL="${DATABASE_URL}" \
+  --set-env-vars=DATABASE_URL="${DATABASE_URL}",NEXTAUTH_SECRET="${NEXTAUTH_SECRET}" \
+  --add-cloudsql-instances="${INSTANCE_CONNECTION_NAME}" \
+  --vpc-connector="${VPC_CONNECTOR}" \
   --region us-central1 \
   --allow-unauthenticated
 
-# --- Update Cloud Run Service ---
-echo "Updating Cloud Run service..."
-CLOUD_RUN_URL=$(gcloud run services describe contoso-web --region us-central1 --format 'value(uri)')
-gcloud run services update contoso-web \
-  --update-env-vars=NEXTAUTH_URL="${CLOUD_RUN_URL}" \
-  --region us-central1
 
-echo "\n✅ Project setup and deployment complete!"
-echo "Your application is available at: ${CLOUD_RUN_URL}"

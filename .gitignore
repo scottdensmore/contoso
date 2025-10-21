@@ -44,3 +44,6 @@ terraform/.terraform.lock.hcl
 terraform/.terraform/
 
 /src/generated/prisma
+
+# cloud sql proxy
+cloud_sql_proxy

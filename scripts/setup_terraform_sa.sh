@@ -25,6 +25,8 @@ else
   gcloud iam service-accounts create "${SERVICE_ACCOUNT_NAME}" \
     --display-name="Terraform Deployer"
   echo "Service account created successfully."
+  echo "Waiting for service account to propagate..."
+  sleep 10
 fi
 
 # --- Grant Permissions ---
@@ -35,10 +37,31 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
   --role="roles/owner" # For simplicity, granting Owner. For production, use least-privilege.
 
 # --- Create and Download Key ---
-echo "Creating and downloading service account key..."
-gcloud iam service-accounts keys create "../terraform/terraform-credentials.json" \
-  --iam-account="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+if [ -f "terraform/terraform-credentials.json" ]; then
+  echo "Service account key already exists at 'terraform/terraform-credentials.json'. Skipping creation."
+else
+  echo "Creating and downloading service account key..."
+  success=false
+  for i in {1..5}; do
+    if gcloud iam service-accounts keys create "terraform/terraform-credentials.json" \
+      --iam-account="${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"; then
+      echo "Successfully created service account key."
+      success=true
+      break
+    fi
+    echo "Attempt $i of 5 failed."
+    if [ $i -lt 5 ]; then
+      echo "Retrying in 10 seconds..."
+      sleep 10
+    fi
+  done
+
+  if [ "$success" = false ]; then
+    echo "Error: Failed to create service account key after 5 attempts." >&2
+    exit 1
+  fi
+fi
 
 echo "\n✅ Setup complete!"
-echo "A service account key has been saved to '../terraform/terraform-credentials.json'."
+echo "A service account key has been saved to 'terraform/terraform-credentials.json'."
 echo "You will use the contents of this file for the GCP_SA_KEY GitHub secret."

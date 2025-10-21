@@ -6,8 +6,10 @@ const alg = 'HS256'
 const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
 
 export async function POST(request: Request) {
+  console.log("Signup request received");
   try {
     const { name, email, password } = await request.json();
+    console.log("Request body:", { name, email });
 
     if (!email || !password) {
       return NextResponse.json(
