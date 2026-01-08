@@ -14,13 +14,13 @@
 - [x] Task: Conductor - User Manual Verification 'Database and API Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Profile UI - General and Security
-- [ ] Task: Create Profile Page with Tabbed Interface
+- [~] Task: Create Profile Page with Tabbed Interface
     - [ ] Task: Write Tests for Profile Page navigation and layout
     - [ ] Task: Implement tabbed layout (General, Security, Shipping) using Tailwind CSS
-- [ ] Task: Implement Avatar Management UI
+- [~] Task: Implement Avatar Management UI
     - [ ] Task: Write Tests for Avatar upload component
     - [ ] Task: Implement direct file upload and preview for user avatar
-- [ ] Task: Implement Password Change UI
+- [~] Task: Implement Password Change UI
     - [ ] Task: Write Tests for Password change form
     - [ ] Task: Implement secure form for updating password with validation
 - [ ] Task: Conductor - User Manual Verification 'Profile UI - General and Security' (Protocol in workflow.md)
