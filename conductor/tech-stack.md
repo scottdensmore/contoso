@@ -1,0 +1,26 @@
+# Technology Stack
+
+## Core Technologies
+- **Language:** [TypeScript](https://www.typescriptlang.org/) - Provides static typing for safer and more maintainable code.
+- **Framework:** [Next.js](https://nextjs.org/) (App Router) - A React framework for building fast, SEO-friendly web applications with server-side rendering and static site generation.
+- **UI Library:** [React](https://reactjs.org/) - A JavaScript library for building component-based user interfaces.
+
+## Styling
+- **CSS Framework:** [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development and consistent styling.
+
+## Database & Data Management
+- **Database:** [PostgreSQL](https://www.postgresql.org/) - A powerful, open-source object-relational database system.
+- **ORM:** [Prisma](https://www.prisma.io/) - A next-generation ORM for Node.js and TypeScript, providing type-safe database access.
+
+## Authentication
+- **Authentication:** [NextAuth.js](https://next-auth.js.org/) - A complete open-source authentication solution for Next.js applications.
+
+## Infrastructure & Deployment
+- **Cloud Provider:** [Google Cloud Platform (GCP)](https://cloud.google.com/)
+  - **Compute:** Cloud Run - For running containerized applications in a fully managed environment.
+  - **Database:** Cloud SQL for PostgreSQL - Fully managed PostgreSQL database service.
+- **Infrastructure as Code (IaC):** [Terraform](https://www.terraform.io/) - For provisioning and managing cloud infrastructure through configuration files.
+- **Deployment Strategy:** Automated deployments using scripts and potentially GitHub Actions, with database migrations running on application startup.
+
+## Development Tools
+- **Containerization:** [Docker](https://www.docker.com/) - For consistent local development and production environments.
