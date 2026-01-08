@@ -13,15 +13,15 @@
 - [x] Task: Create Sign-up API route [4d1d9e6]
     - [x] Task: Write Tests for Sign-up API
     - [x] Task: Implement Sign-up logic with password hashing
-- [ ] Task: Create Sign-up page UI
-    - [ ] Task: Write Tests for Sign-up page
-    - [ ] Task: Implement Sign-up form with Tailwind CSS
+- [x] Task: Create Sign-up page UI [ab579e7]
+    - [x] Task: Write Tests for Sign-up page
+    - [x] Task: Implement Sign-up form with Tailwind CSS
 - [ ] Task: Conductor - User Manual Verification 'Sign-up Flow' (Protocol in workflow.md)
 
 ## Phase 3: Sign-in Flow
-- [ ] Task: Create Sign-in page UI
-    - [ ] Task: Write Tests for Sign-in page
-    - [ ] Task: Implement Sign-in form with Tailwind CSS
+- [x] Task: Create Sign-in page UI [ab579e7]
+    - [x] Task: Write Tests for Sign-in page
+    - [x] Task: Implement Sign-in form with Tailwind CSS
 - [ ] Task: Implement Session Management in Layout
     - [ ] Task: Write Tests for session handling
     - [ ] Task: Update `src/app/layout.tsx` with SessionProvider
