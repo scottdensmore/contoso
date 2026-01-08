@@ -4,9 +4,9 @@
 - [x] Task: Define User model in Prisma schema [1bebe58]
     - [x] Task: Write Tests for User model
     - [x] Task: Update Prisma schema and run migrations
-- [ ] Task: Configure NextAuth.js with Prisma Adapter
-    - [ ] Task: Write Tests for NextAuth configuration
-    - [ ] Task: Implement NextAuth setup in `src/app/api/auth/[...nextauth]/route.ts`
+- [x] Task: Configure NextAuth.js with Prisma Adapter [2270fc9]
+    - [x] Task: Write Tests for NextAuth configuration
+    - [x] Task: Implement NextAuth setup in `src/app/api/auth/[...nextauth]/route.ts`
 - [ ] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Sign-up Flow
