@@ -11,7 +11,7 @@ Showcase outdoor products with detailed information and high-quality imagery to 
 Outdoor enthusiasts looking for high-performance gear and detailed specifications to support their outdoor activities.
 
 ## Key Features
-A robust product catalog featuring categorized items, brand-specific views, and efficient search functionality.
+A robust product catalog featuring categorized items, brand-specific views, and efficient search functionality, integrated with a secure user authentication system for personalized experiences.
 
 ## User Experience
 The platform should feel modern and sleek, utilizing contemporary design patterns and smooth transitions to provide a premium shopping experience.

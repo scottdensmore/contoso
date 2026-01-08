@@ -46,7 +46,7 @@ These instructions will get you a copy of the project running on your local mach
     NEXTAUTH_SECRET=your-generated-secret-here
 
     # Database URL for local Docker Compose
-    DATABASE_URL="postgresql://postgres:postgres@db:5432/contoso?schema=public"
+    DATABASE_URL="postgresql://postgres:postgres@db:5432/contoso-db?schema=public"
     ```
 
 3.  **Start the application:**
@@ -101,7 +101,7 @@ Run the application directly on your machine with only the database in Docker.
     NEXTAUTH_SECRET=your-generated-secret-here
 
     # Note: host is 'localhost' not 'db' when running outside Docker
-    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/contoso?schema=public"
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public"
     ```
 
 4.  **Run database migrations:**
