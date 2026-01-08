@@ -1,0 +1,35 @@
+# Plan: User Profile Management
+
+## Phase 1: Database and API Foundation
+- [x] Task: Update User model in Prisma schema
+    - [x] Task: Write Tests for updated User model logic
+    - [x] Task: Update Prisma schema with avatar and shipping address fields and run migrations
+- [~] Task: Create Profile Management API routes
+    - [ ] Task: Write Tests for Profile and Password API routes
+    - [ ] Task: Implement API route for updating avatar and profile info
+    - [ ] Task: Implement API route for secure password change (bcrypt comparison)
+- [~] Task: Create Shipping Address API route
+    - [ ] Task: Write Tests for Shipping Address API
+    - [ ] Task: Implement API route for setting/updating default shipping address
+- [ ] Task: Conductor - User Manual Verification 'Database and API Foundation' (Protocol in workflow.md)
+
+## Phase 2: Profile UI - General and Security
+- [ ] Task: Create Profile Page with Tabbed Interface
+    - [ ] Task: Write Tests for Profile Page navigation and layout
+    - [ ] Task: Implement tabbed layout (General, Security, Shipping) using Tailwind CSS
+- [ ] Task: Implement Avatar Management UI
+    - [ ] Task: Write Tests for Avatar upload component
+    - [ ] Task: Implement direct file upload and preview for user avatar
+- [ ] Task: Implement Password Change UI
+    - [ ] Task: Write Tests for Password change form
+    - [ ] Task: Implement secure form for updating password with validation
+- [ ] Task: Conductor - User Manual Verification 'Profile UI - General and Security' (Protocol in workflow.md)
+
+## Phase 3: Profile UI - Shipping and Navigation
+- [ ] Task: Implement Shipping Address UI
+    - [ ] Task: Write Tests for Shipping Address form
+    - [ ] Task: Implement form for default shipping address fields
+- [ ] Task: Integrate Profile Access in Header
+    - [ ] Task: Write Tests for Header user dropdown
+    - [ ] Task: Update Header to include a dropdown with a "Profile Settings" link
+- [ ] Task: Conductor - User Manual Verification 'Profile UI - Shipping and Navigation' (Protocol in workflow.md)
