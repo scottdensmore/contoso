@@ -22,7 +22,7 @@
 - [x] Task: Create Sign-in page UI [ab579e7]
     - [x] Task: Write Tests for Sign-in page
     - [x] Task: Implement Sign-in form with Tailwind CSS
-- [ ] Task: Implement Session Management in Layout
-    - [ ] Task: Write Tests for session handling
-    - [ ] Task: Update `src/app/layout.tsx` with SessionProvider
+- [x] Task: Implement Session Management in Layout [3f8d1e4]
+    - [x] Task: Write Tests for session handling
+    - [x] Task: Update `src/app/layout.tsx` with SessionProvider
 - [ ] Task: Conductor - User Manual Verification 'Sign-in Flow' (Protocol in workflow.md)
