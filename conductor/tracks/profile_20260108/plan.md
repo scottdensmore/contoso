@@ -1,17 +1,17 @@
 # Plan: User Profile Management
 
-## Phase 1: Database and API Foundation
-- [x] Task: Update User model in Prisma schema
+## Phase 1: Database and API Foundation [checkpoint: 29e9659]
+- [x] Task: Update User model in Prisma schema [29e9659]
     - [x] Task: Write Tests for updated User model logic
     - [x] Task: Update Prisma schema with avatar and shipping address fields and run migrations
-- [~] Task: Create Profile Management API routes
-    - [ ] Task: Write Tests for Profile and Password API routes
-    - [ ] Task: Implement API route for updating avatar and profile info
-    - [ ] Task: Implement API route for secure password change (bcrypt comparison)
-- [~] Task: Create Shipping Address API route
-    - [ ] Task: Write Tests for Shipping Address API
-    - [ ] Task: Implement API route for setting/updating default shipping address
-- [ ] Task: Conductor - User Manual Verification 'Database and API Foundation' (Protocol in workflow.md)
+- [x] Task: Create Profile Management API routes [29e9659]
+    - [x] Task: Write Tests for Profile and Password API routes
+    - [x] Task: Implement API route for updating avatar and profile info
+    - [x] Task: Implement API route for secure password change (bcrypt comparison)
+- [x] Task: Create Shipping Address API route [29e9659]
+    - [x] Task: Write Tests for Shipping Address API
+    - [x] Task: Implement API route for setting/updating default shipping address
+- [x] Task: Conductor - User Manual Verification 'Database and API Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Profile UI - General and Security
 - [ ] Task: Create Profile Page with Tabbed Interface
