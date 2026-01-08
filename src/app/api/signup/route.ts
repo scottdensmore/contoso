@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { SignJWT } from 'jose';
-
-const alg = 'HS256'
-const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
+import { createUser, getUserByEmail } from "@/lib/user";
 
 export async function POST(request: Request) {
-  console.log("Signup request received");
   try {
     const { name, email, password } = await request.json();
-    console.log("Request body:", { name, email });
 
     if (!email || !password) {
       return NextResponse.json(
@@ -18,9 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await getUserByEmail(email);
 
     if (existingUser) {
       return NextResponse.json(
@@ -29,22 +21,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const hashedPassword = await new SignJWT({ password })
-      .setProtectedHeader({ alg })
-      .setIssuedAt()
-      .setExpirationTime('2h')
-      .sign(secret);
-
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
+    const newUser = await createUser({
+      name,
+      email,
+      password,
     });
 
     return NextResponse.json(
-      { message: "User registered successfully.", user: newUser },
+      { message: "User registered successfully.", user: { id: newUser.id, email: newUser.email, name: newUser.name } },
       { status: 201 }
     );
   } catch (error) {
