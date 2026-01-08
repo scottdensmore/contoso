@@ -10,9 +10,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Sign-up Flow
-- [ ] Task: Create Sign-up API route
-    - [ ] Task: Write Tests for Sign-up API
-    - [ ] Task: Implement Sign-up logic with password hashing
+- [x] Task: Create Sign-up API route [4d1d9e6]
+    - [x] Task: Write Tests for Sign-up API
+    - [x] Task: Implement Sign-up logic with password hashing
 - [ ] Task: Create Sign-up page UI
     - [ ] Task: Write Tests for Sign-up page
     - [ ] Task: Implement Sign-up form with Tailwind CSS
