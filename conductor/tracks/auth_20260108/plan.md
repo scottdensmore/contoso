@@ -1,9 +1,9 @@
 # Plan: User Authentication Flow
 
 ## Phase 1: Foundation
-- [ ] Task: Define User model in Prisma schema
-    - [ ] Task: Write Tests for User model
-    - [ ] Task: Update Prisma schema and run migrations
+- [x] Task: Define User model in Prisma schema [1bebe58]
+    - [x] Task: Write Tests for User model
+    - [x] Task: Update Prisma schema and run migrations
 - [ ] Task: Configure NextAuth.js with Prisma Adapter
     - [ ] Task: Write Tests for NextAuth configuration
     - [ ] Task: Implement NextAuth setup in `src/app/api/auth/[...nextauth]/route.ts`
