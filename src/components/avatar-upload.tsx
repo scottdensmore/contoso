@@ -18,15 +18,16 @@ export default function AvatarUpload({ initialAvatar, onUpload }: AvatarUploadPr
     // Create preview
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
-
-    // In a real app, you'd upload to S3/GCS here.
     setIsUploading(true);
-    
-    // Simulate upload delay
-    setTimeout(() => {
-      onUpload(objectUrl);
+
+    // Convert to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      onUpload(base64String);
       setIsUploading(false);
-    }, 500);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
