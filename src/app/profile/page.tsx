@@ -5,17 +5,26 @@ import { useSession } from "next-auth/react";
 import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
 import PasswordChangeForm from "@/components/password-change-form";
+import ShippingAddressForm from "@/components/shipping-address-form";
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const [activeTab, setActiveTab] = useState("general");
 
   if (status === "loading") {
-    return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
-    return <div className="flex justify-center items-center h-screen"><p>Access Denied</p></div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Access Denied</p>
+      </div>
+    );
   }
 
   const handleAvatarUpload = async (url: string) => {
@@ -29,7 +38,7 @@ export default function ProfilePage() {
         await update();
       }
     } catch (err) {
-      console.error("Failed to update avatar in DB", err);
+      console.error("Failed to update avatar", err);
     }
   };
 
@@ -83,7 +92,16 @@ export default function ProfilePage() {
           {activeTab === "shipping" && (
             <div>
               <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
-              <p>Shipping address form will go here.</p>
+              <ShippingAddressForm initialAddress={{
+                name: session?.user?.name || "",
+                addressLine1: session?.user?.addressLine1,
+                addressLine2: session?.user?.addressLine2,
+                city: session?.user?.city,
+                state: session?.user?.state,
+                zipCode: session?.user?.zipCode,
+                country: session?.user?.country,
+                phoneNumber: session?.user?.phoneNumber,
+              }} />
             </div>
           )}
         </div>

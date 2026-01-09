@@ -26,10 +26,10 @@
 - [x] Task: Conductor - User Manual Verification 'Profile UI - General and Security' (Protocol in workflow.md)
 
 ## Phase 3: Profile UI - Shipping and Navigation
-- [ ] Task: Implement Shipping Address UI
+- [~] Task: Implement Shipping Address UI
     - [ ] Task: Write Tests for Shipping Address form
     - [ ] Task: Implement form for default shipping address fields
-- [ ] Task: Integrate Profile Access in Header
+- [~] Task: Integrate Profile Access in Header
     - [ ] Task: Write Tests for Header user dropdown
     - [ ] Task: Update Header to include a dropdown with a "Profile Settings" link
 - [ ] Task: Conductor - User Manual Verification 'Profile UI - Shipping and Navigation' (Protocol in workflow.md)

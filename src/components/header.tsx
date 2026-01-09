@@ -31,29 +31,31 @@ export const Header = ({
       <div className="flex flex-row items-center gap-3">
         {status === "authenticated" ? (
           <>
-            <div>
-              <div className="text-right font-semibold text-zinc-600">
-                {session.user?.name || session.user?.email}
-              </div>
-              <div className="text-right text-xs text-zinc-400">
-                {session.user?.email}
-              </div>
-            </div>
-            <div className="">
-              {session.user?.image ? (
-                <Image
-                  src={session.user.image}
-                  width={32}
-                  height={32}
-                  alt={session.user.name || "User"}
-                  className="rounded-full"
-                />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
-                  {session.user?.name?.[0] || session.user?.email?.[0]}
+            <Link href="/profile" className="flex flex-row items-center gap-3 hover:bg-gray-50 p-1 rounded-md transition-colors" title="Profile Settings">
+              <div>
+                <div className="text-right font-semibold text-zinc-600">
+                  {session.user?.name || session.user?.email}
                 </div>
-              )}
-            </div>
+                <div className="text-right text-xs text-zinc-400">
+                  {session.user?.email}
+                </div>
+              </div>
+              <div className="">
+                {session.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    width={32}
+                    height={32}
+                    alt={session.user.name || "User"}
+                    className="rounded-full h-8 w-8 object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center text-gray-600">
+                    {session.user?.name?.[0] || session.user?.email?.[0]}
+                  </div>
+                )}
+              </div>
+            </Link>
             <button
               onClick={() => signOut()}
               className="ml-4 px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500"
