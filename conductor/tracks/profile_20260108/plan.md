@@ -25,11 +25,11 @@
     - [x] Task: Implement secure form for updating password with validation
 - [x] Task: Conductor - User Manual Verification 'Profile UI - General and Security' (Protocol in workflow.md)
 
-## Phase 3: Profile UI - Shipping and Navigation
-- [~] Task: Implement Shipping Address UI
-    - [ ] Task: Write Tests for Shipping Address form
-    - [ ] Task: Implement form for default shipping address fields
-- [~] Task: Integrate Profile Access in Header
-    - [ ] Task: Write Tests for Header user dropdown
-    - [ ] Task: Update Header to include a dropdown with a "Profile Settings" link
-- [ ] Task: Conductor - User Manual Verification 'Profile UI - Shipping and Navigation' (Protocol in workflow.md)
+## Phase 3: Profile UI - Shipping and Navigation [checkpoint: 8caccea]
+- [x] Task: Implement Shipping Address UI [8caccea]
+    - [x] Task: Write Tests for Shipping Address form
+    - [x] Task: Implement form for default shipping address fields
+- [x] Task: Integrate Profile Access in Header [8caccea]
+    - [x] Task: Write Tests for Header user dropdown
+    - [x] Task: Update Header to include a dropdown with a "Profile Settings" link
+- [x] Task: Conductor - User Manual Verification 'Profile UI - Shipping and Navigation' (Protocol in workflow.md)

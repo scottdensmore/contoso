@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
@@ -10,21 +10,32 @@ import ShippingAddressForm from "@/components/shipping-address-form";
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
   const [activeTab, setActiveTab] = useState("general");
+  const [profileData, setProfileData] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Loading...</p>
-      </div>
-    );
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetch("/api/profile")
+        .then((res) => res.json())
+        .then((data) => {
+          setProfileData(data);
+          setIsLoadingProfile(false);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch profile", err);
+          setIsLoadingProfile(false);
+        });
+    } else if (status === "unauthenticated") {
+      setIsLoadingProfile(false);
+    }
+  }, [status]);
+
+  if (status === "loading" || (status === "authenticated" && isLoadingProfile)) {
+    return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
   }
 
   if (status === "unauthenticated") {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p>Access Denied</p>
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen"><p>Access Denied</p></div>;
   }
 
   const handleAvatarUpload = async (url: string) => {
@@ -36,6 +47,7 @@ export default function ProfilePage() {
       });
       if (response.ok) {
         await update();
+        setProfileData({ ...profileData, avatar: url });
       }
     } catch (err) {
       console.error("Failed to update avatar", err);
@@ -78,7 +90,7 @@ export default function ProfilePage() {
             <div>
               <h2 className="text-xl font-semibold mb-4">General Settings</h2>
               <AvatarUpload 
-                initialAvatar={session?.user?.image || ""} 
+                initialAvatar={profileData?.avatar || session?.user?.image || ""} 
                 onUpload={handleAvatarUpload} 
               />
             </div>
@@ -93,14 +105,14 @@ export default function ProfilePage() {
             <div>
               <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
               <ShippingAddressForm initialAddress={{
-                name: session?.user?.name || "",
-                addressLine1: session?.user?.addressLine1,
-                addressLine2: session?.user?.addressLine2,
-                city: session?.user?.city,
-                state: session?.user?.state,
-                zipCode: session?.user?.zipCode,
-                country: session?.user?.country,
-                phoneNumber: session?.user?.phoneNumber,
+                name: profileData?.name || session?.user?.name || "",
+                addressLine1: profileData?.addressLine1 || "",
+                addressLine2: profileData?.addressLine2 || "",
+                city: profileData?.city || "",
+                state: profileData?.state || "",
+                zipCode: profileData?.zipCode || "",
+                country: profileData?.country || "",
+                phoneNumber: profileData?.phoneNumber || "",
               }} />
             </div>
           )}
