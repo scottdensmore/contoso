@@ -46,7 +46,7 @@ export default function ProfilePage() {
         body: JSON.stringify({ avatar: url }),
       });
       if (response.ok) {
-        await update();
+        await update({ image: url });
         setProfileData({ ...profileData, avatar: url });
       }
     } catch (err) {
