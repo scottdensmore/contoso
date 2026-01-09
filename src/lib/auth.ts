@@ -14,7 +14,7 @@ export async function authorizeUser(credentials: Record<"email" | "password", st
   });
 
   if (user && await compare(credentials.password, user.password)) {
-    return { id: user.id, name: user.name, email: user.email, image: user.avatar };
+    return { id: user.id, name: user.name, email: user.email };
   }
 
   return null;
@@ -42,17 +42,31 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.image = (user as any).image;
-      }
-      if (trigger === "update" && session?.image) {
-        token.image = session.image;
       }
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
-      if (session.user) {
+      if (session.user && token.id) {
         session.user.id = token.id;
-        session.user.image = token.image;
+        
+        // Fetch fresh user data from DB to get avatar and other fields
+        // This avoids storing large base64 strings in the session cookie
+        const user = await prisma.user.findUnique({ 
+          where: { id: token.id } 
+        });
+        
+        if (user) {
+          session.user.name = user.name;
+          session.user.email = user.email;
+          session.user.image = user.avatar;
+          session.user.addressLine1 = user.addressLine1;
+          session.user.addressLine2 = user.addressLine2;
+          session.user.city = user.city;
+          session.user.state = user.state;
+          session.user.zipCode = user.zipCode;
+          session.user.country = user.country;
+          session.user.phoneNumber = user.phoneNumber;
+        }
       }
       return session;
     },
