@@ -1,13 +1,13 @@
 # Plan: Sidebar Navigation Menu
 
-## Phase 1: Data and Logic Preparation
+## Phase 1: Data and Logic Preparation [checkpoint: 9baad7c]
 - [x] Task: Create utility for fetching categories from DB or JSON [121557]
     - [x] Task: Write Tests for category data retrieval
     - [x] Task: Implement fetching logic (using existing \`public/categories.json\` or Prisma)
 - [x] Task: Define Sidebar structure and link list [121706]
     - [x] Task: Write Tests for sidebar data transformation (grouping)
     - [x] Task: Implement a utility function to generate the link structure based on session and fetched categories
-- [ ] Task: Conductor - User Manual Verification 'Data and Logic Preparation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Data and Logic Preparation' (Protocol in workflow.md)
 
 ## Phase 2: Sidebar Component Implementation
 - [ ] Task: Create Sidebar component UI
