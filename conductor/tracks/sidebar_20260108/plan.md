@@ -19,9 +19,9 @@
 - [x] Task: Conductor - User Manual Verification 'Sidebar Component Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Integration and Polish
-- [ ] Task: Connect Sidebar to Header
-    - [ ] Task: Write Tests for Sidebar trigger and navigation closure
-    - [ ] Task: Update `src/components/header.tsx` to handle sidebar toggle state
+- [x] Task: Connect Sidebar to Header [140802]
+    - [x] Task: Write Tests for Sidebar trigger and navigation closure
+    - [x] Task: Update \`src/components/header.tsx\` to handle sidebar toggle state
 - [ ] Task: Final UI Polish and Mobile Verification
     - [ ] Task: Ensure smooth transitions and responsive layout
     - [ ] Task: Verify touch targets and accessibility
