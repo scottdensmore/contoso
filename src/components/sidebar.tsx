@@ -22,7 +22,7 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
       />
 
       {/* Sidebar Content */}
-      <div className="relative flex w-full max-w-xs flex-col overflow-y-auto bg-white pb-12 shadow-xl" role="complementary">
+      <div className="relative flex w-full max-w-xs flex-col overflow-y-auto bg-white pb-12 shadow-xl animate-in slide-in-from-left duration-300" role="complementary">
         <div className="flex px-4 pb-2 pt-5">
           <button
             type="button"
