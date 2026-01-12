@@ -13,9 +13,9 @@
 - [x] Task: Create Sidebar component UI [123540]
     - [x] Task: Write Tests for Sidebar rendering and visibility
     - [x] Task: Implement the slide-over Sidebar using Tailwind CSS and standard React state
-- [ ] Task: Integrate dynamic content in Sidebar
-    - [ ] Task: Write Tests for dynamic category links and auth-aware links
-    - [ ] Task: Implement the mapping of links into the "Shop", "Account", and "Support" sections
+- [x] Task: Integrate dynamic content in Sidebar [123824]
+    - [x] Task: Write Tests for dynamic category links and auth-aware links
+    - [x] Task: Implement the mapping of links into the "Shop", "Account", and "Support" sections
 - [ ] Task: Conductor - User Manual Verification 'Sidebar Component Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Integration and Polish
