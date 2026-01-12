@@ -4,9 +4,9 @@
 - [x] Task: Create utility for fetching categories from DB or JSON [121557]
     - [x] Task: Write Tests for category data retrieval
     - [x] Task: Implement fetching logic (using existing \`public/categories.json\` or Prisma)
-- [ ] Task: Define Sidebar structure and link list
-    - [ ] Task: Write Tests for sidebar data transformation (grouping)
-    - [ ] Task: Implement a utility function to generate the link structure based on session and fetched categories
+- [x] Task: Define Sidebar structure and link list [121706]
+    - [x] Task: Write Tests for sidebar data transformation (grouping)
+    - [x] Task: Implement a utility function to generate the link structure based on session and fetched categories
 - [ ] Task: Conductor - User Manual Verification 'Data and Logic Preparation' (Protocol in workflow.md)
 
 ## Phase 2: Sidebar Component Implementation
