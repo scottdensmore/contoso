@@ -1,14 +1,14 @@
 # Plan: Category-based Product Filtering
 
-## Phase 1: Backend and Data Logic
-- [~] Task: Add slug to Category model and update schema
-    - [~] Task: Write Tests for updated Category schema and data fetching
-    - [ ] Task: Update \`prisma/schema.prisma\` with \`slug\` field and run migrations
-    - [ ] Task: Update seed script to generate slugs for categories
-- [~] Task: Create utility for fetching products by category slug
-    - [ ] Task: Write Tests for product fetching by category
-    - [ ] Task: Implement \`getProductsByCategory\` logic in \`src/lib/products.ts\`
-- [ ] Task: Conductor - User Manual Verification 'Backend and Data Logic' (Protocol in workflow.md)
+## Phase 1: Backend and Data Logic [checkpoint: af9ffd4]
+- [x] Task: Add slug to Category model and update schema [af9ffd4]
+    - [x] Task: Write Tests for updated Category schema and data fetching
+    - [x] Task: Update `prisma/schema.prisma` with `slug` field and run migrations
+    - [x] Task: Update seed script to generate slugs for categories
+- [x] Task: Create utility for fetching products by category slug [af9ffd4]
+    - [x] Task: Write Tests for product fetching by category
+    - [x] Task: Implement `getProductsByCategory` logic in `src/lib/products.ts`
+- [x] Task: Conductor - User Manual Verification 'Backend and Data Logic' (Protocol in workflow.md)
 
 ## Phase 2: Category Page Implementation
 - [ ] Task: Create Category Product List Page
