@@ -16,10 +16,10 @@ describe('Category Service', () => {
   })
 
   describe('getCategories', () => {
-    it('should return a list of categories', async () => {
+    it('should return a list of categories with slugs', async () => {
       const mockCategories = [
-        { id: '1', name: 'Hiking' },
-        { id: '2', name: 'Camping' },
+        { id: '1', name: 'Hiking', slug: 'hiking' },
+        { id: '2', name: 'Camping', slug: 'camping' },
       ]
 
       vi.mocked(prisma.category.findMany).mockResolvedValue(mockCategories as any)
@@ -28,6 +28,7 @@ describe('Category Service', () => {
 
       expect(prisma.category.findMany).toHaveBeenCalled()
       expect(result).toEqual(mockCategories)
+      expect(result[0]).toHaveProperty('slug')
     })
   })
 })

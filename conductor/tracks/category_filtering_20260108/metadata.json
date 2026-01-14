@@ -1,0 +1,8 @@
+{
+  "track_id": "category_filtering_20260108",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-08T17:15:00Z",
+  "updated_at": "2026-01-08T17:15:00Z",
+  "description": "When you click on one of the categories in the sidebar it should take you to that filtered list of products"
+}

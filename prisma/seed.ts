@@ -15,28 +15,30 @@ async function main() {
   const brandsData = JSON.parse(fs.readFileSync(brandsPath, 'utf-8'));
   const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf-8'));
 
-  // Seed Categories and store IDs in a map
+  // Seed Categories
   const categoryMap = new Map<string, string>();
   for (const category of categoriesData) {
     const created = await prisma.category.upsert({
       where: { name: category.name },
-      update: {},
+      update: { slug: category.slug },
       create: {
         name: category.name,
+        slug: category.slug,
       },
     });
     categoryMap.set(category.name, created.id);
     console.log(`Synced category: ${category.name}`);
   }
 
-  // Seed Brands and store IDs in a map
+  // Seed Brands
   const brandMap = new Map<string, string>();
   for (const brand of brandsData) {
     const created = await prisma.brand.upsert({
       where: { name: brand.name },
-      update: {},
+      update: { slug: brand.slug },
       create: {
         name: brand.name,
+        slug: brand.slug,
       },
     });
     brandMap.set(brand.name, created.id);
@@ -60,6 +62,7 @@ async function main() {
         description: product.description,
         price: parseFloat(product.price),
         image: product.images[0],
+        slug: product.slug,
         categoryId: categoryId,
         brandId: brandId,
       },
@@ -69,6 +72,7 @@ async function main() {
         description: product.description,
         price: parseFloat(product.price),
         image: product.images[0],
+        slug: product.slug,
         categoryId: categoryId,
         brandId: brandId,
       },

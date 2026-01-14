@@ -36,6 +36,7 @@ model Product {
   image       String?
   categoryId  String
   brandId     String
+  slug        String    @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -46,11 +47,13 @@ model Product {
 model Category {
   id        String    @id @default(cuid())
   name      String    @unique
+  slug      String    @unique
   products  Product[]
 }
 
 model Brand {
   id        String    @id @default(cuid())
   name      String    @unique
+  slug      String    @unique
   products  Product[]
 }
