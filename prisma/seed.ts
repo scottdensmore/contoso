@@ -15,42 +15,65 @@ async function main() {
   const brandsData = JSON.parse(fs.readFileSync(brandsPath, 'utf-8'));
   const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf-8'));
 
-  // Seed Categories
+  // Seed Categories and store IDs in a map
+  const categoryMap = new Map<string, string>();
   for (const category of categoriesData) {
-    await prisma.category.create({
-      data: {
-        id: category.id.toString(),
+    const created = await prisma.category.upsert({
+      where: { name: category.name },
+      update: {},
+      create: {
         name: category.name,
       },
     });
-    console.log(`Created category with id: ${category.id}`);
+    categoryMap.set(category.name, created.id);
+    console.log(`Synced category: ${category.name}`);
   }
 
-  // Seed Brands
+  // Seed Brands and store IDs in a map
+  const brandMap = new Map<string, string>();
   for (const brand of brandsData) {
-    await prisma.brand.create({
-      data: {
-        id: brand.id.toString(),
+    const created = await prisma.brand.upsert({
+      where: { name: brand.name },
+      update: {},
+      create: {
         name: brand.name,
       },
     });
-    console.log(`Created brand with id: ${brand.id}`);
+    brandMap.set(brand.name, created.id);
+    console.log(`Synced brand: ${brand.name}`);
   }
 
   // Seed Products
   for (const product of productsData) {
-    await prisma.product.create({
-      data: {
+    const categoryId = categoryMap.get(product.category);
+    const brandId = brandMap.get(product.brand);
+
+    if (!categoryId || !brandId) {
+      console.warn(`Skipping product ${product.name}: Category (${product.category}) or Brand (${product.brand}) not found.`);
+      continue;
+    }
+
+    await prisma.product.upsert({
+      where: { id: product.id.toString() },
+      update: {
+        name: product.name,
+        description: product.description,
+        price: parseFloat(product.price),
+        image: product.images[0],
+        categoryId: categoryId,
+        brandId: brandId,
+      },
+      create: {
         id: product.id.toString(),
         name: product.name,
         description: product.description,
         price: parseFloat(product.price),
-        image: product.image,
-        categoryId: product.categoryId.toString(),
-        brandId: product.brandId.toString(),
+        image: product.images[0],
+        categoryId: categoryId,
+        brandId: brandId,
       },
     });
-    console.log(`Created product with id: ${product.id}`);
+    console.log(`Synced product: ${product.name}`);
   }
 
   console.log('Seeding finished.');
