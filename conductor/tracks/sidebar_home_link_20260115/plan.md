@@ -1,10 +1,10 @@
 # Plan: Sidebar Home Link
 
-## Phase 1: Navigation Logic Update
-- [~] Task: Update navigation utility to include Home link
-    - [~] Task: Write Tests for updated \`getSidebarLinks\` to verify "General" section and "Home" link
-    - [ ] Task: Implement the "General" section in \`src/lib/navigation.ts\`
-- [ ] Task: Conductor - User Manual Verification 'Navigation Logic Update' (Protocol in workflow.md)
+## Phase 1: Navigation Logic Update [checkpoint: 0e98280]
+- [x] Task: Update navigation utility to include Home link [0e98280]
+    - [x] Task: Write Tests for updated `getSidebarLinks` to verify "General" section and "Home" link
+    - [x] Task: Implement the "General" section in `src/lib/navigation.ts`
+- [x] Task: Conductor - User Manual Verification 'Navigation Logic Update' (Protocol in workflow.md)
 
 ## Phase 2: Verification and Polish
 - [ ] Task: Verify sidebar rendering
