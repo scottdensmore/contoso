@@ -16,6 +16,7 @@ describe('Navigation Utility', () => {
     const shop = result.find(s => s.title === 'Shop')
     expect(shop?.links).toHaveLength(2)
     expect(shop?.links[0].title).toBe('Hiking')
+    expect(shop?.links[0].href).toBe('/products/category/hiking')
 
     const account = result.find(s => s.title === 'Account')
     expect(account?.links).toHaveLength(2)

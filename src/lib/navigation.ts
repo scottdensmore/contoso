@@ -18,7 +18,7 @@ export function getSidebarLinks(session: Session | null, categories: any[]): Nav
     title: 'Shop',
     links: categories.map(cat => ({
       title: tabName(cat.name),
-      href: `/products/${cat.slug || cat.name.toLowerCase()}`,
+      href: `/products/category/${cat.slug || cat.name.toLowerCase()}`,
     })),
   })
 
