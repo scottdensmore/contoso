@@ -17,10 +17,10 @@
     - [x] Task: Ensure consistency with homepage layout and product cards
 - [x] Task: Conductor - User Manual Verification 'Category Page Implementation' (Protocol in workflow.md)
 
-## Phase 3: Integration and Polish
-- [~] Task: Update Sidebar links to use slugs
-    - [ ] Task: Write Tests for Sidebar category links
-    - [ ] Task: Ensure sidebar links point to \`/products/category/[slug]\`
-- [x] Task: Final UI Polish
+## Phase 3: Integration and Polish [checkpoint: 75a9e3b]
+- [x] Task: Update Sidebar links to use slugs [75a9e3b]
+    - [x] Task: Write Tests for Sidebar category links
+    - [x] Task: Ensure sidebar links point to `/products/category/[slug]`
+- [x] Task: Final UI Polish [75a9e3b]
     - [x] Task: Verify responsive behavior and loading states
-- [ ] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Integration and Polish' (Protocol in workflow.md)
