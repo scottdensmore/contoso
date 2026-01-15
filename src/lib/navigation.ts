@@ -13,6 +13,14 @@ export interface NavSection {
 export function getSidebarLinks(session: Session | null, categories: any[]): NavSection[] {
   const sections: NavSection[] = []
 
+  // General Section
+  sections.push({
+    title: 'General',
+    links: [
+      { title: 'Home', href: '/' },
+    ],
+  })
+
   // Shop Section
   sections.push({
     title: 'Shop',

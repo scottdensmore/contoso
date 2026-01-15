@@ -11,7 +11,13 @@ describe('Navigation Utility', () => {
     const session = null
     const result = getSidebarLinks(session, mockCategories as any)
 
-    expect(result).toHaveLength(3) // Shop, Account, Support
+    expect(result).toHaveLength(4) // General, Shop, Account, Support
+
+    const general = result.find(s => s.title === 'General')
+    expect(general).toBeDefined()
+    expect(general?.links).toHaveLength(1)
+    expect(general?.links[0].title).toBe('Home')
+    expect(general?.links[0].href).toBe('/')
 
     const shop = result.find(s => s.title === 'Shop')
     expect(shop?.links).toHaveLength(2)
