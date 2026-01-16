@@ -31,6 +31,8 @@ describe('Navigation Utility', () => {
 
     const support = result.find(s => s.title === 'Support')
     expect(support?.links).toHaveLength(3)
+    expect(support?.links[0].title).toBe('About Us')
+    expect(support?.links[0].href).toBe('/about')
   })
 
   it('should return correct links for authenticated user', () => {
