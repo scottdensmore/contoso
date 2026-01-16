@@ -1,10 +1,10 @@
 # Plan: FAQ Page Implementation
 
-## Phase 1: Page Creation
-- [~] Task: Create FAQ Page
-    - [~] Task: Write Tests for FAQ Page rendering
-    - [ ] Task: Implement \`src/app/faq/page.tsx\` with content sections using \`Block\` components
-- [ ] Task: Conductor - User Manual Verification 'Page Creation' (Protocol in workflow.md)
+## Phase 1: Page Creation [checkpoint: bfec028]
+- [x] Task: Create FAQ Page [bfec028]
+    - [x] Task: Write Tests for FAQ Page rendering
+    - [x] Task: Implement `src/app/faq/page.tsx` with content sections using `Block` components
+- [x] Task: Conductor - User Manual Verification 'Page Creation' (Protocol in workflow.md)
 
 ## Phase 2: Verification
 - [ ] Task: Verify Navigation
