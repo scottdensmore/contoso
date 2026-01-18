@@ -1,34 +1,20 @@
 # Contoso Outdoors Company Website
 
-This is the Contoso Outdoors Company Website. It is built with Next.js, Tailwind CSS, and uses a PostgreSQL database with Prisma.
+A modern e-commerce website for "Contoso Outdoors" with integrated AI features, built with Next.js, Tailwind CSS, and PostgreSQL.
 
 ## Table of Contents
 
-- [Local Development with Docker](#local-development-with-docker)
-- [Deployment to Google Cloud Platform](#deployment-to-google-cloud-platform)
-- [Database Management](#database)
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Local Development](#local-development)
+- [Deployment](#deployment-to-google-cloud-platform)
+- [Database](#database)
 - [Authentication](#authentication)
+- [Contributing](#contributing)
 
-## Overview
+## Quick Start
 
-This application can be run in two modes:
-
-1. **Local Development** - Run the entire stack locally using Docker Compose with a local PostgreSQL database. Perfect for development and testing.
-
-2. **Production on GCP** - Deploy to Google Cloud Platform with Cloud Run (application), Cloud SQL (database), and production-ready security configurations.
-
-## Local Development with Docker
-
-These instructions will get you a copy of the project running on your local machine for development and testing, using Docker Compose with a local PostgreSQL database.
-
-> **Note:** This is completely separate from GCP deployment. For connecting to a GCP-hosted database, see the [GCP Deployment section](#deployment-to-google-cloud-platform).
-
-### Prerequisites
-
-*   [Docker](https://www.docker.com/) and Docker Compose
-*   [Node.js 20+](https://nodejs.org/) (optional, for running outside containers)
-
-### Quick Start
+The fastest way to get the application running locally is using Docker Compose.
 
 1.  **Clone the repository:**
 
@@ -58,7 +44,7 @@ These instructions will get you a copy of the project running on your local mach
     This will:
     - Start a PostgreSQL database container
     - Build and start the Next.js application container
-    - Automatically run database migrations
+    - Automatically run database migrations and seed data
 
     The application will be available at [http://localhost:3000](http://localhost:3000).
 
@@ -73,15 +59,25 @@ These instructions will get you a copy of the project running on your local mach
     docker-compose down -v
     ```
 
-### Alternative: Local Development Without Docker
+## Features
 
-Run the application directly on your machine with only the database in Docker.
+- **Product Catalog:** Browse products by category (Tents, Backpacks, etc.).
+- **Dynamic Sidebar:** Responsive navigation sidebar with categories and support links.
+- **Product Details:** Detailed product pages with images, descriptions, specifications, and manuals.
+- **User Accounts:** Sign up, sign in, and manage your profile (Avatar, Address, Password).
+- **About Us:** Learn about the company's mission and story (`/about`).
+- **FAQ:** Common questions regarding ordering, shipping, and returns (`/faq`).
+- **Category Filtering:** Dedicated pages for viewing products within specific categories.
 
-**Prerequisites:**
+## Local Development
+
+For active development, it is recommended to run the database in Docker and the application on your host machine to enable hot-reloading and faster feedback loops.
+
+### Prerequisites
 *   [Node.js 20+](https://nodejs.org/)
-*   [Docker](https://www.docker.com/) (for the database only)
+*   [Docker](https://www.docker.com/) (for the database)
 
-**Steps:**
+### Steps
 
 1.  **Install dependencies:**
 
@@ -97,17 +93,18 @@ Run the application directly on your machine with only the database in Docker.
 
 3.  **Update your `.env` file:**
 
+    Ensure `DATABASE_URL` points to `localhost` instead of `db`:
+
     ```bash
     NEXTAUTH_SECRET=your-generated-secret-here
-
-    # Note: host is 'localhost' not 'db' when running outside Docker
     DATABASE_URL="postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public"
     ```
 
-4.  **Run database migrations:**
+4.  **Run database migrations and seed:**
 
     ```bash
     npx prisma migrate dev
+    # This command creates the database schema and runs the seed script automatically
     ```
 
 5.  **Start the development server:**
@@ -132,11 +129,15 @@ npx prisma migrate dev --name describe_your_changes
 npx prisma studio
 ```
 
-**Resetting the database:**
+**Running Tests:**
 
 ```bash
-npx prisma migrate reset
+npm test
 ```
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our development workflow, coding standards, and how to submit pull requests.
 
 ## Database
 
@@ -145,8 +146,8 @@ The project uses a PostgreSQL database managed by Prisma.
 ### Local Development
 - Uses Docker Compose with a local PostgreSQL container
 - Database is seeded with initial data from JSON files in the `public` directory
-- Seeding runs automatically after `npm install`
-- Connection string: `postgresql://postgres:postgres@localhost:5432/contoso`
+- Seeding runs automatically after `npm install` or `migrate dev`
+- Connection string: `postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public`
 
 ### Production (GCP)
 - Uses Cloud SQL for PostgreSQL 15
