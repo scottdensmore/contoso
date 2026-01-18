@@ -11,7 +11,12 @@ Showcase outdoor products with detailed information and high-quality imagery to 
 Outdoor enthusiasts looking for high-performance gear and detailed specifications to support their outdoor activities.
 
 ## Key Features
-A robust product catalog featuring categorized items, brand-specific views, and efficient search functionality, supported by a dynamic sidebar navigation menu and a secure user authentication system for personalized experiences.
+- **Comprehensive Catalog:** Robust product list with detailed specs and manuals.
+- **Categorized Browsing:** Seamlessly filter products by category (Tents, Backpacks, etc.).
+- **Dynamic Navigation:** Modern sidebar for quick access to store sections and support.
+- **User Authentication:** Secure sign-up and sign-in for a personalized experience.
+- **Personalized Profile:** Manage shipping addresses and customize avatars.
+- **Support Pages:** Dedicated About Us and FAQ pages for customer trust and clarity.
 
 ## User Experience
 The platform should feel modern and sleek, utilizing contemporary design patterns and smooth transitions to provide a premium shopping experience.

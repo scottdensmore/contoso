@@ -17,6 +17,20 @@ Database migrations run **automatically on application startup** via the Docker 
 
 The migration logic is in `scripts/docker-entrypoint.sh` and is executed via the `Dockerfile` ENTRYPOINT.
 
+## Seeding Strategy
+
+The database is seeded with initial data to provide a complete experience out of the box. The data is sourced from JSON files in the `public` directory:
+- `public/categories.json`
+- `public/brands.json`
+- `public/products.json`
+
+The seed script (`prisma/seed.ts`) handles the creation of all models and their relationships. In development, seeding happens automatically after `npm install` or during `npx prisma migrate dev`.
+
+To manually run the seed script:
+```bash
+npx prisma db seed
+```
+
 ## Local Development Access
 
 For local development and debugging, you can use the Cloud SQL Proxy to create a secure tunnel:
