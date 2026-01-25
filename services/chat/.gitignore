@@ -1,0 +1,89 @@
+.venv/
+__pycache__/
+.prompty/
+.env
+config.json
+eval/downloaded_artifacts/remote/eval_results.jsonl
+connections/create-connections.py
+data/customer_info/create-cosmos-db.py
+data/product_info/create-azure-search.py
+deployment/push_and_deploy_pf.py
+endpoint.json
+principal.txt
+.azure
+evaluators/process_log/
+evaluators/flow.flex.yaml
+evaluators/eval_result.**
+evaluators/studio_url.txt
+src/contoso_chat/.runs/*
+src/api/contoso_chat/.runs/*
+src/api/.runs/*
+.runs/*
+evaluators/.runs/*
+evaluators/result_evaluated.jsonl
+evaluators/result.jsonl
+src/api/evaluators/.runs/*
+src/api/evaluators/result_evaluated.jsonl
+src/api/evaluators/result.jsonl
+src/api/evaluators/eval_results.jsonl
+src/api/evaluators/eval_results.md
+src/api/evaluators/.runs/*
+src/api/result_evaluated.jsonl
+src/api/result.jsonl
+src/api/eval_results.jsonl
+src/api/eval_results.md
+docs/workshop/site
+sandbox/*
+docs/workshop/docs/.DS_Store
+
+# Terraform Infrastructure Files
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+.terraform/
+.terraform.lock.hcl
+tfplan
+
+# GCP and Credentials (with exceptions for data files)
+*.json
+!package*.json
+!tsconfig*.json
+!data/**/*.json
+credentials.json
+service-account-*.json
+gcp-credentials.json
+
+# System Files
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python Development
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Logs and Temporary Files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
