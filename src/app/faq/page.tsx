@@ -52,7 +52,7 @@ export default function FAQPage() {
           <div>
             <h3 className="text-xl font-semibold text-zinc-800 mb-2">How do I return an item?</h3>
             <p className="text-zinc-600">
-              To return an item, please visit your order history and select "Return Item" or contact our customer support team for a return shipping label.
+              To return an item, please visit your order history and select &quot;Return Item&quot; or contact our customer support team for a return shipping label.
             </p>
           </div>
           <div>
@@ -68,7 +68,7 @@ export default function FAQPage() {
       <Block innerClassName="py-20 text-center">
         <h2 className="text-2xl font-bold text-zinc-900 mb-4">Still have questions?</h2>
         <p className="text-lg text-zinc-600 mb-8">
-          We're here to help. Reach out to our support team for assistance.
+          We&apos;re here to help. Reach out to our support team for assistance.
         </p>
         <Link href="/contact" className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 transition-colors">
           Contact Support

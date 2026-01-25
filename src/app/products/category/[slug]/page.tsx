@@ -24,13 +24,6 @@ export default async function CategoryPage({
         <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {category.name}
         </div>
-        <div
-          className="first-line:uppercase first-line:tracking-widest
-                  first-letter:text-8xl first-letter:font-bold first-letter:text-slate-900
-                  first-letter:mr-3 first-letter:float-left text-lg text-zinc-600"
-        >
-          {category.description}
-        </div>
       </Block>
 
       <Block innerClassName="p-8">

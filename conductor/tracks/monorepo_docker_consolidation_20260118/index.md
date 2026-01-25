@@ -1,4 +1,4 @@
-# Track chat_migration_20260118 Context
+# Track monorepo_docker_consolidation_20260118 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
