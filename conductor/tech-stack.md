@@ -18,7 +18,7 @@
 
 ## Database & Data Management
 - **Database:** [PostgreSQL](https://www.postgresql.org/) - A powerful, open-source object-relational database system.
-- **ORM:** [Prisma](https://www.prisma.io/) - A next-generation ORM for Node.js and TypeScript, providing type-safe database access.
+- **ORM:** [Prisma](https://www.prisma.io/) - Unified ORM for Node.js (TypeScript) and Python, providing type-safe database access across both services.
 
 ## Authentication
 - **Authentication:** [NextAuth.js](https://next-auth.js.org/) - A complete open-source authentication solution for Next.js applications.
