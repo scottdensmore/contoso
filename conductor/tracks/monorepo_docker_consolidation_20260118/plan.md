@@ -13,10 +13,10 @@
     - [x] Sub-task: Ensure `services/` is not copied.
 
 ## Phase 3: Docker Compose Integration
-- [ ] Task: Update `docker-compose.yml`.
-    - [ ] Sub-task: Add the `chat` service definition.
-    - [ ] Sub-task: Configure build context, ports (8000:8000), and dependencies.
-    - [ ] Sub-task: Add basic environment variables to the `chat` service (Project ID, Region, etc. as placeholders or from `.env`).
+- [x] Task: Update `docker-compose.yml`.
+    - [x] Sub-task: Add the `chat` service definition.
+    - [x] Sub-task: Configure build context, ports (8000:8000), and dependencies.
+    - [x] Sub-task: Add basic environment variables to the `chat` service (Project ID, Region, etc. as placeholders or from `.env`).
 
 ## Phase 4: Documentation Consolidation
 - [ ] Task: Update the root `README.md`.

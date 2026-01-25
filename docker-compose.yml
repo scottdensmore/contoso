@@ -20,6 +20,19 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  chat:
+    build:
+      context: ./services/chat
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_ID=${PROJECT_ID}
+      - REGION=${REGION:-us-central1}
+      - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-2.5-flash}
+      - FIRESTORE_DATABASE=${FIRESTORE_DATABASE:-contoso-db}
+      - DISCOVERY_ENGINE_APP_ID=${DISCOVERY_ENGINE_APP_ID}
+      - DISCOVERY_ENGINE_DATASTORE_ID=${DISCOVERY_ENGINE_DATASTORE_ID}
+      - ENVIRONMENT=development
 
 volumes:
   postgres_data:
