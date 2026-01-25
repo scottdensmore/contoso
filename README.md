@@ -143,10 +143,28 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 The project uses a PostgreSQL database managed by Prisma.
 
+### Database Setup
+
+To set up the database locally, run the following commands:
+
+1.  **Generate the Prisma Client:**
+    ```bash
+    npx prisma generate
+    ```
+
+2.  **Push the schema to the database:**
+    ```bash
+    npx prisma db push
+    ```
+
+3.  **Seed the database with initial data:**
+    ```bash
+    npx prisma db seed
+    ```
+
 ### Local Development
 - Uses Docker Compose with a local PostgreSQL container
 - Database is seeded with initial data from JSON files in the `public` directory
-- Seeding runs automatically after `npm install` or `migrate dev`
 - Connection string: `postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public`
 
 ### Production (GCP)

@@ -15,4 +15,4 @@
 - [x] Task: Verify Migration.
     - [x] Sub-task: Run the `scripts/test-chat-migration.js` test to confirm it passes (Green Phase).
     - [x] Sub-task: Delete the temporary test script.
-- [ ] Task: Conductor - User Manual Verification 'Migration (Lift and Shift)' (Protocol in workflow.md).
+- [~] Task: Conductor - User Manual Verification 'Migration (Lift and Shift)' (Protocol in workflow.md).
