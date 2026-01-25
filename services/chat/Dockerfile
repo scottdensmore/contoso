@@ -1,10 +1,5 @@
 FROM python:3.11-slim as base
 
-# Set build arguments
-ARG BUILD_DATE
-ARG GIT_COMMIT
-ARG VERSION
-
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -35,13 +30,6 @@ COPY src/api/evaluators/ evaluators/
 COPY src/api/tracing.py tracing.py
 COPY src/api/evaluate.py evaluate.py
 
-# Add metadata labels
-LABEL maintainer="Contoso Outdoor <team@contoso-outdoor.com>" \
-      description="Contoso Chat API - Production Build" \
-      version="$VERSION" \
-      build_date="$BUILD_DATE" \
-      git_commit="$GIT_COMMIT"
-
 # Production stage
 FROM base as production
 
@@ -51,14 +39,14 @@ USER appuser
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Set environment variables for Cloud Run
-ENV PORT=80 \
+# Set environment variables
+ENV PORT=8000 \
     HOST=0.0.0.0 \
     ENVIRONMENT=production
 
-EXPOSE 80
+EXPOSE 8000
 
 # Use uvicorn with production settings
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80", "--workers", "1", "--access-log"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--access-log"]
