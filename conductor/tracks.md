@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Unified Database for App and Chat Service**
+- [x] **Track: Unified Database for App and Chat Service**
 *Link: [./tracks/unified_database_20260118/](./tracks/unified_database_20260118/)*
