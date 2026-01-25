@@ -5,12 +5,12 @@
     - [x] Sub-task: Add `firstName`, `lastName`, `age`, `phoneNumber`, `membership` to the `User` model.
     - [x] Sub-task: Add `Order` and `OrderItem` models.
     - [x] Sub-task: Run `npx prisma migrate dev --name extend_user_and_orders`.
-- [~] Task: Create data migration script.
-    - [ ] Sub-task: Create `scripts/migrate-chat-data.ts` to read JSON files and seed PostgreSQL.
-    - [ ] Sub-task: Run the migration script and verify data in the database.
+- [x] Task: Create data migration script.
+    - [x] Sub-task: Create `scripts/migrate-chat-data.ts` to read JSON files and seed PostgreSQL.
+    - [x] Sub-task: Run the migration script and verify data in the database.
 
 ## Phase 2: Python Environment Setup
-- [ ] Task: Configure Python for Prisma.
+- [~] Task: Configure Python for Prisma.
     - [ ] Sub-task: Add `prisma` to `services/chat/src/api/requirements.txt`.
     - [ ] Sub-task: Update `services/chat/Dockerfile` to generate the Prisma client.
     - [ ] Sub-task: Set `DATABASE_URL` in `docker-compose.yml` for the `chat` service.
