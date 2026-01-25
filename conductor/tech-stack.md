@@ -1,12 +1,20 @@
 # Technology Stack
 
 ## Core Technologies
-- **Language:** [TypeScript](https://www.typescriptlang.org/) - Provides static typing for safer and more maintainable code.
-- **Framework:** [Next.js](https://nextjs.org/) (App Router) - A React framework for building fast, SEO-friendly web applications with server-side rendering and static site generation.
+- **Languages:**
+  - [TypeScript](https://www.typescriptlang.org/) - Provides static typing for safer and more maintainable code in the web application.
+  - [Python](https://www.python.org/) - Powering the AI Chat service and data processing scripts.
+- **Frameworks:**
+  - [Next.js](https://nextjs.org/) (App Router) - Main web framework for the frontend and application logic.
+  - [FastAPI](https://fastapi.tiangolo.com/) - High-performance web framework used for the Python AI Chat service.
 - **UI Library:** [React](https://reactjs.org/) - A JavaScript library for building component-based user interfaces.
 
 ## Styling
 - **CSS Framework:** [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework for rapid UI development and consistent styling.
+
+## AI & Machine Learning
+- **Platform:** [Google Cloud Vertex AI](https://cloud.google.com/vertex-ai) - For powering the AI Chat Assistant and other integrated AI features.
+- **Search:** [Discovery Engine](https://cloud.google.com/generative-ai-app-builder/docs/discovery-engine-overview) - For grounding the AI assistant with product manuals and documentation.
 
 ## Database & Data Management
 - **Database:** [PostgreSQL](https://www.postgresql.org/) - A powerful, open-source object-relational database system.

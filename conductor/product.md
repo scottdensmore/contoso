@@ -13,6 +13,7 @@ Outdoor enthusiasts looking for high-performance gear and detailed specification
 ## Key Features
 - **Comprehensive Catalog:** Robust product list with detailed specs and manuals.
 - **Categorized Browsing:** Seamlessly filter products by category (Tents, Backpacks, etc.).
+- **AI Chat Assistant:** Integrated AI chat for product inquiries and customer support.
 - **Dynamic Navigation:** Modern sidebar for quick access to store sections and support.
 - **User Authentication:** Secure sign-up and sign-in for a personalized experience.
 - **Personalized Profile:** Manage shipping addresses and customize avatars.
