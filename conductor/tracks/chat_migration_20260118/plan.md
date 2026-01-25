@@ -1,10 +1,10 @@
 # Implementation Plan - Move contoso-chat to services/chat
 
 ## Phase 1: Preparation and Acquisition
-- [~] Task: Create a test to verify the existence of the `services/chat` directory and key files (e.g., `package.json` inside it).
+- [x] Task: Create a test to verify the existence of the `services/chat` directory and key files (e.g., `package.json` inside it).
     - [x] Sub-task: Create `scripts/test-chat-migration.js` (or a similar test file) that asserts `services/chat` exists and contains files.
     - [x] Sub-task: Run the test to confirm it fails (Red Phase).
-- [ ] Task: Create the `services` directory if it doesn't exist.
+- [x] Task: Create the `services` directory if it doesn't exist.
 
 ## Phase 2: Migration (Lift and Shift)
 - [ ] Task: Clone and Copy Chat Service Code.
