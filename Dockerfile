@@ -16,8 +16,14 @@ COPY prisma ./prisma
 # Install dependencies
 RUN npm install
 
-# Copy all other source files
-COPY . .
+# Copy application source
+COPY src ./src
+COPY public ./public
+COPY next.config.js ./
+COPY tsconfig.json ./
+COPY tailwind.config.ts ./
+COPY postcss.config.js ./
+COPY .eslintrc.json ./
 
 # Generate prisma client
 RUN npx prisma generate

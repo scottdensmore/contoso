@@ -8,9 +8,9 @@
 - [x] Task: Remove `services/chat/src/api/Dockerfile`.
 
 ## Phase 2: Root Dockerfile Refinement
-- [ ] Task: Update the root `Dockerfile` to be selective.
-    - [ ] Sub-task: Replace `COPY . .` with specific `COPY` commands for `src/`, `public/`, `next.config.js`, etc.
-    - [ ] Sub-task: Ensure `services/` is not copied.
+- [x] Task: Update the root `Dockerfile` to be selective.
+    - [x] Sub-task: Replace `COPY . .` with specific `COPY` commands for `src/`, `public/`, `next.config.js`, etc.
+    - [x] Sub-task: Ensure `services/` is not copied.
 
 ## Phase 3: Docker Compose Integration
 - [ ] Task: Update `docker-compose.yml`.
