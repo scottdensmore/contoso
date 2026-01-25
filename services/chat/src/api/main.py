@@ -97,7 +97,7 @@ async def health():
     return {"status": "healthy", "real_chat": REAL_CHAT_AVAILABLE}
 
 @app.post("/api/create_response")
-def create_response(request: ChatRequest):
+async def create_response(request: ChatRequest):
     logger.info(
         "Chat request received",
         extra={
@@ -112,7 +112,7 @@ def create_response(request: ChatRequest):
         if REAL_CHAT_AVAILABLE:
             # Use real chat logic
             logger.info("Processing request with real chat logic")
-            result = get_response(request.customer_id, request.question, request.chat_history)
+            result = await get_response(request.customer_id, request.question, request.chat_history)
 
             logger.info(
                 "Chat response generated",

@@ -1,23 +1,42 @@
 
 import os
 import json
-from google.cloud import firestore
 from google.cloud import discoveryengine_v1alpha as discoveryengine
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
+from prisma import Prisma
 
-def get_customer_from_firestore(customer_id: str, project_id: str):
-    """Retrieves a customer's data from Firestore."""
+async def get_customer_from_postgres(customer_id: str):
+    """Retrieves a customer's data from PostgreSQL."""
     try:
-        db = firestore.Client(project=project_id)
-        doc_ref = db.collection('customers').document(customer_id)
-        doc = doc_ref.get()
-        if doc.exists:
-            return doc.to_dict()
+        db = Prisma()
+        await db.connect()
+        
+        # Try to find by ID
+        user = await db.user.find_unique(
+            where={'id': customer_id},
+            include={
+                'orders': {
+                    'include': {
+                        'items': {
+                            'include': {
+                                'product': True
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        
+        await db.disconnect()
+        
+        if user:
+            # Convert to dictionary
+            return user.model_dump()
         else:
             return None
     except Exception as e:
-        print(f"Error retrieving customer from Firestore: {e}")
+        print(f"Error retrieving customer from Postgres: {e}")
         return None
 
 def search_products_vertex_ai(query: str, project_id: str, location: str, search_app_id: str):
@@ -38,7 +57,7 @@ def search_products_vertex_ai(query: str, project_id: str, location: str, search
         print(f"Error searching products in Vertex AI Search: {e}")
         return []
 
-def get_response(customer_id, question, chat_history):
+async def get_response(customer_id, question, chat_history):
     """Generates a response using the RAG pattern with GCP services."""
     
     project_id = os.environ.get("PROJECT_ID")
@@ -47,7 +66,7 @@ def get_response(customer_id, question, chat_history):
 
     # 1. Retrieve customer data
     print(f"Retrieving customer {customer_id}...")
-    customer = get_customer_from_firestore(customer_id, project_id)
+    customer = await get_customer_from_postgres(customer_id)
 
     # 2. Retrieve relevant product documentation
     print(f"Searching for products related to: {question}")

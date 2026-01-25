@@ -9,7 +9,6 @@ fastapi
 uvicorn[standard]
 
 # Google Cloud Services
-google-cloud-firestore
 google-cloud-aiplatform
 google-cloud-discoveryengine
 google-auth

@@ -16,11 +16,12 @@
     - [x] Sub-task: Set `DATABASE_URL` in `docker-compose.yml` for the `chat` service.
 
 ## Phase 3: Chat Service Code Refactoring
-- [~] Task: Update data access logic in `services/chat`.
-    - [ ] Sub-task: Identify functions reading from `data/customer_info/`.
-    - [ ] Sub-task: Refactor these functions to use the generated Python Prisma client.
-- [ ] Task: Verify chat service functionality.
+- [x] Task: Update data access logic in `services/chat`.
+    - [x] Sub-task: Identify functions reading from `data/customer_info/`.
+    - [x] Sub-task: Refactor these functions to use the generated Python Prisma client.
+- [~] Task: Verify chat service functionality.
     - [ ] Sub-task: Run `docker-compose up`.
+    - [ ] Sub-task: Test a chat request that requires customer or order information.    - [ ] Sub-task: Run `docker-compose up`.
     - [ ] Sub-task: Test a chat request that requires customer or order information.
 
 ## Phase 4: Verification and Cleanup
