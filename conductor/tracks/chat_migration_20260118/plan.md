@@ -6,7 +6,7 @@
     - [x] Sub-task: Run the test to confirm it fails (Red Phase).
 - [x] Task: Create the `services` directory if it doesn't exist.
 
-## Phase 2: Migration (Lift and Shift)
+## Phase 2: Migration (Lift and Shift) [checkpoint: 3a9f2c4]
 - [x] Task: Clone and Copy Chat Service Code.
     - [x] Sub-task: Clone `https://github.com/scottdensmore/contoso-chat` to a temporary directory in `.gemini/tmp` or similar.
     - [x] Sub-task: Create the `services/chat` directory.
@@ -15,4 +15,4 @@
 - [x] Task: Verify Migration.
     - [x] Sub-task: Run the `scripts/test-chat-migration.js` test to confirm it passes (Green Phase).
     - [x] Sub-task: Delete the temporary test script.
-- [~] Task: Conductor - User Manual Verification 'Migration (Lift and Shift)' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Migration (Lift and Shift)' (Protocol in workflow.md).
