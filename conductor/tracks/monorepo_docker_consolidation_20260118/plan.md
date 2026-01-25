@@ -24,9 +24,9 @@
     - [x] Sub-task: Incorporate local development and deployment instructions from `services/chat/README.md`.
     - [x] Sub-task: Ensure links and paths in the consolidated documentation are correct for the new monorepo structure.
 
-## Phase 5: Verification
+## Phase 5: Verification [checkpoint: 4d6c419]
 - [x] Task: Verify the build.
     - [x] Sub-task: Run `docker-compose build`.
     - [x] Sub-task: Run `docker-compose up -d`.
     - [x] Sub-task: Verify `web` and `chat` are running (e.g., check `docker ps` and logs).
-- [ ] Task: Conductor - User Manual Verification 'Consolidate Monorepo Docker Configuration' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Consolidate Monorepo Docker Configuration' (Protocol in workflow.md).
