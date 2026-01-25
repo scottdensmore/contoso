@@ -22,10 +22,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
   chat:
     build:
-      context: ./services/chat
+      context: .
+      dockerfile: services/chat/Dockerfile
     ports:
       - "8000:8000"
     environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
       - PROJECT_ID=${PROJECT_ID}
       - REGION=${REGION:-us-central1}
       - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-2.5-flash}

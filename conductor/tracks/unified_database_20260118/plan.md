@@ -10,13 +10,13 @@
     - [x] Sub-task: Run the migration script and verify data in the database.
 
 ## Phase 2: Python Environment Setup
-- [~] Task: Configure Python for Prisma.
-    - [ ] Sub-task: Add `prisma` to `services/chat/src/api/requirements.txt`.
-    - [ ] Sub-task: Update `services/chat/Dockerfile` to generate the Prisma client.
-    - [ ] Sub-task: Set `DATABASE_URL` in `docker-compose.yml` for the `chat` service.
+- [x] Task: Configure Python for Prisma.
+    - [x] Sub-task: Add `prisma` to `services/chat/src/api/requirements.txt`.
+    - [x] Sub-task: Update `services/chat/Dockerfile` to generate the Prisma client.
+    - [x] Sub-task: Set `DATABASE_URL` in `docker-compose.yml` for the `chat` service.
 
 ## Phase 3: Chat Service Code Refactoring
-- [ ] Task: Update data access logic in `services/chat`.
+- [~] Task: Update data access logic in `services/chat`.
     - [ ] Sub-task: Identify functions reading from `data/customer_info/`.
     - [ ] Sub-task: Refactor these functions to use the generated Python Prisma client.
 - [ ] Task: Verify chat service functionality.

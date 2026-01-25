@@ -22,3 +22,6 @@ opentelemetry-instrumentation-fastapi
 
 # Prompty (simplified)
 prompty
+
+# Database
+prisma

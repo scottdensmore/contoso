@@ -18,17 +18,21 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY src/api/requirements.txt requirements.txt
+COPY services/chat/src/api/requirements.txt requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy Prisma schema and generate client
+COPY prisma/schema.prisma schema.prisma
+RUN prisma generate
+
 # Copy application code
-COPY src/api/main.py main.py
-COPY src/api/contoso_chat/ contoso_chat/
-COPY src/api/evaluators/ evaluators/
-COPY src/api/tracing.py tracing.py
-COPY src/api/evaluate.py evaluate.py
+COPY services/chat/src/api/main.py main.py
+COPY services/chat/src/api/contoso_chat/ contoso_chat/
+COPY services/chat/src/api/evaluators/ evaluators/
+COPY services/chat/src/api/tracing.py tracing.py
+COPY services/chat/src/api/evaluate.py evaluate.py
 
 # Production stage
 FROM base as production
