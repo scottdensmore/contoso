@@ -44,9 +44,10 @@ The fastest way to get the application running locally is using Docker Compose.
     This will:
     - Start a PostgreSQL database container
     - Build and start the Next.js application container
+    - Build and start the Python AI Chat service container
     - Automatically run database migrations and seed data
 
-    The application will be available at [http://localhost:3000](http://localhost:3000).
+    The web application will be available at [http://localhost:3000](http://localhost:3000) and the chat service at [http://localhost:8000](http://localhost:8000).
 
 4.  **Stopping the application:**
 
@@ -67,7 +68,35 @@ The fastest way to get the application running locally is using Docker Compose.
 - **User Accounts:** Sign up, sign in, and manage your profile (Avatar, Address, Password).
 - **About Us:** Learn about the company's mission and story (`/about`).
 - **FAQ:** Common questions regarding ordering, shipping, and returns (`/faq`).
+- **AI Chat Assistant:** Intelligent customer service chatbot powered by Gemini 2.5 Flash (`services/chat`).
 - **Category Filtering:** Dedicated pages for viewing products within specific categories.
+
+## Chat Service
+
+The AI Chat Assistant is a Python-based FastAPI service that uses Retrieval-Augmented Generation (RAG) to provide contextual responses based on product manuals and customer data.
+
+### Local Development (Python)
+
+If you wish to run the chat service independently of Docker:
+
+1.  **Install dependencies:**
+    ```bash
+    cd services/chat
+    pip install -r src/api/requirements.txt
+    ```
+
+2.  **Configure environment:**
+    Create a `.env` file in `services/chat/` with your GCP project details.
+
+3.  **Run the service:**
+    ```bash
+    cd src/api
+    uvicorn main:app --reload --port 8000
+    ```
+
+### Deployment
+
+The chat service is deployed as a separate Cloud Run service. See `services/chat/PRODUCTION_DEPLOYMENT.md` for detailed instructions.
 
 ## Local Development
 

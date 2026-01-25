@@ -19,10 +19,10 @@
     - [x] Sub-task: Add basic environment variables to the `chat` service (Project ID, Region, etc. as placeholders or from `.env`).
 
 ## Phase 4: Documentation Consolidation
-- [ ] Task: Update the root `README.md`.
-    - [ ] Sub-task: Add a "Chat Service" section under "Features" or a new major section.
-    - [ ] Sub-task: Incorporate local development and deployment instructions from `services/chat/README.md`.
-    - [ ] Sub-task: Ensure links and paths in the consolidated documentation are correct for the new monorepo structure.
+- [x] Task: Update the root `README.md`.
+    - [x] Sub-task: Add a "Chat Service" section under "Features" or a new major section.
+    - [x] Sub-task: Incorporate local development and deployment instructions from `services/chat/README.md`.
+    - [x] Sub-task: Ensure links and paths in the consolidated documentation are correct for the new monorepo structure.
 
 ## Phase 5: Verification
 - [ ] Task: Verify the build.
