@@ -23,6 +23,6 @@
     - [x] Sub-task: Run `docker-compose up`.
     - [x] Sub-task: Test a chat request that requires customer or order information.
 
-## Phase 4: Verification and Cleanup
+## Phase 4: Verification and Cleanup [checkpoint: b34944e]
 - [x] Task: Verify the entire stack.
-- [~] Task: Conductor - User Manual Verification 'Unified Database' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Unified Database' (Protocol in workflow.md).
