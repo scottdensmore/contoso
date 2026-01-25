@@ -19,11 +19,10 @@
 - [x] Task: Update data access logic in `services/chat`.
     - [x] Sub-task: Identify functions reading from `data/customer_info/`.
     - [x] Sub-task: Refactor these functions to use the generated Python Prisma client.
-- [~] Task: Verify chat service functionality.
-    - [ ] Sub-task: Run `docker-compose up`.
-    - [ ] Sub-task: Test a chat request that requires customer or order information.    - [ ] Sub-task: Run `docker-compose up`.
-    - [ ] Sub-task: Test a chat request that requires customer or order information.
+- [x] Task: Verify chat service functionality.
+    - [x] Sub-task: Run `docker-compose up`.
+    - [x] Sub-task: Test a chat request that requires customer or order information.
 
 ## Phase 4: Verification and Cleanup
-- [ ] Task: Verify the entire stack.
-- [ ] Task: Conductor - User Manual Verification 'Unified Database' (Protocol in workflow.md).
+- [x] Task: Verify the entire stack.
+- [~] Task: Conductor - User Manual Verification 'Unified Database' (Protocol in workflow.md).

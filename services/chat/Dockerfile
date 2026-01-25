@@ -15,6 +15,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -25,6 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Prisma schema and generate client
 COPY prisma/schema.prisma schema.prisma
+RUN echo '\ngenerator pyclient {\n  provider = "prisma-client-py"\n  interface = "asyncio"\n}' >> schema.prisma
 RUN prisma generate
 
 # Copy application code
