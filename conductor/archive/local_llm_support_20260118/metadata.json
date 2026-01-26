@@ -1,0 +1,8 @@
+{
+  "track_id": "local_llm_support_20260118",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-18T00:00:00Z",
+  "updated_at": "2026-01-18T00:00:00Z",
+  "description": "Local LLM and Search Support for Chat Service"
+}
