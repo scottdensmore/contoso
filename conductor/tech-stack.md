@@ -15,6 +15,9 @@
 ## AI & Machine Learning
 - **Platform:** [Google Cloud Vertex AI](https://cloud.google.com/vertex-ai) - For powering the AI Chat Assistant and other integrated AI features.
 - **Search:** [Discovery Engine](https://cloud.google.com/generative-ai-app-builder/docs/discovery-engine-overview) - For grounding the AI assistant with product manuals and documentation.
+- **Model Orchestration:** [LiteLLM](https://github.com/BerriAI/litellm) - Used for routing LLM requests between GCP Vertex AI and local Ollama.
+- **Local Models:** [Ollama](https://ollama.com/) - For running local LLMs (e.g., `gemma:2b`) during development.
+- **Local Search:** [ChromaDB](https://www.trychroma.com/) - Persistent vector store for local product search.
 
 ## Database & Data Management
 - **Database:** [PostgreSQL](https://www.postgresql.org/) - A powerful, open-source object-relational database system.
