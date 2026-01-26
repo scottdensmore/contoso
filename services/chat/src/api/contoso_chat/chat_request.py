@@ -1,10 +1,8 @@
 
 import os
 import json
-from google.cloud import discoveryengine_v1alpha as discoveryengine
-import vertexai
-from vertexai.generative_models import GenerativeModel, Part
 from prisma import Prisma
+from .search_service import get_search_service
 
 async def get_customer_from_postgres(customer_id: str):
     """Retrieves a customer's data from PostgreSQL."""
@@ -39,44 +37,47 @@ async def get_customer_from_postgres(customer_id: str):
         print(f"Error retrieving customer from Postgres: {e}")
         return None
 
-def search_products_vertex_ai(query: str, project_id: str, location: str, search_app_id: str):
-    """Performs a semantic search for products using Vertex AI Search."""
-    try:
-        client = discoveryengine.SearchServiceClient()
-        serving_config = f"projects/{project_id}/locations/global/collections/default_collection/dataStores/{search_app_id}/servingConfigs/default_config"
-
-        request = discoveryengine.SearchRequest(
-            serving_config=serving_config,
-            query=query,
-            page_size=5,
+async def generate_llm_response(prompt: str, provider: str, project_id: str, location: str, model_name: str):
+    """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
+    if provider == "local":
+        from litellm import completion
+        api_base = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
+        # Ensure we use the correct model format for LiteLLM + Ollama
+        # Assuming user has pulled gemma:2b locally
+        response = completion(
+            model="ollama/gemma:2b",
+            messages=[{"role": "user", "content": prompt}],
+            api_base=api_base
         )
-
-        response = client.search(request)
-        return [discoveryengine.Document.to_dict(r.document) for r in response.results]
-    except Exception as e:
-        print(f"Error searching products in Vertex AI Search: {e}")
-        return []
+        return response.choices[0].message.content
+    else:
+        import vertexai
+        from vertexai.generative_models import GenerativeModel, Part
+        vertexai.init(project=project_id, location=location)
+        model = GenerativeModel(model_name)
+        response = model.generate_content([Part.from_text(prompt)])
+        return response.text
 
 async def get_response(customer_id, question, chat_history):
-    """Generates a response using the RAG pattern with GCP services."""
+    """Generates a response using the RAG pattern."""
     
     project_id = os.environ.get("PROJECT_ID")
     location = os.environ.get("REGION")
-    search_app_id = os.environ.get("DISCOVERY_ENGINE_DATASTORE_ID")
-
+    
     # 1. Retrieve customer data
     print(f"Retrieving customer {customer_id}...")
     customer = await get_customer_from_postgres(customer_id)
 
     # 2. Retrieve relevant product documentation
     print(f"Searching for products related to: {question}")
-    product_context = search_products_vertex_ai(question, project_id, location, search_app_id)
+    search_service = get_search_service()
+    product_context = search_service.search(question)
 
-    # 3. Generate a response using a Gemini model
-    print("Generating response with Gemini...")
-    vertexai.init(project=project_id, location=location)
+    # 3. Generate a response
+    print("Generating response...")
+    provider = os.environ.get("LLM_PROVIDER", "gcp")
+    print(f"DEBUG: LLM_PROVIDER is {provider}")
     model_name = os.environ.get("GEMINI_MODEL_NAME", "gemini-2.5-flash")
-    model = GenerativeModel(model_name)
 
     # Prepare the prompt
     prompt = f"""You are a helpful AI assistant for Contoso Outdoor, an online retailer.
@@ -90,10 +91,10 @@ async def get_response(customer_id, question, chat_history):
     Customer's Question: {question}
     """
 
-    response = model.generate_content([Part.from_text(prompt)])
+    answer = await generate_llm_response(prompt, provider, project_id, location, model_name)
     
     return {
         "question": question,
-        "answer": response.text,
+        "answer": answer,
         "context": product_context
     }

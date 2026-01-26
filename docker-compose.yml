@@ -35,6 +35,11 @@ services:
       - DISCOVERY_ENGINE_APP_ID=${DISCOVERY_ENGINE_APP_ID}
       - DISCOVERY_ENGINE_DATASTORE_ID=${DISCOVERY_ENGINE_DATASTORE_ID}
       - ENVIRONMENT=development
+      - LLM_PROVIDER=${LLM_PROVIDER:-gcp}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    volumes:
+      - chat_data:/app/data
 
 volumes:
   postgres_data:
+  chat_data:

@@ -24,3 +24,8 @@ prompty
 
 # Database
 prisma
+
+# Local LLM & Search
+litellm
+chromadb
+sentence-transformers

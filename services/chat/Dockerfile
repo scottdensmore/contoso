@@ -6,11 +6,6 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-WORKDIR /app
-
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
@@ -19,30 +14,45 @@ RUN apt-get update && apt-get install -y \
     npm \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -m -g appuser appuser
+
+WORKDIR /app
+RUN chown -R appuser:appuser /app
+
+# Switch to appuser
+USER appuser
+
+# Create virtualenv
+RUN python -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
 # Copy requirements first for better caching
-COPY services/chat/src/api/requirements.txt requirements.txt
+COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Prisma schema and generate client
-COPY prisma/schema.prisma schema.prisma
+COPY --chown=appuser:appuser prisma/schema.prisma schema.prisma
 RUN echo '\ngenerator pyclient {\n  provider = "prisma-client-py"\n  interface = "asyncio"\n}' >> schema.prisma
 RUN prisma generate
 
 # Copy application code
-COPY services/chat/src/api/main.py main.py
-COPY services/chat/src/api/contoso_chat/ contoso_chat/
-COPY services/chat/src/api/evaluators/ evaluators/
-COPY services/chat/src/api/tracing.py tracing.py
-COPY services/chat/src/api/evaluate.py evaluate.py
+COPY --chown=appuser:appuser services/chat/src/api/main.py main.py
+COPY --chown=appuser:appuser services/chat/src/api/contoso_chat/ contoso_chat/
+COPY --chown=appuser:appuser services/chat/src/api/evaluators/ evaluators/
+COPY --chown=appuser:appuser services/chat/src/api/tracing.py tracing.py
+COPY --chown=appuser:appuser services/chat/src/api/evaluate.py evaluate.py
+
+# Copy scripts
+COPY --chown=appuser:appuser services/chat/scripts/ scripts/
 
 # Production stage
 FROM base as production
 
-# Security: Change ownership to non-root user
-RUN chown -R appuser:appuser /app
-USER appuser
+# Security: Change ownership to non-root user (already done in base but good practice if base changes)
+# USER appuser is already set in base
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
