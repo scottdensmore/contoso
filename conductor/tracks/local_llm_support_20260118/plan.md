@@ -23,10 +23,10 @@
     - [x] Sub-task: Update `chat_request.py` to use `litellm` for generation.
     - [x] Sub-task: Configure `litellm` to use Vertex AI (when `gcp`) or Ollama (when `local`).
 
-## Phase 4: Verification
+## Phase 4: Verification [checkpoint: 368c880]
 - [x] Task: Verify Local Chat.
     - [x] Sub-task: Ensure Ollama is running (`gemma:2b`).
     - [x] Sub-task: Run the indexing script.
     - [x] Sub-task: Start app with `LLM_PROVIDER=local`.
     - [x] Sub-task: Send a chat request and verify response and logs (ensure no GCP calls).
-- [~] Task: Conductor - User Manual Verification 'Local LLM Support' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Local LLM Support' (Protocol in workflow.md).
