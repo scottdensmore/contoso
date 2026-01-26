@@ -1,0 +1,8 @@
+{
+  "track_id": "seed_data_merge_20260125",
+  "type": "chore",
+  "status": "completed",
+  "created_at": "2026-01-25T22:30:00Z",
+  "updated_at": "2026-01-25T22:45:00Z",
+  "description": "Merge chat service and app seed data into a single source of truth in public/ directory."
+}
