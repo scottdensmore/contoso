@@ -80,6 +80,96 @@ async function main() {
     console.log(`Synced product: ${product.name}`);
   }
 
+  // Seed Customers
+  const customersPath = path.join(process.cwd(), 'public', 'customers.json');
+  if (fs.existsSync(customersPath)) {
+    const customersData = JSON.parse(fs.readFileSync(customersPath, 'utf-8'));
+    for (const customer of customersData) {
+      const addressParts = customer.address ? customer.address.split(',').map((s: string) => s.trim()) : [];
+      const addressLine1 = addressParts[0] || '';
+      const cityState = addressParts[1] || ''; // simplistic parsing
+      const zipCode = addressParts[2] || '';
+      // Try to split city/state if possible, or just leave in city
+      const city = cityState; 
+
+      await prisma.user.upsert({
+        where: { email: customer.email },
+        update: {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          age: customer.age,
+          membership: customer.membership,
+          phoneNumber: customer.phone,
+          addressLine1,
+          city,
+          zipCode,
+        },
+        create: {
+          id: customer.id,
+          email: customer.email,
+          password: 'password', // Default password
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          age: customer.age,
+          membership: customer.membership,
+          phoneNumber: customer.phone,
+          addressLine1,
+          city,
+          zipCode,
+        },
+      });
+      console.log(`Synced user: ${customer.firstName} ${customer.lastName}`);
+
+      for (const order of customer.orders) {
+        // Upsert Order
+        await prisma.order.upsert({
+          where: { id: order.id.toString() },
+          update: {
+            userId: customer.id,
+            date: new Date(order.date),
+            total: order.total,
+          },
+          create: {
+            id: order.id.toString(),
+            userId: customer.id,
+            date: new Date(order.date),
+            total: order.total,
+          },
+        });
+
+        // Upsert OrderItem (Assuming one item per order as per data structure)
+        // Since we don't have a stable ID for OrderItem in the JSON, we find first or create
+        const existingItem = await prisma.orderItem.findFirst({
+          where: {
+            orderId: order.id.toString(),
+            productId: order.productId.toString(),
+          },
+        });
+
+        if (!existingItem) {
+          await prisma.orderItem.create({
+            data: {
+              orderId: order.id.toString(),
+              productId: order.productId.toString(),
+              quantity: order.quantity,
+              price: order.unitprice,
+            },
+          });
+        } else {
+            // Optional: update if needed
+            await prisma.orderItem.update({
+                where: { id: existingItem.id },
+                data: {
+                    quantity: order.quantity,
+                    price: order.unitprice
+                }
+            })
+        }
+      }
+      console.log(`Synced orders for user: ${customer.email}`);
+    }
+  }
+
   console.log('Seeding finished.');
 }
 

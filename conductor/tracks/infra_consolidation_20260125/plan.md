@@ -15,35 +15,35 @@
 - [x] Task: Conductor - User Manual Verification 'Terraform Unification' (Protocol in workflow.md)
 
 ## Phase 3: Script Consolidation
-- [ ] Task: Move and refactor root scripts to `infrastructure/scripts`
-    - [ ] Move `scripts/*.sh` and `scripts/*.ts`.
-    - [ ] Update internal paths in scripts.
-- [ ] Task: Move and refactor chat service scripts to `infrastructure/scripts`
-    - [ ] Move `services/chat/scripts/*`.
-    - [ ] Update internal paths.
-- [ ] Task: Create unified `setup_project.sh`
-    - [ ] Merge logic from both setup scripts into a single, idempotent project-wide setup script.
-- [ ] Task: Conductor - User Manual Verification 'Script Consolidation' (Protocol in workflow.md)
+- [x] Task: Move and refactor root scripts to `infrastructure/scripts` [22a28e2]
+    - [x] Move `scripts/*.sh` and `scripts/*.ts`.
+    - [x] Update internal paths in scripts.
+- [x] Task: Move and refactor chat service scripts to `infrastructure/scripts` [22a28e2]
+    - [x] Move `services/chat/scripts/*`.
+    - [x] Update internal paths.
+- [x] Task: Create unified `setup_project.sh` [22a28e2]
+    - [x] Merge logic from both setup scripts into a single, idempotent project-wide setup script.
+- [~] Task: Conductor - User Manual Verification 'Script Consolidation' (Protocol in workflow.md)
 
 ## Phase 4: CI/CD and Workflow Unification
-- [ ] Task: Move and unify GitHub Actions workflows
-    - [ ] Move `.github/workflows/google-cloud.yml` to `infrastructure/workflows/` (as a template/reference) or update the root workflow to coordinate both services.
-    - [ ] Standardize environment variables and secret management.
-- [ ] Task: Conductor - User Manual Verification 'CI/CD and Workflow Unification' (Protocol in workflow.md)
+- [x] Task: Move and unify GitHub Actions workflows [acfc41f]
+    - [x] Move `.github/workflows/google-cloud.yml` to `infrastructure/workflows/` (as a template/reference) or update the root workflow to coordinate both services.
+    - [x] Standardize environment variables and secret management.
+- [~] Task: Conductor - User Manual Verification 'CI/CD and Workflow Unification' (Protocol in workflow.md)
 
 ## Phase 5: Deployment Testing Implementation
-- [ ] Task: Implement infrastructure validation tests
-    - [ ] Write scripts/tests to verify GCP resource existence and state.
-- [ ] Task: Implement app-chat service integration tests
-    - [ ] Write automated tests to verify communication between services.
-- [ ] Task: Implement end-to-end smoke tests
-    - [ ] Create a deployment smoke test suite.
-- [ ] Task: Conductor - User Manual Verification 'Deployment Testing Implementation' (Protocol in workflow.md)
+- [x] Task: Implement infrastructure validation tests [827a492]
+    - [x] Write scripts/tests to verify GCP resource existence and state.
+- [x] Task: Implement app-chat service integration tests [827a492]
+    - [x] Write automated tests to verify communication between services.
+- [x] Task: Implement end-to-end smoke tests [827a492]
+    - [x] Create a deployment smoke test suite.
+- [~] Task: Conductor - User Manual Verification 'Deployment Testing Implementation' (Protocol in workflow.md)
 
-## Phase 6: Final Cleanup
-- [ ] Task: Remove redundant directories and files
-    - [ ] Delete root `terraform/` and `scripts/`.
-    - [ ] Delete `services/chat/infra/` and `services/chat/scripts/`.
-- [ ] Task: Final project-wide build and verification
+## Phase 6: Final Cleanup [checkpoint: 21703]
+- [x] Task: Remove redundant directories and files [21703]
+    - [x] Delete root `terraform/` and `scripts/`.
+    - [x] Delete `services/chat/infra/` and `services/chat/scripts/`.
+- [~] Task: Final project-wide build and verification
     - [ ] Run `npm run build` and ensure everything functions correctly.
 - [ ] Task: Conductor - User Manual Verification 'Final Cleanup' (Protocol in workflow.md)

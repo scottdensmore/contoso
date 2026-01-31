@@ -1,4 +1,4 @@
-# Track local_llm_support_20260118 Context
+# Track infra_consolidation_20260125 Context
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
