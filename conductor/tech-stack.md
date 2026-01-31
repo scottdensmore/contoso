@@ -29,9 +29,11 @@
 ## Infrastructure & Deployment
 - **Cloud Provider:** [Google Cloud Platform (GCP)](https://cloud.google.com/)
   - **Compute:** Cloud Run - For running containerized applications in a fully managed environment.
-  - **Database:** Cloud SQL for PostgreSQL - Fully managed PostgreSQL database service.
+  - **Databases:**
+    - Cloud SQL for PostgreSQL - Fully managed PostgreSQL database service for the main application.
+    - Firestore - NoSQL document database for customer data used by the AI Chat service.
 - **Infrastructure as Code (IaC):** [Terraform](https://www.terraform.io/) - For provisioning and managing cloud infrastructure through configuration files.
-- **Deployment Strategy:** Automated deployments using scripts and potentially GitHub Actions, with database migrations running on application startup.
+- **Deployment Strategy:** Unified automated deployments using consolidated scripts and GitHub Actions, with coordinated deployment of both the web application and chat service.
 
 ## Development Tools
 - **Containerization:** [Docker](https://www.docker.com/) - For consistent local development and production environments.
