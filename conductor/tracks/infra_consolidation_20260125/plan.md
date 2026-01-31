@@ -5,14 +5,14 @@
     - [x] Create `infrastructure/terraform`, `infrastructure/scripts`, and `infrastructure/workflows` directories.
 - [x] Task: Conductor - User Manual Verification 'Foundation and Directory Structure' (Protocol in workflow.md)
 
-## Phase 2: Terraform Unification
+## Phase 2: Terraform Unification [checkpoint: 7f2dbd1]
 - [x] Task: Analyze and merge root and chat service Terraform configurations [94b6810]
     - [x] Compare `terraform/main.tf` and `services/chat/infra/gcp/main.tf`.
     - [x] Create a unified `infrastructure/terraform/main.tf` and supporting files (`variables.tf`, `outputs.tf`).
     - [x] Ensure all GCP resources for both services are defined.
-- [~] Task: Verify unified Terraform configuration
-    - [ ] Run `terraform validate` in `infrastructure/terraform`.
-- [ ] Task: Conductor - User Manual Verification 'Terraform Unification' (Protocol in workflow.md)
+- [x] Task: Verify unified Terraform configuration [7f2dbd1]
+    - [x] Run `terraform validate` in `infrastructure/terraform`.
+- [x] Task: Conductor - User Manual Verification 'Terraform Unification' (Protocol in workflow.md)
 
 ## Phase 3: Script Consolidation
 - [ ] Task: Move and refactor root scripts to `infrastructure/scripts`
