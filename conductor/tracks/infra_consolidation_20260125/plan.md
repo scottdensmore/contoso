@@ -6,11 +6,11 @@
 - [x] Task: Conductor - User Manual Verification 'Foundation and Directory Structure' (Protocol in workflow.md)
 
 ## Phase 2: Terraform Unification
-- [ ] Task: Analyze and merge root and chat service Terraform configurations
-    - [ ] Compare `terraform/main.tf` and `services/chat/infra/gcp/main.tf`.
-    - [ ] Create a unified `infrastructure/terraform/main.tf` and supporting files (`variables.tf`, `outputs.tf`).
-    - [ ] Ensure all GCP resources for both services are defined.
-- [ ] Task: Verify unified Terraform configuration
+- [x] Task: Analyze and merge root and chat service Terraform configurations [94b6810]
+    - [x] Compare `terraform/main.tf` and `services/chat/infra/gcp/main.tf`.
+    - [x] Create a unified `infrastructure/terraform/main.tf` and supporting files (`variables.tf`, `outputs.tf`).
+    - [x] Ensure all GCP resources for both services are defined.
+- [~] Task: Verify unified Terraform configuration
     - [ ] Run `terraform validate` in `infrastructure/terraform`.
 - [ ] Task: Conductor - User Manual Verification 'Terraform Unification' (Protocol in workflow.md)
 
