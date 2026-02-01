@@ -13,7 +13,7 @@
 - [x] Task: Monitor and debug workflow execution (c7f59a0)
     - [x] Create `infrastructure/scripts/simulate_ci.sh` to simulate the CI pipeline locally.
     - [x] Update `google-cloud.yml` to dynamically resolve DATABASE_URL.
-- [ ] Task: Verify post-deployment state
+- [~] Task: Verify post-deployment state
     - [ ] Check Cloud Run console to confirm new revisions are live.
 - [ ] Task: Conductor - User Manual Verification 'CI/CD Pipeline Verification' (Protocol in workflow.md)
 
