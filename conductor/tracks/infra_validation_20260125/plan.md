@@ -1,6 +1,6 @@
 # Implementation Plan - Infrastructure Validation and Deployment Testing
 
-## Phase 1: Local Infrastructure Verification
+## Phase 1: Local Infrastructure Verification [checkpoint: c74938d]
 - [x] Task: Validate Terraform configuration locally (c014976)
     - [x] Run `terraform init`, `validate`, and `plan` in `infrastructure/terraform`.
 - [x] Task: Test manual deployment script (b1c7b89)
