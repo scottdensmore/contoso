@@ -7,7 +7,7 @@
     - [x] Execute `infrastructure/scripts/setup_project.sh` in a test environment or with a test project ID.
 - [x] Task: Conductor - User Manual Verification 'Local Infrastructure Verification' (b34ff31)
 
-## Phase 2: CI/CD Pipeline Verification
+## Phase 2: CI/CD Pipeline Verification [checkpoint: 1fb3084]
 - [x] Task: Trigger GitHub Actions workflow (d59b27b)
     - [x] Create a dummy commit or manually trigger the `Deploy to Google Cloud Run` workflow.
 - [x] Task: Monitor and debug workflow execution (c7f59a0)
