@@ -15,7 +15,7 @@ Database migrations run **automatically on application startup** via the Docker 
 - Non-interactive and production-safe
 - Happens on every deployment ensuring schema is always up-to-date
 
-The migration logic is in `scripts/docker-entrypoint.sh` and is executed via the `Dockerfile` ENTRYPOINT.
+The migration logic is in `infrastructure/scripts/docker-entrypoint.sh` and is executed via the `Dockerfile` ENTRYPOINT.
 
 ## Seeding Strategy
 
@@ -36,7 +36,7 @@ npx prisma db seed
 For local development and debugging, you can use the Cloud SQL Proxy to create a secure tunnel:
 
 ```bash
-./scripts/dev_db_proxy.sh
+./infrastructure/scripts/dev_db_proxy.sh
 ```
 
 This script:
@@ -55,7 +55,7 @@ With the proxy running in one terminal, you can run migrations locally:
 
 ```bash
 # In terminal 1
-./scripts/dev_db_proxy.sh
+./infrastructure/scripts/dev_db_proxy.sh
 
 # In terminal 2
 export DATABASE_URL="postgresql://prismauser:<password>@localhost:5432/contoso-db"
@@ -68,7 +68,7 @@ You can use tools like `psql`, pgAdmin, or database GUIs:
 
 ```bash
 # Get credentials
-cd terraform
+cd infrastructure/terraform
 terraform output db_user      # prismauser
 terraform output db_password  # the password
 
@@ -123,7 +123,7 @@ For Cloud Run:
 ## Migration Workflow
 
 ### Initial Setup
-1. `setup_project.sh` runs Terraform to create the database
+1. `infrastructure/scripts/setup_project.sh` runs Terraform to create the database
 2. Script builds the migration Docker image
 3. Script creates a Cloud Run Job and executes it
 4. Migration job runs `prisma migrate deploy` inside GCP

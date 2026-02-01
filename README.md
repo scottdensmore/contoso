@@ -263,7 +263,7 @@ export NEXTAUTH_SECRET="your-secret-here"  # Generate with: openssl rand -base64
 Run the setup script to provision and deploy everything:
 
 ```bash
-./scripts/setup_project.sh
+./infrastructure/scripts/setup_project.sh
 ```
 
 This script performs the following steps:
@@ -293,7 +293,7 @@ To connect to the production database from your local machine for debugging:
 
 ```bash
 # Terminal 1: Start the Cloud SQL Proxy
-./scripts/dev_db_proxy.sh
+./infrastructure/scripts/dev_db_proxy.sh
 
 # Terminal 2: Run your application locally
 npm run dev
@@ -315,7 +315,7 @@ The proxy creates a secure tunnel using your GCP IAM credentials. See [docs/DATA
    ```bash
    # Just deploy - migrations happen on startup!
    # Or re-run the setup script to deploy
-   ./scripts/setup_project.sh
+   ./infrastructure/scripts/setup_project.sh
    ```
 
 **Note:** Production uses `prisma migrate deploy` (runs automatically on startup), while local development uses `prisma migrate dev` (interactive).
@@ -325,7 +325,7 @@ The proxy creates a secure tunnel using your GCP IAM credentials. See [docs/DATA
 To delete all GCP resources and avoid charges:
 
 ```bash
-./scripts/teardown_project.sh
+./infrastructure/scripts/teardown_project.sh
 ```
 
 This will destroy all infrastructure including the database (data will be lost).
@@ -360,10 +360,10 @@ npx prisma studio
 
 ```bash
 # Full deployment
-./scripts/setup_project.sh
+./infrastructure/scripts/setup_project.sh
 
 # Connect to production database locally
-./scripts/dev_db_proxy.sh
+./infrastructure/scripts/dev_db_proxy.sh
 
 # Run production migrations
 gcloud run jobs execute contoso-migrate --region us-central1 --wait
@@ -375,7 +375,7 @@ gcloud run logs tail contoso-web --region us-central1
 gcloud run services describe contoso-web --region us-central1
 
 # Tear down all resources
-./scripts/teardown_project.sh
+./infrastructure/scripts/teardown_project.sh
 ```
 
 ### Useful GCP Commands
@@ -388,8 +388,8 @@ gcloud sql instances list
 gcloud run services list --region us-central1
 
 # View Terraform outputs
-cd terraform && terraform output
+cd infrastructure/terraform && terraform output
 
 # Get database password
-cd terraform && terraform output -raw db_password
+cd infrastructure/terraform && terraform output -raw db_password
 ```

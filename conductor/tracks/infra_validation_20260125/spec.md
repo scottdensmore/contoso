@@ -5,7 +5,7 @@ Validate the newly consolidated infrastructure setup and test the unified deploy
 
 ## Functional Requirements
 - **Infrastructure Validation:**
-    - Perform a local `terraform plan` and `apply` to ensure the monolithic configuration is valid and correctly provisions all resources (Cloud SQL, Firestore, VPC, etc.).
+    - Perform a local `terraform plan` and `apply` to ensure the monolithic configuration is valid and correctly provisions all resources (Cloud SQL, VPC, etc.).
     - Verify manual deployment using the unified `infrastructure/scripts/setup_project.sh`.
     - Audit provisioned resources in GCP to ensure they match the defined configuration.
 - **Deployment Testing:**

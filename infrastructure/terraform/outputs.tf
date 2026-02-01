@@ -23,10 +23,6 @@ output "db_password" {
   sensitive = true
 }
 
-output "firestore_database_name" {
-  value = google_firestore_database.customer_db.name
-}
-
 output "container_registry_url" {
   value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.repository_id}"
 }

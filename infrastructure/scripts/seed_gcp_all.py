@@ -62,7 +62,6 @@ def run_script(script_path: Path, script_name: str) -> bool:
 def install_requirements():
     """Install required Python packages."""
     requirements = [
-        "google-cloud-firestore",
         "google-cloud-discoveryengine",
         "google-cloud-aiplatform",
         "vertexai"
@@ -110,25 +109,6 @@ def verify_infrastructure():
     project_id = os.getenv("PROJECT_ID")
     environment = os.getenv("ENVIRONMENT", "dev")
 
-    # Check if Firestore database exists
-    try:
-        from google.cloud import firestore
-        database_name = os.getenv("FIRESTORE_DATABASE", f"{environment}-customer-db")
-
-        if database_name and database_name != "(default)":
-            db = firestore.Client(project=project_id, database=database_name)
-        else:
-            db = firestore.Client(project=project_id)
-
-        # Try to access the database
-        collections = list(db.collections())
-        logger.info("✅ Firestore database accessible")
-
-    except Exception as e:
-        logger.error(f"❌ Cannot access Firestore database: {e}")
-        logger.error("Please ensure Terraform has been applied and Firestore is configured")
-        return False
-
     # Check if Discovery Engine datastore exists
     try:
         from google.cloud import discoveryengine_v1
@@ -173,7 +153,6 @@ def main():
 
     # Define seeding scripts in order
     seeding_scripts = [
-        (script_dir / "seed_gcp_customers.py", "Customer Data Seeding"),
         (script_dir / "seed_gcp_products.py", "Product Data Seeding")
     ]
 

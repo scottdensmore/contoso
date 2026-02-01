@@ -9,12 +9,6 @@ variable "region" {
   default     = "us-central1"
 }
 
-variable "firestore_location" {
-  description = "The location for Firestore database"
-  type        = string
-  default     = "us-central1"
-}
-
 variable "environment_name" {
   description = "Name of the environment (e.g., dev, staging, prod)"
   type        = string

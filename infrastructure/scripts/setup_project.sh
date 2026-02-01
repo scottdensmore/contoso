@@ -49,7 +49,6 @@ gcloud services enable artifactregistry.googleapis.com
 gcloud services enable compute.googleapis.com
 gcloud services enable servicenetworking.googleapis.com
 gcloud services enable vpcaccess.googleapis.com
-gcloud services enable firestore.googleapis.com
 gcloud services enable discoveryengine.googleapis.com
 gcloud services enable aiplatform.googleapis.com
 gcloud services enable secretmanager.googleapis.com
@@ -96,7 +95,7 @@ echo "Configuring database connection..."
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost/${DB_NAME}?host=/cloudsql/${INSTANCE_CONNECTION_NAME}"
 
 # --- Data Seeding ---
-echo "Seeding data into GCP (Firestore & Discovery Engine)..."
+echo "Seeding data into GCP (Discovery Engine)..."
 # Ensure python dependencies are installed
 pip install -r services/chat/requirements.txt
 # Run the master seeding script

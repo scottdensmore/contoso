@@ -26,8 +26,13 @@
 - [~] Task: Conductor - User Manual Verification 'Deployment Testing and Rollback' (9d8327a)
 
 ## Phase 4: Final Cleanup and Documentation
-- [ ] Task: Audit and delete redundant files
-    - [ ] Scan the codebase for any remaining legacy script or config files and remove them.
-- [ ] Task: Update infrastructure documentation
-    - [ ] Ensure `infrastructure/README.md` accurately reflects the validated deployment process.
-- [ ] Task: Conductor - User Manual Verification 'Final Cleanup and Documentation' (Protocol in workflow.md)
+- [x] Task: Audit and delete redundant files (c7f59a0)
+    - [x] Remove Firestore from Terraform configurations.
+    - [x] Remove Firestore from `setup_project.sh` and `seed_gcp_all.py`.
+    - [x] Delete redundant seeding scripts (`seed_gcp_customers.py`, `import-products.py`, `seed-gcp-db.sh`).
+    - [x] Update documentation to reflect unified database architecture.
+- [x] Task: Update infrastructure documentation (9b7d2a2)
+    - [x] Create `infrastructure/README.md` with validated procedures.
+    - [x] Update root `README.md` with correct paths.
+    - [x] Update `services/chat/README.md` and `docs/DATABASE.md`.
+- [~] Task: Conductor - User Manual Verification 'Final Cleanup and Documentation' (9b7d2a2)

@@ -47,7 +47,6 @@ resource "google_project_service" "required_apis" {
     "iam.googleapis.com",
     "run.googleapis.com",
     "artifactregistry.googleapis.com",
-    "firestore.googleapis.com",
     "discoveryengine.googleapis.com",
     "aiplatform.googleapis.com",
     "secretmanager.googleapis.com",
@@ -153,16 +152,6 @@ resource "google_sql_user" "users" {
   name     = "prismauser"
   instance = google_sql_database_instance.postgres.name
   password = random_password.db_password.result
-}
-
-# --- Firestore ---
-resource "google_firestore_database" "customer_db" {
-  project     = var.project_id
-  name        = "${var.environment_name}-customer-db"
-  location_id = var.firestore_location
-  type        = "FIRESTORE_NATIVE"
-
-  depends_on = [google_project_service.required_apis]
 }
 
 # --- Artifact Registry ---
