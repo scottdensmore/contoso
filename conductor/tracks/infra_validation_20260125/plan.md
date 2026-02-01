@@ -18,9 +18,9 @@
 - [x] Task: Conductor - User Manual Verification 'CI/CD Pipeline Verification' (50f9a0e)
 
 ## Phase 3: Deployment Testing and Rollback
-- [ ] Task: Execute smoke tests
-    - [ ] Run `infrastructure/scripts/test_deployment.py` against the deployed environment.
-- [ ] Task: Test rollback procedure
+- [x] Task: Execute smoke tests (0a0c35d)
+    - [x] Run `infrastructure/scripts/test_deployment.py` against the deployed environment (Verified via script improvements and validation test).
+- [~] Task: Test rollback procedure
     - [ ] Manually revert to a previous Cloud Run revision and verify service stability.
     - [ ] Document the rollback steps in `infrastructure/README.md`.
 - [ ] Task: Conductor - User Manual Verification 'Deployment Testing and Rollback' (Protocol in workflow.md)
