@@ -76,7 +76,20 @@ terraform output db_password  # the password
 psql -h localhost -p 5432 -U prismauser -d contoso-db
 ```
 
-## How It Works
+## AI Chat Service Connectivity
+
+The AI Chat Service (FastAPI) also connects to the unified PostgreSQL database using Prisma ORM. It shares the same schema and credentials as the Web Application.
+
+### Configuration
+In the AI Chat Service, the database connection is managed via the `DATABASE_URL` environment variable, typically configured in `services/chat/src/api/.env` for local development.
+
+### Shared Schema
+Both services use the `prisma/schema.prisma` file at the root of the repository as the single source of truth for the database schema.
+
+- **Web App**: Uses Prisma for user management, product display, and orders.
+- **Chat Service**: Uses Prisma for retrieving product information for RAG (Retrieval-Augmented Generation) and accessing customer history for personalized recommendations.
+
+## How It Works (Multi-Service Architecture)
 
 ```
 ┌─────────────────┐
@@ -101,13 +114,16 @@ psql -h localhost -p 5432 -U prismauser -d contoso-db
 
 For Cloud Run:
 ```
-┌─────────────────┐
-│ Cloud Run Job   │
-│ (Migration)     │
-└────────┬────────┘
-         │ VPC Connector
-         │
-         ▼
+┌─────────────────┐     ┌─────────────────┐
+│ Web Application │     │ AI Chat Service │
+│ (Next.js)       │     │ (FastAPI)       │
+└────────┬────────┘     └────────┬────────┘
+         │                       │
+         └───────────┬───────────┘
+                     │
+               VPC Connector
+                     │
+                     ▼
 ┌─────────────────┐
 │ GCP VPC         │
 │  Network        │
