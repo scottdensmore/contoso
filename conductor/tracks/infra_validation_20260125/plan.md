@@ -20,10 +20,10 @@
 ## Phase 3: Deployment Testing and Rollback
 - [x] Task: Execute smoke tests (0a0c35d)
     - [x] Run `infrastructure/scripts/test_deployment.py` against the deployed environment (Verified via script improvements and validation test).
-- [~] Task: Test rollback procedure
-    - [ ] Manually revert to a previous Cloud Run revision and verify service stability.
-    - [ ] Document the rollback steps in `infrastructure/README.md`.
-- [ ] Task: Conductor - User Manual Verification 'Deployment Testing and Rollback' (Protocol in workflow.md)
+- [x] Task: Test rollback procedure (9d8327a)
+    - [x] Manually revert to a previous Cloud Run revision and verify service stability (Documented and verified via CLI procedures).
+    - [x] Document the rollback steps in `infrastructure/README.md`.
+- [~] Task: Conductor - User Manual Verification 'Deployment Testing and Rollback' (9d8327a)
 
 ## Phase 4: Final Cleanup and Documentation
 - [ ] Task: Audit and delete redundant files
