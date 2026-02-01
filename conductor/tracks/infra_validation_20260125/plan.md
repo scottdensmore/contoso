@@ -10,8 +10,9 @@
 ## Phase 2: CI/CD Pipeline Verification
 - [x] Task: Trigger GitHub Actions workflow (d59b27b)
     - [x] Create a dummy commit or manually trigger the `Deploy to Google Cloud Run` workflow.
-- [ ] Task: Monitor and debug workflow execution
-    - [ ] Analyze workflow logs to ensure all steps (Terraform, Docker build, Deploy) succeed.
+- [~] Task: Monitor and debug workflow execution
+    - [ ] Create `infrastructure/scripts/simulate_ci.sh` to simulate the CI pipeline locally.
+    - [ ] Update `google-cloud.yml` to dynamically resolve DATABASE_URL.
 - [ ] Task: Verify post-deployment state
     - [ ] Check Cloud Run console to confirm new revisions are live.
 - [ ] Task: Conductor - User Manual Verification 'CI/CD Pipeline Verification' (Protocol in workflow.md)

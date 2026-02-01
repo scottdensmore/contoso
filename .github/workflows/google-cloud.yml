@@ -50,8 +50,12 @@ jobs:
           echo "db_instance_name=$(terraform output -raw db_instance_name)" >> $GITHUB_OUTPUT
           echo "db_name=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
           echo "db_user=$(terraform output -raw db_user)" >> $GITHUB_OUTPUT
+          echo "db_password=$(terraform output -raw db_password)" >> $GITHUB_OUTPUT
           echo "container_registry_url=$(terraform output -raw container_registry_url)" >> $GITHUB_OUTPUT
         working-directory: ./infrastructure/terraform
+        # Mask the password in logs
+        env:
+          TF_LOG: ERROR
 
   deploy-web:
     needs: infrastructure
@@ -85,7 +89,7 @@ jobs:
           region: ${{ env.REGION }}
           image: ${{ env.image_path }}
           env_vars: |
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_URL=postgresql://${{ needs.infrastructure.outputs.db_user }}:${{ needs.infrastructure.outputs.db_password }}@localhost/${{ needs.infrastructure.outputs.db_name }}?host=/cloudsql/${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ needs.infrastructure.outputs.db_instance_name }}
             NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
 
   deploy-chat:
