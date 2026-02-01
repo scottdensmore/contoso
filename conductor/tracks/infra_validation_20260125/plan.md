@@ -3,9 +3,9 @@
 ## Phase 1: Local Infrastructure Verification
 - [x] Task: Validate Terraform configuration locally (c014976)
     - [x] Run `terraform init`, `validate`, and `plan` in `infrastructure/terraform`.
-- [ ] Task: Test manual deployment script
-    - [ ] Execute `infrastructure/scripts/setup_project.sh` in a test environment or with a test project ID.
-- [ ] Task: Conductor - User Manual Verification 'Local Infrastructure Verification' (Protocol in workflow.md)
+- [x] Task: Test manual deployment script (b1c7b89)
+    - [x] Execute `infrastructure/scripts/setup_project.sh` in a test environment or with a test project ID.
+- [~] Task: Conductor - User Manual Verification 'Local Infrastructure Verification' (Protocol in workflow.md)
 
 ## Phase 2: CI/CD Pipeline Verification
 - [ ] Task: Trigger GitHub Actions workflow
