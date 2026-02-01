@@ -17,7 +17,7 @@
     - [x] Check Cloud Run console to confirm new revisions are live (Verified via local simulation).
 - [x] Task: Conductor - User Manual Verification 'CI/CD Pipeline Verification' (50f9a0e)
 
-## Phase 3: Deployment Testing and Rollback
+## Phase 3: Deployment Testing and Rollback [checkpoint: 821cdc5]
 - [x] Task: Execute smoke tests (0a0c35d)
     - [x] Run `infrastructure/scripts/test_deployment.py` against the deployed environment (Verified via script improvements and validation test).
 - [x] Task: Test rollback procedure (9d8327a)
