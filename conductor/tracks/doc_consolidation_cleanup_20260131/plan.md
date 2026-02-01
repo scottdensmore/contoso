@@ -5,9 +5,9 @@
     - [x] Extract instructions and architecture details from `services/chat/README.md`.
     - [x] Create a dedicated "AI Chat Service" section in the root `README.md`.
     - [x] Integrate chat-specific instructions (Local Dev, Deployment) into the root `README.md`.
-- [ ] Task: Remove redundant service files
-    - [ ] Delete `services/chat/README.md`.
-    - [ ] Delete `services/chat/LICENSE`.
+- [x] Task: Remove redundant service files (5ac947f)
+    - [x] Delete `services/chat/README.md`.
+    - [x] Delete `services/chat/LICENSE`.
 - [ ] Task: Conductor - User Manual Verification 'README Consolidation and Cleanup' (Protocol in workflow.md)
 
 ## Phase 2: GitIgnore Unification and Audit
