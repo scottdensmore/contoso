@@ -86,6 +86,10 @@ def main():
     web_url = os.getenv("WEB_APP_URL")
     chat_url = os.getenv("CHAT_SERVICE_URL")
 
+    if not any([project_id, web_url, chat_url]):
+        logger.error("❌ No environment variables provided for testing (PROJECT_ID, WEB_APP_URL, or CHAT_SERVICE_URL)")
+        sys.exit(1)
+
     success = True
 
     if project_id:
