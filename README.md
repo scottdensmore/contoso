@@ -68,12 +68,26 @@ The fastest way to get the application running locally is using Docker Compose.
 - **User Accounts:** Sign up, sign in, and manage your profile (Avatar, Address, Password).
 - **About Us:** Learn about the company's mission and story (`/about`).
 - **FAQ:** Common questions regarding ordering, shipping, and returns (`/faq`).
-- **AI Chat Assistant:** Intelligent customer service chatbot powered by Gemini 2.5 Flash (`services/chat`).
+- **AI Chat Assistant:** Intelligent customer service chatbot powered by Gemini 2.5 Flash.
 - **Category Filtering:** Dedicated pages for viewing products within specific categories.
 
-## Chat Service
+## AI Chat Service
 
 The AI Chat Assistant is a Python-based FastAPI service that uses Retrieval-Augmented Generation (RAG) to provide contextual responses based on product manuals and customer data.
+
+### Overview
+
+Contoso Chat uses a Retrieval-Augmented Generation (RAG) pattern to provide contextual, accurate responses based on:
+1.  **Product Catalog:** Grounded by Vertex AI Search (Discovery Engine).
+2.  **Customer Context:** Personalized responses based on profile and order history from PostgreSQL.
+
+### Architecture
+
+- **Backend:** FastAPI (Python 3.10+)
+- **LLM:** Google Vertex AI (Gemini 2.5 Flash)
+- **Vector Search:** Google Cloud Discovery Engine
+- **Database:** PostgreSQL (Cloud SQL) via Prisma
+- **Orchestration:** Prompty for prompt management
 
 ### Local Development (Python)
 
@@ -85,18 +99,29 @@ If you wish to run the chat service independently of Docker:
     pip install -r src/api/requirements.txt
     ```
 
-2.  **Configure environment:**
-    Create a `.env` file in `services/chat/` with your GCP project details.
+2.  **Configure Environment:**
+    Create a `.env` file in `services/chat/src/api/` (or set environment variables):
+    ```env
+    PROJECT_ID=your-project-id
+    REGION=us-central1
+    ENVIRONMENT=dev
+    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public"
+    ```
 
 3.  **Run the service:**
     ```bash
-    cd src/api
+    cd services/chat/src/api
     uvicorn main:app --reload --port 8000
     ```
 
+### Key API Endpoints
+
+- `GET /health`: Service health check.
+- `POST /api/create_response`: Generate an AI response.
+
 ### Deployment
 
-The chat service is deployed as a separate Cloud Run service. See `services/chat/PRODUCTION_DEPLOYMENT.md` for detailed instructions.
+The chat service is deployed as a Google Cloud Run service via the unified infrastructure configuration in the root `infrastructure/` directory.
 
 ## Local Development
 
