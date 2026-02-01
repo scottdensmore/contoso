@@ -1,6 +1,6 @@
 # Implementation Plan - Documentation Consolidation and Repository Cleanup
 
-## Phase 1: README Consolidation and Cleanup
+## Phase 1: README Consolidation and Cleanup [checkpoint: c32eea4]
 - [x] Task: Consolidate README files (40d2944)
     - [x] Extract instructions and architecture details from `services/chat/README.md`.
     - [x] Create a dedicated "AI Chat Service" section in the root `README.md`.
