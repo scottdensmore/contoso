@@ -1,8 +1,0 @@
-{
-  "track_id": "infra_consolidation_20260125",
-  "type": "chore",
-  "status": "new",
-  "created_at": "2026-01-25T23:05:00Z",
-  "updated_at": "2026-01-25T23:05:00Z",
-  "description": "The chat service has scripts and terraform to deploy and setup the service. So does the application. I want to merge all this setup and scripts. Also all the files to test deployments etc"
-}
