@@ -109,7 +109,7 @@ export const Chat = () => {
           setShowVideo(true);
         })
         .catch((err) => {
-          console.log(err);
+          console.error(err);
           if (
             err.name == "NotAllowedError" ||
             err.name == "PermissionDeniedError"
@@ -175,8 +175,6 @@ export const Chat = () => {
       if (message === "") return;
       dispatch({ type: "add", payload: newTurn });
       sendGroundedMessage(newTurn).then((responseTurn) => {
-        const t1 = performance.now();
-        console.log(`sendGroundedMessage took ${t1 - t0} milliseconds.`);
         dispatch({ type: "replace", payload: responseTurn });
       });
     } else if (chatType === ChatType.Visual || chatType === ChatType.Video) {
@@ -185,8 +183,6 @@ export const Chat = () => {
       dispatch({ type: "add", payload: newTurn });
 
       sendVisualMessage(newTurn, customerId).then((responseTurn) => {
-        const t1 = performance.now();
-        console.log(`sendChatMessage took ${t1 - t0} milliseconds.`);
         dispatch({ type: "replace", payload: responseTurn });
       });
     } else {
@@ -195,8 +191,6 @@ export const Chat = () => {
       dispatch({ type: "add", payload: newTurn });
 
       sendChatMessage(newTurn, customerId).then((responseTurn) => {
-        const t1 = performance.now();
-        console.log(`sendChatMessage took ${t1 - t0} milliseconds.`);
         dispatch({ type: "replace", payload: responseTurn });
       });
     }

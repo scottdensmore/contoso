@@ -10,8 +10,6 @@ export const sendGroundedMessage = async (
     },
   ];
 
-  console.log(message);
-
   const response = await fetch("/api/chat/grounded", {
     method: "POST",
     headers: {
@@ -21,7 +19,6 @@ export const sendGroundedMessage = async (
   });
 
   const data = (await response.json()) as GroundedMessage;
-  console.log(data);
 
   const newTurn: ChatTurn = {
     name: "Jane Doe",
