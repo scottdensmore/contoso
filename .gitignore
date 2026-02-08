@@ -51,6 +51,8 @@ config.json
 credentials.json
 service-account-*.json
 gcp-credentials.json
+infrastructure/terraform/*.json
+infrastructure/scripts/*.json
 .azure
 
 # Terraform Infrastructure
@@ -61,7 +63,8 @@ gcp-credentials.json
 *.tfplan.*
 .terraform.lock.hcl
 tfplan
-terraform/*.json
+infrastructure/terraform/*.json
+
 
 # Databases / AI / Search / Prompty
 /src/generated/prisma

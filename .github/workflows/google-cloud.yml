@@ -19,6 +19,7 @@ jobs:
       db_instance_name: ${{ steps.tf-output.outputs.db_instance_name }}
       db_name: ${{ steps.tf-output.outputs.db_name }}
       db_user: ${{ steps.tf-output.outputs.db_user }}
+      db_password: ${{ steps.tf-output.outputs.db_password }}
       container_registry_url: ${{ steps.tf-output.outputs.container_registry_url }}
     steps:
       - name: Checkout
