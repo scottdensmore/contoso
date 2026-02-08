@@ -34,6 +34,12 @@ COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements
 # Install Python dependencies with increased timeout and retries
 RUN pip install --no-cache-dir --default-timeout=100 --retries 5 -r requirements.txt
 
+# Explicitly install Prisma CLI via npm to avoid issues with automated downloads during client generation
+# Using a fixed version that matches what prisma-python expects
+RUN npm config set fetch-retry-maxtimeout 600000 && \
+    npm config set fetch-retries 5 && \
+    npm install -g prisma@5.17.0
+
 # Copy Prisma schema and generate client
 COPY --chown=appuser:appuser prisma/schema.prisma schema.prisma
 RUN prisma generate --generator pyclient
