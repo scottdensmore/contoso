@@ -1,10 +1,11 @@
-FROM python:3.11-slim as base
+FROM python:3.11-slim AS base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -30,8 +31,8 @@ ENV PATH="/app/venv/bin:$PATH"
 # Copy requirements first for better caching
 COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies with increased timeout and retries
+RUN pip install --no-cache-dir --default-timeout=100 --retries 5 -r requirements.txt
 
 # Copy Prisma schema and generate client
 COPY --chown=appuser:appuser prisma/schema.prisma schema.prisma
@@ -47,7 +48,7 @@ COPY --chown=appuser:appuser services/chat/src/api/chat-entrypoint.sh chat-entry
 COPY --chown=appuser:appuser infrastructure/scripts/index_products_local.py infrastructure/scripts/index_products_local.py
 
 # Production stage
-FROM base as production
+FROM base AS production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
