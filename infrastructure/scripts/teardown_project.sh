@@ -24,6 +24,7 @@ echo "  - Cloud Run services (contoso-web, contoso-chat)"
 echo "  - Cloud SQL database (ALL DATA WILL BE LOST)"
 echo "  - VPC Connector"
 echo "  - Artifact Registry repository"
+echo "  - Secret Manager secrets"
 echo "  - Terraform state bucket"
 echo "  - Service accounts"
 echo ""
@@ -92,6 +93,13 @@ fi
 echo ""
 echo "Performing final cleanup sweep..."
 
+# Secret Manager
+SECRET_ID="${ENVIRONMENT}-app-config"
+if gcloud secrets describe "${SECRET_ID}" &>/dev/null; then
+  echo "Removing Secret Manager secret: ${SECRET_ID}..."
+  gcloud secrets delete "${SECRET_ID}" --quiet
+fi
+
 # Artifact Registry
 REPO_ID="${ENVIRONMENT}-containers"
 if gcloud artifacts repositories describe "${REPO_ID}" --location "${REGION}" &>/dev/null; then
@@ -106,6 +114,13 @@ if gcloud sql instances describe "${DB_INSTANCE}" &>/dev/null; then
   gcloud sql instances delete "${DB_INSTANCE}" --quiet
 fi
 
+# Global IP Address
+IP_NAME="${ENVIRONMENT}-private-ip"
+if gcloud compute addresses describe "${IP_NAME}" --global &>/dev/null; then
+  echo "Removing global IP address: ${IP_NAME}..."
+  gcloud compute addresses delete "${IP_NAME}" --global --quiet
+fi
+
 # VPC Connector
 VPC_CONN="${ENVIRONMENT}-vpc-conn"
 if gcloud compute networks vpc-access connectors describe "${VPC_CONN}" --region "${REGION}" &>/dev/null; then
@@ -113,11 +128,19 @@ if gcloud compute networks vpc-access connectors describe "${VPC_CONN}" --region
   gcloud compute networks vpc-access connectors delete "${VPC_CONN}" --region "${REGION}" --quiet
 fi
 
-# Service Account
-SA_EMAIL="${ENVIRONMENT}-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
-if gcloud iam service-accounts describe "${SA_EMAIL}" &>/dev/null; then
-  echo "Removing application service account: ${SA_EMAIL}..."
-  gcloud iam service-accounts delete "${SA_EMAIL}" --quiet
+# Service Accounts
+# 1. Application Service Account
+SA_APP="${ENVIRONMENT}-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+if gcloud iam service-accounts describe "${SA_APP}" &>/dev/null; then
+  echo "Removing application service account: ${SA_APP}..."
+  gcloud iam service-accounts delete "${SA_APP}" --quiet
+fi
+
+# 2. Terraform Deployer Service Account (created by separate setup script)
+SA_TF="terraform-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
+if gcloud iam service-accounts describe "${SA_TF}" &>/dev/null; then
+  echo "Removing Terraform deployer service account: ${SA_TF}..."
+  gcloud iam service-accounts delete "${SA_TF}" --quiet
 fi
 
 # --- Delete GCS Bucket ---
