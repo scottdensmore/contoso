@@ -106,6 +106,8 @@ import_if_exists "google_vpc_access_connector.connector" "${VPC_ID}" "gcloud com
 
 import_if_exists "google_artifact_registry_repository.container_registry" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${ENVIRONMENT}-containers" "gcloud artifacts repositories describe ${ENVIRONMENT}-containers --location ${REGION}"
 
+import_if_exists "google_secret_manager_secret.app_config" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-app-config" "gcloud secrets describe ${ENVIRONMENT}-app-config"
+
 terraform apply -auto-approve \
   -var="project_id=${PROJECT_ID}" \
   -var="environment_name=${ENVIRONMENT}" \
