@@ -73,6 +73,32 @@ fi
 echo "Running Terraform..."
 cd infrastructure/terraform
 terraform init -backend-config="bucket=${BUCKET_NAME}"
+
+# Helper to import existing resources for idempotency
+import_if_exists() {
+  RESOURCE_ADDR=$1
+  RESOURCE_ID=$2
+  CHECK_CMD=$3
+
+  echo "Checking if ${RESOURCE_ADDR} needs to be imported..."
+  if eval "${CHECK_CMD}" &>/dev/null; then
+    if ! terraform state list | grep -q "${RESOURCE_ADDR}"; then
+      echo "Syncing existing resource ${RESOURCE_ID} into state..."
+      terraform import -var="project_id=${PROJECT_ID}" -var="environment_name=${ENVIRONMENT}" -var="region=${REGION}" "${RESOURCE_ADDR}" "${RESOURCE_ID}" || true
+    fi
+  fi
+}
+
+# Sync key resources before applying
+SA_ID="${ENVIRONMENT}-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+import_if_exists "google_service_account.app_service_account" "projects/${PROJECT_ID}/serviceAccounts/${SA_ID}" "gcloud iam service-accounts describe ${SA_ID}"
+
+DB_ID="${ENVIRONMENT}-db-instance"
+import_if_exists "google_sql_database_instance.postgres" "projects/${PROJECT_ID}/instances/${DB_ID}" "gcloud sql instances describe ${DB_ID}"
+
+VPC_ID="projects/${PROJECT_ID}/locations/${REGION}/connectors/${ENVIRONMENT}-vpc-conn"
+import_if_exists "google_vpc_access_connector.connector" "${VPC_ID}" "gcloud compute networks vpc-access connectors describe ${ENVIRONMENT}-vpc-conn --region ${REGION}"
+
 terraform apply -auto-approve \
   -var="project_id=${PROJECT_ID}" \
   -var="environment_name=${ENVIRONMENT}" \
