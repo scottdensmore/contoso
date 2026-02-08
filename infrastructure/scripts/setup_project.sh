@@ -10,9 +10,6 @@ if [ -z "${NEXTAUTH_SECRET}" ]; then
 fi
 
 # --- Configuration ---
-# The script uses the following environment variables:
-# PROJECT_ID: The desired GCP Project ID.
-# BILLING_ACCOUNT: Your GCP Billing Account ID.
 PROJECT_ID=${PROJECT_ID:-"contoso-outdoor"}
 BILLING_ACCOUNT=${BILLING_ACCOUNT:-"YOUR_BILLING_ACCOUNT"}
 ENVIRONMENT=${ENVIRONMENT:-"dev"}
@@ -32,11 +29,10 @@ if [ -n "${BILLING_ACCOUNT}" ] && [ "${BILLING_ACCOUNT}" != "YOUR_BILLING_ACCOUN
   echo "Linking billing account: ${BILLING_ACCOUNT}..."
   gcloud billing projects link "${PROJECT_ID}" --billing-account="${BILLING_ACCOUNT}"
 else
-  echo "Skipping billing account linking. Please link a billing account to the project manually."
+  echo "Skipping billing account linking."
 fi
 
 # --- Set Project ---
-echo "Setting project to ${PROJECT_ID}..."
 gcloud config set project "${PROJECT_ID}"
 
 # --- Enable Required APIs ---
@@ -54,12 +50,8 @@ gcloud services enable aiplatform.googleapis.com
 gcloud services enable secretmanager.googleapis.com
 gcloud services enable storage.googleapis.com
 
-echo "Waiting for services to be enabled..."
-sleep 30
-
 # --- Terraform Backend Setup ---
 echo "Setting up Terraform backend..."
-# Assuming BUCKET_NAME is globally unique
 BUCKET_NAME="${PROJECT_ID}-tf-state"
 if gsutil ls -b "gs://${BUCKET_NAME}" &> /dev/null; then
   echo "GCS bucket 'gs://${BUCKET_NAME}' already exists."
@@ -69,8 +61,35 @@ else
   gsutil versioning set on "gs://${BUCKET_NAME}"
 fi
 
+# --- Artifact Registry Setup (Idempotent) ---
+echo "Ensuring Artifact Registry repository exists..."
+if ! gcloud artifacts repositories describe "${ENVIRONMENT}-containers" --location "${REGION}" &>/dev/null; then
+  gcloud artifacts repositories create "${ENVIRONMENT}-containers" \
+    --repository-format=docker \
+    --location="${REGION}" \
+    --description="Container registry for Contoso Outdoor application"
+fi
+
+# --- Build and Push Images ---
+echo "Building and pushing Docker images..."
+IMAGE_WEB="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-web:latest"
+IMAGE_CHAT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-chat:latest"
+
+docker buildx build --platform linux/amd64 -t "${IMAGE_WEB}" .
+docker push "${IMAGE_WEB}"
+
+docker buildx build --platform linux/amd64 -t "${IMAGE_CHAT}" -f services/chat/Dockerfile .
+docker push "${IMAGE_CHAT}"
+
+# --- Secret Manager Setup (Idempotent) ---
+echo "Ensuring secrets exist..."
+if ! gcloud secrets describe "${ENVIRONMENT}-app-config" &>/dev/null; then
+  gcloud secrets create "${ENVIRONMENT}-app-config" --replication-policy="automatic"
+fi
+echo -n "${NEXTAUTH_SECRET}" | gcloud secrets versions add "${ENVIRONMENT}-app-config" --data-file=-
+
 # --- Run Terraform ---
-echo "Running Terraform..."
+echo "Applying Terraform..."
 cd infrastructure/terraform
 terraform init -backend-config="bucket=${BUCKET_NAME}"
 
@@ -89,7 +108,7 @@ import_if_exists() {
   fi
 }
 
-# Sync key resources before applying
+# Sync all key resources into state
 SA_ID="${ENVIRONMENT}-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
 import_if_exists "google_service_account.app_service_account" "projects/${PROJECT_ID}/serviceAccounts/${SA_ID}" "gcloud iam service-accounts describe ${SA_ID}"
 
@@ -108,29 +127,19 @@ import_if_exists "google_artifact_registry_repository.container_registry" "proje
 
 import_if_exists "google_secret_manager_secret.app_config" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-app-config" "gcloud secrets describe ${ENVIRONMENT}-app-config"
 
+# Sync Cloud Run services
+import_if_exists "google_cloud_run_v2_service.web_app" "projects/${PROJECT_ID}/locations/${REGION}/services/contoso-web" "gcloud run services describe contoso-web --region ${REGION}"
+import_if_exists "google_cloud_run_v2_service.chat_service" "projects/${PROJECT_ID}/locations/${REGION}/services/contoso-chat" "gcloud run services describe contoso-chat --region ${REGION}"
+
 terraform apply -auto-approve \
   -var="project_id=${PROJECT_ID}" \
   -var="environment_name=${ENVIRONMENT}" \
   -var="region=${REGION}"
 
-# Extract outputs
-DB_NAME=$(terraform output -raw db_name)
-DB_USER=$(terraform output -raw db_user)
-DB_PASSWORD=$(terraform output -raw db_password)
-DB_INSTANCE_NAME=$(terraform output -raw db_instance_name)
-# For Cloud SQL, connection name is often project:region:instance
-INSTANCE_CONNECTION_NAME=$(gcloud sql instances describe ${DB_INSTANCE_NAME} --format='value(connectionName)')
 cd ../..
 
-# --- Database Setup (Prisma) ---
-echo "Configuring database connection..."
-# For local migration proxy or Cloud Build
-# For simplicity in this script, we assume the user might need to run migrations via a proxy or from within GCP.
-# Here we just show the intended DATABASE_URL format for Cloud Run.
-DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost/${DB_NAME}?host=/cloudsql/${INSTANCE_CONNECTION_NAME}"
-
 # --- Data Seeding ---
-echo "Seeding data into GCP (Discovery Engine)..."
+echo "Seeding data into GCP..."
 # Ensure python dependencies are installed
 pip install -r services/chat/src/api/requirements.txt
 # Generate python prisma client
@@ -138,49 +147,6 @@ prisma generate --schema=prisma/schema.prisma
 # Run the master seeding script
 python3 infrastructure/scripts/seed_gcp_all.py
 
-# --- Build and Push Images (Required for Terraform) ---
-echo "Building and pushing Docker images..."
-IMAGE_WEB="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-web:latest"
-IMAGE_CHAT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-chat:latest"
-
-# Ensure repo exists first (idempotent check)
-import_if_exists "google_artifact_registry_repository.container_registry" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${ENVIRONMENT}-containers" "gcloud artifacts repositories describe ${ENVIRONMENT}-containers --location ${REGION}"
-
-# We need the repo created to push, but we moved repo creation to Terraform.
-# To break this chicken-and-egg, we'll create the repo via gcloud if it doesn't exist, 
-# then let Terraform adopt it.
-if ! gcloud artifacts repositories describe "${ENVIRONMENT}-containers" --location "${REGION}" &>/dev/null; then
-  echo "Creating Artifact Registry repo for initial image push..."
-  gcloud artifacts repositories create "${ENVIRONMENT}-containers" \
-    --repository-format=docker \
-    --location="${REGION}" \
-    --description="Container registry for Contoso Outdoor application"
-fi
-
-docker buildx build --platform linux/amd64 -t "${IMAGE_WEB}" .
-docker push "${IMAGE_WEB}"
-
-docker buildx build --platform linux/amd64 -t "${IMAGE_CHAT}" -f services/chat/Dockerfile .
-docker push "${IMAGE_CHAT}"
-
-# --- Create Secrets (Required for Terraform) ---
-echo "Creating secrets..."
-if ! gcloud secrets describe "${ENVIRONMENT}-app-config" &>/dev/null; then
-  gcloud secrets create "${ENVIRONMENT}-app-config" --replication-policy="automatic"
-fi
-# Add NEXTAUTH_SECRET version
-echo -n "${NEXTAUTH_SECRET}" | gcloud secrets versions add "${ENVIRONMENT}-app-config" --data-file=-
-
-import_if_exists "google_secret_manager_secret.app_config" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-app-config" "gcloud secrets describe ${ENVIRONMENT}-app-config"
-
-# --- Run Terraform (Deploy Services) ---
-# Now that images and secrets exist, we can apply the full state including Cloud Run services
-echo "Applying Terraform to deploy services..."
-terraform apply -auto-approve \
-  -var="project_id=${PROJECT_ID}" \
-  -var="environment_name=${ENVIRONMENT}" \
-  -var="region=${REGION}"
-
 echo "✅ Project setup and deployment complete!"
-echo "Web App URL: $(terraform output -raw web_app_url)"
-echo "Chat Service URL: $(terraform output -raw chat_service_url)"
+echo "Web App URL: $(cd infrastructure/terraform && terraform output -raw web_app_url)"
+echo "Chat Service URL: $(cd infrastructure/terraform && terraform output -raw chat_service_url)"
