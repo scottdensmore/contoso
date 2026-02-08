@@ -34,3 +34,11 @@ output "storage_bucket_name" {
 output "app_service_account_email" {
   value = google_service_account.app_service_account.email
 }
+
+output "web_app_url" {
+  value = google_cloud_run_v2_service.web_app.uri
+}
+
+output "chat_service_url" {
+  value = google_cloud_run_v2_service.chat_service.uri
+}

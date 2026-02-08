@@ -210,6 +210,129 @@ resource "google_project_iam_member" "app_sa_roles" {
   member  = "serviceAccount:${google_service_account.app_service_account.email}"
 }
 
+# --- Cloud Run Services ---
+
+# Web Application
+resource "google_cloud_run_v2_service" "web_app" {
+  name     = "contoso-web"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  template {
+    service_account = google_service_account.app_service_account.email
+    
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+      egress    = "ALL_TRAFFIC"
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.name}/contoso-web:latest"
+      
+      env {
+        name  = "DATABASE_URL"
+        value = "postgresql://${google_sql_user.users.name}:${random_password.db_password.result}@localhost/${google_sql_database.database.name}?host=/cloudsql/${var.project_id}:${var.region}:${google_sql_database_instance.postgres.name}"
+      }
+      
+      # Secrets
+      env {
+        name = "NEXTAUTH_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.app_config.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      # Cloud SQL connection
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [google_sql_database_instance.postgres.connection_name]
+      }
+    }
+  }
+
+  depends_on = [
+    google_project_service.required_apis,
+    google_secret_manager_secret.app_config
+  ]
+}
+
+# Chat Service
+resource "google_cloud_run_v2_service" "chat_service" {
+  name     = "contoso-chat"
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  template {
+    service_account = google_service_account.app_service_account.email
+
+    vpc_access {
+      connector = google_vpc_access_connector.connector.id
+      egress    = "ALL_TRAFFIC"
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.name}/contoso-chat:latest"
+      
+      env {
+        name  = "PROJECT_ID"
+        value = var.project_id
+      }
+      env {
+        name  = "REGION"
+        value = var.region
+      }
+      env {
+        name  = "ENVIRONMENT"
+        value = var.environment_name
+      }
+      env {
+        name  = "DATABASE_URL"
+        value = "postgresql://${google_sql_user.users.name}:${random_password.db_password.result}@localhost/${google_sql_database.database.name}?host=/cloudsql/${var.project_id}:${var.region}:${google_sql_database_instance.postgres.name}"
+      }
+
+      # Cloud SQL connection
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
+    }
+
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [google_sql_database_instance.postgres.connection_name]
+      }
+    }
+  }
+
+  depends_on = [google_project_service.required_apis]
+}
+
+# --- IAM: Public Access ---
+resource "google_cloud_run_service_iam_member" "public_web" {
+  service  = google_cloud_run_v2_service.web_app.name
+  location = google_cloud_run_v2_service.web_app.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+resource "google_cloud_run_service_iam_member" "public_chat" {
+  service  = google_cloud_run_v2_service.chat_service.name
+  location = google_cloud_run_v2_service.chat_service.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 # --- Monitoring ---
 resource "google_monitoring_notification_channel" "email" {
   count = var.alert_email != "" ? 1 : 0

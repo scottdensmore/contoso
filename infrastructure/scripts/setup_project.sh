@@ -138,45 +138,49 @@ prisma generate --schema=prisma/schema.prisma
 # Run the master seeding script
 python3 infrastructure/scripts/seed_gcp_all.py
 
-# --- Build and Deploy Web App ---
-echo "Deploying Web Application..."
-VPC_CONNECTOR="${ENVIRONMENT}-vpc-conn"
-
-echo "Waiting for VPC connector ${VPC_CONNECTOR} to be ready..."
-for i in {1..30}; do
-  STATE=$(gcloud compute networks vpc-access connectors describe "${VPC_CONNECTOR}" --region "${REGION}" --format="value(state)" 2>/dev/null || echo "UNKNOWN")
-  if [ "$STATE" == "READY" ]; then
-    echo "✅ VPC connector is ready."
-    break
-  fi
-  echo "  Attempt $i/30: Connector state is $STATE, waiting..."
-  sleep 10
-done
-
+# --- Build and Push Images (Required for Terraform) ---
+echo "Building and pushing Docker images..."
 IMAGE_WEB="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-web:latest"
+IMAGE_CHAT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-chat:latest"
+
+# Ensure repo exists first (idempotent check)
+import_if_exists "google_artifact_registry_repository.container_registry" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${ENVIRONMENT}-containers" "gcloud artifacts repositories describe ${ENVIRONMENT}-containers --location ${REGION}"
+
+# We need the repo created to push, but we moved repo creation to Terraform.
+# To break this chicken-and-egg, we'll create the repo via gcloud if it doesn't exist, 
+# then let Terraform adopt it.
+if ! gcloud artifacts repositories describe "${ENVIRONMENT}-containers" --location "${REGION}" &>/dev/null; then
+  echo "Creating Artifact Registry repo for initial image push..."
+  gcloud artifacts repositories create "${ENVIRONMENT}-containers" \
+    --repository-format=docker \
+    --location="${REGION}" \
+    --description="Container registry for Contoso Outdoor application"
+fi
 
 docker buildx build --platform linux/amd64 -t "${IMAGE_WEB}" .
 docker push "${IMAGE_WEB}"
 
-gcloud run deploy contoso-web \
-  --image "${IMAGE_WEB}" \
-  --set-env-vars=DATABASE_URL="${DATABASE_URL}",NEXTAUTH_SECRET="${NEXTAUTH_SECRET}" \
-  --add-cloudsql-instances="${INSTANCE_CONNECTION_NAME}" \
-  --vpc-connector="${VPC_CONNECTOR}" \
-  --region "${REGION}" \
-  --allow-unauthenticated
-
-# --- Build and Deploy Chat Service ---
-echo "Deploying Chat Service..."
-IMAGE_CHAT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-chat:latest"
-
 docker buildx build --platform linux/amd64 -t "${IMAGE_CHAT}" -f services/chat/Dockerfile .
 docker push "${IMAGE_CHAT}"
 
-gcloud run deploy contoso-chat \
-  --image "${IMAGE_CHAT}" \
-  --set-env-vars=PROJECT_ID="${PROJECT_ID}",REGION="${REGION}",ENVIRONMENT="${ENVIRONMENT}" \
-  --region "${REGION}" \
-  --allow-unauthenticated
+# --- Create Secrets (Required for Terraform) ---
+echo "Creating secrets..."
+if ! gcloud secrets describe "${ENVIRONMENT}-app-config" &>/dev/null; then
+  gcloud secrets create "${ENVIRONMENT}-app-config" --replication-policy="automatic"
+fi
+# Add NEXTAUTH_SECRET version
+echo -n "${NEXTAUTH_SECRET}" | gcloud secrets versions add "${ENVIRONMENT}-app-config" --data-file=-
+
+import_if_exists "google_secret_manager_secret.app_config" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-app-config" "gcloud secrets describe ${ENVIRONMENT}-app-config"
+
+# --- Run Terraform (Deploy Services) ---
+# Now that images and secrets exist, we can apply the full state including Cloud Run services
+echo "Applying Terraform to deploy services..."
+terraform apply -auto-approve \
+  -var="project_id=${PROJECT_ID}" \
+  -var="environment_name=${ENVIRONMENT}" \
+  -var="region=${REGION}"
 
 echo "✅ Project setup and deployment complete!"
+echo "Web App URL: $(terraform output -raw web_app_url)"
+echo "Chat Service URL: $(terraform output -raw chat_service_url)"
