@@ -132,7 +132,7 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost/${DB_NAME}?host=/
 # --- Data Seeding ---
 echo "Seeding data into GCP (Discovery Engine)..."
 # Ensure python dependencies are installed
-pip install -r services/chat/requirements.txt
+pip install -r services/chat/src/api/requirements.txt
 # Run the master seeding script
 python3 infrastructure/scripts/seed_gcp_all.py
 
@@ -156,10 +156,8 @@ gcloud run deploy contoso-web \
 echo "Deploying Chat Service..."
 IMAGE_CHAT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-chat:latest"
 
-cd services/chat
-docker buildx build --platform linux/amd64 -t "${IMAGE_CHAT}" .
+docker buildx build --platform linux/amd64 -t "${IMAGE_CHAT}" -f services/chat/Dockerfile .
 docker push "${IMAGE_CHAT}"
-cd ../..
 
 gcloud run deploy contoso-chat \
   --image "${IMAGE_CHAT}" \
