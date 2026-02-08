@@ -242,7 +242,7 @@ def main():
 
     # Path to products JSON
     script_dir = Path(__file__).parent
-    json_path = script_dir.parents[2] / "public" / "products.json"
+    json_path = script_dir.parents[1] / "public" / "products.json"
 
     if not json_path.exists():
         logger.error(f"Products JSON not found at: {json_path}")

@@ -133,6 +133,8 @@ DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost/${DB_NAME}?host=/
 echo "Seeding data into GCP (Discovery Engine)..."
 # Ensure python dependencies are installed
 pip install -r services/chat/src/api/requirements.txt
+# Generate python prisma client
+prisma generate --schema=prisma/schema.prisma
 # Run the master seeding script
 python3 infrastructure/scripts/seed_gcp_all.py
 
