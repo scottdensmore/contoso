@@ -1,0 +1,47 @@
+import { describe, it, expect } from 'vitest'
+import { getSidebarLinks } from './navigation'
+
+describe('Navigation Utility', () => {
+  const mockCategories = [
+    { id: '1', name: 'Hiking', slug: 'hiking' },
+    { id: '2', name: 'Camping', slug: 'camping' },
+  ]
+
+  it('should return correct links for unauthenticated user', () => {
+    const session = null
+    const result = getSidebarLinks(session, mockCategories as any)
+
+    expect(result).toHaveLength(4) // General, Shop, Account, Support
+
+    const general = result.find(s => s.title === 'General')
+    expect(general).toBeDefined()
+    expect(general?.links).toHaveLength(1)
+    expect(general?.links[0].title).toBe('Home')
+    expect(general?.links[0].href).toBe('/')
+
+    const shop = result.find(s => s.title === 'Shop')
+    expect(shop?.links).toHaveLength(2)
+    expect(shop?.links[0].title).toBe('Hiking')
+    expect(shop?.links[0].href).toBe('/products/category/hiking')
+
+    const account = result.find(s => s.title === 'Account')
+    expect(account?.links).toHaveLength(2)
+    expect(account?.links.map(l => l.title)).toContain('Sign In')
+    expect(account?.links.map(l => l.title)).toContain('Sign Up')
+
+    const support = result.find(s => s.title === 'Support')
+    expect(support?.links).toHaveLength(3)
+    expect(support?.links[0].title).toBe('About Us')
+    expect(support?.links[0].href).toBe('/about')
+  })
+
+  it('should return correct links for authenticated user', () => {
+    const session = { user: { name: 'Test User' } }
+    const result = getSidebarLinks(session as any, mockCategories as any)
+
+    const account = result.find(s => s.title === 'Account')
+    expect(account?.links).toHaveLength(2)
+    expect(account?.links.map(l => l.title)).toContain('Profile')
+    expect(account?.links.map(l => l.title)).toContain('Sign Out')
+  })
+})

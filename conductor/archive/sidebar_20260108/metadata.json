@@ -1,0 +1,8 @@
+{
+  "track_id": "sidebar_20260108",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-08T12:00:00Z",
+  "updated_at": "2026-01-08T12:00:00Z",
+  "description": "Populate the sidebar (hamburger) menu with navigation links organized into sections."
+}

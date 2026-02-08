@@ -1,40 +1,122 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.js
 .yarn/install-state.gz
+.venv/
+venv/
+env/
+ENV/
+pyvenv.cfg
+.python-version
 
-# testing
-/coverage
+# Next.js / Build Artifacts
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
 
-# next.js
-/.next/
-/out/
+# Testing / Coverage
+coverage/
+.nyc_output/
+.pytest_cache/
+.coverage
+htmlcov/
+nosetests.xml
+pip-log.txt
+pip-delete-this-directory.txt
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs and Temporary Files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# environment variable
+# Environment / Secrets / Credentials
 .env
-push.ps1
+.env*.local
+local.env
+*.pem
+principal.txt
+endpoint.json
+config.json
+credentials.json
+service-account-*.json
+gcp-credentials.json
+infrastructure/terraform/*.json
+infrastructure/scripts/*.json
+.azure
+
+# Terraform Infrastructure
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+.terraform.lock.hcl
+tfplan
+infrastructure/terraform/*.json
+
+
+# Databases / AI / Search / Prompty
+/src/generated/prisma
+cloud_sql_proxy
+**/.prompty/
+**/eval/downloaded_artifacts/
+**/evaluators/process_log/
+**/evaluators/eval_result.**
+**/evaluators/studio_url.txt
+**/.runs/
+**/result_evaluated.jsonl
+**/result.jsonl
+**/eval_results.jsonl
+**/eval_results.md
+**/data/chroma_db/
+sandbox/
+
+# System Files
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Python Specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Workshop / Documentation
+docs/workshop/site
+
+# Exceptions (Do NOT ignore these)
+!package*.json
+!tsconfig*.json
+!data/**/*.json
+!public/**/*.json
+!infrastructure/terraform/*.tf
+!infrastructure/terraform/*.tfvars

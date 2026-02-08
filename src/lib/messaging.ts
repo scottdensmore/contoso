@@ -10,8 +10,6 @@ export const sendGroundedMessage = async (
     },
   ];
 
-  console.log(message);
-
   const response = await fetch("/api/chat/grounded", {
     method: "POST",
     headers: {
@@ -21,7 +19,6 @@ export const sendGroundedMessage = async (
   });
 
   const data = (await response.json()) as GroundedMessage;
-  console.log(data);
 
   const newTurn: ChatTurn = {
     name: "Jane Doe",
@@ -35,44 +32,56 @@ export const sendGroundedMessage = async (
   return newTurn;
 };
 
-export const sendPromptFlowMessage = async (
+export const sendChatMessage = async (
   turn: ChatTurn,
-  customerId: string = "4" // Sarah Lee is Customer 4
+  customerId?: string
 ): Promise<ChatTurn> => {
   const body = {
-    chat_history: [],
+    chat_history: "[]",
     question: turn.message,
-    customerId: customerId.toString(),
+    customer_id: customerId ? customerId.toString() : null,
   };
 
-  console.log(body);
+  try {
+    const response = await fetch("/api/chat/service", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-  const response = await fetch("/api/chat/promptflow", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  const data = await response.json();
-  console.log(data);
+    const data = await response.json();
+    const answer = data["answer"] || data["response"] || "I received an empty response from the server.";
 
-  const newTurn: ChatTurn = {
-    name: "Jane Doe",
-    message: data["answer"],
-    status: "done",
-    type: "assistant",
-    avatar: "",
-    image: null,
-  };
-
-  return newTurn;
+    return {
+      name: "Jane Doe",
+      message: answer,
+      status: "done",
+      type: "assistant",
+      avatar: "",
+      image: null,
+    };
+  } catch (error) {
+    console.error("Error sending chat message:", error);
+    return {
+      name: "Jane Doe",
+      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : String(error)}`,
+      status: "done",
+      type: "assistant",
+      avatar: "",
+      image: null,
+    };
+  }
 };
 
 export const sendVisualMessage = async (
   turn: ChatTurn,
-  customerId: string = "4" // Sarah Lee is Customer 4
+  customerId?: string
 ): Promise<ChatTurn> => {
   let image_contents: any = {};
 
@@ -87,32 +96,44 @@ export const sendVisualMessage = async (
   }
 
   const body = {
-    chat_history: [],
+    chat_history: "[]",
     question: turn.message,
-    customer_id: customerId.toString(),
+    customer_id: customerId ? customerId.toString() : null,
   };
 
-  console.log(body);
+  try {
+    const response = await fetch("/api/chat/visual", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-  const response = await fetch("/api/chat/visual", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  const data = await response.json();
-  console.log(data);
+    const data = await response.json();
+    const answer = data["answer"] || data["response"] || "I received an empty response from the server.";
 
-  const newTurn: ChatTurn = {
-    name: "Jane Doe",
-    message: data["answer"],
-    status: "done",
-    type: "assistant",
-    avatar: "",
-    image: null,
-  };
-
-  return newTurn;
+    return {
+      name: "Jane Doe",
+      message: answer,
+      status: "done",
+      type: "assistant",
+      avatar: "",
+      image: null,
+    };
+  } catch (error) {
+    console.error("Error sending visual message:", error);
+    return {
+      name: "Jane Doe",
+      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : String(error)}`,
+      status: "done",
+      type: "assistant",
+      avatar: "",
+      image: null,
+    };
+  }
 };

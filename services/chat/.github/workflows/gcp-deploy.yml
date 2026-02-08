@@ -1,0 +1,103 @@
+name: Deploy to Google Cloud
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+
+    env:
+      PROJECT_ID: ${{ vars.PROJECT_ID }}
+      REGION: ${{ vars.REGION }}
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Deploy Infrastructure
+        working-directory: ./infra/gcp
+        run: |
+          # Initialize Terraform
+          terraform init
+
+          # Select workspace based on environment
+          terraform workspace select ${{ env.ENVIRONMENT }} || terraform workspace new ${{ env.ENVIRONMENT }}
+
+          # Plan and apply
+          if [ "${{ env.ENVIRONMENT }}" = "prod" ]; then
+            terraform plan -var-file="terraform-prod.tfvars"
+            terraform apply -auto-approve -var-file="terraform-prod.tfvars"
+          else
+            terraform plan -var-file="terraform.tfvars"
+            terraform apply -auto-approve -var-file="terraform.tfvars"
+          fi
+
+      - name: Build and Deploy Application
+        working-directory: ./infra/gcp
+        run: |
+          # Get service URL from Terraform output
+          SERVICE_URL=$(terraform output -raw service_url)
+          echo "Deployed to: $SERVICE_URL"
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
+      - name: Seed Data
+        run: |
+          cd scripts
+          python seed_gcp_all.py
+
+      - name: Run Health Check
+        run: |
+          # Wait a moment for service to be ready
+          sleep 30
+
+          # Test health endpoint
+          curl -f ${{ env.SERVICE_URL }}/health || exit 1
+
+          # Test chat endpoint
+          curl -f -X POST ${{ env.SERVICE_URL }}/api/create_response \
+            -H "Content-Type: application/json" \
+            -d '{"question": "Hello", "customer_id": "1", "chat_history": "[]"}' || exit 1
+
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service URL**: ${{ env.SERVICE_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region**: ${{ env.REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed Successfully" >> $GITHUB_STEP_SUMMARY

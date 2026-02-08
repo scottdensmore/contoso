@@ -73,7 +73,7 @@ export const Turn = ({ turn, type }: Props) => {
                 : "[&_a]:font-semibold"
             )}
           >
-            {reactContent}
+            {reactContent || turn.message}
           </div>
         </div>
       );

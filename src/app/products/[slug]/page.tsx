@@ -5,6 +5,7 @@ import { Product } from "@/lib/types";
 import { promises as fs } from "fs";
 import { marked } from "marked";
 import Header from "@/components/header";
+import { notFound } from "next/navigation";
 
 // This function gets called at build time
 export async function generateStaticParams() {
@@ -20,14 +21,14 @@ export async function generateStaticParams() {
   return paths;
 }
 
-async function getData(slug: string): Promise<Product> {
+async function getData(slug: string): Promise<Product | undefined> {
   const file = await fs.readFile(
     process.cwd() + "/public/products.json",
     "utf8"
   );
   const data: Product[] = JSON.parse(file);
-  const product = data.findIndex((p) => p.slug === slug);
-  return data[product];
+  const product = data.find((p) => p.slug === slug);
+  return product;
 }
 
 async function getManual(manual: string): Promise<string> {
@@ -50,6 +51,11 @@ export default async function Page({
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const product = await getData(params.slug);
+
+  if (!product) {
+    notFound();
+  }
+
   const manual = await getManual(product.manual);
   const mitems = manual.split("\n");
 

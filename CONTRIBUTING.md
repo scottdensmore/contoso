@@ -1,76 +1,59 @@
-# Contributing to Contoso Outdoors Web Application
+# Contributing to Contoso Outdoors
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+Thank you for your interest in contributing to the Contoso Outdoors project! We follow a structured, spec-driven development process to ensure high quality and maintainability.
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+## Spec-Driven Development (Conductor)
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+This project uses the **Conductor** framework to manage features and tasks.
 
- - [Code of Conduct](#coc)
- - [Issues and Bugs](#issue)
- - [Feature Requests](#feature)
- - [Submission Guidelines](#submit)
+1.  **Tracks:** Every major feature or bug fix is a "Track".
+    - Tracks are listed in `conductor/tracks.md`.
+    - Each track has its own folder in `conductor/tracks/<track_id>/` containing:
+        - `spec.md`: Detailed functional and technical requirements.
+        - `plan.md`: Step-by-step implementation plan.
 
-## <a name="coc"></a> Code of Conduct
-Help us keep this project open and inclusive. Please read and follow our [Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+2.  **Workflow:**
+    - **Pick a Track:** Choose an incomplete track from `conductor/tracks.md`.
+    - **Mark In Progress:** Update the status in `conductor/tracks.md` to `[~]`.
+    - **Follow the Plan:** Execute tasks sequentially from the track's `plan.md`.
 
-## <a name="issue"></a> Found an Issue?
-If you find a bug in the source code or a mistake in the documentation, you can help us by
-[submitting an issue](#submit-issue) to the GitHub Repository. Even better, you can
-[submit a Pull Request](#submit-pr) with a fix.
+## Coding Standards
 
-## <a name="feature"></a> Want a Feature?
-You can *request* a new feature by [submitting an issue](#submit-issue) to the GitHub
-Repository. If you would like to *implement* a new feature, please submit an issue with
-a proposal for your work first, to be sure that we can use it.
+### Technology Stack
+- **Frontend:** Next.js (App Router), React, Tailwind CSS.
+- **Backend:** Next.js API Routes, Prisma ORM.
+- **Database:** PostgreSQL.
+- **Testing:** Vitest, React Testing Library.
 
-* **Small Features** can be crafted and directly [submitted as a Pull Request](#submit-pr).
+### Guidelines
+- **TypeScript:** Use strict typing. Avoid `any`.
+- **Functional Components:** Use React Hooks and functional components.
+- **Tailwind:** Use utility classes for styling.
+- **TDD:** Write tests *before* implementation.
 
-## <a name="submit"></a> Submission Guidelines
+## Quality Gates
 
-### <a name="submit-issue"></a> Submitting an Issue
-Before you submit an issue, search the archive, maybe your question was already answered.
+Before submitting a Pull Request, ensure:
+- [ ] All tests pass (`npm test`).
+- [ ] Code coverage is sufficient.
+- [ ] No linting errors (`npm run lint`).
+- [ ] The code matches the `spec.md` requirements.
 
-If your issue appears to be a bug, and hasn't been reported, open a new issue.
-Help us to maximize the effort we can spend fixing issues and adding new
-features, by not reporting duplicate issues.  Providing the following information will increase the
-chances of your issue being dealt with quickly:
+## Making Changes
 
-* **Overview of the Issue** - if an error is being thrown a non-minified stack trace helps
-* **Version** - what version is affected (e.g. 0.1.2)
-* **Motivation for or Use Case** - explain what are you trying to do and why the current behavior is a bug for you
-* **Browsers and Operating System** - is this a problem with all browsers?
-* **Reproduce the Error** - provide a live example or a unambiguous set of steps
-* **Related Issues** - has a similar issue been reported before?
-* **Suggest a Fix** - if you can't fix the bug yourself, perhaps you can point to what might be
-  causing the problem (line of code or commit)
+1.  **Create a Branch:** `git checkout -b feature/your-feature-name`
+2.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
+3.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
+4.  **Verify:** Run the full test suite.
+5.  **Push & PR:** Push your branch and open a Pull Request.
 
-You can file new issues by providing the above information at the corresponding repository's issues link: https://github.com/[organization-name]/[repository-name]/issues/new].
+## Database Migrations
 
-### <a name="submit-pr"></a> Submitting a Pull Request (PR)
-Before you submit your Pull Request (PR) consider the following guidelines:
+If your change involves the database:
+1.  Modify `prisma/schema.prisma`.
+2.  Run `npx prisma migrate dev --name your_change_description`.
+3.  Update the seed script (`prisma/seed.ts`) if necessary.
 
-* Search the repository (https://github.com/[organization-name]/[repository-name]/pulls) for an open or closed PR
-  that relates to your submission. You don't want to duplicate effort.
+## Need Help?
 
-* Make your changes in a new git fork:
-
-* Commit your changes using a descriptive commit message
-* Push your fork to GitHub:
-* In GitHub, create a pull request
-* If we suggest changes then:
-  * Make the required updates.
-  * Rebase your fork and force push to your GitHub repository (this will update your Pull Request):
-
-    ```shell
-    git rebase master -i
-    git push -f
-    ```
-
-That's it! Thank you for your contribution!
+Refer to the documentation in the `conductor/` directory for more details on the project structure and product goals.

@@ -1,0 +1,49 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=http://localhost:3000
+      - CHAT_ENDPOINT=http://chat:8000/api/create_response
+      - CHAT_API_KEY=${CHAT_API_KEY:-dummy}
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: contoso-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  chat:
+    build:
+      context: .
+      dockerfile: services/chat/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
+      - PROJECT_ID=${PROJECT_ID}
+      - REGION=${REGION:-us-central1}
+      - GEMINI_MODEL_NAME=${GEMINI_MODEL_NAME:-gemini-2.5-flash}
+      - FIRESTORE_DATABASE=${FIRESTORE_DATABASE:-contoso-db}
+      - DISCOVERY_ENGINE_APP_ID=${DISCOVERY_ENGINE_APP_ID}
+      - DISCOVERY_ENGINE_DATASTORE_ID=${DISCOVERY_ENGINE_DATASTORE_ID}
+      - ENVIRONMENT=development
+      - LLM_PROVIDER=${LLM_PROVIDER:-gcp}
+      - LOCAL_MODEL_NAME=${LOCAL_MODEL_NAME:-gemma3:12b}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - CHROMA_DB_PATH=/app/data/chroma_db
+    volumes:
+      - chat_data:/app/data
+
+volumes:
+  postgres_data:
+  chat_data:

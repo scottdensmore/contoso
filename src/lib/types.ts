@@ -11,7 +11,7 @@ export enum ChatType {
   Grounded,
   Visual,
   Video,
-  PromptFlow
+  Standard
 };
 
 export interface Product {
