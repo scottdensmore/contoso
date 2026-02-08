@@ -141,6 +141,18 @@ python3 infrastructure/scripts/seed_gcp_all.py
 # --- Build and Deploy Web App ---
 echo "Deploying Web Application..."
 VPC_CONNECTOR="${ENVIRONMENT}-vpc-conn"
+
+echo "Waiting for VPC connector ${VPC_CONNECTOR} to be ready..."
+for i in {1..30}; do
+  STATE=$(gcloud compute networks vpc-access connectors describe "${VPC_CONNECTOR}" --region "${REGION}" --format="value(state)" 2>/dev/null || echo "UNKNOWN")
+  if [ "$STATE" == "READY" ]; then
+    echo "✅ VPC connector is ready."
+    break
+  fi
+  echo "  Attempt $i/30: Connector state is $STATE, waiting..."
+  sleep 10
+done
+
 IMAGE_WEB="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ENVIRONMENT}-containers/contoso-web:latest"
 
 docker buildx build --platform linux/amd64 -t "${IMAGE_WEB}" .
