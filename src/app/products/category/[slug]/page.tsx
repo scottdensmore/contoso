@@ -24,6 +24,9 @@ export default async function CategoryPage({
         <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {category.name}
         </div>
+        <div className="text-xl text-gray-600">
+          {category.description}
+        </div>
       </Block>
 
       <Block innerClassName="p-8">
