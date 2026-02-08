@@ -104,6 +104,8 @@ import_if_exists "google_service_networking_connection.private_vpc_connection" "
 VPC_ID="projects/${PROJECT_ID}/locations/${REGION}/connectors/${ENVIRONMENT}-vpc-conn"
 import_if_exists "google_vpc_access_connector.connector" "${VPC_ID}" "gcloud compute networks vpc-access connectors describe ${ENVIRONMENT}-vpc-conn --region ${REGION}"
 
+import_if_exists "google_artifact_registry_repository.container_registry" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${ENVIRONMENT}-containers" "gcloud artifacts repositories describe ${ENVIRONMENT}-containers --location ${REGION}"
+
 terraform apply -auto-approve \
   -var="project_id=${PROJECT_ID}" \
   -var="environment_name=${ENVIRONMENT}" \
