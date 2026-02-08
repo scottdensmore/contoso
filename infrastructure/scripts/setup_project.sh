@@ -96,6 +96,9 @@ import_if_exists "google_service_account.app_service_account" "projects/${PROJEC
 DB_ID="${ENVIRONMENT}-db-instance"
 import_if_exists "google_sql_database_instance.postgres" "projects/${PROJECT_ID}/instances/${DB_ID}" "gcloud sql instances describe ${DB_ID}"
 
+IP_NAME="${ENVIRONMENT}-private-ip"
+import_if_exists "google_compute_global_address.private_ip_address" "projects/${PROJECT_ID}/global/addresses/${IP_NAME}" "gcloud compute addresses describe ${IP_NAME} --global"
+
 VPC_ID="projects/${PROJECT_ID}/locations/${REGION}/connectors/${ENVIRONMENT}-vpc-conn"
 import_if_exists "google_vpc_access_connector.connector" "${VPC_ID}" "gcloud compute networks vpc-access connectors describe ${ENVIRONMENT}-vpc-conn --region ${REGION}"
 
