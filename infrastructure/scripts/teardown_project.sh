@@ -3,29 +3,29 @@
 # Don't exit on errors - we want to continue even if resources don't exist
 set +e
 
-# --- Pre-flight Checks ---
-if [ -z "${NEXTAUTH_SECRET}" ]; then
-  echo "Warning: NEXTAUTH_SECRET not set. Terraform destroy may fail."
-  echo "Set it with: export NEXTAUTH_SECRET=<your-secret>"
-fi
-
 # --- Configuration ---
 # The script uses the following environment variables:
 # PROJECT_ID: The GCP Project ID.
-# NEXTAUTH_SECRET: Required for Terraform destroy
 PROJECT_ID=${PROJECT_ID:-"contoso-outdoor"}
+ENVIRONMENT=${ENVIRONMENT:-"dev"}
+REGION=${REGION:-"us-central1"}
+
+# --- Pre-flight Checks ---
+echo "Checking project: ${PROJECT_ID}..."
+if ! gcloud projects describe "${PROJECT_ID}" &>/dev/null; then
+  echo "Error: Project '${PROJECT_ID}' not found."
+  exit 1
+fi
 
 # --- Confirmation ---
-echo "⚠️  WARNING: This will destroy all resources in project '${PROJECT_ID}'"
+echo "⚠️  WARNING: This will destroy all resources in project '${PROJECT_ID}' for environment '${ENVIRONMENT}'"
 echo "This includes:"
-echo "  - Cloud Run service (contoso-web)"
+echo "  - Cloud Run services (contoso-web, contoso-chat)"
 echo "  - Cloud SQL database (ALL DATA WILL BE LOST)"
 echo "  - VPC Connector"
 echo "  - Artifact Registry repository"
 echo "  - Terraform state bucket"
 echo "  - Service accounts"
-echo ""
-echo "This script is idempotent and can be run multiple times safely."
 echo ""
 read -p "Are you sure you want to continue? (type 'yes' to confirm): " confirmation
 
@@ -39,109 +39,96 @@ echo ""
 echo "Setting project to ${PROJECT_ID}..."
 gcloud config set project "${PROJECT_ID}"
 
-# --- Delete Cloud Run Resources ---
+# --- Delete Cloud Run Resources (via gcloud for speed) ---
 echo ""
-echo "Checking for Cloud Run service..."
-if gcloud run services describe contoso-web --region us-central1 &>/dev/null; then
-  echo "Deleting Cloud Run service..."
-  gcloud run services delete contoso-web --region us-central1 --quiet
-else
-  echo "Cloud Run service not found (already deleted)"
-fi
-
-# --- Delete Artifact Registry Repository ---
-echo ""
-echo "Checking for Artifact Registry repository..."
-if gcloud artifacts repositories describe contoso-outdoor-repo --location us-central1 &>/dev/null; then
-  echo "Deleting Artifact Registry repository..."
-  gcloud artifacts repositories delete contoso-outdoor-repo --location us-central1 --quiet
-else
-  echo "Artifact Registry repository not found (already deleted)"
-fi
-
-# --- Delete Cloud SQL Instance First ---
-echo ""
-echo "Checking for Cloud SQL instance..."
-if gcloud sql instances describe contoso-outdoor-db-instance &>/dev/null; then
-  echo "Deleting Cloud SQL instance (this may take several minutes)..."
-  gcloud sql instances delete contoso-outdoor-db-instance --quiet
-else
-  echo "Cloud SQL instance not found (already deleted)"
-fi
-
-# Wait for Cloud SQL deletion to complete
-echo "Waiting for Cloud SQL deletion to complete..."
-echo "Checking if instance still exists..."
-for i in {1..60}; do
-  if gcloud sql instances describe contoso-outdoor-db-instance --format="value(state)" 2>/dev/null; then
-    echo "  Attempt $i/60: Instance still exists, waiting..."
-    sleep 10
-  else
-    echo "✓ Cloud SQL instance deleted successfully"
-    break
+echo "Cleaning up Cloud Run services..."
+for service in "contoso-web" "contoso-chat"; do
+  if gcloud run services describe "${service}" --region "${REGION}" &>/dev/null; then
+    echo "Deleting Cloud Run service: ${service}..."
+    gcloud run services delete "${service}" --region "${REGION}" --quiet
   fi
 done
 
 # --- Run Terraform Destroy ---
+# We run Terraform destroy to clean up everything it managed.
 echo ""
-echo "Checking for Terraform state..."
-if [ -d "terraform/.terraform" ]; then
-  echo "Running Terraform destroy..."
-  cd terraform
-  terraform init || echo "Terraform init failed, continuing..."
+echo "Running Terraform destroy..."
+if [ -d "infrastructure/terraform" ]; then
+  cd infrastructure/terraform
+  
+  # Ensure backend is initialized
+  BUCKET_NAME="${PROJECT_ID}-tf-state"
+  terraform init -backend-config="bucket=${BUCKET_NAME}" || echo "Terraform init failed, continuing..."
 
-  # Try to destroy, but handle errors gracefully
-  if [ -n "${NEXTAUTH_SECRET}" ]; then
-    terraform destroy -auto-approve -var="nextauth_secret=${NEXTAUTH_SECRET}" || echo "Terraform destroy encountered errors, continuing..."
-  else
-    terraform destroy -auto-approve || echo "Terraform destroy encountered errors, continuing..."
-  fi
+  # We try to destroy. We ignore failures here because some network resources 
+  # (like VPC peering) often take time to release and might need a retry.
+  echo "Attempting to destroy infrastructure via Terraform..."
+  terraform destroy -auto-approve \
+    -var="project_id=${PROJECT_ID}" \
+    -var="environment_name=${ENVIRONMENT}" \
+    -var="region=${REGION}"
 
-  # Handle the VPC connection error if it occurs
+  # Handle common VPC peering hang-up
   if [ $? -ne 0 ]; then
-    echo "Removing VPC Service Networking Connection from state..."
-    terraform state rm google_service_networking_connection.private_vpc_connection 2>/dev/null || true
-
-    # Try destroy again
-    if [ -n "${NEXTAUTH_SECRET}" ]; then
-      terraform destroy -auto-approve -var="nextauth_secret=${NEXTAUTH_SECRET}" || echo "Terraform destroy still has errors, continuing..."
-    else
-      terraform destroy -auto-approve || echo "Terraform destroy still has errors, continuing..."
-    fi
+    echo "⚠️  Terraform destroy encountered an error (likely VPC peering dependency)."
+    echo "Removing peering connection from state to unblock cleanup..."
+    terraform state rm google_service_networking_connection.private_vpc_connection 2>/dev/null
+    
+    echo "Retrying Terraform destroy..."
+    terraform destroy -auto-approve \
+      -var="project_id=${PROJECT_ID}" \
+      -var="environment_name=${ENVIRONMENT}" \
+      -var="region=${REGION}"
   fi
-
-  cd ..
+  cd ../..
 else
-  echo "Terraform not initialized (already cleaned up)"
+  echo "Terraform directory not found."
+fi
+
+# --- Manual Cleanup (Final Sweep) ---
+# Some resources (like Artifact Registry and SQL) can be "orphaned" if Terraform fails.
+# We do a final sweep using gcloud to ensure they are gone.
+
+echo ""
+echo "Performing final cleanup sweep..."
+
+# Artifact Registry
+REPO_ID="${ENVIRONMENT}-containers"
+if gcloud artifacts repositories describe "${REPO_ID}" --location "${REGION}" &>/dev/null; then
+  echo "Removing Artifact Registry repository: ${REPO_ID}..."
+  gcloud artifacts repositories delete "${REPO_ID}" --location "${REGION}" --quiet
+fi
+
+# Cloud SQL
+DB_INSTANCE="${ENVIRONMENT}-db-instance"
+if gcloud sql instances describe "${DB_INSTANCE}" &>/dev/null; then
+  echo "Removing Cloud SQL instance: ${DB_INSTANCE} (this can take a few minutes)..."
+  gcloud sql instances delete "${DB_INSTANCE}" --quiet
+fi
+
+# VPC Connector
+VPC_CONN="${ENVIRONMENT}-vpc-conn"
+if gcloud compute networks vpc-access connectors describe "${VPC_CONN}" --region "${REGION}" &>/dev/null; then
+  echo "Removing VPC Connector: ${VPC_CONN}..."
+  gcloud compute networks vpc-access connectors delete "${VPC_CONN}" --region "${REGION}" --quiet
+fi
+
+# Service Account
+SA_EMAIL="${ENVIRONMENT}-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+if gcloud iam service-accounts describe "${SA_EMAIL}" &>/dev/null; then
+  echo "Removing application service account: ${SA_EMAIL}..."
+  gcloud iam service-accounts delete "${SA_EMAIL}" --quiet
 fi
 
 # --- Delete GCS Bucket ---
 echo ""
-echo "Checking for Terraform state bucket..."
-if gsutil ls "gs://contoso-outdoor-tf-state" &>/dev/null; then
-  echo "Deleting GCS bucket..."
-  gsutil -m rm -r "gs://contoso-outdoor-tf-state"
-else
-  echo "GCS bucket not found (already deleted)"
-fi
-
-# --- Delete Service Account ---
-echo ""
-echo "Checking for service account..."
-if gcloud iam service-accounts describe "terraform-deployer@${PROJECT_ID}.iam.gserviceaccount.com" &>/dev/null; then
-  echo "Deleting service account..."
-  gcloud iam service-accounts delete "terraform-deployer@${PROJECT_ID}.iam.gserviceaccount.com" --quiet
-else
-  echo "Service account not found (already deleted)"
+BUCKET_NAME="${PROJECT_ID}-tf-state"
+if gsutil ls "gs://${BUCKET_NAME}" &>/dev/null; then
+  echo "Deleting Terraform state bucket: gs://${BUCKET_NAME}..."
+  gsutil -m rm -r "gs://${BUCKET_NAME}"
 fi
 
 echo ""
 echo "✅ Teardown complete!"
-echo ""
-echo "All resources have been deleted from project '${PROJECT_ID}'"
-echo ""
-echo "To redeploy, run: ./scripts/setup_project.sh"
-echo ""
-echo "Note: The GCP project '${PROJECT_ID}' itself still exists."
-echo "To delete the project entirely, run:"
-echo "  gcloud projects delete ${PROJECT_ID}"
+echo "Note: The GCP project '${PROJECT_ID}' still exists."
+echo "To delete the project entirely, run: gcloud projects delete ${PROJECT_ID}"
