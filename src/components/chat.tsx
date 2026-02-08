@@ -11,10 +11,11 @@ import {
 import Turn from "./turn";
 import { ChatTurn, ChatType } from "@/lib/types";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Video from "./video";
 import {
   sendGroundedMessage,
-  sendPromptFlowMessage,
+  sendChatMessage,
   sendVisualMessage,
 } from "@/lib/messaging";
 
@@ -43,6 +44,7 @@ function chatReducer(state: ChatState, action: ChatAction) {
 }
 
 export const Chat = () => {
+  const { data: session } = useSession();
   const [showChat, setShowChat] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
@@ -69,7 +71,7 @@ export const Chat = () => {
       setChatType(ChatType.Visual);
     } else {
       setShowCamera(false);
-      setChatType(ChatType.PromptFlow);
+      setChatType(ChatType.Standard);
     }
   }, [searchParams]);
 
@@ -153,12 +155,16 @@ export const Chat = () => {
   };
 
   const sendMessage = () => {
+    const userName = session?.user?.name || "Guest";
+    const userAvatar = (session?.user as any)?.image || "";
+    const customerId = (session?.user as any)?.id;
+
     const newTurn: ChatTurn = {
-      name: "John Doe",
+      name: userName,
       message: message,
       status: "done",
       type: "user",
-      avatar: "",
+      avatar: userAvatar,
       image: currentImage,
     };
 
@@ -178,9 +184,9 @@ export const Chat = () => {
       if (message === "" && !currentImage) return;
       dispatch({ type: "add", payload: newTurn });
 
-      sendVisualMessage(newTurn).then((responseTurn) => {
+      sendVisualMessage(newTurn, customerId).then((responseTurn) => {
         const t1 = performance.now();
-        console.log(`sendPromptFlowMessage took ${t1 - t0} milliseconds.`);
+        console.log(`sendChatMessage took ${t1 - t0} milliseconds.`);
         dispatch({ type: "replace", payload: responseTurn });
       });
     } else {
@@ -188,9 +194,9 @@ export const Chat = () => {
       if (message === "") return;
       dispatch({ type: "add", payload: newTurn });
 
-      sendPromptFlowMessage(newTurn).then((responseTurn) => {
+      sendChatMessage(newTurn, customerId).then((responseTurn) => {
         const t1 = performance.now();
-        console.log(`sendPromptFlowMessage took ${t1 - t0} milliseconds.`);
+        console.log(`sendChatMessage took ${t1 - t0} milliseconds.`);
         dispatch({ type: "replace", payload: responseTurn });
       });
     }
@@ -219,11 +225,12 @@ export const Chat = () => {
       scrollChat();
       if (state.turns.length === 0) {
         setTimeout(() => {
+          const userName = session?.user?.name || "there";
           dispatch({
             type: "add",
             payload: {
               name: "Jane Doe",
-              message: "Hi, how can I be helpful today?",
+              message: `Hi ${userName}, how can I be helpful today?`,
               status: "done",
               type: "assistant",
               avatar: "",

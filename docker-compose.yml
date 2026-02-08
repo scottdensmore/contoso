@@ -9,6 +9,8 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL=http://localhost:3000
+      - CHAT_ENDPOINT=http://chat:8000/api/create_response
+      - CHAT_API_KEY=${CHAT_API_KEY:-dummy}
   db:
     image: postgres:15
     restart: always
@@ -36,7 +38,9 @@ services:
       - DISCOVERY_ENGINE_DATASTORE_ID=${DISCOVERY_ENGINE_DATASTORE_ID}
       - ENVIRONMENT=development
       - LLM_PROVIDER=${LLM_PROVIDER:-gcp}
+      - LOCAL_MODEL_NAME=${LOCAL_MODEL_NAME:-gemma3:12b}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - CHROMA_DB_PATH=/app/data/chroma_db
     volumes:
       - chat_data:/app/data
 

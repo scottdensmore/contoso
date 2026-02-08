@@ -1,12 +1,12 @@
 
 import { type NextRequest } from "next/server";
-const api_endpoint = process.env.VISUAL_ENDPOINT!;
-const api_key = process.env.VISUAL_KEY!;
+const api_endpoint = process.env.CHAT_ENDPOINT!;
+const api_key = process.env.CHAT_API_KEY!;
 
 export async function POST(req: NextRequest) {
   try {
     const request_body = await req.json();
-    console.log(`[API] Received visual chat request for customer ${request_body.customer_id}`);
+    console.log(`[API] Received chat request for customer ${request_body.customer_id}`);
 
     const headers = {
       "Content-Type": "application/json",
@@ -21,16 +21,18 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error(`[API] Visual chat service responded with status ${response.status}`);
-      return Response.json({ error: "Visual chat service error", status: response.status }, { status: response.status });
+      console.error(`[API] Chat service responded with status ${response.status}`);
+      const errorText = await response.text();
+      console.error(`[API] Error details: ${errorText}`);
+      return Response.json({ error: "Chat service error", status: response.status }, { status: response.status });
     }
 
     const data = await response.json();
-    console.log(`[API] Successfully received response from visual chat service`);
+    console.log(`[API] Successfully received response from chat service`);
 
     return Response.json(data);
   } catch (error) {
-    console.error(`[API] Unexpected error in visual chat route:`, error);
+    console.error(`[API] Unexpected error in chat route:`, error);
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }

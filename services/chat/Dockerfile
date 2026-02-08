@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd -r appuser && useradd -r -m -g appuser appuser
 
 WORKDIR /app
-RUN chown -R appuser:appuser /app
+RUN mkdir -p /app/data && chown -R appuser:appuser /app
 
 # Switch to appuser
 USER appuser
@@ -35,8 +35,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy Prisma schema and generate client
 COPY --chown=appuser:appuser prisma/schema.prisma schema.prisma
-RUN echo '\ngenerator pyclient {\n  provider = "prisma-client-py"\n  interface = "asyncio"\n}' >> schema.prisma
-RUN prisma generate
+RUN prisma generate --generator pyclient
 
 # Copy application code
 COPY --chown=appuser:appuser services/chat/src/api/main.py main.py
@@ -44,15 +43,11 @@ COPY --chown=appuser:appuser services/chat/src/api/contoso_chat/ contoso_chat/
 COPY --chown=appuser:appuser services/chat/src/api/evaluators/ evaluators/
 COPY --chown=appuser:appuser services/chat/src/api/tracing.py tracing.py
 COPY --chown=appuser:appuser services/chat/src/api/evaluate.py evaluate.py
-
-# Copy scripts
-COPY --chown=appuser:appuser services/chat/scripts/ scripts/
+COPY --chown=appuser:appuser services/chat/src/api/chat-entrypoint.sh chat-entrypoint.sh
+COPY --chown=appuser:appuser infrastructure/scripts/index_products_local.py infrastructure/scripts/index_products_local.py
 
 # Production stage
 FROM base as production
-
-# Security: Change ownership to non-root user (already done in base but good practice if base changes)
-# USER appuser is already set in base
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -65,5 +60,7 @@ ENV PORT=8000 \
 
 EXPOSE 8000
 
-# Use uvicorn with production settings
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--access-log"]
+RUN chmod +x chat-entrypoint.sh
+
+# Use the new entrypoint script
+CMD ["./chat-entrypoint.sh"]

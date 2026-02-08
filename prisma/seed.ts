@@ -20,10 +20,14 @@ async function main() {
   for (const category of categoriesData) {
     const created = await prisma.category.upsert({
       where: { name: category.name },
-      update: { slug: category.slug },
+      update: { 
+        slug: category.slug,
+        description: category.description,
+      },
       create: {
         name: category.name,
         slug: category.slug,
+        description: category.description,
       },
     });
     categoryMap.set(category.name, created.id);
@@ -92,7 +96,7 @@ async function main() {
       // Try to split city/state if possible, or just leave in city
       const city = cityState; 
 
-      await prisma.user.upsert({
+      const upsertedUser = await prisma.user.upsert({
         where: { email: customer.email },
         update: {
           firstName: customer.firstName,
@@ -125,13 +129,13 @@ async function main() {
         await prisma.order.upsert({
           where: { id: order.id.toString() },
           update: {
-            userId: customer.id,
+            userId: upsertedUser.id,
             date: new Date(order.date),
             total: order.total,
           },
           create: {
             id: order.id.toString(),
-            userId: customer.id,
+            userId: upsertedUser.id,
             date: new Date(order.date),
             total: order.total,
           },

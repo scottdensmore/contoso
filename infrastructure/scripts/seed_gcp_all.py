@@ -153,7 +153,8 @@ def main():
 
     # Define seeding scripts in order
     seeding_scripts = [
-        (script_dir / "seed_gcp_products.py", "Product Data Seeding")
+        (script_dir / "seed_gcp_products.py", "Product Data Seeding (GCP)"),
+        (script_dir / "index_products_local.py", "Local Vector Search Indexing")
     ]
 
     # Track results

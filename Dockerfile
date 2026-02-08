@@ -26,13 +26,13 @@ COPY postcss.config.js ./
 COPY .eslintrc.json ./
 
 # Generate prisma client
-RUN npx prisma generate
+RUN npx prisma generate --generator client
 
 # Build the Next.js application
 RUN npm run build
 
 # Copy entrypoint script
-COPY scripts/docker-entrypoint.sh /usr/local/bin/
+COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port 3000

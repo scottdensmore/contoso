@@ -75,11 +75,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from typing import List, Any, Optional
+
 # Request model
 class ChatRequest(BaseModel):
     question: str
-    customer_id: str = "1"
-    chat_history: str = "[]"
+    customer_id: Optional[str] = None
+    chat_history: Optional[Any] = "[]"
+
+    class Config:
+        extra = "allow" # Allow extra fields like customerId (camelCase)
 
 @app.get("/")
 async def root():
@@ -128,7 +133,7 @@ async def create_response(request: ChatRequest):
             # Mock response for testing
             logger.warning("Using mock response - real chat logic not available")
             return {
-                "response": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
+                "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
                 "chat_history": request.chat_history,
                 "mock": True
@@ -147,7 +152,7 @@ async def create_response(request: ChatRequest):
 
         # Fallback response if real chat fails
         return {
-            "response": f"I'm having trouble processing your request about '{request.question}' right now. Please try again later.",
+            "answer": f"I'm having trouble processing your request about '{request.question}' right now. Please try again later.",
             "customer_id": request.customer_id,
             "chat_history": request.chat_history,
             "error": str(e),

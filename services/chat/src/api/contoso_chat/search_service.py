@@ -4,7 +4,7 @@ from chromadb.utils import embedding_functions
 from google.cloud import discoveryengine_v1alpha as discoveryengine
 
 class SearchService:
-    def search(self, query: str) -> list:
+    def search(self, query: str, limit: int = 5) -> list:
         raise NotImplementedError
 
 class LocalVectorSearch(SearchService):
@@ -20,13 +20,13 @@ class LocalVectorSearch(SearchService):
             print(f"Error initializing local vector search: {e}")
             self.collection = None
 
-    def search(self, query: str) -> list:
+    def search(self, query: str, limit: int = 5) -> list:
         if not self.collection:
             return []
             
         results = self.collection.query(
             query_texts=[query],
-            n_results=5
+            n_results=limit
         )
         
         # Format results to match Discovery Engine structure roughly (list of dicts)
@@ -50,12 +50,12 @@ class VertexAISearch(SearchService):
         self.client = discoveryengine.SearchServiceClient()
         self.serving_config = f"projects/{self.project_id}/locations/global/collections/default_collection/dataStores/{self.search_app_id}/servingConfigs/default_config"
 
-    def search(self, query: str) -> list:
+    def search(self, query: str, limit: int = 5) -> list:
         try:
             request = discoveryengine.SearchRequest(
                 serving_config=self.serving_config,
                 query=query,
-                page_size=5,
+                page_size=limit,
             )
             response = self.client.search(request)
             return [discoveryengine.Document.to_dict(r.document) for r in response.results]
