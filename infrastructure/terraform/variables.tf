@@ -31,3 +31,9 @@ variable "alert_email" {
   type        = string
   default     = ""
 }
+
+variable "create_datastore" {
+  description = "Whether to create the Discovery Engine DataStore (set to false if a previous one is still being deleted)"
+  type        = bool
+  default     = true
+}

@@ -16,10 +16,6 @@ jobs:
   infrastructure:
     runs-on: ubuntu-latest
     outputs:
-      db_instance_name: ${{ steps.tf-output.outputs.db_instance_name }}
-      db_name: ${{ steps.tf-output.outputs.db_name }}
-      db_user: ${{ steps.tf-output.outputs.db_user }}
-      db_password: ${{ steps.tf-output.outputs.db_password }}
       container_registry_url: ${{ steps.tf-output.outputs.container_registry_url }}
     steps:
       - name: Checkout
@@ -48,15 +44,8 @@ jobs:
       - name: Get Terraform Outputs
         id: tf-output
         run: |
-          echo "db_instance_name=$(terraform output -raw db_instance_name)" >> $GITHUB_OUTPUT
-          echo "db_name=$(terraform output -raw db_name)" >> $GITHUB_OUTPUT
-          echo "db_user=$(terraform output -raw db_user)" >> $GITHUB_OUTPUT
-          echo "db_password=$(terraform output -raw db_password)" >> $GITHUB_OUTPUT
           echo "container_registry_url=$(terraform output -raw container_registry_url)" >> $GITHUB_OUTPUT
         working-directory: ./infrastructure/terraform
-        # Mask the password in logs
-        env:
-          TF_LOG: ERROR
 
   deploy-web:
     needs: infrastructure
@@ -89,9 +78,6 @@ jobs:
           service: contoso-web
           region: ${{ env.REGION }}
           image: ${{ env.image_path }}
-          env_vars: |
-            DATABASE_URL=postgresql://${{ needs.infrastructure.outputs.db_user }}:${{ needs.infrastructure.outputs.db_password }}@localhost/${{ needs.infrastructure.outputs.db_name }}?host=/cloudsql/${{ env.PROJECT_ID }}:${{ env.REGION }}:${{ needs.infrastructure.outputs.db_instance_name }}
-            NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}
 
   deploy-chat:
     needs: infrastructure
@@ -114,8 +100,7 @@ jobs:
       - name: Build and Push Chat Image
         run: |
           IMAGE_PATH="${{ needs.infrastructure.outputs.container_registry_url }}/contoso-chat:${GITHUB_SHA}"
-          cd services/chat
-          docker build -t ${IMAGE_PATH} .
+          docker build -t ${IMAGE_PATH} -f services/chat/Dockerfile .
           docker push ${IMAGE_PATH}
           echo "image_path=${IMAGE_PATH}" >> $GITHUB_ENV
 

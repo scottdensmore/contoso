@@ -33,13 +33,16 @@ app = FastAPI(title="Contoso Chat", version="1.0.0")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
 
-    # Log request details
+    # Log request details (filter sensitive headers)
+    _sensitive_headers = {"authorization", "cookie", "x-api-key", "x-auth-token"}
+    filtered_headers = {k: v for k, v in request.headers.items()
+                        if k.lower() not in _sensitive_headers}
     logger.info(
         "Request started",
         extra={
             "method": request.method,
             "url": str(request.url),
-            "headers": dict(request.headers),
+            "headers": filtered_headers,
             "client_ip": request.client.host if request.client else None
         }
     )
@@ -66,13 +69,14 @@ async def log_requests(request: Request, call_next):
 
     return response
 
-# CORS middleware
+# CORS middleware - restrict to known origins
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 from typing import List, Any, Optional

@@ -25,11 +25,13 @@ else
 fi
 
 # --- Link Billing Account ---
-if [ -n "${BILLING_ACCOUNT}" ] && [ "${BILLING_ACCOUNT}" != "YOUR_BILLING_ACCOUNT" ]; then
-  echo "Linking billing account: ${BILLING_ACCOUNT}..."
-  gcloud billing projects link "${PROJECT_ID}" --billing-account="${BILLING_ACCOUNT}"
+if [ -z "${BILLING_ACCOUNT}" ] || [ "${BILLING_ACCOUNT}" == "YOUR_BILLING_ACCOUNT" ]; then
+    echo "Error: BILLING_ACCOUNT is not set. Please set it to a valid billing account ID."
+    echo "You can list your billing accounts with: gcloud beta billing accounts list"
+    exit 1
 else
-  echo "Skipping billing account linking."
+    echo "Linking billing account: ${BILLING_ACCOUNT}..."
+    gcloud billing projects link "${PROJECT_ID}" --billing-account="${BILLING_ACCOUNT}"
 fi
 
 # --- Set Project ---
@@ -91,7 +93,7 @@ echo -n "${NEXTAUTH_SECRET}" | gcloud secrets versions add "${ENVIRONMENT}-app-c
 # --- Run Terraform ---
 echo "Applying Terraform..."
 cd infrastructure/terraform
-terraform init -backend-config="bucket=${BUCKET_NAME}"
+terraform init -reconfigure -backend-config="bucket=${BUCKET_NAME}"
 
 # Helper to import existing resources for idempotency
 import_if_exists() {
@@ -126,15 +128,60 @@ import_if_exists "google_vpc_access_connector.connector" "${VPC_ID}" "gcloud com
 import_if_exists "google_artifact_registry_repository.container_registry" "projects/${PROJECT_ID}/locations/${REGION}/repositories/${ENVIRONMENT}-containers" "gcloud artifacts repositories describe ${ENVIRONMENT}-containers --location ${REGION}"
 
 import_if_exists "google_secret_manager_secret.app_config" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-app-config" "gcloud secrets describe ${ENVIRONMENT}-app-config"
+import_if_exists "google_secret_manager_secret.database_url" "projects/${PROJECT_ID}/secrets/${ENVIRONMENT}-database-url" "gcloud secrets describe ${ENVIRONMENT}-database-url"
 
 # Sync Cloud Run services
 import_if_exists "google_cloud_run_v2_service.web_app" "projects/${PROJECT_ID}/locations/${REGION}/services/contoso-web" "gcloud run services describe contoso-web --region ${REGION}"
 import_if_exists "google_cloud_run_v2_service.chat_service" "projects/${PROJECT_ID}/locations/${REGION}/services/contoso-chat" "gcloud run services describe contoso-chat --region ${REGION}"
 
-terraform apply -auto-approve \
+# Sync Discovery Engine Data Store
+DATASTORE_ID="${ENVIRONMENT}-products-datastore"
+# Discovery Engine Data Stores are global resources but accessed via location/collections
+# The ID format for import is projects/{{project}}/locations/{{location}}/collections/default_collection/dataStores/{{data_store_id}}
+# Check if Discovery Engine DataStore exists and is usable
+# Try to create a test query against the datastore - if it fails, skip creation
+CREATE_DATASTORE=${CREATE_DATASTORE:-"true"}
+if [ "${CREATE_DATASTORE}" = "true" ]; then
+  DATASTORE_CHECK=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -H "x-goog-user-project: ${PROJECT_ID}" \
+    "https://discoveryengine.googleapis.com/v1alpha/projects/${PROJECT_ID}/locations/global/collections/default_collection/dataStores/${DATASTORE_ID}" 2>/dev/null)
+  echo "DataStore check returned HTTP ${DATASTORE_CHECK}"
+  if [ "${DATASTORE_CHECK}" = "200" ]; then
+    echo "DataStore exists, importing..."
+    import_if_exists "google_discovery_engine_data_store.products[0]" \
+      "projects/${PROJECT_ID}/locations/global/collections/default_collection/dataStores/${DATASTORE_ID}" \
+      "echo already_checked"
+  elif [ "${DATASTORE_CHECK}" = "404" ]; then
+    echo "DataStore not found, Terraform will create it."
+  else
+    echo "DataStore returned unexpected HTTP ${DATASTORE_CHECK}, skipping creation (may be deleting, re-run later)..."
+    CREATE_DATASTORE="false"
+  fi
+fi
+
+if ! terraform apply -auto-approve \
   -var="project_id=${PROJECT_ID}" \
   -var="environment_name=${ENVIRONMENT}" \
-  -var="region=${REGION}"
+  -var="region=${REGION}" \
+  -var="create_datastore=${CREATE_DATASTORE}"; then
+
+  # Check if the failure was due to DataStore still being deleted
+  # (GET returns 404 but creation returns 400 "is being deleted" — a known GCP quirk)
+  if [ "${CREATE_DATASTORE}" = "true" ]; then
+    echo ""
+    echo "Terraform failed. Retrying without DataStore creation (it may still be deleting from a previous teardown)..."
+    echo "You can re-run this script later to create the DataStore once deletion completes (up to 2 hours)."
+    terraform apply -auto-approve \
+      -var="project_id=${PROJECT_ID}" \
+      -var="environment_name=${ENVIRONMENT}" \
+      -var="region=${REGION}" \
+      -var="create_datastore=false"
+  else
+    echo "Terraform apply failed."
+    exit 1
+  fi
+fi
 
 cd ../..
 
@@ -144,8 +191,12 @@ echo "Seeding data into GCP..."
 pip install -r services/chat/src/api/requirements.txt
 # Generate python prisma client
 prisma generate --schema=prisma/schema.prisma
-# Run the master seeding script
-python3 infrastructure/scripts/seed_gcp_all.py
+# Run the master seeding script (skip DataStore seeding if it doesn't exist yet)
+python3 infrastructure/scripts/seed_gcp_all.py || {
+  echo ""
+  echo "Warning: Data seeding failed (likely because Discovery Engine DataStore doesn't exist yet)."
+  echo "Re-run this script after the DataStore deletion completes (up to 2 hours from teardown)."
+}
 
 echo "✅ Project setup and deployment complete!"
 echo "Web App URL: $(cd infrastructure/terraform && terraform output -raw web_app_url)"

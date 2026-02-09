@@ -82,6 +82,8 @@ resource "google_vpc_access_connector" "connector" {
   ip_cidr_range = "10.8.0.0/28"
   network       = "default"
   region        = var.region
+  max_instances = 3
+  min_instances = 2
 
   depends_on = [google_project_service.required_apis]
 }
@@ -106,6 +108,10 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 
   depends_on = [google_project_service.required_apis]
+
+  lifecycle {
+    ignore_changes = [network, reserved_peering_ranges]
+  }
 }
 
 # --- Cloud SQL (Postgres) ---
@@ -124,9 +130,20 @@ resource "google_sql_database_instance" "postgres" {
   settings {
     tier = "db-g1-small"
     ip_configuration {
-      ipv4_enabled                          = false
-      private_network                       = data.google_compute_network.default.self_link
+      ipv4_enabled                                  = false
+      private_network                               = data.google_compute_network.default.self_link
       enable_private_path_for_google_cloud_services = true
+    }
+
+    backup_configuration {
+      enabled                        = true
+      start_time                     = "03:00"
+      point_in_time_recovery_enabled = true
+      transaction_log_retention_days = 7
+      backup_retention_settings {
+        retained_backups = 30
+        retention_unit   = "COUNT"
+      }
     }
 
     database_flags {
@@ -192,16 +209,32 @@ resource "google_secret_manager_secret" "app_config" {
   depends_on = [google_project_service.required_apis]
 }
 
+resource "google_secret_manager_secret" "database_url" {
+  secret_id = "${var.environment_name}-database-url"
+
+  replication {
+    auto {}
+  }
+
+  labels = local.labels
+
+  depends_on = [google_project_service.required_apis]
+}
+
+resource "google_secret_manager_secret_version" "database_url" {
+  secret      = google_secret_manager_secret.database_url.id
+  secret_data = "postgresql://${google_sql_user.users.name}:${random_password.db_password.result}@localhost/${google_sql_database.database.name}?host=/cloudsql/${var.project_id}:${var.region}:${google_sql_database_instance.postgres.name}"
+}
+
 # --- IAM ---
 resource "google_project_iam_member" "app_sa_roles" {
   for_each = toset([
     "roles/aiplatform.user",
-    "roles/datastore.user",
-    "roles/storage.objectAdmin",
+    "roles/storage.objectViewer",
     "roles/secretmanager.secretAccessor",
     "roles/monitoring.metricWriter",
     "roles/logging.logWriter",
-    "roles/discoveryengine.editor",
+    "roles/discoveryengine.viewer",
     "roles/cloudsql.client"
   ])
 
@@ -210,17 +243,32 @@ resource "google_project_iam_member" "app_sa_roles" {
   member  = "serviceAccount:${google_service_account.app_service_account.email}"
 }
 
+# --- Discovery Engine ---
+resource "google_discovery_engine_data_store" "products" {
+  count                       = var.create_datastore ? 1 : 0
+  location                    = "global"
+  data_store_id               = "${var.environment_name}-products-datastore"
+  display_name                = "Products Data Store (${var.environment_name})"
+  industry_vertical           = "GENERIC"
+  content_config              = "CONTENT_REQUIRED"
+  solution_types              = ["SOLUTION_TYPE_SEARCH"]
+  create_advanced_site_search = false
+
+  depends_on = [google_project_service.required_apis]
+}
+
 # --- Cloud Run Services ---
 
 # Web Application
 resource "google_cloud_run_v2_service" "web_app" {
-  name     = "contoso-web"
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name                = "contoso-web"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
+  deletion_protection = false
 
   template {
     service_account = google_service_account.app_service_account.email
-    
+
     vpc_access {
       connector = google_vpc_access_connector.connector.id
       egress    = "ALL_TRAFFIC"
@@ -228,13 +276,17 @@ resource "google_cloud_run_v2_service" "web_app" {
 
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.name}/contoso-web:latest"
-      
+
       env {
-        name  = "DATABASE_URL"
-        value = "postgresql://${google_sql_user.users.name}:${random_password.db_password.result}@localhost/${google_sql_database.database.name}?host=/cloudsql/${var.project_id}:${var.region}:${google_sql_database_instance.postgres.name}"
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url.secret_id
+            version = "latest"
+          }
+        }
       }
-      
-      # Secrets
+
       env {
         name = "NEXTAUTH_SECRET"
         value_source {
@@ -243,6 +295,11 @@ resource "google_cloud_run_v2_service" "web_app" {
             version = "latest"
           }
         }
+      }
+
+      env {
+        name  = "CHAT_ENDPOINT"
+        value = "${google_cloud_run_v2_service.chat_service.uri}/api/create_response"
       }
 
       # Cloud SQL connection
@@ -262,15 +319,17 @@ resource "google_cloud_run_v2_service" "web_app" {
 
   depends_on = [
     google_project_service.required_apis,
-    google_secret_manager_secret.app_config
+    google_secret_manager_secret.app_config,
+    google_secret_manager_secret_version.database_url
   ]
 }
 
-# Chat Service
+# Chat Service (internal-only: only accessible from within VPC and other Cloud Run services)
 resource "google_cloud_run_v2_service" "chat_service" {
-  name     = "contoso-chat"
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name                = "contoso-chat"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  deletion_protection = false
 
   template {
     service_account = google_service_account.app_service_account.email
@@ -282,7 +341,11 @@ resource "google_cloud_run_v2_service" "chat_service" {
 
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.name}/contoso-chat:latest"
-      
+
+      ports {
+        container_port = 8000
+      }
+
       env {
         name  = "PROJECT_ID"
         value = var.project_id
@@ -296,10 +359,14 @@ resource "google_cloud_run_v2_service" "chat_service" {
         value = var.environment_name
       }
       env {
-        name  = "DATABASE_URL"
-        value = "postgresql://${google_sql_user.users.name}:${random_password.db_password.result}@localhost/${google_sql_database.database.name}?host=/cloudsql/${var.project_id}:${var.region}:${google_sql_database_instance.postgres.name}"
+        name = "DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.database_url.secret_id
+            version = "latest"
+          }
+        }
       }
-
       # Cloud SQL connection
       volume_mounts {
         name       = "cloudsql"
@@ -315,7 +382,10 @@ resource "google_cloud_run_v2_service" "chat_service" {
     }
   }
 
-  depends_on = [google_project_service.required_apis]
+  depends_on = [
+    google_project_service.required_apis,
+    google_secret_manager_secret_version.database_url
+  ]
 }
 
 # --- IAM: Public Access ---
@@ -326,11 +396,11 @@ resource "google_cloud_run_service_iam_member" "public_web" {
   member   = "allUsers"
 }
 
-resource "google_cloud_run_service_iam_member" "public_chat" {
+resource "google_cloud_run_service_iam_member" "web_to_chat" {
   service  = google_cloud_run_v2_service.chat_service.name
   location = google_cloud_run_v2_service.chat_service.location
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${google_service_account.app_service_account.email}"
 }
 
 # --- Monitoring ---

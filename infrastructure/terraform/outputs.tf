@@ -18,11 +18,6 @@ output "db_user" {
   value = google_sql_user.users.name
 }
 
-output "db_password" {
-  value     = random_password.db_password.result
-  sensitive = true
-}
-
 output "container_registry_url" {
   value = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.container_registry.repository_id}"
 }

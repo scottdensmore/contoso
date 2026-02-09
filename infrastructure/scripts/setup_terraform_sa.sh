@@ -30,11 +30,34 @@ else
 fi
 
 # --- Grant Permissions ---
-# Grant roles needed for Terraform to manage resources
+# Grant only the specific roles Terraform needs to manage project resources
 echo "Granting permissions to service account..."
-gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
-  --member="serviceAccount:${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/owner" # For simplicity, granting Owner. For production, use least-privilege.
+SA_MEMBER="serviceAccount:${SERVICE_ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+ROLES=(
+  "roles/compute.admin"
+  "roles/cloudsql.admin"
+  "roles/run.admin"
+  "roles/storage.admin"
+  "roles/artifactregistry.admin"
+  "roles/iam.serviceAccountAdmin"
+  "roles/iam.serviceAccountUser"
+  "roles/servicenetworking.networksAdmin"
+  "roles/secretmanager.admin"
+  "roles/discoveryengine.admin"
+  "roles/monitoring.admin"
+  "roles/logging.admin"
+  "roles/vpcaccess.admin"
+  "roles/resourcemanager.projectIamAdmin"
+)
+
+for ROLE in "${ROLES[@]}"; do
+  echo "  Granting ${ROLE}..."
+  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="${SA_MEMBER}" \
+    --role="${ROLE}" \
+    --quiet
+done
 
 # --- Create and Download Key ---
 if [ -f "infrastructure/terraform/terraform-credentials.json" ]; then
