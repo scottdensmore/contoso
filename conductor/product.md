@@ -18,6 +18,7 @@ Outdoor enthusiasts looking for high-performance gear and detailed specification
 - **User Authentication:** Secure sign-up and sign-in for a personalized experience.
 - **Personalized Profile:** Manage shipping addresses and customize avatars.
 - **Support Pages:** Dedicated About Us and FAQ pages for customer trust and clarity.
+- **Contact Us:** Integrated contact form for seamless customer inquiries and support.
 
 ## User Experience
 The platform should feel modern and sleek, utilizing contemporary design patterns and smooth transitions to provide a premium shopping experience.
