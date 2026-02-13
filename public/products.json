@@ -2,7 +2,7 @@
     {
         "id": 1,
         "name": "TrailMaster X4 Tent",
-        "price": 250.0,
+        "price": 250,
         "category": "Tents",
         "brand": "OutdoorLiving",
         "description": "Unveiling the TrailMaster X4 Tent from OutdoorLiving, your home away from home for your next camping adventure. Crafted from durable polyester, this tent boasts a spacious interior perfect for four occupants. It ensures your dryness under drizzly skies thanks to its water-resistant construction, and the accompanying rainfly adds an extra layer of weather protection. It offers refreshing airflow and bug defence, courtesy of its mesh panels. Accessibility is not an issue with its multiple doors and interior pockets that keep small items tidy. Reflective guy lines grant better visibility at night, and the freestanding design simplifies setup and relocation. With the included carry bag, transporting this convenient abode becomes a breeze. Be it an overnight getaway or a week-long nature escapade, the TrailMaster X4 Tent provides comfort, convenience, and concord with the great outdoors. Comes with a two-year limited warranty to ensure customer satisfaction.",
@@ -19,7 +19,7 @@
     {
         "id": 2,
         "name": "Adventurer Pro Backpack",
-        "price": 90.0,
+        "price": 90,
         "category": "Backpacks",
         "brand": "HikeMate",
         "description": "Venture into the wilderness with the HikeMate's Adventurer Pro Backpack! Uniquely designed with ergonomic comfort in mind, this backpack ensures a steadfast journey no matter the mileage. It boasts a generous 40L capacity wrapped up in durable nylon fabric ensuring its long-lasting performance on even the most rugged pursuits. It's meticulously fashioned with multiple compartments and pockets for organized storage, hydration system compatibility, and adjustable padded shoulder straps all in a lightweight construction. The added features of a sternum strap and hip belt enhance stability without compromising on comfort. The Adventurer Pro Backpack also prioritizes your safety with its reflective accents for when night falls. This buoyant beauty does more than carry your essentials; it carries the promise of a stress-free adventure!",
@@ -36,7 +36,7 @@
     {
         "id": 3,
         "name": "Summit Breeze Jacket",
-        "price": 120.0,
+        "price": 120,
         "category": "Hiking Clothing",
         "brand": "MountainStyle",
         "description": "Discover the joy of hiking with MountainStyle's Summit Breeze Jacket. This lightweight jacket is your perfect companion for outdoor adventures. Sporting a trail-ready, windproof design and a water-resistant fabric, it's ready to withstand any weather. The breathable polyester material and adjustable cuffs keep you comfortable, whether you're ascending a mountain or strolling through a park. And its sleek black color adds style to function. The jacket features a full-zip front closure, adjustable hood, and secure zippered pockets. Experience the comfort of its inner lining and the convenience of its packable design. Crafted for night trekkers too, the jacket has reflective accents for enhanced visibility. Rugged yet chic, the Summit Breeze Jacket is more than a hiking essential, it's the gear that inspires you to reach new heights. Choose adventure, choose the Summit Breeze Jacket.",
@@ -53,7 +53,7 @@
     {
         "id": 4,
         "name": "TrekReady Hiking Boots",
-        "price": 140.0,
+        "price": 140,
         "category": "Hiking Footwear",
         "brand": "TrekReady",
         "description": "Introducing the TrekReady Hiking Boots - stepping up your hiking game, one footprint at a time! Crafted from leather, these stylistic Trailmates are made to last. TrekReady infuses durability with its reinforced stitching and toe protection, making sure your journey is never stopped short. Comfort? They have that covered too! The boots are a haven with their breathable materials, cushioned insole, with padded collar and tongue; all nestled neatly within their lightweight design. As they say, it's what's inside that counts - so inside you'll find a moisture-wicking lining that quarantines stank and keeps your feet fresh as that mountaintop breeze. Remember the fear of slippery surfaces? With these boots, you can finally tell it to 'take a hike'! Their shock-absorbing midsoles and excellent traction capabilities promise stability at your every step. Beautifully finished in a traditional lace-up system, every adventurer deserves a pair of TrekReady Hiking Boots. Hike more, worry less!",
@@ -70,7 +70,7 @@
     {
         "id": 5,
         "name": "BaseCamp Folding Table",
-        "price": 60.0,
+        "price": 60,
         "category": "Camping Tables",
         "brand": "CampBuddy",
         "description": "CampBuddy's BaseCamp Folding Table is an adventurer's best friend. Lightweight yet powerful, the table is a testament to fun-meets-function and will elevate any outing to new heights. Crafted from resilient, rust-resistant aluminum, the table boasts a generously sized 48 x 24 inches tabletop, perfect for meal times, games and more. The foldable design is a godsend for on-the-go explorers. Adjustable legs rise to the occasion to conquer uneven terrains and offer height versatility, while the built-in handle simplifies transportation. Additional features like non-slip feet, integrated cup holders and mesh pockets add a pinch of finesse. Quick to set up without the need for extra tools, this table is a silent yet indispensable sidekick during camping, picnics, and other outdoor events. Don't miss out on the opportunity to take your outdoor experiences to a new level with the BaseCamp Folding Table. Get yours today and embark on new adventures tomorrow! ",
@@ -87,7 +87,7 @@
     {
         "id": 6,
         "name": "EcoFire Camping Stove",
-        "price": 80.0,
+        "price": 80,
         "category": "Camping Stoves",
         "brand": "EcoFire",
         "description": "Introducing EcoFire's Camping Stove, your ultimate companion for every outdoor adventure! This portable wonder is precision-engineered with a lightweight and compact design, perfect for capturing that spirit of wanderlust. Made from high-quality stainless steel, it promises durability and steadfast performance. This stove is not only fuel-efficient but also offers an easy, intuitive operation that ensures hassle-free cooking. Plus, it's flexible, accommodating a variety of cooking methods whether you're boiling, grilling, or simmering under the starry sky. Its stable construction, quick setup, and adjustable flame control make cooking a breeze, while safety features protect you from any potential mishaps. And did we mention it also includes an effective wind protector and a carry case for easy transportation? But that's not all! The EcoFire Camping Stove is eco-friendly, designed to minimize environmental impact. So get ready to enhance your camping experience and enjoy delicious outdoor feasts with this unique, versatile stove!",
@@ -104,10 +104,10 @@
     {
         "id": 7,
         "name": "CozyNights Sleeping Bag",
-        "price": 100.0,
+        "price": 100,
         "category": "Sleeping Bags",
         "brand": "CozyNights",
-        "description": "Embrace the great outdoors in any season with the lightweight CozyNights Sleeping Bag! This durable three-season bag is superbly designed to give hikers, campers, and backpackers comfort and warmth during spring, summer, and fall. With a compact design that folds down into a convenient stuff sack, you can whisk it away on any adventure without a hitch. The sleeping bag takes comfort seriously, featuring a handy hood, ample room and padding, and a reliable temperature rating. Crafted from high-quality polyester, it ensures long-lasting use and can even be zipped together with another bag for shared comfort. Whether you're gazing at stars or catching a quick nap between trails, the CozyNights Sleeping Bag makes it a treat. Don't just sleep\u2014 dream with CozyNights.",
+        "description": "Embrace the great outdoors in any season with the lightweight CozyNights Sleeping Bag! This durable three-season bag is superbly designed to give hikers, campers, and backpackers comfort and warmth during spring, summer, and fall. With a compact design that folds down into a convenient stuff sack, you can whisk it away on any adventure without a hitch. The sleeping bag takes comfort seriously, featuring a handy hood, ample room and padding, and a reliable temperature rating. Crafted from high-quality polyester, it ensures long-lasting use and can even be zipped together with another bag for shared comfort. Whether you're gazing at stars or catching a quick nap between trails, the CozyNights Sleeping Bag makes it a treat. Don't just sleep— dream with CozyNights.",
         "slug": "cozynights-sleeping-bag",
         "manual": "/manuals/product_info_7.md",
         "images": [
@@ -121,7 +121,7 @@
     {
         "id": 8,
         "name": "Alpine Explorer Tent",
-        "price": 350.0,
+        "price": 350,
         "category": "Tents",
         "brand": "AlpineGear",
         "description": "Welcome to the joy of camping with the Alpine Explorer Tent! This robust, 8-person, 3-season marvel is from the responsible hands of the AlpineGear brand. Promising an enviable setup that is as straightforward as counting sheep, your camping experience is transformed into a breezy pastime. Looking for privacy? The detachable divider provides separate spaces at a moment's notice. Love a tent that breathes? The numerous mesh windows and adjustable vents fend off any condensation dragon trying to dampen your adventure fun. The waterproof assurance keeps you worry-free during unexpected rain dances. With a built-in gear loft to stash away your outdoor essentials, the Alpine Explorer Tent emerges as a smooth balance of privacy, comfort, and convenience. Simply put, this tent isn't just a shelter - it's your second home in the heart of nature! Whether you're a seasoned camper or a nature-loving novice, this tent makes exploring the outdoors a joyous journey.",
@@ -138,7 +138,7 @@
     {
         "id": 9,
         "name": "SummitClimber Backpack",
-        "price": 120.0,
+        "price": 120,
         "category": "Backpacks",
         "brand": "HikeMate",
         "description": "Adventure waits for no one! Introducing the HikeMate SummitClimber Backpack, your reliable partner for every exhilarating journey. With a generous 60-liter capacity and multiple compartments and pockets, packing is a breeze. Every feature points to comfort and convenience; the ergonomic design and adjustable hip belt ensure a pleasantly personalized fit, while padded shoulder straps protect you from the burden of carrying. Venturing into wet weather? Fear not! The integrated rain cover has your back, literally. Stay hydrated thanks to the backpack's hydration system compatibility. Travelling during twilight? Reflective accents keep you visible in low-light conditions. The SummitClimber Backpack isn't merely a carrier; it's a wearable base camp constructed from ruggedly durable nylon and thoughtfully designed for the great outdoors adventurer, promising to withstand tough conditions and provide years of service. So, set off on that quest - the wild beckons! The SummitClimber Backpack - your hearty companion on every expedition!",
@@ -155,7 +155,7 @@
     {
         "id": 10,
         "name": "TrailBlaze Hiking Pants",
-        "price": 75.0,
+        "price": 75,
         "category": "Hiking Clothing",
         "brand": "MountainStyle",
         "description": "Meet the TrailBlaze Hiking Pants from MountainStyle, the stylish khaki champions of the trails. These are not just pants; they're your passport to outdoor adventure. Crafted from high-quality nylon fabric, these dapper troopers are lightweight and fast-drying, with a water-resistant armor that laughs off light rain. Their breathable design whisks away sweat while their articulated knees grant you the flexibility of a mountain goat. Zippered pockets guard your essentials, making them a hiker's best ally. Designed with durability for all your trekking trials, these pants come with a comfortable, ergonomic fit that will make you forget you're wearing them. Sneak a peek, and you are sure to be tempted by the sleek allure that is the TrailBlaze Hiking Pants. Your outdoors wardrobe wouldn't be quite complete without them.",
@@ -173,7 +173,7 @@
     {
         "id": 11,
         "name": "TrailWalker Hiking Shoes",
-        "price": 110.0,
+        "price": 110,
         "category": "Hiking Footwear",
         "brand": "TrekReady",
         "description": "Meet the TrekReady TrailWalker Hiking Shoes, the ideal companion for all your outdoor adventures. Constructed with synthetic leather and breathable mesh, these shoes are tough as nails yet surprisingly airy. Their cushioned insoles offer fabulous comfort for long hikes, while the supportive midsoles and traction outsoles with multidirectional lugs ensure stability and excellent grip. A quick-lace system, padded collar and tongue, and reflective accents make these shoes a dream to wear. From combating rough terrain with the reinforced toe cap and heel, to keeping off trail debris with the protective mudguard, the TrailWalker Hiking Shoes have you covered. These waterproof warriors are made to endure all weather conditions. But they're not just about being rugged, they're light as a feather too, minimizing fatigue during epic hikes. Each pair can be customized for a perfect fit with removable insoles and availability in multiple sizes and widths. Navigate hikes comfortably and confidently with the TrailWalker Hiking Shoes. Adventure, here you come!",
@@ -190,7 +190,7 @@
     {
         "id": 12,
         "name": "TrekMaster Camping Chair",
-        "price": 50.0,
+        "price": 50,
         "category": "Camping Tables",
         "brand": "CampBuddy",
         "description": "Gravitate towards comfort with the TrekMaster Camping Chair from CampBuddy. This trusty outdoor companion boasts sturdy construction using high-quality materials that promise durability and enjoyment for seasons to come. Impeccably lightweight and portable, it's designed to be your go-to seat whether you're camping, at a picnic, cheering at a sporting event, or simply relishing in your backyard pleasures. Beyond its foldable design ensuring compact storage and easy transportation, its ergonomic magic is in the details. An adjustable recline, padded seat and backrest, integrated cup holder, and side pockets ensure the greatest outdoor comfort. Weather resistant, easy to clean, and capable of supporting diverse body types, this versatile chair also comes with a carry bag, ready for your next adventure.",
@@ -207,10 +207,10 @@
     {
         "id": 13,
         "name": "PowerBurner Camping Stove",
-        "price": 100.0,
+        "price": 100,
         "category": "Camping Stoves",
         "brand": "PowerBurner",
-        "description": "Unleash your inner explorer with the PowerBurner Dual Burner Camping Stove. It's designed for the adventurous heart, with sturdy construction and a high heat output that makes boiling and cooking a breeze. This stove isn't just about strength\u2014it's got finesse too. With adjustable flame control, you can simmer, saut\u00e9, or sizzle with absolute precision. Its compact design and integrated carrying handle make transportation effortless. Moreover, it's crafted to defy the elements, boasting a wind-resistant exterior and piezo ignition system for quick, reliable starts. And when the cooking's done, its removable grates make cleanup swift and easy. Rugged, versatile and reliable, the PowerBurner marks a perfect blend of practicality and performance. So, why wait? Let's turn up the heat on your outdoor culinary adventures today.",
+        "description": "Unleash your inner explorer with the PowerBurner Dual Burner Camping Stove. It's designed for the adventurous heart, with sturdy construction and a high heat output that makes boiling and cooking a breeze. This stove isn't just about strength—it's got finesse too. With adjustable flame control, you can simmer, sauté, or sizzle with absolute precision. Its compact design and integrated carrying handle make transportation effortless. Moreover, it's crafted to defy the elements, boasting a wind-resistant exterior and piezo ignition system for quick, reliable starts. And when the cooking's done, its removable grates make cleanup swift and easy. Rugged, versatile and reliable, the PowerBurner marks a perfect blend of practicality and performance. So, why wait? Let's turn up the heat on your outdoor culinary adventures today.",
         "slug": "powerburner-camping-stove",
         "manual": "/manuals/product_info_13.md",
         "images": [
@@ -224,10 +224,10 @@
     {
         "id": 14,
         "name": "MountainDream Sleeping Bag",
-        "price": 130.0,
+        "price": 130,
         "category": "Sleeping Bags",
         "brand": "MountainDream",
-        "description": "Meet the MountainDream Sleeping Bag: your new must-have companion for every outdoor adventure. Designed to handle 3-season camping with ease, it comes equipped with a premium synthetic insulation that will keep you cozy even when temperatures fall down to 15\u00b0F! Sporting a durable water-resistant nylon shell and soft breathable polyester lining, this bag doesn't sacrifice comfort for toughness. The star of the show is the contoured mummy shape that not only provides optimal heat retention but also cuts down on the weight. A smooth, snag-free YKK zipper with a unique anti-snag design allows for hassle-free operation, while the adjustable hood and full-length zipper baffle work together to ensure you stay warm all night long. Need to bring along some essentials? Not to worry! There's an interior pocket just for that. And when it's time to pack up? Just slip it into the included compression sack for easy storage and transport. Whether you're a backpacking pro or a camping novice, the MountainDream Sleeping Bag is the perfect blend of durability, warmth, and comfort that you've been looking for.",
+        "description": "Meet the MountainDream Sleeping Bag: your new must-have companion for every outdoor adventure. Designed to handle 3-season camping with ease, it comes equipped with a premium synthetic insulation that will keep you cozy even when temperatures fall down to 15°F! Sporting a durable water-resistant nylon shell and soft breathable polyester lining, this bag doesn't sacrifice comfort for toughness. The star of the show is the contoured mummy shape that not only provides optimal heat retention but also cuts down on the weight. A smooth, snag-free YKK zipper with a unique anti-snag design allows for hassle-free operation, while the adjustable hood and full-length zipper baffle work together to ensure you stay warm all night long. Need to bring along some essentials? Not to worry! There's an interior pocket just for that. And when it's time to pack up? Just slip it into the included compression sack for easy storage and transport. Whether you're a backpacking pro or a camping novice, the MountainDream Sleeping Bag is the perfect blend of durability, warmth, and comfort that you've been looking for.",
         "slug": "mountaindream-sleeping-bag",
         "manual": "/manuals/product_info_14.md",
         "images": [
@@ -241,7 +241,7 @@
     {
         "id": 15,
         "name": "SkyView 2-Person Tent",
-        "price": 200.0,
+        "price": 200,
         "category": "Tents",
         "brand": "OutdoorLiving",
         "description": "Introducing the OutdoorLiving SkyView 2-Person Tent, a perfect companion for your camping and hiking adventures. This tent offers a spacious interior that houses two people comfortably, with room to spare. Crafted from durable waterproof materials to shield you from the elements, it is the fortress you need in the wild. Setup is a breeze thanks to its intuitive design and color-coded poles, while two large doors allow for easy access. Stay organized with interior pockets, and store additional gear in its two vestibules. The tent also features mesh panels for effective ventilation, and it comes with a rainfly for extra weather protection. Light enough for on-the-go adventurers, it packs compactly into a carrying bag for seamless transportation. Reflective guy lines ensure visibility at night for added safety, and the tent stands freely for versatile placement. Experience the reliability of double-stitched seams that guarantee increased durability, and rest easy under the stars with OutdoorLiving's SkyView 2-Person Tent. It's not just a tent; it's your home away from home.",
@@ -258,7 +258,7 @@
     {
         "id": 16,
         "name": "TrailLite Daypack",
-        "price": 60.0,
+        "price": 60,
         "category": "Backpacks",
         "brand": "HikeMate",
         "description": "Step up your hiking game with HikeMate's TrailLite Daypack. Built for comfort and efficiency, this lightweight and durable backpack offers a spacious main compartment, multiple pockets, and organization-friendly features all in one sleek package. The adjustable shoulder straps and padded back panel ensure optimal comfort during those long exhilarating treks. Course through nature without worry as the daypack's water-resistant fabric protects your essentials from unexpected showers. Plus, never run dry with the integrated hydration system. And did we mention it comes in a plethora of colors and designs? So you can choose one that truly speaks to your outdoorsy soul! Keeping your visibility in mind, we've added reflective accents that light up in low-light conditions. Don't just carry a backpack, adorn a companion that takes you a step ahead in your adventures. Trust the TrailLite Daypack for a hassle-free, enjoyable hiking experience.",
@@ -275,7 +275,7 @@
     {
         "id": 17,
         "name": "RainGuard Hiking Jacket",
-        "price": 110.0,
+        "price": 110,
         "category": "Hiking Clothing",
         "brand": "MountainStyle",
         "description": "Introducing the MountainStyle RainGuard Hiking Jacket - the ultimate solution for weatherproof comfort during your outdoor undertakings! Designed with waterproof, breathable fabric, this jacket promises an outdoor experience that's as dry as it is comfortable. The rugged construction assures durability, while the adjustable hood provides a customizable fit against wind and rain. Featuring multiple pockets for safe, convenient storage and adjustable cuffs and hem, you can tailor the jacket to suit your needs on-the-go. And, don't worry about overheating during intense activities - it's equipped with ventilation zippers for increased airflow. Reflective details ensure visibility even during low-light conditions, making it perfect for evening treks. With its lightweight, packable design, carrying it inside your backpack requires minimal effort. With options for men and women, the RainGuard Hiking Jacket is perfect for hiking, camping, trekking and countless other outdoor adventures. Don't let the weather stand in your way - embrace the outdoors with MountainStyle RainGuard Hiking Jacket!",
@@ -292,10 +292,10 @@
     {
         "id": 18,
         "name": "TrekStar Hiking Sandals",
-        "price": 70.0,
+        "price": 70,
         "category": "Hiking Footwear",
         "brand": "TrekReady",
-        "description": "Meet the TrekStar Hiking Sandals from TrekReady \u2013 the ultimate trail companion for your feet. Designed for comfort and durability, these lightweight sandals are perfect for those who prefer to see the world from a hiking trail. They feature adjustable straps for a snug, secure fit, perfect for adapting to the contours of your feet. With a breathable design, your feet will stay cool and dry, escaping the discomfort of sweaty hiking boots on long summer treks. The deep tread rubber outsole ensures excellent traction on any terrain, while the cushioned footbed promises enhanced comfort with every step. For those wild and unpredictable trails, the added toe protection and shock-absorbing midsole protect your feet from rocky surprises. Ingeniously, the removable insole makes for easy cleaning and maintenance, extending the lifespan of your sandals. Available in various sizes and a handsome brown color, the versatile TrekStar Hiking Sandals are just as comfortable on a casual walk in the park as they are navigating rocky slopes. Explore more with TrekReady!",
+        "description": "Meet the TrekStar Hiking Sandals from TrekReady – the ultimate trail companion for your feet. Designed for comfort and durability, these lightweight sandals are perfect for those who prefer to see the world from a hiking trail. They feature adjustable straps for a snug, secure fit, perfect for adapting to the contours of your feet. With a breathable design, your feet will stay cool and dry, escaping the discomfort of sweaty hiking boots on long summer treks. The deep tread rubber outsole ensures excellent traction on any terrain, while the cushioned footbed promises enhanced comfort with every step. For those wild and unpredictable trails, the added toe protection and shock-absorbing midsole protect your feet from rocky surprises. Ingeniously, the removable insole makes for easy cleaning and maintenance, extending the lifespan of your sandals. Available in various sizes and a handsome brown color, the versatile TrekStar Hiking Sandals are just as comfortable on a casual walk in the park as they are navigating rocky slopes. Explore more with TrekReady!",
         "slug": "trekstar-hiking-sandals",
         "manual": "/manuals/product_info_18.md",
         "images": [
@@ -309,7 +309,7 @@
     {
         "id": 19,
         "name": "Adventure Dining Table",
-        "price": 90.0,
+        "price": 90,
         "category": "Camping Tables",
         "brand": "CampBuddy",
         "description": "Discover the joy of outdoor adventures with the CampBuddy Adventure Dining Table. This feature-packed camping essential brings both comfort and convenience to your memorable trips. Made from high-quality aluminum, it promises long-lasting performance, weather resistance, and easy maintenance - all key for the great outdoors! It's light, portable, and comes with adjustable height settings to suit various seating arrangements and the spacious surface comfortably accommodates meals, drinks, and other essentials. The sturdy yet lightweight frame holds food, dishes, and utensils with ease. When it's time to pack up, it fold and stows away with no fuss, ready for the next adventure!  Perfect for camping, picnics, barbecues, and beach outings - its versatility shines as brightly as the summer sun! Durable, sturdy and a breeze to set up, the Adventure Dining Table will be a loyal companion on every trip. Embark on your next adventure and make lifetime memories with CampBuddy. As with all good experiences, it'll leave you wanting more! ",
@@ -327,7 +327,7 @@
     {
         "id": 20,
         "name": "CompactCook Camping Stove",
-        "price": 60.0,
+        "price": 60,
         "category": "Camping Stoves",
         "brand": "CompactCook",
         "description": "Step into the great outdoors with the CompactCook Camping Stove, a convenient, lightweight companion perfect for all your culinary camping needs. Boasting a robust design built for harsh environments, you can whip up meals anytime, anywhere. Its wind-resistant and fuel-versatile features coupled with an efficient cooking performance, ensures you won't have to worry about the elements or helpless taste buds while on adventures. The easy ignition technology and adjustable flame control make cooking as easy as a walk in the park, while its compact, foldable design makes packing a breeze. Whether you're camping with family or hiking solo, this reliable, portable stove is an essential addition to your gear. With its sturdy construction and safety-focused design, the CompactCook Camping Stove is a step above the rest, providing durability, quality, and peace of mind. Be wild, be free, be cooked for with the CompactCook Camping Stove!",
@@ -339,6 +339,2476 @@
             "/images/20/7e626010-0ad0-4e9c-9f87-f2e1afdfc1dd.png",
             "/images/20/919e1e2a-b1e1-4b5f-a223-e25454fa0740.png",
             "/images/20/ab8b6369-d14f-4d01-a3af-59cf0779180b.png"
+        ]
+    },
+    {
+        "id": 21,
+        "name": "NatureNest Tent 21",
+        "price": 465,
+        "category": "Tents",
+        "brand": "NatureNest",
+        "description": "The NatureNest Tent 21 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-tent-21",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/21.jpg"
+        ]
+    },
+    {
+        "id": 22,
+        "name": "OceanBreeze Tent 22",
+        "price": 92,
+        "category": "Tents",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Tent 22 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-tent-22",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/22.jpg"
+        ]
+    },
+    {
+        "id": 23,
+        "name": "VistaPoint Tent 23",
+        "price": 244,
+        "category": "Tents",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Tent 23 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-tent-23",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/23.jpg"
+        ]
+    },
+    {
+        "id": 24,
+        "name": "SummitGear Tent 24",
+        "price": 437,
+        "category": "Tents",
+        "brand": "SummitGear",
+        "description": "The SummitGear Tent 24 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-tent-24",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/24.jpg"
+        ]
+    },
+    {
+        "id": 25,
+        "name": "PeakPerformance Tent 25",
+        "price": 376,
+        "category": "Tents",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Tent 25 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-tent-25",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/25.jpg"
+        ]
+    },
+    {
+        "id": 26,
+        "name": "AlpineAce Tent 26",
+        "price": 417,
+        "category": "Tents",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Tent 26 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-tent-26",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/26.jpg"
+        ]
+    },
+    {
+        "id": 27,
+        "name": "NatureNest Tent 27",
+        "price": 246,
+        "category": "Tents",
+        "brand": "NatureNest",
+        "description": "The NatureNest Tent 27 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-tent-27",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/27.jpg"
+        ]
+    },
+    {
+        "id": 28,
+        "name": "TrailBlazer Tent 28",
+        "price": 490,
+        "category": "Tents",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Tent 28 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-tent-28",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/28.jpg"
+        ]
+    },
+    {
+        "id": 29,
+        "name": "CloudWalker Tent 29",
+        "price": 181,
+        "category": "Tents",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Tent 29 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-tent-29",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/29.jpg"
+        ]
+    },
+    {
+        "id": 30,
+        "name": "SummitGear Tent 30",
+        "price": 366,
+        "category": "Tents",
+        "brand": "SummitGear",
+        "description": "The SummitGear Tent 30 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-tent-30",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/30.jpg"
+        ]
+    },
+    {
+        "id": 31,
+        "name": "SkyLine Tent 31",
+        "price": 273,
+        "category": "Tents",
+        "brand": "SkyLine",
+        "description": "The SkyLine Tent 31 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-tent-31",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/31.jpg"
+        ]
+    },
+    {
+        "id": 32,
+        "name": "CloudWalker Tent 32",
+        "price": 423,
+        "category": "Tents",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Tent 32 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-tent-32",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/32.jpg"
+        ]
+    },
+    {
+        "id": 33,
+        "name": "PeakPerformance Tent 33",
+        "price": 330,
+        "category": "Tents",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Tent 33 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-tent-33",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/33.jpg"
+        ]
+    },
+    {
+        "id": 34,
+        "name": "WildBound Tent 34",
+        "price": 102,
+        "category": "Tents",
+        "brand": "WildBound",
+        "description": "The WildBound Tent 34 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-tent-34",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/34.jpg"
+        ]
+    },
+    {
+        "id": 35,
+        "name": "SwiftStream Tent 35",
+        "price": 92,
+        "category": "Tents",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Tent 35 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-tent-35",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/35.jpg"
+        ]
+    },
+    {
+        "id": 36,
+        "name": "RuggedEdge Tent 36",
+        "price": 301,
+        "category": "Tents",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Tent 36 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-tent-36",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/36.jpg"
+        ]
+    },
+    {
+        "id": 37,
+        "name": "TerraNova Tent 37",
+        "price": 54,
+        "category": "Tents",
+        "brand": "TerraNova",
+        "description": "The TerraNova Tent 37 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-tent-37",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/37.jpg"
+        ]
+    },
+    {
+        "id": 38,
+        "name": "SwiftStream Tent 38",
+        "price": 318,
+        "category": "Tents",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Tent 38 is a top-tier choice for enthusiasts in the Tents category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-tent-38",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/tents/38.jpg"
+        ]
+    },
+    {
+        "id": 39,
+        "name": "RuggedEdge Backpack 39",
+        "price": 273,
+        "category": "Backpacks",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Backpack 39 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-backpack-39",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/39.jpg"
+        ]
+    },
+    {
+        "id": 40,
+        "name": "VistaPoint Backpack 40",
+        "price": 348,
+        "category": "Backpacks",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Backpack 40 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-backpack-40",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/40.jpg"
+        ]
+    },
+    {
+        "id": 41,
+        "name": "OceanBreeze Backpack 41",
+        "price": 225,
+        "category": "Backpacks",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Backpack 41 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-backpack-41",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/41.jpg"
+        ]
+    },
+    {
+        "id": 42,
+        "name": "SwiftStream Backpack 42",
+        "price": 449,
+        "category": "Backpacks",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Backpack 42 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-backpack-42",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/42.jpg"
+        ]
+    },
+    {
+        "id": 43,
+        "name": "TerraNova Backpack 43",
+        "price": 163,
+        "category": "Backpacks",
+        "brand": "TerraNova",
+        "description": "The TerraNova Backpack 43 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-backpack-43",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/43.jpg"
+        ]
+    },
+    {
+        "id": 44,
+        "name": "CloudWalker Backpack 44",
+        "price": 142,
+        "category": "Backpacks",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Backpack 44 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-backpack-44",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/44.jpg"
+        ]
+    },
+    {
+        "id": 45,
+        "name": "AlpineAce Backpack 45",
+        "price": 245,
+        "category": "Backpacks",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Backpack 45 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-backpack-45",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/45.jpg"
+        ]
+    },
+    {
+        "id": 46,
+        "name": "SummitGear Backpack 46",
+        "price": 173,
+        "category": "Backpacks",
+        "brand": "SummitGear",
+        "description": "The SummitGear Backpack 46 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-backpack-46",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/46.jpg"
+        ]
+    },
+    {
+        "id": 47,
+        "name": "TerraNova Backpack 47",
+        "price": 212,
+        "category": "Backpacks",
+        "brand": "TerraNova",
+        "description": "The TerraNova Backpack 47 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-backpack-47",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/47.jpg"
+        ]
+    },
+    {
+        "id": 48,
+        "name": "AlpineAce Backpack 48",
+        "price": 402,
+        "category": "Backpacks",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Backpack 48 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-backpack-48",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/48.jpg"
+        ]
+    },
+    {
+        "id": 49,
+        "name": "PeakPerformance Backpack 49",
+        "price": 43,
+        "category": "Backpacks",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Backpack 49 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-backpack-49",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/49.jpg"
+        ]
+    },
+    {
+        "id": 50,
+        "name": "SkyLine Backpack 50",
+        "price": 54,
+        "category": "Backpacks",
+        "brand": "SkyLine",
+        "description": "The SkyLine Backpack 50 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-backpack-50",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/50.jpg"
+        ]
+    },
+    {
+        "id": 51,
+        "name": "ForestFound Backpack 51",
+        "price": 434,
+        "category": "Backpacks",
+        "brand": "ForestFound",
+        "description": "The ForestFound Backpack 51 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-backpack-51",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/51.jpg"
+        ]
+    },
+    {
+        "id": 52,
+        "name": "OceanBreeze Backpack 52",
+        "price": 392,
+        "category": "Backpacks",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Backpack 52 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-backpack-52",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/52.jpg"
+        ]
+    },
+    {
+        "id": 53,
+        "name": "NatureNest Backpack 53",
+        "price": 418,
+        "category": "Backpacks",
+        "brand": "NatureNest",
+        "description": "The NatureNest Backpack 53 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-backpack-53",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/53.jpg"
+        ]
+    },
+    {
+        "id": 54,
+        "name": "EcoTrek Backpack 54",
+        "price": 34,
+        "category": "Backpacks",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Backpack 54 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-backpack-54",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/54.jpg"
+        ]
+    },
+    {
+        "id": 55,
+        "name": "ForestFound Backpack 55",
+        "price": 173,
+        "category": "Backpacks",
+        "brand": "ForestFound",
+        "description": "The ForestFound Backpack 55 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-backpack-55",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/55.jpg"
+        ]
+    },
+    {
+        "id": 56,
+        "name": "CloudWalker Backpack 56",
+        "price": 88,
+        "category": "Backpacks",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Backpack 56 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-backpack-56",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/56.jpg"
+        ]
+    },
+    {
+        "id": 57,
+        "name": "PeakPerformance Backpack 57",
+        "price": 95,
+        "category": "Backpacks",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Backpack 57 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-backpack-57",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/57.jpg"
+        ]
+    },
+    {
+        "id": 58,
+        "name": "EcoTrek Backpack 58",
+        "price": 107,
+        "category": "Backpacks",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Backpack 58 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-backpack-58",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/58.jpg"
+        ]
+    },
+    {
+        "id": 59,
+        "name": "SkyLine Backpack 59",
+        "price": 213,
+        "category": "Backpacks",
+        "brand": "SkyLine",
+        "description": "The SkyLine Backpack 59 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-backpack-59",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/59.jpg"
+        ]
+    },
+    {
+        "id": 60,
+        "name": "WildBound Backpack 60",
+        "price": 369,
+        "category": "Backpacks",
+        "brand": "WildBound",
+        "description": "The WildBound Backpack 60 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-backpack-60",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/60.jpg"
+        ]
+    },
+    {
+        "id": 61,
+        "name": "AlpineAce Backpack 61",
+        "price": 22,
+        "category": "Backpacks",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Backpack 61 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-backpack-61",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/61.jpg"
+        ]
+    },
+    {
+        "id": 62,
+        "name": "EcoTrek Backpack 62",
+        "price": 409,
+        "category": "Backpacks",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Backpack 62 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-backpack-62",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/62.jpg"
+        ]
+    },
+    {
+        "id": 63,
+        "name": "SkyLine Backpack 63",
+        "price": 319,
+        "category": "Backpacks",
+        "brand": "SkyLine",
+        "description": "The SkyLine Backpack 63 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-backpack-63",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/63.jpg"
+        ]
+    },
+    {
+        "id": 64,
+        "name": "OceanBreeze Backpack 64",
+        "price": 287,
+        "category": "Backpacks",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Backpack 64 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-backpack-64",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/64.jpg"
+        ]
+    },
+    {
+        "id": 65,
+        "name": "ForestFound Backpack 65",
+        "price": 453,
+        "category": "Backpacks",
+        "brand": "ForestFound",
+        "description": "The ForestFound Backpack 65 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-backpack-65",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/65.jpg"
+        ]
+    },
+    {
+        "id": 66,
+        "name": "RuggedEdge Backpack 66",
+        "price": 162,
+        "category": "Backpacks",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Backpack 66 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-backpack-66",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/66.jpg"
+        ]
+    },
+    {
+        "id": 67,
+        "name": "SummitGear Backpack 67",
+        "price": 473,
+        "category": "Backpacks",
+        "brand": "SummitGear",
+        "description": "The SummitGear Backpack 67 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-backpack-67",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/67.jpg"
+        ]
+    },
+    {
+        "id": 68,
+        "name": "TerraNova Backpack 68",
+        "price": 465,
+        "category": "Backpacks",
+        "brand": "TerraNova",
+        "description": "The TerraNova Backpack 68 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-backpack-68",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/68.jpg"
+        ]
+    },
+    {
+        "id": 69,
+        "name": "RuggedEdge Backpack 69",
+        "price": 164,
+        "category": "Backpacks",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Backpack 69 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-backpack-69",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/69.jpg"
+        ]
+    },
+    {
+        "id": 70,
+        "name": "TrailBlazer Backpack 70",
+        "price": 342,
+        "category": "Backpacks",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Backpack 70 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-backpack-70",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/70.jpg"
+        ]
+    },
+    {
+        "id": 71,
+        "name": "VistaPoint Backpack 71",
+        "price": 462,
+        "category": "Backpacks",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Backpack 71 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-backpack-71",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/71.jpg"
+        ]
+    },
+    {
+        "id": 72,
+        "name": "TrailBlazer Backpack 72",
+        "price": 361,
+        "category": "Backpacks",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Backpack 72 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-backpack-72",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/72.jpg"
+        ]
+    },
+    {
+        "id": 73,
+        "name": "CloudWalker Backpack 73",
+        "price": 41,
+        "category": "Backpacks",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Backpack 73 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-backpack-73",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/73.jpg"
+        ]
+    },
+    {
+        "id": 74,
+        "name": "SummitGear Backpack 74",
+        "price": 237,
+        "category": "Backpacks",
+        "brand": "SummitGear",
+        "description": "The SummitGear Backpack 74 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-backpack-74",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/74.jpg"
+        ]
+    },
+    {
+        "id": 75,
+        "name": "RuggedEdge Backpack 75",
+        "price": 165,
+        "category": "Backpacks",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Backpack 75 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-backpack-75",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/75.jpg"
+        ]
+    },
+    {
+        "id": 76,
+        "name": "VistaPoint Backpack 76",
+        "price": 397,
+        "category": "Backpacks",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Backpack 76 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-backpack-76",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/76.jpg"
+        ]
+    },
+    {
+        "id": 77,
+        "name": "TrailBlazer Backpack 77",
+        "price": 154,
+        "category": "Backpacks",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Backpack 77 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-backpack-77",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/77.jpg"
+        ]
+    },
+    {
+        "id": 78,
+        "name": "WildBound Backpack 78",
+        "price": 372,
+        "category": "Backpacks",
+        "brand": "WildBound",
+        "description": "The WildBound Backpack 78 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-backpack-78",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/78.jpg"
+        ]
+    },
+    {
+        "id": 79,
+        "name": "EcoTrek Backpack 79",
+        "price": 114,
+        "category": "Backpacks",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Backpack 79 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-backpack-79",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/79.jpg"
+        ]
+    },
+    {
+        "id": 80,
+        "name": "NatureNest Backpack 80",
+        "price": 237,
+        "category": "Backpacks",
+        "brand": "NatureNest",
+        "description": "The NatureNest Backpack 80 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-backpack-80",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/80.jpg"
+        ]
+    },
+    {
+        "id": 81,
+        "name": "ForestFound Backpack 81",
+        "price": 192,
+        "category": "Backpacks",
+        "brand": "ForestFound",
+        "description": "The ForestFound Backpack 81 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-backpack-81",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/81.jpg"
+        ]
+    },
+    {
+        "id": 82,
+        "name": "SummitGear Backpack 82",
+        "price": 487,
+        "category": "Backpacks",
+        "brand": "SummitGear",
+        "description": "The SummitGear Backpack 82 is a top-tier choice for enthusiasts in the Backpacks category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-backpack-82",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/backpacks/82.jpg"
+        ]
+    },
+    {
+        "id": 83,
+        "name": "CloudWalker Clothin 83",
+        "price": 183,
+        "category": "Hiking Clothing",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Clothin 83 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-clothin-83",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/83.jpg"
+        ]
+    },
+    {
+        "id": 84,
+        "name": "SwiftStream Clothin 84",
+        "price": 347,
+        "category": "Hiking Clothing",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Clothin 84 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-clothin-84",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/84.jpg"
+        ]
+    },
+    {
+        "id": 85,
+        "name": "CloudWalker Clothin 85",
+        "price": 309,
+        "category": "Hiking Clothing",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Clothin 85 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-clothin-85",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/85.jpg"
+        ]
+    },
+    {
+        "id": 86,
+        "name": "EcoTrek Clothin 86",
+        "price": 334,
+        "category": "Hiking Clothing",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Clothin 86 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-clothin-86",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/86.jpg"
+        ]
+    },
+    {
+        "id": 87,
+        "name": "TerraNova Clothin 87",
+        "price": 455,
+        "category": "Hiking Clothing",
+        "brand": "TerraNova",
+        "description": "The TerraNova Clothin 87 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-clothin-87",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/87.jpg"
+        ]
+    },
+    {
+        "id": 88,
+        "name": "PeakPerformance Clothin 88",
+        "price": 325,
+        "category": "Hiking Clothing",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Clothin 88 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-clothin-88",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/88.jpg"
+        ]
+    },
+    {
+        "id": 89,
+        "name": "TrailBlazer Clothin 89",
+        "price": 182,
+        "category": "Hiking Clothing",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Clothin 89 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-clothin-89",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/89.jpg"
+        ]
+    },
+    {
+        "id": 90,
+        "name": "SkyLine Clothin 90",
+        "price": 297,
+        "category": "Hiking Clothing",
+        "brand": "SkyLine",
+        "description": "The SkyLine Clothin 90 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-clothin-90",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/90.jpg"
+        ]
+    },
+    {
+        "id": 91,
+        "name": "SummitGear Clothin 91",
+        "price": 200,
+        "category": "Hiking Clothing",
+        "brand": "SummitGear",
+        "description": "The SummitGear Clothin 91 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-clothin-91",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/91.jpg"
+        ]
+    },
+    {
+        "id": 92,
+        "name": "VistaPoint Clothin 92",
+        "price": 131,
+        "category": "Hiking Clothing",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Clothin 92 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-clothin-92",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/92.jpg"
+        ]
+    },
+    {
+        "id": 93,
+        "name": "OceanBreeze Clothin 93",
+        "price": 123,
+        "category": "Hiking Clothing",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Clothin 93 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-clothin-93",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/93.jpg"
+        ]
+    },
+    {
+        "id": 94,
+        "name": "VistaPoint Clothin 94",
+        "price": 391,
+        "category": "Hiking Clothing",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Clothin 94 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-clothin-94",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/94.jpg"
+        ]
+    },
+    {
+        "id": 95,
+        "name": "CloudWalker Clothin 95",
+        "price": 260,
+        "category": "Hiking Clothing",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Clothin 95 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-clothin-95",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/95.jpg"
+        ]
+    },
+    {
+        "id": 96,
+        "name": "CloudWalker Clothin 96",
+        "price": 403,
+        "category": "Hiking Clothing",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Clothin 96 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-clothin-96",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/96.jpg"
+        ]
+    },
+    {
+        "id": 97,
+        "name": "NatureNest Clothin 97",
+        "price": 218,
+        "category": "Hiking Clothing",
+        "brand": "NatureNest",
+        "description": "The NatureNest Clothin 97 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-clothin-97",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/97.jpg"
+        ]
+    },
+    {
+        "id": 98,
+        "name": "AlpineAce Clothin 98",
+        "price": 162,
+        "category": "Hiking Clothing",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Clothin 98 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-clothin-98",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/98.jpg"
+        ]
+    },
+    {
+        "id": 99,
+        "name": "SwiftStream Clothin 99",
+        "price": 164,
+        "category": "Hiking Clothing",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Clothin 99 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-clothin-99",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/99.jpg"
+        ]
+    },
+    {
+        "id": 100,
+        "name": "EcoTrek Clothin 100",
+        "price": 49,
+        "category": "Hiking Clothing",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Clothin 100 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-clothin-100",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/100.jpg"
+        ]
+    },
+    {
+        "id": 101,
+        "name": "WildBound Clothin 101",
+        "price": 99,
+        "category": "Hiking Clothing",
+        "brand": "WildBound",
+        "description": "The WildBound Clothin 101 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-clothin-101",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/101.jpg"
+        ]
+    },
+    {
+        "id": 102,
+        "name": "RuggedEdge Clothin 102",
+        "price": 144,
+        "category": "Hiking Clothing",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Clothin 102 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-clothin-102",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/102.jpg"
+        ]
+    },
+    {
+        "id": 103,
+        "name": "PeakPerformance Clothin 103",
+        "price": 214,
+        "category": "Hiking Clothing",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Clothin 103 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-clothin-103",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/103.jpg"
+        ]
+    },
+    {
+        "id": 104,
+        "name": "SkyLine Clothin 104",
+        "price": 46,
+        "category": "Hiking Clothing",
+        "brand": "SkyLine",
+        "description": "The SkyLine Clothin 104 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-clothin-104",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/104.jpg"
+        ]
+    },
+    {
+        "id": 105,
+        "name": "ForestFound Clothin 105",
+        "price": 74,
+        "category": "Hiking Clothing",
+        "brand": "ForestFound",
+        "description": "The ForestFound Clothin 105 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-clothin-105",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/105.jpg"
+        ]
+    },
+    {
+        "id": 106,
+        "name": "NatureNest Clothin 106",
+        "price": 404,
+        "category": "Hiking Clothing",
+        "brand": "NatureNest",
+        "description": "The NatureNest Clothin 106 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-clothin-106",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/106.jpg"
+        ]
+    },
+    {
+        "id": 107,
+        "name": "SummitGear Clothin 107",
+        "price": 431,
+        "category": "Hiking Clothing",
+        "brand": "SummitGear",
+        "description": "The SummitGear Clothin 107 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-clothin-107",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/107.jpg"
+        ]
+    },
+    {
+        "id": 108,
+        "name": "WildBound Clothin 108",
+        "price": 308,
+        "category": "Hiking Clothing",
+        "brand": "WildBound",
+        "description": "The WildBound Clothin 108 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-clothin-108",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/108.jpg"
+        ]
+    },
+    {
+        "id": 109,
+        "name": "SkyLine Clothin 109",
+        "price": 299,
+        "category": "Hiking Clothing",
+        "brand": "SkyLine",
+        "description": "The SkyLine Clothin 109 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-clothin-109",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/109.jpg"
+        ]
+    },
+    {
+        "id": 110,
+        "name": "OceanBreeze Clothin 110",
+        "price": 138,
+        "category": "Hiking Clothing",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Clothin 110 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-clothin-110",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/110.jpg"
+        ]
+    },
+    {
+        "id": 111,
+        "name": "PeakPerformance Clothin 111",
+        "price": 116,
+        "category": "Hiking Clothing",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Clothin 111 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-clothin-111",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/111.jpg"
+        ]
+    },
+    {
+        "id": 112,
+        "name": "CloudWalker Clothin 112",
+        "price": 464,
+        "category": "Hiking Clothing",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Clothin 112 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-clothin-112",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/112.jpg"
+        ]
+    },
+    {
+        "id": 113,
+        "name": "OceanBreeze Clothin 113",
+        "price": 261,
+        "category": "Hiking Clothing",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Clothin 113 is a top-tier choice for enthusiasts in the Hiking Clothing category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-clothin-113",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-clothing/113.jpg"
+        ]
+    },
+    {
+        "id": 114,
+        "name": "SummitGear Footwea 114",
+        "price": 196,
+        "category": "Hiking Footwear",
+        "brand": "SummitGear",
+        "description": "The SummitGear Footwea 114 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-footwea-114",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/114.jpg"
+        ]
+    },
+    {
+        "id": 115,
+        "name": "EcoTrek Footwea 115",
+        "price": 288,
+        "category": "Hiking Footwear",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Footwea 115 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-footwea-115",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/115.jpg"
+        ]
+    },
+    {
+        "id": 116,
+        "name": "NatureNest Footwea 116",
+        "price": 397,
+        "category": "Hiking Footwear",
+        "brand": "NatureNest",
+        "description": "The NatureNest Footwea 116 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-footwea-116",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/116.jpg"
+        ]
+    },
+    {
+        "id": 117,
+        "name": "CloudWalker Footwea 117",
+        "price": 315,
+        "category": "Hiking Footwear",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Footwea 117 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-footwea-117",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/117.jpg"
+        ]
+    },
+    {
+        "id": 118,
+        "name": "EcoTrek Footwea 118",
+        "price": 398,
+        "category": "Hiking Footwear",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Footwea 118 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-footwea-118",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/118.jpg"
+        ]
+    },
+    {
+        "id": 119,
+        "name": "OceanBreeze Footwea 119",
+        "price": 104,
+        "category": "Hiking Footwear",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Footwea 119 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-footwea-119",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/119.jpg"
+        ]
+    },
+    {
+        "id": 120,
+        "name": "AlpineAce Footwea 120",
+        "price": 106,
+        "category": "Hiking Footwear",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Footwea 120 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-footwea-120",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/120.jpg"
+        ]
+    },
+    {
+        "id": 121,
+        "name": "SkyLine Footwea 121",
+        "price": 450,
+        "category": "Hiking Footwear",
+        "brand": "SkyLine",
+        "description": "The SkyLine Footwea 121 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-footwea-121",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/121.jpg"
+        ]
+    },
+    {
+        "id": 122,
+        "name": "SkyLine Footwea 122",
+        "price": 290,
+        "category": "Hiking Footwear",
+        "brand": "SkyLine",
+        "description": "The SkyLine Footwea 122 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-footwea-122",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/122.jpg"
+        ]
+    },
+    {
+        "id": 123,
+        "name": "RuggedEdge Footwea 123",
+        "price": 180,
+        "category": "Hiking Footwear",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Footwea 123 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-footwea-123",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/123.jpg"
+        ]
+    },
+    {
+        "id": 124,
+        "name": "TrailBlazer Footwea 124",
+        "price": 173,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 124 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-124",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/124.jpg"
+        ]
+    },
+    {
+        "id": 125,
+        "name": "CloudWalker Footwea 125",
+        "price": 248,
+        "category": "Hiking Footwear",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Footwea 125 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-footwea-125",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/125.jpg"
+        ]
+    },
+    {
+        "id": 126,
+        "name": "TerraNova Footwea 126",
+        "price": 338,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 126 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-126",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/126.jpg"
+        ]
+    },
+    {
+        "id": 127,
+        "name": "SummitGear Footwea 127",
+        "price": 434,
+        "category": "Hiking Footwear",
+        "brand": "SummitGear",
+        "description": "The SummitGear Footwea 127 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-footwea-127",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/127.jpg"
+        ]
+    },
+    {
+        "id": 128,
+        "name": "RuggedEdge Footwea 128",
+        "price": 259,
+        "category": "Hiking Footwear",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Footwea 128 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-footwea-128",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/128.jpg"
+        ]
+    },
+    {
+        "id": 129,
+        "name": "EcoTrek Footwea 129",
+        "price": 134,
+        "category": "Hiking Footwear",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Footwea 129 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-footwea-129",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/129.jpg"
+        ]
+    },
+    {
+        "id": 130,
+        "name": "TrailBlazer Footwea 130",
+        "price": 98,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 130 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-130",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/130.jpg"
+        ]
+    },
+    {
+        "id": 131,
+        "name": "TerraNova Footwea 131",
+        "price": 26,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 131 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-131",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/131.jpg"
+        ]
+    },
+    {
+        "id": 132,
+        "name": "TrailBlazer Footwea 132",
+        "price": 201,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 132 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-132",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/132.jpg"
+        ]
+    },
+    {
+        "id": 133,
+        "name": "WildBound Footwea 133",
+        "price": 309,
+        "category": "Hiking Footwear",
+        "brand": "WildBound",
+        "description": "The WildBound Footwea 133 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-footwea-133",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/133.jpg"
+        ]
+    },
+    {
+        "id": 134,
+        "name": "CloudWalker Footwea 134",
+        "price": 77,
+        "category": "Hiking Footwear",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Footwea 134 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-footwea-134",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/134.jpg"
+        ]
+    },
+    {
+        "id": 135,
+        "name": "TrailBlazer Footwea 135",
+        "price": 417,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 135 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-135",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/135.jpg"
+        ]
+    },
+    {
+        "id": 136,
+        "name": "RuggedEdge Footwea 136",
+        "price": 41,
+        "category": "Hiking Footwear",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Footwea 136 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-footwea-136",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/136.jpg"
+        ]
+    },
+    {
+        "id": 137,
+        "name": "RuggedEdge Footwea 137",
+        "price": 156,
+        "category": "Hiking Footwear",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Footwea 137 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-footwea-137",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/137.jpg"
+        ]
+    },
+    {
+        "id": 138,
+        "name": "SwiftStream Footwea 138",
+        "price": 403,
+        "category": "Hiking Footwear",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Footwea 138 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-footwea-138",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/138.jpg"
+        ]
+    },
+    {
+        "id": 139,
+        "name": "TerraNova Footwea 139",
+        "price": 126,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 139 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-139",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/139.jpg"
+        ]
+    },
+    {
+        "id": 140,
+        "name": "TrailBlazer Footwea 140",
+        "price": 245,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 140 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-140",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/140.jpg"
+        ]
+    },
+    {
+        "id": 141,
+        "name": "AlpineAce Footwea 141",
+        "price": 340,
+        "category": "Hiking Footwear",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Footwea 141 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-footwea-141",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/141.jpg"
+        ]
+    },
+    {
+        "id": 142,
+        "name": "TerraNova Footwea 142",
+        "price": 33,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 142 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-142",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/142.jpg"
+        ]
+    },
+    {
+        "id": 143,
+        "name": "WildBound Footwea 143",
+        "price": 58,
+        "category": "Hiking Footwear",
+        "brand": "WildBound",
+        "description": "The WildBound Footwea 143 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-footwea-143",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/143.jpg"
+        ]
+    },
+    {
+        "id": 144,
+        "name": "ForestFound Footwea 144",
+        "price": 358,
+        "category": "Hiking Footwear",
+        "brand": "ForestFound",
+        "description": "The ForestFound Footwea 144 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-footwea-144",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/144.jpg"
+        ]
+    },
+    {
+        "id": 145,
+        "name": "EcoTrek Footwea 145",
+        "price": 365,
+        "category": "Hiking Footwear",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Footwea 145 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-footwea-145",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/145.jpg"
+        ]
+    },
+    {
+        "id": 146,
+        "name": "TerraNova Footwea 146",
+        "price": 90,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 146 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-146",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/146.jpg"
+        ]
+    },
+    {
+        "id": 147,
+        "name": "PeakPerformance Footwea 147",
+        "price": 417,
+        "category": "Hiking Footwear",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Footwea 147 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-footwea-147",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/147.jpg"
+        ]
+    },
+    {
+        "id": 148,
+        "name": "PeakPerformance Footwea 148",
+        "price": 365,
+        "category": "Hiking Footwear",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Footwea 148 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-footwea-148",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/148.jpg"
+        ]
+    },
+    {
+        "id": 149,
+        "name": "WildBound Footwea 149",
+        "price": 133,
+        "category": "Hiking Footwear",
+        "brand": "WildBound",
+        "description": "The WildBound Footwea 149 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-footwea-149",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/149.jpg"
+        ]
+    },
+    {
+        "id": 150,
+        "name": "TrailBlazer Footwea 150",
+        "price": 391,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 150 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-150",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/150.jpg"
+        ]
+    },
+    {
+        "id": 151,
+        "name": "SkyLine Footwea 151",
+        "price": 274,
+        "category": "Hiking Footwear",
+        "brand": "SkyLine",
+        "description": "The SkyLine Footwea 151 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-footwea-151",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/151.jpg"
+        ]
+    },
+    {
+        "id": 152,
+        "name": "TrailBlazer Footwea 152",
+        "price": 48,
+        "category": "Hiking Footwear",
+        "brand": "TrailBlazer",
+        "description": "The TrailBlazer Footwea 152 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "trailblazer-footwea-152",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/152.jpg"
+        ]
+    },
+    {
+        "id": 153,
+        "name": "WildBound Footwea 153",
+        "price": 39,
+        "category": "Hiking Footwear",
+        "brand": "WildBound",
+        "description": "The WildBound Footwea 153 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "wildbound-footwea-153",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/153.jpg"
+        ]
+    },
+    {
+        "id": 154,
+        "name": "CloudWalker Footwea 154",
+        "price": 334,
+        "category": "Hiking Footwear",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Footwea 154 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-footwea-154",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/154.jpg"
+        ]
+    },
+    {
+        "id": 155,
+        "name": "SkyLine Footwea 155",
+        "price": 205,
+        "category": "Hiking Footwear",
+        "brand": "SkyLine",
+        "description": "The SkyLine Footwea 155 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-footwea-155",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/155.jpg"
+        ]
+    },
+    {
+        "id": 156,
+        "name": "TerraNova Footwea 156",
+        "price": 292,
+        "category": "Hiking Footwear",
+        "brand": "TerraNova",
+        "description": "The TerraNova Footwea 156 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-footwea-156",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/156.jpg"
+        ]
+    },
+    {
+        "id": 157,
+        "name": "SwiftStream Footwea 157",
+        "price": 434,
+        "category": "Hiking Footwear",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Footwea 157 is a top-tier choice for enthusiasts in the Hiking Footwear category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-footwea-157",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/hiking-footwear/157.jpg"
+        ]
+    },
+    {
+        "id": 158,
+        "name": "PeakPerformance Table 158",
+        "price": 474,
+        "category": "Camping Tables",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Table 158 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-table-158",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/158.jpg"
+        ]
+    },
+    {
+        "id": 159,
+        "name": "AlpineAce Table 159",
+        "price": 130,
+        "category": "Camping Tables",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Table 159 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-table-159",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/159.jpg"
+        ]
+    },
+    {
+        "id": 160,
+        "name": "RuggedEdge Table 160",
+        "price": 84,
+        "category": "Camping Tables",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Table 160 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-table-160",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/160.jpg"
+        ]
+    },
+    {
+        "id": 161,
+        "name": "NatureNest Table 161",
+        "price": 398,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 161 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-161",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/161.jpg"
+        ]
+    },
+    {
+        "id": 162,
+        "name": "OceanBreeze Table 162",
+        "price": 450,
+        "category": "Camping Tables",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Table 162 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-table-162",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/162.jpg"
+        ]
+    },
+    {
+        "id": 163,
+        "name": "ForestFound Table 163",
+        "price": 25,
+        "category": "Camping Tables",
+        "brand": "ForestFound",
+        "description": "The ForestFound Table 163 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-table-163",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/163.jpg"
+        ]
+    },
+    {
+        "id": 164,
+        "name": "EcoTrek Table 164",
+        "price": 51,
+        "category": "Camping Tables",
+        "brand": "EcoTrek",
+        "description": "The EcoTrek Table 164 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ecotrek-table-164",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/164.jpg"
+        ]
+    },
+    {
+        "id": 165,
+        "name": "SummitGear Table 165",
+        "price": 353,
+        "category": "Camping Tables",
+        "brand": "SummitGear",
+        "description": "The SummitGear Table 165 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-table-165",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/165.jpg"
+        ]
+    },
+    {
+        "id": 166,
+        "name": "SkyLine Table 166",
+        "price": 42,
+        "category": "Camping Tables",
+        "brand": "SkyLine",
+        "description": "The SkyLine Table 166 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-table-166",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/166.jpg"
+        ]
+    },
+    {
+        "id": 167,
+        "name": "RuggedEdge Table 167",
+        "price": 461,
+        "category": "Camping Tables",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Table 167 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-table-167",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/167.jpg"
+        ]
+    },
+    {
+        "id": 168,
+        "name": "PeakPerformance Table 168",
+        "price": 275,
+        "category": "Camping Tables",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Table 168 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-table-168",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/168.jpg"
+        ]
+    },
+    {
+        "id": 169,
+        "name": "AlpineAce Table 169",
+        "price": 79,
+        "category": "Camping Tables",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Table 169 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-table-169",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/169.jpg"
+        ]
+    },
+    {
+        "id": 170,
+        "name": "RuggedEdge Table 170",
+        "price": 436,
+        "category": "Camping Tables",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Table 170 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-table-170",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/170.jpg"
+        ]
+    },
+    {
+        "id": 171,
+        "name": "NatureNest Table 171",
+        "price": 178,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 171 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-171",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/171.jpg"
+        ]
+    },
+    {
+        "id": 172,
+        "name": "VistaPoint Table 172",
+        "price": 33,
+        "category": "Camping Tables",
+        "brand": "VistaPoint",
+        "description": "The VistaPoint Table 172 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "vistapoint-table-172",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/172.jpg"
+        ]
+    },
+    {
+        "id": 173,
+        "name": "SummitGear Table 173",
+        "price": 20,
+        "category": "Camping Tables",
+        "brand": "SummitGear",
+        "description": "The SummitGear Table 173 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-table-173",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/173.jpg"
+        ]
+    },
+    {
+        "id": 174,
+        "name": "SummitGear Table 174",
+        "price": 298,
+        "category": "Camping Tables",
+        "brand": "SummitGear",
+        "description": "The SummitGear Table 174 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-table-174",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/174.jpg"
+        ]
+    },
+    {
+        "id": 175,
+        "name": "NatureNest Table 175",
+        "price": 247,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 175 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-175",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/175.jpg"
+        ]
+    },
+    {
+        "id": 176,
+        "name": "PeakPerformance Table 176",
+        "price": 281,
+        "category": "Camping Tables",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Table 176 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-table-176",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/176.jpg"
+        ]
+    },
+    {
+        "id": 177,
+        "name": "NatureNest Table 177",
+        "price": 128,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 177 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-177",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/177.jpg"
+        ]
+    },
+    {
+        "id": 178,
+        "name": "NatureNest Table 178",
+        "price": 142,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 178 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-178",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/178.jpg"
+        ]
+    },
+    {
+        "id": 179,
+        "name": "NatureNest Table 179",
+        "price": 277,
+        "category": "Camping Tables",
+        "brand": "NatureNest",
+        "description": "The NatureNest Table 179 is a top-tier choice for enthusiasts in the Camping Tables category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-table-179",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-tables/179.jpg"
+        ]
+    },
+    {
+        "id": 180,
+        "name": "PeakPerformance Stove 180",
+        "price": 99,
+        "category": "Camping Stoves",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Stove 180 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-stove-180",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/180.jpg"
+        ]
+    },
+    {
+        "id": 181,
+        "name": "CloudWalker Stove 181",
+        "price": 209,
+        "category": "Camping Stoves",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Stove 181 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-stove-181",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/181.jpg"
+        ]
+    },
+    {
+        "id": 182,
+        "name": "RuggedEdge Stove 182",
+        "price": 427,
+        "category": "Camping Stoves",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Stove 182 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-stove-182",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/182.jpg"
+        ]
+    },
+    {
+        "id": 183,
+        "name": "SwiftStream Stove 183",
+        "price": 247,
+        "category": "Camping Stoves",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Stove 183 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-stove-183",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/183.jpg"
+        ]
+    },
+    {
+        "id": 184,
+        "name": "ForestFound Stove 184",
+        "price": 342,
+        "category": "Camping Stoves",
+        "brand": "ForestFound",
+        "description": "The ForestFound Stove 184 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-stove-184",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/184.jpg"
+        ]
+    },
+    {
+        "id": 185,
+        "name": "CloudWalker Stove 185",
+        "price": 457,
+        "category": "Camping Stoves",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Stove 185 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-stove-185",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/185.jpg"
+        ]
+    },
+    {
+        "id": 186,
+        "name": "TerraNova Stove 186",
+        "price": 169,
+        "category": "Camping Stoves",
+        "brand": "TerraNova",
+        "description": "The TerraNova Stove 186 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-stove-186",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/186.jpg"
+        ]
+    },
+    {
+        "id": 187,
+        "name": "PeakPerformance Stove 187",
+        "price": 409,
+        "category": "Camping Stoves",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Stove 187 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-stove-187",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/187.jpg"
+        ]
+    },
+    {
+        "id": 188,
+        "name": "NatureNest Stove 188",
+        "price": 236,
+        "category": "Camping Stoves",
+        "brand": "NatureNest",
+        "description": "The NatureNest Stove 188 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-stove-188",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/188.jpg"
+        ]
+    },
+    {
+        "id": 189,
+        "name": "OceanBreeze Stove 189",
+        "price": 203,
+        "category": "Camping Stoves",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Stove 189 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-stove-189",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/189.jpg"
+        ]
+    },
+    {
+        "id": 190,
+        "name": "PeakPerformance Stove 190",
+        "price": 268,
+        "category": "Camping Stoves",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Stove 190 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-stove-190",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/190.jpg"
+        ]
+    },
+    {
+        "id": 191,
+        "name": "OceanBreeze Stove 191",
+        "price": 492,
+        "category": "Camping Stoves",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Stove 191 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-stove-191",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/191.jpg"
+        ]
+    },
+    {
+        "id": 192,
+        "name": "SwiftStream Stove 192",
+        "price": 38,
+        "category": "Camping Stoves",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Stove 192 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-stove-192",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/192.jpg"
+        ]
+    },
+    {
+        "id": 193,
+        "name": "AlpineAce Stove 193",
+        "price": 93,
+        "category": "Camping Stoves",
+        "brand": "AlpineAce",
+        "description": "The AlpineAce Stove 193 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "alpineace-stove-193",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/193.jpg"
+        ]
+    },
+    {
+        "id": 194,
+        "name": "RuggedEdge Stove 194",
+        "price": 393,
+        "category": "Camping Stoves",
+        "brand": "RuggedEdge",
+        "description": "The RuggedEdge Stove 194 is a top-tier choice for enthusiasts in the Camping Stoves category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "ruggededge-stove-194",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/camping-stoves/194.jpg"
+        ]
+    },
+    {
+        "id": 195,
+        "name": "TerraNova Sleeping Bag 195",
+        "price": 285,
+        "category": "Sleeping Bags",
+        "brand": "TerraNova",
+        "description": "The TerraNova Sleeping Bag 195 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-sleeping-bag-195",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/195.jpg"
+        ]
+    },
+    {
+        "id": 196,
+        "name": "SkyLine Sleeping Bag 196",
+        "price": 47,
+        "category": "Sleeping Bags",
+        "brand": "SkyLine",
+        "description": "The SkyLine Sleeping Bag 196 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-sleeping-bag-196",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/196.jpg"
+        ]
+    },
+    {
+        "id": 197,
+        "name": "CloudWalker Sleeping Bag 197",
+        "price": 297,
+        "category": "Sleeping Bags",
+        "brand": "CloudWalker",
+        "description": "The CloudWalker Sleeping Bag 197 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "cloudwalker-sleeping-bag-197",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/197.jpg"
+        ]
+    },
+    {
+        "id": 198,
+        "name": "OceanBreeze Sleeping Bag 198",
+        "price": 230,
+        "category": "Sleeping Bags",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Sleeping Bag 198 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-sleeping-bag-198",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/198.jpg"
+        ]
+    },
+    {
+        "id": 199,
+        "name": "PeakPerformance Sleeping Bag 199",
+        "price": 149,
+        "category": "Sleeping Bags",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Sleeping Bag 199 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-sleeping-bag-199",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/199.jpg"
+        ]
+    },
+    {
+        "id": 200,
+        "name": "TerraNova Sleeping Bag 200",
+        "price": 90,
+        "category": "Sleeping Bags",
+        "brand": "TerraNova",
+        "description": "The TerraNova Sleeping Bag 200 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "terranova-sleeping-bag-200",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/200.jpg"
+        ]
+    },
+    {
+        "id": 201,
+        "name": "NatureNest Sleeping Bag 201",
+        "price": 120,
+        "category": "Sleeping Bags",
+        "brand": "NatureNest",
+        "description": "The NatureNest Sleeping Bag 201 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "naturenest-sleeping-bag-201",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/201.jpg"
+        ]
+    },
+    {
+        "id": 202,
+        "name": "OceanBreeze Sleeping Bag 202",
+        "price": 61,
+        "category": "Sleeping Bags",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Sleeping Bag 202 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-sleeping-bag-202",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/202.jpg"
+        ]
+    },
+    {
+        "id": 203,
+        "name": "SummitGear Sleeping Bag 203",
+        "price": 106,
+        "category": "Sleeping Bags",
+        "brand": "SummitGear",
+        "description": "The SummitGear Sleeping Bag 203 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "summitgear-sleeping-bag-203",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/203.jpg"
+        ]
+    },
+    {
+        "id": 204,
+        "name": "SkyLine Sleeping Bag 204",
+        "price": 122,
+        "category": "Sleeping Bags",
+        "brand": "SkyLine",
+        "description": "The SkyLine Sleeping Bag 204 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "skyline-sleeping-bag-204",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/204.jpg"
+        ]
+    },
+    {
+        "id": 205,
+        "name": "SwiftStream Sleeping Bag 205",
+        "price": 243,
+        "category": "Sleeping Bags",
+        "brand": "SwiftStream",
+        "description": "The SwiftStream Sleeping Bag 205 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "swiftstream-sleeping-bag-205",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/205.jpg"
+        ]
+    },
+    {
+        "id": 206,
+        "name": "PeakPerformance Sleeping Bag 206",
+        "price": 359,
+        "category": "Sleeping Bags",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Sleeping Bag 206 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-sleeping-bag-206",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/206.jpg"
+        ]
+    },
+    {
+        "id": 207,
+        "name": "OceanBreeze Sleeping Bag 207",
+        "price": 33,
+        "category": "Sleeping Bags",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Sleeping Bag 207 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-sleeping-bag-207",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/207.jpg"
+        ]
+    },
+    {
+        "id": 208,
+        "name": "OceanBreeze Sleeping Bag 208",
+        "price": 314,
+        "category": "Sleeping Bags",
+        "brand": "OceanBreeze",
+        "description": "The OceanBreeze Sleeping Bag 208 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "oceanbreeze-sleeping-bag-208",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/208.jpg"
+        ]
+    },
+    {
+        "id": 209,
+        "name": "ForestFound Sleeping Bag 209",
+        "price": 206,
+        "category": "Sleeping Bags",
+        "brand": "ForestFound",
+        "description": "The ForestFound Sleeping Bag 209 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "forestfound-sleeping-bag-209",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/209.jpg"
+        ]
+    },
+    {
+        "id": 210,
+        "name": "PeakPerformance Sleeping Bag 210",
+        "price": 444,
+        "category": "Sleeping Bags",
+        "brand": "PeakPerformance",
+        "description": "The PeakPerformance Sleeping Bag 210 is a top-tier choice for enthusiasts in the Sleeping Bags category. Designed for durability and performance, it features the latest in outdoor technology to ensure your comfort and safety in the wild.",
+        "slug": "peakperformance-sleeping-bag-210",
+        "manual": "/manuals/product_info_1.md",
+        "images": [
+            "/images/products/sleeping-bags/210.jpg"
         ]
     }
 ]
