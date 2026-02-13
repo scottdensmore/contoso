@@ -11,7 +11,7 @@ Showcase outdoor products with detailed information and high-quality imagery to 
 Outdoor enthusiasts looking for high-performance gear and detailed specifications to support their outdoor activities.
 
 ## Key Features
-- **Comprehensive Catalog:** Robust product list with detailed specs and manuals.
+- **Comprehensive Catalog:** Robust product list with detailed specs and manuals across seven core categories (Tents, Backpacks, Sleeping Bags, Hiking Footwear, Clothing, Stoves, and Tables).
 - **Categorized Browsing:** Seamlessly filter products by category (Tents, Backpacks, etc.).
 - **AI Chat Assistant:** Integrated AI chat for product inquiries and customer support.
 - **Dynamic Navigation:** Modern sidebar for quick access to store sections and support.
