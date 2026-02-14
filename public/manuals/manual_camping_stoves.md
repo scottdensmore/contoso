@@ -1,39 +1,44 @@
 # Camping Stove Safety & Usage Guide
 
 ## Features
-- **High Output:** Powerful burners for rapid boiling.
-- **Precise Control:** Adjustable flame for simmering or searing.
-- **Wind Protection:** Integrated windshields for efficiency.
-- **Compact:** Lightweight design for easy transport.
+- **High Output**: Precision burners designed for rapid boiling.
+- **Flame Control**: Micro-adjust valve for simmering or searing.
+- **Wind Protection**: Integrated windshield for maximum fuel efficiency.
+- **Lightweight**: Optimized for weight-conscious backpackers.
 
-## Technical
-- **Fuel Type:** Isobutane-propane canister.
-- **Boil Time:** Approx. 3.5 minutes for 1L of water.
-- **Ignition:** Piezoelectric igniter on select models.
-
-## Reviews
-### Robert T.
-"Incredibly fast boil time, works great even in the wind."
-### Sarah H.
-"Very compact and reliable, a staple in my gear kit."
-
-## FAQ
-**What fuel does it use?**
-Most models use standard threaded backpacking canisters.
-**Does it work at high altitude?**
-Yes, our stoves are tested for performance at high altitudes.
+## Technical Specs
+**Fuel Type**: Threaded isobutane-propane canister  
+**Boil Time**: ~3.5 min for 1L water  
+**Ignition**: Manual or Piezo (varies by model)  
+**Pot Support**: Folding stainless steel  
 
 ## User Guide
-1. Connect the fuel canister securely.
-2. Open the valve slightly.
-3. Ignite using the piezo or a match.
+1. Inspect the O-ring and connect the fuel canister securely.
+2. Open the control valve slightly until you hear gas flow.
+3. Ignite the burner using the piezo igniter or a match.
+4. Adjust the flame height as needed for your cooking task.
 
-## Caution
-- Use only in well-ventilated outdoor areas.
-- Keep away from children during use.
+## Cautions
+1. Use only in well-ventilated outdoor areas. Never use in a tent.
+2. Ensure the stove is on a flat, stable, non-flammable surface.
+3. Allow the stove to cool completely before packing.
 
-## Warranty
-- 2-year warranty on all components.
+## Warranty Information
+- 2-year warranty on all mechanical components.
 
-## Return
-- 30-day return policy.
+## Return Policy
+- 30-day return policy for unused stoves in original packaging.
+
+## Reviews
+1) **Rating:** 5
+   **Review:** Incredibly fast boil time, works great even in the wind.
+2) **Rating:** 5
+   **Review:** Very compact and reliable, a staple in my gear kit.
+
+## FAQ
+1) What fuel does it use?
+   Standard threaded isobutane-propane canisters.
+2) Does it work at high altitude?
+   Yes, our valves are pressure-regulated for consistent performance.
+3) How do I clean the burner?
+   Wipe with a damp cloth; ensure the burner holes are clear of debris.

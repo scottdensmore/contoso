@@ -351,7 +351,9 @@
         "slug": "naturenest-shelter-21",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/21.jpg"
+            "/images/products/tents/21.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -364,7 +366,9 @@
         "slug": "oceanbreeze-basecamp-22",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/22.jpg"
+            "/images/products/tents/22.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -377,7 +381,9 @@
         "slug": "vistapoint-backpacker-23",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/23.jpg"
+            "/images/products/tents/23.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -390,7 +396,9 @@
         "slug": "summitgear-expedition-24",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/24.jpg"
+            "/images/products/tents/24.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -403,7 +411,9 @@
         "slug": "peakperformance-fortress-25",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/25.jpg"
+            "/images/products/tents/25.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -416,7 +426,9 @@
         "slug": "alpineace-skyview-26",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/26.jpg"
+            "/images/products/tents/26.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -429,7 +441,9 @@
         "slug": "naturenest-summit-27",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/27.jpg"
+            "/images/products/tents/27.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -442,7 +456,9 @@
         "slug": "trailblazer-trailhead-28",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/28.jpg"
+            "/images/products/tents/28.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -455,7 +471,9 @@
         "slug": "cloudwalker-escape-29",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/29.jpg"
+            "/images/products/tents/29.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -468,7 +486,9 @@
         "slug": "summitgear-dome-30",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/30.jpg"
+            "/images/products/tents/30.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -481,7 +501,9 @@
         "slug": "skyline-shelter-31",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/31.jpg"
+            "/images/products/tents/31.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -494,7 +516,9 @@
         "slug": "cloudwalker-basecamp-32",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/32.jpg"
+            "/images/products/tents/32.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -507,7 +531,9 @@
         "slug": "peakperformance-backpacker-33",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/33.jpg"
+            "/images/products/tents/33.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -520,7 +546,9 @@
         "slug": "wildbound-expedition-34",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/34.jpg"
+            "/images/products/tents/34.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -533,7 +561,9 @@
         "slug": "swiftstream-fortress-35",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/35.jpg"
+            "/images/products/tents/35.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -546,7 +576,9 @@
         "slug": "ruggededge-skyview-36",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/36.jpg"
+            "/images/products/tents/36.jpg",
+            "/images/details/tents/1.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -559,7 +591,9 @@
         "slug": "terranova-summit-37",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/37.jpg"
+            "/images/products/tents/37.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -572,7 +606,9 @@
         "slug": "swiftstream-trailhead-38",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/38.jpg"
+            "/images/products/tents/38.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/tents/2.jpg"
         ]
     },
     {
@@ -585,7 +621,9 @@
         "slug": "ruggededge-pathfinder-39",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/39.jpg"
+            "/images/products/backpacks/39.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -598,7 +636,9 @@
         "slug": "vistapoint-pro-40",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/40.jpg"
+            "/images/products/backpacks/40.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -611,7 +651,9 @@
         "slug": "oceanbreeze-daypack-41",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/41.jpg"
+            "/images/products/backpacks/41.jpg",
+            "/images/details/colors/blue/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -624,7 +666,9 @@
         "slug": "swiftstream-trekker-42",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/42.jpg"
+            "/images/products/backpacks/42.jpg",
+            "/images/details/colors/blue/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -637,7 +681,9 @@
         "slug": "terranova-climber-43",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/43.jpg"
+            "/images/products/backpacks/43.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -650,7 +696,9 @@
         "slug": "cloudwalker-summit-44",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/44.jpg"
+            "/images/products/backpacks/44.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -663,7 +711,9 @@
         "slug": "alpineace-venture-45",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/45.jpg"
+            "/images/products/backpacks/45.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -676,7 +726,9 @@
         "slug": "summitgear-rucksack-46",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/46.jpg"
+            "/images/products/backpacks/46.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -689,7 +741,9 @@
         "slug": "terranova-explorer-47",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/47.jpg"
+            "/images/products/backpacks/47.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -702,7 +756,9 @@
         "slug": "alpineace-carrier-48",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/48.jpg"
+            "/images/products/backpacks/48.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -715,7 +771,9 @@
         "slug": "peakperformance-pathfinder-49",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/49.jpg"
+            "/images/products/backpacks/49.jpg",
+            "/images/details/colors/yellow/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -728,7 +786,9 @@
         "slug": "skyline-pro-50",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/50.jpg"
+            "/images/products/backpacks/50.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -741,7 +801,9 @@
         "slug": "forestfound-daypack-51",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/51.jpg"
+            "/images/products/backpacks/51.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -754,7 +816,9 @@
         "slug": "oceanbreeze-trekker-52",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/52.jpg"
+            "/images/products/backpacks/52.jpg",
+            "/images/details/colors/blue/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -767,7 +831,9 @@
         "slug": "naturenest-climber-53",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/53.jpg"
+            "/images/products/backpacks/53.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -780,7 +846,9 @@
         "slug": "ecotrek-summit-54",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/54.jpg"
+            "/images/products/backpacks/54.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -793,7 +861,9 @@
         "slug": "forestfound-venture-55",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/55.jpg"
+            "/images/products/backpacks/55.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -806,7 +876,9 @@
         "slug": "cloudwalker-rucksack-56",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/56.jpg"
+            "/images/products/backpacks/56.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -819,7 +891,9 @@
         "slug": "peakperformance-explorer-57",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/57.jpg"
+            "/images/products/backpacks/57.jpg",
+            "/images/details/colors/yellow/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -832,7 +906,9 @@
         "slug": "ecotrek-carrier-58",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/58.jpg"
+            "/images/products/backpacks/58.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -845,7 +921,9 @@
         "slug": "skyline-pathfinder-59",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/59.jpg"
+            "/images/products/backpacks/59.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -858,7 +936,9 @@
         "slug": "wildbound-pro-60",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/60.jpg"
+            "/images/products/backpacks/60.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -871,7 +951,9 @@
         "slug": "alpineace-daypack-61",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/61.jpg"
+            "/images/products/backpacks/61.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -884,7 +966,9 @@
         "slug": "ecotrek-trekker-62",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/62.jpg"
+            "/images/products/backpacks/62.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -897,7 +981,9 @@
         "slug": "skyline-climber-63",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/63.jpg"
+            "/images/products/backpacks/63.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -910,7 +996,9 @@
         "slug": "oceanbreeze-summit-64",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/64.jpg"
+            "/images/products/backpacks/64.jpg",
+            "/images/details/colors/blue/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -923,7 +1011,9 @@
         "slug": "forestfound-venture-65",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/65.jpg"
+            "/images/products/backpacks/65.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -936,7 +1026,9 @@
         "slug": "ruggededge-rucksack-66",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/66.jpg"
+            "/images/products/backpacks/66.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -949,7 +1041,9 @@
         "slug": "summitgear-explorer-67",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/67.jpg"
+            "/images/products/backpacks/67.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -962,7 +1056,9 @@
         "slug": "terranova-carrier-68",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/68.jpg"
+            "/images/products/backpacks/68.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -975,7 +1071,9 @@
         "slug": "ruggededge-pathfinder-69",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/69.jpg"
+            "/images/products/backpacks/69.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -988,7 +1086,9 @@
         "slug": "trailblazer-pro-70",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/70.jpg"
+            "/images/products/backpacks/70.jpg",
+            "/images/details/colors/yellow/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1001,7 +1101,9 @@
         "slug": "vistapoint-daypack-71",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/71.jpg"
+            "/images/products/backpacks/71.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1014,7 +1116,9 @@
         "slug": "trailblazer-trekker-72",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/72.jpg"
+            "/images/products/backpacks/72.jpg",
+            "/images/details/colors/yellow/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1027,7 +1131,9 @@
         "slug": "cloudwalker-climber-73",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/73.jpg"
+            "/images/products/backpacks/73.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1040,7 +1146,9 @@
         "slug": "summitgear-summit-74",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/74.jpg"
+            "/images/products/backpacks/74.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1053,7 +1161,9 @@
         "slug": "ruggededge-venture-75",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/75.jpg"
+            "/images/products/backpacks/75.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1066,7 +1176,9 @@
         "slug": "vistapoint-rucksack-76",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/76.jpg"
+            "/images/products/backpacks/76.jpg",
+            "/images/details/colors/red/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1079,7 +1191,9 @@
         "slug": "trailblazer-explorer-77",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/77.jpg"
+            "/images/products/backpacks/77.jpg",
+            "/images/details/colors/yellow/backpack_detail.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1092,7 +1206,9 @@
         "slug": "wildbound-carrier-78",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/78.jpg"
+            "/images/products/backpacks/78.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1105,7 +1221,9 @@
         "slug": "ecotrek-pathfinder-79",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/79.jpg"
+            "/images/products/backpacks/79.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1118,7 +1236,9 @@
         "slug": "naturenest-pro-80",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/80.jpg"
+            "/images/products/backpacks/80.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1131,7 +1251,9 @@
         "slug": "forestfound-daypack-81",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/81.jpg"
+            "/images/products/backpacks/81.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1144,7 +1266,9 @@
         "slug": "summitgear-trekker-82",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/82.jpg"
+            "/images/products/backpacks/82.jpg",
+            "/images/details/backpacks/1.jpg",
+            "/images/details/backpacks/2.jpg"
         ]
     },
     {
@@ -1157,7 +1281,9 @@
         "slug": "cloudwalker-alpine-trousers-83",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/83.jpg"
+            "/images/products/hiking-clothing/83.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1170,7 +1296,10 @@
         "slug": "swiftstream-trail-hoodie-84",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/84.jpg"
+            "/images/products/hiking-clothing/84.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1183,7 +1312,9 @@
         "slug": "cloudwalker-rapid-dry-tee-85",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/85.jpg"
+            "/images/products/hiking-clothing/85.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1196,7 +1327,9 @@
         "slug": "ecotrek-thermal-vest-86",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/86.jpg"
+            "/images/products/hiking-clothing/86.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1209,7 +1342,10 @@
         "slug": "terranova-merino-layer-87",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/87.jpg"
+            "/images/products/hiking-clothing/87.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1222,7 +1358,10 @@
         "slug": "peakperformance-vanguard-shorts-88",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/88.jpg"
+            "/images/products/hiking-clothing/88.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1235,7 +1374,10 @@
         "slug": "trailblazer-summit-parka-89",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/89.jpg"
+            "/images/products/hiking-clothing/89.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1248,7 +1390,9 @@
         "slug": "skyline-aero-jacket-90",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/90.jpg"
+            "/images/products/hiking-clothing/90.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1261,7 +1405,9 @@
         "slug": "summitgear-storm-shell-91",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/91.jpg"
+            "/images/products/hiking-clothing/91.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1274,7 +1420,10 @@
         "slug": "vistapoint-performance-base-92",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/92.jpg"
+            "/images/products/hiking-clothing/92.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1287,7 +1436,10 @@
         "slug": "oceanbreeze-alpine-trousers-93",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/93.jpg"
+            "/images/products/hiking-clothing/93.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1300,7 +1452,10 @@
         "slug": "vistapoint-trail-hoodie-94",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/94.jpg"
+            "/images/products/hiking-clothing/94.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1313,7 +1468,9 @@
         "slug": "cloudwalker-rapid-dry-tee-95",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/95.jpg"
+            "/images/products/hiking-clothing/95.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1326,7 +1483,9 @@
         "slug": "cloudwalker-thermal-vest-96",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/96.jpg"
+            "/images/products/hiking-clothing/96.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1339,7 +1498,9 @@
         "slug": "naturenest-merino-layer-97",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/97.jpg"
+            "/images/products/hiking-clothing/97.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1352,7 +1513,9 @@
         "slug": "alpineace-vanguard-shorts-98",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/98.jpg"
+            "/images/products/hiking-clothing/98.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1365,7 +1528,10 @@
         "slug": "swiftstream-summit-parka-99",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/99.jpg"
+            "/images/products/hiking-clothing/99.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1378,7 +1544,9 @@
         "slug": "ecotrek-aero-jacket-100",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/100.jpg"
+            "/images/products/hiking-clothing/100.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1391,7 +1559,9 @@
         "slug": "wildbound-storm-shell-101",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/101.jpg"
+            "/images/products/hiking-clothing/101.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1404,7 +1574,9 @@
         "slug": "ruggededge-performance-base-102",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/102.jpg"
+            "/images/products/hiking-clothing/102.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1417,7 +1589,10 @@
         "slug": "peakperformance-alpine-trousers-103",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/103.jpg"
+            "/images/products/hiking-clothing/103.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1430,7 +1605,9 @@
         "slug": "skyline-trail-hoodie-104",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/104.jpg"
+            "/images/products/hiking-clothing/104.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1443,7 +1620,9 @@
         "slug": "forestfound-rapid-dry-tee-105",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/105.jpg"
+            "/images/products/hiking-clothing/105.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1456,7 +1635,9 @@
         "slug": "naturenest-thermal-vest-106",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/106.jpg"
+            "/images/products/hiking-clothing/106.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1469,7 +1650,9 @@
         "slug": "summitgear-merino-layer-107",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/107.jpg"
+            "/images/products/hiking-clothing/107.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1482,7 +1665,9 @@
         "slug": "wildbound-vanguard-shorts-108",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/108.jpg"
+            "/images/products/hiking-clothing/108.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1495,7 +1680,9 @@
         "slug": "skyline-summit-parka-109",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/109.jpg"
+            "/images/products/hiking-clothing/109.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1508,7 +1695,10 @@
         "slug": "oceanbreeze-aero-jacket-110",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/110.jpg"
+            "/images/products/hiking-clothing/110.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1521,7 +1711,10 @@
         "slug": "peakperformance-storm-shell-111",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/111.jpg"
+            "/images/products/hiking-clothing/111.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1534,7 +1727,9 @@
         "slug": "cloudwalker-performance-base-112",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/112.jpg"
+            "/images/products/hiking-clothing/112.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1547,7 +1742,10 @@
         "slug": "oceanbreeze-alpine-trousers-113",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/113.jpg"
+            "/images/products/hiking-clothing/113.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-clothing/1.jpg",
+            "/images/details/hiking-clothing/2.jpg"
         ]
     },
     {
@@ -1560,7 +1758,8 @@
         "slug": "summitgear-summit-mid-114",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/114.jpg"
+            "/images/products/hiking-footwear/114.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1573,7 +1772,8 @@
         "slug": "ecotrek-scout-low-115",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/115.jpg"
+            "/images/products/hiking-footwear/115.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1586,7 +1786,8 @@
         "slug": "naturenest-ridge-walker-116",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/116.jpg"
+            "/images/products/hiking-footwear/116.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1599,7 +1800,8 @@
         "slug": "cloudwalker-peak-performer-117",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/117.jpg"
+            "/images/products/hiking-footwear/117.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1612,7 +1814,8 @@
         "slug": "ecotrek-river-sandal-118",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/118.jpg"
+            "/images/products/hiking-footwear/118.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1625,7 +1828,9 @@
         "slug": "oceanbreeze-canyon-grip-119",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/119.jpg"
+            "/images/products/hiking-footwear/119.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1638,7 +1843,8 @@
         "slug": "alpineace-trek-boot-120",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/120.jpg"
+            "/images/products/hiking-footwear/120.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1651,7 +1857,8 @@
         "slug": "skyline-trail-runner-121",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/121.jpg"
+            "/images/products/hiking-footwear/121.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1664,7 +1871,8 @@
         "slug": "skyline-alpine-climber-122",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/122.jpg"
+            "/images/products/hiking-footwear/122.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1677,7 +1885,8 @@
         "slug": "ruggededge-all-terrain-shoe-123",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/123.jpg"
+            "/images/products/hiking-footwear/123.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1690,7 +1899,9 @@
         "slug": "trailblazer-summit-mid-124",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/124.jpg"
+            "/images/products/hiking-footwear/124.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1703,7 +1914,8 @@
         "slug": "cloudwalker-scout-low-125",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/125.jpg"
+            "/images/products/hiking-footwear/125.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1716,7 +1928,9 @@
         "slug": "terranova-ridge-walker-126",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/126.jpg"
+            "/images/products/hiking-footwear/126.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1729,7 +1943,8 @@
         "slug": "summitgear-peak-performer-127",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/127.jpg"
+            "/images/products/hiking-footwear/127.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1742,7 +1957,8 @@
         "slug": "ruggededge-river-sandal-128",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/128.jpg"
+            "/images/products/hiking-footwear/128.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1755,7 +1971,8 @@
         "slug": "ecotrek-canyon-grip-129",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/129.jpg"
+            "/images/products/hiking-footwear/129.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1768,7 +1985,9 @@
         "slug": "trailblazer-trek-boot-130",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/130.jpg"
+            "/images/products/hiking-footwear/130.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1781,7 +2000,9 @@
         "slug": "terranova-trail-runner-131",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/131.jpg"
+            "/images/products/hiking-footwear/131.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1794,7 +2015,9 @@
         "slug": "trailblazer-alpine-climber-132",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/132.jpg"
+            "/images/products/hiking-footwear/132.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1807,7 +2030,8 @@
         "slug": "wildbound-all-terrain-shoe-133",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/133.jpg"
+            "/images/products/hiking-footwear/133.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1820,7 +2044,8 @@
         "slug": "cloudwalker-summit-mid-134",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/134.jpg"
+            "/images/products/hiking-footwear/134.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1833,7 +2058,9 @@
         "slug": "trailblazer-scout-low-135",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/135.jpg"
+            "/images/products/hiking-footwear/135.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1846,7 +2073,8 @@
         "slug": "ruggededge-ridge-walker-136",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/136.jpg"
+            "/images/products/hiking-footwear/136.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1859,7 +2087,8 @@
         "slug": "ruggededge-peak-performer-137",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/137.jpg"
+            "/images/products/hiking-footwear/137.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1872,7 +2101,9 @@
         "slug": "swiftstream-river-sandal-138",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/138.jpg"
+            "/images/products/hiking-footwear/138.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1885,7 +2116,9 @@
         "slug": "terranova-canyon-grip-139",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/139.jpg"
+            "/images/products/hiking-footwear/139.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1898,7 +2131,9 @@
         "slug": "trailblazer-trek-boot-140",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/140.jpg"
+            "/images/products/hiking-footwear/140.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1911,7 +2146,8 @@
         "slug": "alpineace-trail-runner-141",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/141.jpg"
+            "/images/products/hiking-footwear/141.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1924,7 +2160,9 @@
         "slug": "terranova-alpine-climber-142",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/142.jpg"
+            "/images/products/hiking-footwear/142.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1937,7 +2175,8 @@
         "slug": "wildbound-all-terrain-shoe-143",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/143.jpg"
+            "/images/products/hiking-footwear/143.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1950,7 +2189,8 @@
         "slug": "forestfound-summit-mid-144",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/144.jpg"
+            "/images/products/hiking-footwear/144.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1963,7 +2203,8 @@
         "slug": "ecotrek-scout-low-145",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/145.jpg"
+            "/images/products/hiking-footwear/145.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1976,7 +2217,9 @@
         "slug": "terranova-ridge-walker-146",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/146.jpg"
+            "/images/products/hiking-footwear/146.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -1989,7 +2232,9 @@
         "slug": "peakperformance-peak-performer-147",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/147.jpg"
+            "/images/products/hiking-footwear/147.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2002,7 +2247,9 @@
         "slug": "peakperformance-river-sandal-148",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/148.jpg"
+            "/images/products/hiking-footwear/148.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2015,7 +2262,8 @@
         "slug": "wildbound-canyon-grip-149",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/149.jpg"
+            "/images/products/hiking-footwear/149.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2028,7 +2276,9 @@
         "slug": "trailblazer-trek-boot-150",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/150.jpg"
+            "/images/products/hiking-footwear/150.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2041,7 +2291,8 @@
         "slug": "skyline-trail-runner-151",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/151.jpg"
+            "/images/products/hiking-footwear/151.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2054,7 +2305,9 @@
         "slug": "trailblazer-alpine-climber-152",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/152.jpg"
+            "/images/products/hiking-footwear/152.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2067,7 +2320,8 @@
         "slug": "wildbound-all-terrain-shoe-153",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/153.jpg"
+            "/images/products/hiking-footwear/153.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2080,7 +2334,8 @@
         "slug": "cloudwalker-summit-mid-154",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/154.jpg"
+            "/images/products/hiking-footwear/154.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2093,7 +2348,8 @@
         "slug": "skyline-scout-low-155",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/155.jpg"
+            "/images/products/hiking-footwear/155.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2106,7 +2362,9 @@
         "slug": "terranova-ridge-walker-156",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/156.jpg"
+            "/images/products/hiking-footwear/156.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2119,7 +2377,9 @@
         "slug": "swiftstream-peak-performer-157",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/157.jpg"
+            "/images/products/hiking-footwear/157.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/hiking-footwear/1.jpg"
         ]
     },
     {
@@ -2132,7 +2392,9 @@
         "slug": "peakperformance-nomad-desk-158",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/158.jpg"
+            "/images/products/camping-tables/158.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2145,7 +2407,8 @@
         "slug": "alpineace-peak-platform-159",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/159.jpg"
+            "/images/products/camping-tables/159.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2158,7 +2421,8 @@
         "slug": "ruggededge-basecamp-table-160",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/160.jpg"
+            "/images/products/camping-tables/160.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2171,7 +2435,8 @@
         "slug": "naturenest-folding-prep-161",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/161.jpg"
+            "/images/products/camping-tables/161.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2184,7 +2449,9 @@
         "slug": "oceanbreeze-alpine-surface-162",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/162.jpg"
+            "/images/products/camping-tables/162.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2197,7 +2464,8 @@
         "slug": "forestfound-compact-side-163",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/163.jpg"
+            "/images/products/camping-tables/163.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2210,7 +2478,8 @@
         "slug": "ecotrek-summit-station-164",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/164.jpg"
+            "/images/products/camping-tables/164.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2223,7 +2492,8 @@
         "slug": "summitgear-trail-dining-165",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/165.jpg"
+            "/images/products/camping-tables/165.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2236,7 +2506,8 @@
         "slug": "skyline-explorer-lite-166",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/166.jpg"
+            "/images/products/camping-tables/166.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2249,7 +2520,8 @@
         "slug": "ruggededge-gathering-table-167",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/167.jpg"
+            "/images/products/camping-tables/167.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2262,7 +2534,9 @@
         "slug": "peakperformance-nomad-desk-168",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/168.jpg"
+            "/images/products/camping-tables/168.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2275,7 +2549,8 @@
         "slug": "alpineace-peak-platform-169",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/169.jpg"
+            "/images/products/camping-tables/169.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2288,7 +2563,8 @@
         "slug": "ruggededge-basecamp-table-170",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/170.jpg"
+            "/images/products/camping-tables/170.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2301,7 +2577,8 @@
         "slug": "naturenest-folding-prep-171",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/171.jpg"
+            "/images/products/camping-tables/171.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2314,7 +2591,9 @@
         "slug": "vistapoint-alpine-surface-172",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/172.jpg"
+            "/images/products/camping-tables/172.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2327,7 +2606,8 @@
         "slug": "summitgear-compact-side-173",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/173.jpg"
+            "/images/products/camping-tables/173.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2340,7 +2620,8 @@
         "slug": "summitgear-summit-station-174",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/174.jpg"
+            "/images/products/camping-tables/174.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2353,7 +2634,8 @@
         "slug": "naturenest-trail-dining-175",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/175.jpg"
+            "/images/products/camping-tables/175.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2366,7 +2648,9 @@
         "slug": "peakperformance-explorer-lite-176",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/176.jpg"
+            "/images/products/camping-tables/176.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2379,7 +2663,8 @@
         "slug": "naturenest-gathering-table-177",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/177.jpg"
+            "/images/products/camping-tables/177.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2392,7 +2677,8 @@
         "slug": "naturenest-nomad-desk-178",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/178.jpg"
+            "/images/products/camping-tables/178.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2405,7 +2691,8 @@
         "slug": "naturenest-peak-platform-179",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/179.jpg"
+            "/images/products/camping-tables/179.jpg",
+            "/images/details/camping-tables/1.jpg"
         ]
     },
     {
@@ -2418,7 +2705,10 @@
         "slug": "peakperformance-eco-burner-180",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/180.jpg"
+            "/images/products/camping-stoves/180.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2431,7 +2721,9 @@
         "slug": "cloudwalker-power-flame-181",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/181.jpg"
+            "/images/products/camping-stoves/181.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2444,7 +2736,9 @@
         "slug": "ruggededge-compact-cooker-182",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/182.jpg"
+            "/images/products/camping-stoves/182.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2457,7 +2751,10 @@
         "slug": "swiftstream-alpine-jet-183",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/183.jpg"
+            "/images/products/camping-stoves/183.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2470,7 +2767,9 @@
         "slug": "forestfound-summit-hearth-184",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/184.jpg"
+            "/images/products/camping-stoves/184.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2483,7 +2782,9 @@
         "slug": "cloudwalker-trail-fire-185",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/185.jpg"
+            "/images/products/camping-stoves/185.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2496,7 +2797,10 @@
         "slug": "terranova-rapid-boil-186",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/186.jpg"
+            "/images/products/camping-stoves/186.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2509,7 +2813,10 @@
         "slug": "peakperformance-explorer-grill-187",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/187.jpg"
+            "/images/products/camping-stoves/187.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2522,7 +2829,9 @@
         "slug": "naturenest-micro-stove-188",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/188.jpg"
+            "/images/products/camping-stoves/188.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2535,7 +2844,10 @@
         "slug": "oceanbreeze-vortex-burner-189",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/189.jpg"
+            "/images/products/camping-stoves/189.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2548,7 +2860,10 @@
         "slug": "peakperformance-eco-burner-190",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/190.jpg"
+            "/images/products/camping-stoves/190.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2561,7 +2876,10 @@
         "slug": "oceanbreeze-power-flame-191",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/191.jpg"
+            "/images/products/camping-stoves/191.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2574,7 +2892,10 @@
         "slug": "swiftstream-compact-cooker-192",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/192.jpg"
+            "/images/products/camping-stoves/192.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2587,7 +2908,9 @@
         "slug": "alpineace-alpine-jet-193",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/193.jpg"
+            "/images/products/camping-stoves/193.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2600,7 +2923,9 @@
         "slug": "ruggededge-summit-hearth-194",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/194.jpg"
+            "/images/products/camping-stoves/194.jpg",
+            "/images/details/camping-stoves/1.jpg",
+            "/images/details/camping-stoves/2.jpg"
         ]
     },
     {
@@ -2613,7 +2938,10 @@
         "slug": "terranova-explorer-comfort-195",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/195.jpg"
+            "/images/products/sleeping-bags/195.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2626,7 +2954,9 @@
         "slug": "skyline-thermal-nest-196",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/196.jpg"
+            "/images/products/sleeping-bags/196.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2639,7 +2969,9 @@
         "slug": "cloudwalker-vantage-bag-197",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/197.jpg"
+            "/images/products/sleeping-bags/197.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2652,7 +2984,10 @@
         "slug": "oceanbreeze-cozy-shelter-198",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/198.jpg"
+            "/images/products/sleeping-bags/198.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2665,7 +3000,10 @@
         "slug": "peakperformance-horizon-sleeper-199",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/199.jpg"
+            "/images/products/sleeping-bags/199.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2678,7 +3016,10 @@
         "slug": "terranova-dream-cloud-200",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/200.jpg"
+            "/images/products/sleeping-bags/200.jpg",
+            "/images/details/colors/red/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2691,7 +3032,9 @@
         "slug": "naturenest-night-oasis-201",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/201.jpg"
+            "/images/products/sleeping-bags/201.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2704,7 +3047,10 @@
         "slug": "oceanbreeze-summit-sleep-202",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/202.jpg"
+            "/images/products/sleeping-bags/202.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2717,7 +3063,9 @@
         "slug": "summitgear-alpine-mummy-203",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/203.jpg"
+            "/images/products/sleeping-bags/203.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2730,7 +3078,9 @@
         "slug": "skyline-trail-snug-204",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/204.jpg"
+            "/images/products/sleeping-bags/204.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2743,7 +3093,10 @@
         "slug": "swiftstream-explorer-comfort-205",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/205.jpg"
+            "/images/products/sleeping-bags/205.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2756,7 +3109,10 @@
         "slug": "peakperformance-thermal-nest-206",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/206.jpg"
+            "/images/products/sleeping-bags/206.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2769,7 +3125,10 @@
         "slug": "oceanbreeze-vantage-bag-207",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/207.jpg"
+            "/images/products/sleeping-bags/207.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2782,7 +3141,10 @@
         "slug": "oceanbreeze-cozy-shelter-208",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/208.jpg"
+            "/images/products/sleeping-bags/208.jpg",
+            "/images/details/colors/blue/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2795,7 +3157,9 @@
         "slug": "forestfound-horizon-sleeper-209",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/209.jpg"
+            "/images/products/sleeping-bags/209.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     },
     {
@@ -2808,7 +3172,10 @@
         "slug": "peakperformance-dream-cloud-210",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/210.jpg"
+            "/images/products/sleeping-bags/210.jpg",
+            "/images/details/colors/yellow/tent_detail.jpg",
+            "/images/details/sleeping-bags/1.jpg",
+            "/images/details/sleeping-bags/2.jpg"
         ]
     }
 ]
