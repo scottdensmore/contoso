@@ -1,15 +1,39 @@
 # Camping Table User Guide
 
-## Setup
-1. Unfold the table legs until they lock into place.
-2. Ensure the table is on stable, level ground.
-3. If the table has a roll-top, unroll it and secure it to the frame.
+## Features
+- **Ultra-Portable:** Lightweight materials and compact folding design.
+- **Sturdy Frame:** Aluminum alloy construction for maximum stability.
+- **Heat Resistant:** Surface can handle warm cookware.
+- **Quick Assembly:** Sets up in seconds without tools.
 
-## Usage Limits
+## Technical
+- **Material:** Anodized aluminum.
+- **Weight Capacity:** Up to 100 lbs (varies by model).
+- **Height:** Adjustable legs on select models.
+
+## Reviews
+### Chris B.
+"Perfect for camp cooking, very stable and easy to clean."
+### Linda K.
+"Love how small it folds down, fits anywhere in the car."
+
+## FAQ
+**Can I cook directly on it?**
+We recommend using a stove or heat mat; the surface is heat-resistant but not fireproof.
+**Is it rust-proof?**
+Yes, the aluminum construction is naturally resistant to rust.
+
+## User Guide
+1. Unfold the table legs until they lock.
+2. Ensure the table is on level ground.
+3. Secure the top to the frame.
+
+## Caution
+- Do not exceed the maximum weight limit.
 - Do not sit or stand on the table.
-- Respect the maximum weight capacity (refer to product specs).
-- Use coasters or heat-resistant pads for hot items.
 
-## Care
-- Wipe down with a damp cloth after use.
-- Ensure the table is dry before folding and storing.
+## Warranty
+- 3-year limited warranty.
+
+## Return
+- 30-day money-back guarantee.

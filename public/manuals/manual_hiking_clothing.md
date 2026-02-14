@@ -1,13 +1,38 @@
 # Hiking Clothing Care Guide
 
-## Washing Instructions
-- **Read the Label:** Always follow the specific care label on your garment.
-- **Detergent:** Use a mild, technical detergent designed for outdoor gear. Avoid fabric softeners.
-- **Temperature:** Wash in cold or warm water to preserve technical fabrics.
+## Features
+- **Moisture Wicking:** Pulls sweat away from the body to keep you dry.
+- **Breathable Fabric:** Enhances airflow during intense activity.
+- **UV Protection:** Built-in UPF rating for sun safety.
+- **Quick-Dry:** Dries rapidly after rain or washing.
 
-## Drying
-- **Air Dry:** Line dry whenever possible to save energy and extend garment life.
-- **Tumble Dry:** If necessary, use low heat.
+## Technical
+- **Fabric:** Advanced polyester/spandex blends.
+- **Weight:** Ultralight construction.
+- **Fit:** Athletic cut for freedom of movement.
 
-## Re-waterproofing
-- For waterproof items (DWR), re-apply a water-repellent spray or wash-in treatment once water stops beading on the surface.
+## Reviews
+### Alex P.
+"Very comfortable even on long, hot treks."
+### Jessica L.
+"The fit is perfect and it really does dry incredibly fast."
+
+## FAQ
+**Does it shrink in the wash?**
+No, our technical fabrics are pre-shrunk and designed to hold their shape.
+**Is it windproof?**
+Our shells and jackets offer varying levels of wind resistance.
+
+## User Guide
+- **Read the Label:** Always follow the specific care label.
+- **Detergent:** Use mild detergent. Avoid fabric softeners.
+
+## Caution
+- Keep away from open flames.
+- Do not iron technical prints or logos.
+
+## Warranty
+- 1-year limited warranty.
+
+## Return
+- Returns accepted within 30 days with original tags.
