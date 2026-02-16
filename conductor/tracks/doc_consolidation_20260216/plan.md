@@ -5,8 +5,8 @@ This plan outlines the steps to centralize, standardize, and integrate the proje
 ## Phase 1: Discovery and Initial Consolidation
 Goal: Identify all existing documentation and consolidate it into the `docs/` directory.
 
-- [ ] Task: Audit the repository for scattered Markdown files that should be in `docs/`
-- [ ] Task: Move identified documentation files to the `docs/` directory
+- [x] Task: Audit the repository for scattered Markdown files that should be in `docs/`
+- [x] Task: Move identified documentation files to the `docs/` directory [3c5e37b]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Discovery and Initial Consolidation' (Protocol in workflow.md)
 
 ## Phase 2: Audit and Standardization
