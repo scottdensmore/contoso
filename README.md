@@ -102,6 +102,17 @@ make test
 make ci
 ```
 
+There is also a root `package.json` workspace command surface:
+
+```bash
+npm run setup
+npm run dev:web
+npm run dev:chat
+npm run ci:web
+npm run ci:chat
+npm run ci
+```
+
 For coding agents, see [AGENTS.md](./AGENTS.md).
 
 ## Features

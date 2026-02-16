@@ -1,0 +1,28 @@
+{
+  "name": "contoso-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "make dev",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:chat": "make dev-chat",
+    "setup:web": "npm --prefix apps/web ci",
+    "setup:chat": "make setup-chat",
+    "setup": "npm run setup:web && npm run setup:chat",
+    "lint:web": "npm run lint -w apps/web",
+    "typecheck:web": "make typecheck",
+    "test": "make test",
+    "test:web": "npm run test -w apps/web",
+    "test:chat": "make test-chat",
+    "test:chat:integration": "make test-chat-integration",
+    "build:web": "npm run build -w apps/web",
+    "prisma:generate": "make prisma-generate",
+    "migrate": "make migrate",
+    "docs:check": "make docs-check",
+    "ci": "make ci",
+    "ci:web": "npm run lint:web && npm run typecheck:web && npm run test:web && npm run build:web",
+    "ci:chat": "npm run test:chat"
+  }
+}

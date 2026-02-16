@@ -15,6 +15,8 @@ From repository root:
 ```bash
 make setup
 make dev-web
+npm run setup:web
+npm run dev:web
 ```
 
 Run web with dependencies (db + chat) in Docker:
@@ -33,6 +35,7 @@ make typecheck
 make test-web
 make build
 make prisma-generate
+npm run ci:web
 ```
 
 ## Prisma

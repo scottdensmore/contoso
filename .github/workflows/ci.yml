@@ -29,11 +29,15 @@ jobs:
               - 'apps/web/**'
               - 'Dockerfile'
               - 'docker-compose.yml'
+              - 'Makefile'
+              - 'package.json'
             chat:
               - 'services/chat/**'
               - 'apps/web/prisma/**'
               - 'docker-compose.yml'
               - 'Dockerfile.migrate'
+              - 'Makefile'
+              - 'package.json'
 
   web-ci:
     name: Web App CI
@@ -58,24 +62,16 @@ jobs:
         run: npm ci
 
       - name: Lint
-        working-directory: ./apps/web
-        run: npm run lint -- --max-warnings 0
-
-      - name: Generate Prisma Client (JS)
-        working-directory: ./apps/web
-        run: npx prisma generate --generator client --schema prisma/schema.prisma
+        run: npm run lint:web -- --max-warnings 0
 
       - name: Type Check
-        working-directory: ./apps/web
-        run: npx tsc --noEmit
+        run: npm run typecheck:web
 
       - name: Run tests
-        working-directory: ./apps/web
-        run: npm run test
+        run: npm run test:web
 
       - name: Build
-        working-directory: ./apps/web
-        run: npm run build
+        run: npm run build:web
 
   chat-ci:
     name: Chat Service CI
@@ -104,9 +100,7 @@ jobs:
           prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
 
       - name: Run unit tests
-        working-directory: ./services/chat
-        run: |
-          pytest tests/unit/ --cov=src/api --cov-report=term-missing -v
+        run: npm run ci:chat
         env:
           PROJECT_ID: local-project
           REGION: us-central1

@@ -31,6 +31,17 @@ make test
 make ci
 ```
 
+Unified npm command surface (root `package.json`):
+
+```bash
+npm run setup
+npm run dev:web
+npm run dev:chat
+npm run ci:web
+npm run ci:chat
+npm run ci
+```
+
 Useful split commands:
 
 ```bash

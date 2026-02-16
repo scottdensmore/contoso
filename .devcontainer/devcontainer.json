@@ -15,5 +15,5 @@
       "onAutoForward": "openPreview"
     }
   },
-  "postCreateCommand": "npm --prefix apps/web install"
+  "postCreateCommand": "npm run setup:web"
 }
