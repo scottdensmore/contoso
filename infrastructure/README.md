@@ -1,27 +1,52 @@
 # Infrastructure and Deployment
 
-This directory contains the infrastructure-as-code and setup scripts for the Contoso Outdoor project.
+This directory contains the infrastructure-as-code and deployment scripts for the Contoso Outdoor project.
 
-## CI/CD Overview
+## Deployment Overview
 
-The project uses a test-focused Continuous Integration (CI) pipeline via GitHub Actions. Automated deployment to Google Cloud Run has been removed in favor of manual deployment via scripts when necessary.
+The project uses a unified deployment process targeting Google Cloud Run.
 
-### CI Workflow
-The CI pipeline (`.github/workflows/ci.yml`) automatically runs on every push to `main` and includes:
-- Web App: Linting, Unit Tests, and Build verification.
-- Chat Service: Python unit tests.
-- Security: CodeQL static analysis.
+### Local Simulation
+To verify the deployment logic locally:
+```bash
+./infrastructure/scripts/simulate_ci.sh
+```
 
 ### Manual Deployment
-To provision resources and deploy the stack manually:
 ```bash
 export PROJECT_ID="your-project-id"
-export BILLING_ACCOUNT="your-billing-account-id"
+export BILLING_ACCOUNT="your-billing-account-id" # List with: gcloud beta billing accounts list
 export NEXTAUTH_SECRET="your-secret"
 ./infrastructure/scripts/setup_project.sh
 ```
 
-## Maintenance and Teardown
+## Rollback Procedures
+
+In the event of a deployment failure or service instability, follow these steps to roll back to a previous known-good version.
+
+### 1. Cloud Run Service Rollback (Immediate)
+Use the `gcloud` CLI to revert traffic to a previous revision:
+
+```bash
+# List revisions to find the previous stable one
+gcloud run revisions list --service=contoso-web --region=us-central1
+
+# Revert 100% of traffic to the stable revision
+gcloud run services update-traffic contoso-web --to-revisions=STABLE_REVISION_NAME=100 --region=us-central1
+```
+Repeat for `contoso-chat` if necessary.
+
+### 2. GitHub Actions Rollback
+If the failure was due to a faulty commit:
+1. Revert the commit on the `main` branch.
+2. Reverting the commit on the `main` branch will trigger the CI workflow to verify the previous state.
+
+### 3. Terraform Rollback
+If the failure was due to infrastructure changes:
+1. Revert the changes in `infrastructure/terraform`.
+2. Run `terraform apply` locally or push to trigger the CI pipeline.
+
+## Teardown
 
 To destroy all GCP resources for an environment:
 

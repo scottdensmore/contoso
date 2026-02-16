@@ -7,13 +7,14 @@ A modern e-commerce website for "Contoso Outdoors" with integrated AI features, 
 - [Quick Start](#quick-start)
 - [Features](#features)
 - [Local Development](#local-development)
+- [Deployment](#deployment-to-google-cloud-platform)
 - [Database](#database)
 - [Authentication](#authentication)
 - [Contributing](#contributing)
 
 ## Getting Started
 
-Choose one of the following two options to run the application:
+Choose one of the following three options to run the application:
 
 ### Option 1: Run Everything Locally (Docker)
 **Best for:** Trying out the application quickly without installing dependencies.
@@ -73,6 +74,24 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
     npm run dev
     ```
 
+### Option 3: Deploy to Google Cloud Platform (GCP)
+**Best for:** Production deployment with Vertex AI.
+
+1.  **Prerequisites:** Google Cloud SDK, Docker, Terraform, Billing Account.
+
+2.  **Environment:**
+    ```bash
+    export PROJECT_ID="your-project-id"
+    export BILLING_ACCOUNT="your-billing-id"
+    export NEXTAUTH_SECRET="your-secret"
+    ```
+
+3.  **Deploy:**
+    ```bash
+    ./infrastructure/scripts/setup_project.sh
+    ```
+    This script provisions Cloud SQL, Cloud Run, and deploys the entire stack.
+
 ---
 
 ## Features
@@ -111,3 +130,23 @@ Authentication is handled by NextAuth.js.
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our development workflow, coding standards, and how to submit pull requests.
 
+## Quick Reference
+
+### Docker (Option 1)
+```bash
+docker-compose up      # Start all services
+docker-compose down -v # Stop and remove data
+```
+
+### Local Dev (Option 2)
+```bash
+docker-compose up -d db chat # Start dependencies
+npm run dev                  # Start web app
+npx prisma studio            # View database
+```
+
+### GCP Deployment (Option 3)
+```bash
+./infrastructure/scripts/setup_project.sh    # Deploy everything
+./infrastructure/scripts/teardown_project.sh # Delete all resources
+```
