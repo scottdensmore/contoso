@@ -10,8 +10,45 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    name: Detect Changed Surfaces
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      chat: ${{ steps.filter.outputs.chat }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'src/**'
+              - 'public/**'
+              - 'prisma/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'tsconfig.json'
+              - 'next.config.js'
+              - 'tailwind.config.ts'
+              - 'postcss.config.js'
+              - '.eslintrc.json'
+              - 'vitest.config.ts'
+              - 'Dockerfile'
+              - 'docker-compose.yml'
+            chat:
+              - 'services/chat/**'
+              - 'prisma/**'
+              - 'docker-compose.yml'
+              - 'Dockerfile.migrate'
+
   web-ci:
     name: Web App CI
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,6 +80,8 @@ jobs:
 
   chat-ci:
     name: Chat Service CI
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.chat == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

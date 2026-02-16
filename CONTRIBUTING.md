@@ -21,9 +21,9 @@ This project uses the **Conductor** framework to manage features and tasks.
 
 ### Technology Stack
 - **Frontend:** Next.js (App Router), React, Tailwind CSS.
-- **Backend:** Next.js API Routes, Prisma ORM.
+- **Backend:** Next.js API Routes, FastAPI chat service, Prisma ORM.
 - **Database:** PostgreSQL.
-- **Testing:** Vitest, React Testing Library.
+- **Testing:** Vitest, React Testing Library, pytest.
 
 ### Guidelines
 - **TypeScript:** Use strict typing. Avoid `any`.
@@ -34,9 +34,9 @@ This project uses the **Conductor** framework to manage features and tasks.
 ## Quality Gates
 
 Before submitting a Pull Request, ensure:
-- [ ] All tests pass (`npm test`).
+- [ ] All tests pass (`make test`).
 - [ ] Code coverage is sufficient.
-- [ ] No linting errors (`npm run lint`).
+- [ ] No linting errors (`make lint`).
 - [ ] The code matches the `spec.md` requirements.
 
 ## Making Changes
@@ -44,7 +44,7 @@ Before submitting a Pull Request, ensure:
 1.  **Create a Branch:** `git checkout -b feature/your-feature-name`
 2.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
 3.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
-4.  **Verify:** Run the full test suite.
+4.  **Verify:** Run the full local checks (`make ci`).
 5.  **Push & PR:** Push your branch and open a Pull Request.
 
 ## Database Migrations
@@ -56,4 +56,7 @@ If your change involves the database:
 
 ## Need Help?
 
-Refer to the documentation in the `conductor/` directory for more details on the project structure and product goals.
+Refer to:
+
+- `AGENTS.md` for coding agent runbooks and command conventions.
+- `conductor/` for product goals and track context.

@@ -33,13 +33,9 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
 
 3.  **Create `.env`:**
     ```bash
-    NEXTAUTH_SECRET=your-secret-here
-    DATABASE_URL="postgresql://postgres:postgres@db:5432/contoso-db?schema=public"
-    CHAT_ENDPOINT=http://localhost:8000/api/create_response
-    LLM_PROVIDER=local
-    LOCAL_MODEL_NAME=gemma3:12b
-    PROJECT_ID=local
+    cp .env.example .env
     ```
+    Then edit values as needed for your environment.
 
 4.  **Start:**
     ```bash
@@ -58,12 +54,9 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
 
 2.  **Configure `.env`:**
     ```bash
-    NEXTAUTH_SECRET=your-secret-here
-    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/contoso-db?schema=public"
-    CHAT_ENDPOINT=http://localhost:8000/api/create_response
-    LLM_PROVIDER=local
-    PROJECT_ID=local
+    cp .env.example .env
     ```
+    Then edit values as needed for your environment.
 
 3.  **Run Migrations:**
     ```bash
@@ -95,6 +88,20 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
 
 ---
 
+## Common Commands
+
+The repository now includes a root `Makefile` for a consistent command surface:
+
+```bash
+make help
+make setup
+make dev
+make test
+make ci
+```
+
+For coding agents, see [AGENTS.md](./AGENTS.md).
+
 ## Features
 
 - **Product Catalog:** Browse products by category (Tents, Backpacks, etc.).
@@ -112,6 +119,7 @@ Comprehensive documentation is available in the [docs/](./docs/) directory:
 
 - **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
 - **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
+- **[Chat Service Runbook](./services/chat/README.md):** Chat API local development and testing.
 - **[Contributing Guide](./CONTRIBUTING.md):** Standards and workflow for developers.
 
 ## Database
