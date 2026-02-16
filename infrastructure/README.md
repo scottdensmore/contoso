@@ -39,7 +39,7 @@ Repeat for `contoso-chat` if necessary.
 ### 2. GitHub Actions Rollback
 If the failure was due to a faulty commit:
 1. Revert the commit on the `main` branch.
-2. The `google-cloud.yml` workflow will automatically trigger and deploy the previous state.
+2. Reverting the commit on the `main` branch will trigger the CI workflow to verify the previous state.
 
 ### 3. Terraform Rollback
 If the failure was due to infrastructure changes:

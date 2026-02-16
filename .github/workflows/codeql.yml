@@ -13,9 +13,9 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", "feat/google-cloud-deployment" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "feat/google-cloud-deployment" ]
+    branches: [ "main" ]
   schedule:
     - cron: '40 16 * * 6'
   repository_dispatch:
