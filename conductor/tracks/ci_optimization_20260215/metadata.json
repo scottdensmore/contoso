@@ -1,0 +1,8 @@
+{
+  "track_id": "ci_optimization_20260215",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-02-15T10:00:00Z",
+  "updated_at": "2026-02-15T10:00:00Z",
+  "description": "update the workflow to only run tests and run the codeql. We can remove the deployment for GCP"
+}

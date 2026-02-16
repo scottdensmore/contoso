@@ -3,9 +3,8 @@
 ## Phase 1: Deletion and Cleanup
 - [x] Task: Remove GCP deployment workflow (14a7d9a)
     - [x] Delete `.github/workflows/google-cloud.yml`
-- [x] Task: Update project documentation (aebb172)
-    - [x] Remove GCP deployment instructions from `README.md`
-    - [x] Update `infrastructure/README.md` to reflect the removal of automated deployment
+- [x] Task: Update project documentation (10e29fc)
+    - [x] Retain deployment information in `README.md` and `infrastructure/README.md` as requested.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Deletion and Cleanup' (Protocol in workflow.md)
 
 ## Phase 2: CI Workflow Implementation

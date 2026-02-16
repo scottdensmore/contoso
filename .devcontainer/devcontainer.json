@@ -3,13 +3,12 @@
   "dockerComposeFile": "../docker-compose.yml",
   "service": "web",
   "workspaceFolder": "/app",
-  "runArgs": ["--userns=keep-id"],
-  "customizations": {
-    "vscode": {
-      "extensions": ["google.gemini-cli-vscode-ide-companion"]
-    }
-  },
-  "forwardPorts": [3000],
+  "runArgs": [
+    "--userns=keep-id"
+  ],
+  "forwardPorts": [
+    3000
+  ],
   "portsAttributes": {
     "3000": {
       "label": "Application",
