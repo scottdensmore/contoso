@@ -17,6 +17,19 @@ From repository root:
 make setup-chat
 make dev-chat
 make test-chat
+npm run setup:chat
+npm run dev:chat
+npm run ci:chat
+```
+
+From service directory:
+
+```bash
+make help
+make setup
+make dev
+make test
+make ci
 ```
 
 Integration tests (service must already be running):

@@ -89,11 +89,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        working-directory: ./services/chat
-        run: |
-          pip install -r src/api/requirements.txt
-          pip install -r tests/requirements-test.txt
-          pip install httpx pytest-cov prisma
+        run: make -C services/chat setup
 
       - name: Generate Prisma Client (Python)
         run: |

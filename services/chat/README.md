@@ -27,6 +27,7 @@ Service endpoint: `http://localhost:8000`
 ```bash
 make setup-chat
 npm run setup:chat
+make -C services/chat setup
 ```
 
 2. Create env file:
@@ -40,6 +41,7 @@ cp services/chat/.env.example services/chat/.env
 ```bash
 make dev-chat
 npm run dev:chat
+make -C services/chat dev
 ```
 
 ## Endpoints
@@ -56,6 +58,9 @@ make test-chat
 SERVICE_URL=http://localhost:8000 make test-chat-integration
 npm run quick-ci:chat
 npm run ci:chat
+make -C services/chat test
+make -C services/chat test-integration
+make -C services/chat ci
 ```
 
 ## Environment

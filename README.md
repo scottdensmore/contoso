@@ -69,6 +69,10 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
     ```bash
     make dev-web
     ```
+    or
+    ```bash
+    npm run dev:web
+    ```
 
 ### Option 3: Deploy to Google Cloud Platform (GCP)
 **Best for:** Production deployment with Vertex AI.
@@ -114,6 +118,15 @@ npm run quick-ci:chat
 npm run ci:web
 npm run ci:chat
 npm run ci
+```
+
+Service-owned command surface:
+
+```bash
+make -C services/chat help
+make -C services/chat setup
+make -C services/chat dev
+make -C services/chat ci
 ```
 
 For coding agents, see [AGENTS.md](./AGENTS.md).

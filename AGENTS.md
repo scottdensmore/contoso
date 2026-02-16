@@ -14,6 +14,7 @@ Use this file as the default runbook for coding agents.
 - `apps/web/src/lib/`: shared web helpers and domain logic.
 - `services/chat/src/api/`: chat service API and chat logic.
 - `services/chat/tests/`: chat unit and integration tests.
+- `services/chat/Makefile`: chat-owned dev/test command surface.
 - `apps/web/prisma/`: shared data model and migrations.
 - `infrastructure/`: deployment scripts and Terraform.
 - `docs/`: operator and architecture docs.
@@ -53,6 +54,7 @@ make dev-chat
 make test-web
 make test-chat
 make docs-check
+make -C services/chat help
 ```
 
 ## Environment files

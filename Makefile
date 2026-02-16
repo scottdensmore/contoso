@@ -7,7 +7,7 @@ PIP ?= pip3
 
 WEB_DIR := apps/web
 CHAT_DIR := services/chat
-CHAT_SRC_DIR := $(CHAT_DIR)/src/api
+CHAT_MAKE := $(MAKE) -C $(CHAT_DIR)
 
 .DEFAULT_GOAL := help
 
@@ -24,9 +24,7 @@ sync-web-env: ## Sync root .env into apps/web/.env when present
 	@if [ -f .env ]; then cp .env $(WEB_DIR)/.env; fi
 
 setup-chat: ## Install chat dependencies in the active Python environment
-	$(PIP) install -r $(CHAT_SRC_DIR)/requirements.txt
-	$(PIP) install -r $(CHAT_DIR)/tests/requirements-test.txt
-	$(PIP) install httpx pytest-cov prisma
+	$(CHAT_MAKE) setup
 
 dev: ## Run web locally with db+chat in Docker
 	$(MAKE) sync-web-env
@@ -38,7 +36,7 @@ dev-web: ## Run only the web app
 	$(NPM) --prefix $(WEB_DIR) run dev
 
 dev-chat: ## Run chat service locally with hot reload
-	cd $(CHAT_SRC_DIR) && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	$(CHAT_MAKE) dev
 
 up: ## Start all Docker services
 	$(DOCKER_COMPOSE) up -d
@@ -70,10 +68,10 @@ test-web: ## Run web tests
 	$(NPM) --prefix $(WEB_DIR) run test
 
 test-chat: ## Run chat unit tests
-	cd $(CHAT_DIR) && pytest tests/unit/ --cov=src/api --cov-report=term-missing -v
+	$(CHAT_MAKE) test
 
 test-chat-integration: ## Run chat integration tests (requires SERVICE_URL)
-	cd $(CHAT_DIR) && pytest tests/integration/ -v
+	$(CHAT_MAKE) test-integration
 
 build: ## Build web app
 	$(MAKE) sync-web-env
@@ -86,7 +84,7 @@ quick-ci-web: ## Fast web checks (no build)
 	$(MAKE) test-web
 
 quick-ci-chat: ## Fast chat checks
-	$(MAKE) test-chat
+	$(CHAT_MAKE) quick-ci
 
 quick-ci: ## Fast local checks for common iteration loop
 	$(MAKE) quick-ci-web
