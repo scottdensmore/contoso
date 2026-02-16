@@ -351,9 +351,10 @@
         "slug": "naturenest-shelter-21",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/21.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/21/main.jpg",
+            "/images/products/tents/21/angle.jpg",
+            "/images/products/tents/21/detail.jpg",
+            "/images/products/tents/21/lifestyle.jpg"
         ]
     },
     {
@@ -366,9 +367,10 @@
         "slug": "oceanbreeze-basecamp-22",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/22.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/22/main.jpg",
+            "/images/products/tents/22/angle.jpg",
+            "/images/products/tents/22/detail.jpg",
+            "/images/products/tents/22/lifestyle.jpg"
         ]
     },
     {
@@ -381,9 +383,9 @@
         "slug": "vistapoint-backpacker-23",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/23.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/23/main.jpg",
+            "/images/products/tents/23/angle.jpg",
+            "/images/products/tents/23/detail.jpg"
         ]
     },
     {
@@ -396,9 +398,9 @@
         "slug": "summitgear-expedition-24",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/24.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/24/main.jpg",
+            "/images/products/tents/24/detail.jpg",
+            "/images/products/tents/24/lifestyle.jpg"
         ]
     },
     {
@@ -411,9 +413,10 @@
         "slug": "peakperformance-fortress-25",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/25.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/25/main.jpg",
+            "/images/products/tents/25/angle.jpg",
+            "/images/products/tents/25/detail.jpg",
+            "/images/products/tents/25/lifestyle.jpg"
         ]
     },
     {
@@ -426,9 +429,10 @@
         "slug": "alpineace-skyview-26",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/26.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/26/main.jpg",
+            "/images/products/tents/26/angle.jpg",
+            "/images/products/tents/26/detail.jpg",
+            "/images/products/tents/26/lifestyle.jpg"
         ]
     },
     {
@@ -441,9 +445,10 @@
         "slug": "naturenest-summit-27",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/27.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/27/main.jpg",
+            "/images/products/tents/27/angle.jpg",
+            "/images/products/tents/27/detail.jpg",
+            "/images/products/tents/27/lifestyle.jpg"
         ]
     },
     {
@@ -456,9 +461,10 @@
         "slug": "trailblazer-trailhead-28",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/28.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/28/main.jpg",
+            "/images/products/tents/28/angle.jpg",
+            "/images/products/tents/28/detail.jpg",
+            "/images/products/tents/28/lifestyle.jpg"
         ]
     },
     {
@@ -471,9 +477,10 @@
         "slug": "cloudwalker-escape-29",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/29.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/29/main.jpg",
+            "/images/products/tents/29/angle.jpg",
+            "/images/products/tents/29/detail.jpg",
+            "/images/products/tents/29/lifestyle.jpg"
         ]
     },
     {
@@ -486,9 +493,10 @@
         "slug": "summitgear-dome-30",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/30.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/30/main.jpg",
+            "/images/products/tents/30/angle.jpg",
+            "/images/products/tents/30/detail.jpg",
+            "/images/products/tents/30/lifestyle.jpg"
         ]
     },
     {
@@ -501,9 +509,9 @@
         "slug": "skyline-shelter-31",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/31.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/31/main.jpg",
+            "/images/products/tents/31/angle.jpg",
+            "/images/products/tents/31/lifestyle.jpg"
         ]
     },
     {
@@ -516,9 +524,10 @@
         "slug": "cloudwalker-basecamp-32",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/32.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/32/main.jpg",
+            "/images/products/tents/32/angle.jpg",
+            "/images/products/tents/32/detail.jpg",
+            "/images/products/tents/32/lifestyle.jpg"
         ]
     },
     {
@@ -531,9 +540,10 @@
         "slug": "peakperformance-backpacker-33",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/33.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/33/main.jpg",
+            "/images/products/tents/33/angle.jpg",
+            "/images/products/tents/33/detail.jpg",
+            "/images/products/tents/33/lifestyle.jpg"
         ]
     },
     {
@@ -546,9 +556,10 @@
         "slug": "wildbound-expedition-34",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/34.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/34/main.jpg",
+            "/images/products/tents/34/angle.jpg",
+            "/images/products/tents/34/detail.jpg",
+            "/images/products/tents/34/lifestyle.jpg"
         ]
     },
     {
@@ -561,9 +572,10 @@
         "slug": "swiftstream-fortress-35",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/35.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/35/main.jpg",
+            "/images/products/tents/35/angle.jpg",
+            "/images/products/tents/35/detail.jpg",
+            "/images/products/tents/35/lifestyle.jpg"
         ]
     },
     {
@@ -576,9 +588,10 @@
         "slug": "ruggededge-skyview-36",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/36.jpg",
-            "/images/details/tents/1.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/36/main.jpg",
+            "/images/products/tents/36/angle.jpg",
+            "/images/products/tents/36/detail.jpg",
+            "/images/products/tents/36/lifestyle.jpg"
         ]
     },
     {
@@ -591,9 +604,10 @@
         "slug": "terranova-summit-37",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/37.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/37/main.jpg",
+            "/images/products/tents/37/angle.jpg",
+            "/images/products/tents/37/detail.jpg",
+            "/images/products/tents/37/lifestyle.jpg"
         ]
     },
     {
@@ -606,9 +620,10 @@
         "slug": "swiftstream-trailhead-38",
         "manual": "/manuals/manual_tents.md",
         "images": [
-            "/images/products/tents/38.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/tents/2.jpg"
+            "/images/products/tents/38/main.jpg",
+            "/images/products/tents/38/angle.jpg",
+            "/images/products/tents/38/detail.jpg",
+            "/images/products/tents/38/lifestyle.jpg"
         ]
     },
     {
@@ -621,9 +636,10 @@
         "slug": "ruggededge-pathfinder-39",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/39.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/39/main.jpg",
+            "/images/products/backpacks/39/angle.jpg",
+            "/images/products/backpacks/39/detail.jpg",
+            "/images/products/backpacks/39/lifestyle.jpg"
         ]
     },
     {
@@ -636,9 +652,10 @@
         "slug": "vistapoint-pro-40",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/40.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/40/main.jpg",
+            "/images/products/backpacks/40/angle.jpg",
+            "/images/products/backpacks/40/detail.jpg",
+            "/images/products/backpacks/40/lifestyle.jpg"
         ]
     },
     {
@@ -651,9 +668,10 @@
         "slug": "oceanbreeze-daypack-41",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/41.jpg",
-            "/images/details/colors/blue/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/41/main.jpg",
+            "/images/products/backpacks/41/angle.jpg",
+            "/images/products/backpacks/41/detail.jpg",
+            "/images/products/backpacks/41/lifestyle.jpg"
         ]
     },
     {
@@ -666,9 +684,10 @@
         "slug": "swiftstream-trekker-42",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/42.jpg",
-            "/images/details/colors/blue/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/42/main.jpg",
+            "/images/products/backpacks/42/angle.jpg",
+            "/images/products/backpacks/42/detail.jpg",
+            "/images/products/backpacks/42/lifestyle.jpg"
         ]
     },
     {
@@ -681,9 +700,10 @@
         "slug": "terranova-climber-43",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/43.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/43/main.jpg",
+            "/images/products/backpacks/43/angle.jpg",
+            "/images/products/backpacks/43/detail.jpg",
+            "/images/products/backpacks/43/lifestyle.jpg"
         ]
     },
     {
@@ -696,9 +716,10 @@
         "slug": "cloudwalker-summit-44",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/44.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/44/main.jpg",
+            "/images/products/backpacks/44/angle.jpg",
+            "/images/products/backpacks/44/detail.jpg",
+            "/images/products/backpacks/44/lifestyle.jpg"
         ]
     },
     {
@@ -711,9 +732,10 @@
         "slug": "alpineace-venture-45",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/45.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/45/main.jpg",
+            "/images/products/backpacks/45/angle.jpg",
+            "/images/products/backpacks/45/detail.jpg",
+            "/images/products/backpacks/45/lifestyle.jpg"
         ]
     },
     {
@@ -726,9 +748,9 @@
         "slug": "summitgear-rucksack-46",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/46.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/46/main.jpg",
+            "/images/products/backpacks/46/angle.jpg",
+            "/images/products/backpacks/46/detail.jpg"
         ]
     },
     {
@@ -741,9 +763,10 @@
         "slug": "terranova-explorer-47",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/47.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/47/main.jpg",
+            "/images/products/backpacks/47/angle.jpg",
+            "/images/products/backpacks/47/detail.jpg",
+            "/images/products/backpacks/47/lifestyle.jpg"
         ]
     },
     {
@@ -756,9 +779,10 @@
         "slug": "alpineace-carrier-48",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/48.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/48/main.jpg",
+            "/images/products/backpacks/48/angle.jpg",
+            "/images/products/backpacks/48/detail.jpg",
+            "/images/products/backpacks/48/lifestyle.jpg"
         ]
     },
     {
@@ -771,9 +795,10 @@
         "slug": "peakperformance-pathfinder-49",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/49.jpg",
-            "/images/details/colors/yellow/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/49/main.jpg",
+            "/images/products/backpacks/49/angle.jpg",
+            "/images/products/backpacks/49/detail.jpg",
+            "/images/products/backpacks/49/lifestyle.jpg"
         ]
     },
     {
@@ -786,9 +811,10 @@
         "slug": "skyline-pro-50",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/50.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/50/main.jpg",
+            "/images/products/backpacks/50/angle.jpg",
+            "/images/products/backpacks/50/detail.jpg",
+            "/images/products/backpacks/50/lifestyle.jpg"
         ]
     },
     {
@@ -801,9 +827,10 @@
         "slug": "forestfound-daypack-51",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/51.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/51/main.jpg",
+            "/images/products/backpacks/51/angle.jpg",
+            "/images/products/backpacks/51/detail.jpg",
+            "/images/products/backpacks/51/lifestyle.jpg"
         ]
     },
     {
@@ -816,9 +843,10 @@
         "slug": "oceanbreeze-trekker-52",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/52.jpg",
-            "/images/details/colors/blue/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/52/main.jpg",
+            "/images/products/backpacks/52/angle.jpg",
+            "/images/products/backpacks/52/detail.jpg",
+            "/images/products/backpacks/52/lifestyle.jpg"
         ]
     },
     {
@@ -831,9 +859,10 @@
         "slug": "naturenest-climber-53",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/53.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/53/main.jpg",
+            "/images/products/backpacks/53/angle.jpg",
+            "/images/products/backpacks/53/detail.jpg",
+            "/images/products/backpacks/53/lifestyle.jpg"
         ]
     },
     {
@@ -846,9 +875,10 @@
         "slug": "ecotrek-summit-54",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/54.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/54/main.jpg",
+            "/images/products/backpacks/54/angle.jpg",
+            "/images/products/backpacks/54/detail.jpg",
+            "/images/products/backpacks/54/lifestyle.jpg"
         ]
     },
     {
@@ -861,9 +891,10 @@
         "slug": "forestfound-venture-55",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/55.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/55/main.jpg",
+            "/images/products/backpacks/55/angle.jpg",
+            "/images/products/backpacks/55/detail.jpg",
+            "/images/products/backpacks/55/lifestyle.jpg"
         ]
     },
     {
@@ -876,9 +907,10 @@
         "slug": "cloudwalker-rucksack-56",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/56.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/56/main.jpg",
+            "/images/products/backpacks/56/angle.jpg",
+            "/images/products/backpacks/56/detail.jpg",
+            "/images/products/backpacks/56/lifestyle.jpg"
         ]
     },
     {
@@ -891,9 +923,10 @@
         "slug": "peakperformance-explorer-57",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/57.jpg",
-            "/images/details/colors/yellow/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/57/main.jpg",
+            "/images/products/backpacks/57/angle.jpg",
+            "/images/products/backpacks/57/detail.jpg",
+            "/images/products/backpacks/57/lifestyle.jpg"
         ]
     },
     {
@@ -906,9 +939,10 @@
         "slug": "ecotrek-carrier-58",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/58.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/58/main.jpg",
+            "/images/products/backpacks/58/angle.jpg",
+            "/images/products/backpacks/58/detail.jpg",
+            "/images/products/backpacks/58/lifestyle.jpg"
         ]
     },
     {
@@ -921,9 +955,10 @@
         "slug": "skyline-pathfinder-59",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/59.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/59/main.jpg",
+            "/images/products/backpacks/59/angle.jpg",
+            "/images/products/backpacks/59/detail.jpg",
+            "/images/products/backpacks/59/lifestyle.jpg"
         ]
     },
     {
@@ -936,9 +971,10 @@
         "slug": "wildbound-pro-60",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/60.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/60/main.jpg",
+            "/images/products/backpacks/60/angle.jpg",
+            "/images/products/backpacks/60/detail.jpg",
+            "/images/products/backpacks/60/lifestyle.jpg"
         ]
     },
     {
@@ -951,9 +987,10 @@
         "slug": "alpineace-daypack-61",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/61.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/61/main.jpg",
+            "/images/products/backpacks/61/angle.jpg",
+            "/images/products/backpacks/61/detail.jpg",
+            "/images/products/backpacks/61/lifestyle.jpg"
         ]
     },
     {
@@ -966,9 +1003,10 @@
         "slug": "ecotrek-trekker-62",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/62.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/62/main.jpg",
+            "/images/products/backpacks/62/angle.jpg",
+            "/images/products/backpacks/62/detail.jpg",
+            "/images/products/backpacks/62/lifestyle.jpg"
         ]
     },
     {
@@ -981,9 +1019,10 @@
         "slug": "skyline-climber-63",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/63.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/63/main.jpg",
+            "/images/products/backpacks/63/angle.jpg",
+            "/images/products/backpacks/63/detail.jpg",
+            "/images/products/backpacks/63/lifestyle.jpg"
         ]
     },
     {
@@ -996,9 +1035,10 @@
         "slug": "oceanbreeze-summit-64",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/64.jpg",
-            "/images/details/colors/blue/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/64/main.jpg",
+            "/images/products/backpacks/64/angle.jpg",
+            "/images/products/backpacks/64/detail.jpg",
+            "/images/products/backpacks/64/lifestyle.jpg"
         ]
     },
     {
@@ -1011,9 +1051,10 @@
         "slug": "forestfound-venture-65",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/65.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/65/main.jpg",
+            "/images/products/backpacks/65/angle.jpg",
+            "/images/products/backpacks/65/detail.jpg",
+            "/images/products/backpacks/65/lifestyle.jpg"
         ]
     },
     {
@@ -1026,9 +1067,10 @@
         "slug": "ruggededge-rucksack-66",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/66.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/66/main.jpg",
+            "/images/products/backpacks/66/angle.jpg",
+            "/images/products/backpacks/66/detail.jpg",
+            "/images/products/backpacks/66/lifestyle.jpg"
         ]
     },
     {
@@ -1041,9 +1083,10 @@
         "slug": "summitgear-explorer-67",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/67.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/67/main.jpg",
+            "/images/products/backpacks/67/angle.jpg",
+            "/images/products/backpacks/67/detail.jpg",
+            "/images/products/backpacks/67/lifestyle.jpg"
         ]
     },
     {
@@ -1056,9 +1099,10 @@
         "slug": "terranova-carrier-68",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/68.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/68/main.jpg",
+            "/images/products/backpacks/68/angle.jpg",
+            "/images/products/backpacks/68/detail.jpg",
+            "/images/products/backpacks/68/lifestyle.jpg"
         ]
     },
     {
@@ -1071,9 +1115,10 @@
         "slug": "ruggededge-pathfinder-69",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/69.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/69/main.jpg",
+            "/images/products/backpacks/69/angle.jpg",
+            "/images/products/backpacks/69/detail.jpg",
+            "/images/products/backpacks/69/lifestyle.jpg"
         ]
     },
     {
@@ -1086,9 +1131,10 @@
         "slug": "trailblazer-pro-70",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/70.jpg",
-            "/images/details/colors/yellow/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/70/main.jpg",
+            "/images/products/backpacks/70/angle.jpg",
+            "/images/products/backpacks/70/detail.jpg",
+            "/images/products/backpacks/70/lifestyle.jpg"
         ]
     },
     {
@@ -1101,9 +1147,10 @@
         "slug": "vistapoint-daypack-71",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/71.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/71/main.jpg",
+            "/images/products/backpacks/71/angle.jpg",
+            "/images/products/backpacks/71/detail.jpg",
+            "/images/products/backpacks/71/lifestyle.jpg"
         ]
     },
     {
@@ -1116,9 +1163,10 @@
         "slug": "trailblazer-trekker-72",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/72.jpg",
-            "/images/details/colors/yellow/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/72/main.jpg",
+            "/images/products/backpacks/72/angle.jpg",
+            "/images/products/backpacks/72/detail.jpg",
+            "/images/products/backpacks/72/lifestyle.jpg"
         ]
     },
     {
@@ -1131,9 +1179,10 @@
         "slug": "cloudwalker-climber-73",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/73.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/73/main.jpg",
+            "/images/products/backpacks/73/angle.jpg",
+            "/images/products/backpacks/73/detail.jpg",
+            "/images/products/backpacks/73/lifestyle.jpg"
         ]
     },
     {
@@ -1146,9 +1195,10 @@
         "slug": "summitgear-summit-74",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/74.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/74/main.jpg",
+            "/images/products/backpacks/74/angle.jpg",
+            "/images/products/backpacks/74/detail.jpg",
+            "/images/products/backpacks/74/lifestyle.jpg"
         ]
     },
     {
@@ -1161,9 +1211,10 @@
         "slug": "ruggededge-venture-75",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/75.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/75/main.jpg",
+            "/images/products/backpacks/75/angle.jpg",
+            "/images/products/backpacks/75/detail.jpg",
+            "/images/products/backpacks/75/lifestyle.jpg"
         ]
     },
     {
@@ -1176,9 +1227,10 @@
         "slug": "vistapoint-rucksack-76",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/76.jpg",
-            "/images/details/colors/red/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/76/main.jpg",
+            "/images/products/backpacks/76/angle.jpg",
+            "/images/products/backpacks/76/detail.jpg",
+            "/images/products/backpacks/76/lifestyle.jpg"
         ]
     },
     {
@@ -1191,9 +1243,10 @@
         "slug": "trailblazer-explorer-77",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/77.jpg",
-            "/images/details/colors/yellow/backpack_detail.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/77/main.jpg",
+            "/images/products/backpacks/77/angle.jpg",
+            "/images/products/backpacks/77/detail.jpg",
+            "/images/products/backpacks/77/lifestyle.jpg"
         ]
     },
     {
@@ -1206,9 +1259,10 @@
         "slug": "wildbound-carrier-78",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/78.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/78/main.jpg",
+            "/images/products/backpacks/78/angle.jpg",
+            "/images/products/backpacks/78/detail.jpg",
+            "/images/products/backpacks/78/lifestyle.jpg"
         ]
     },
     {
@@ -1221,9 +1275,10 @@
         "slug": "ecotrek-pathfinder-79",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/79.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/79/main.jpg",
+            "/images/products/backpacks/79/angle.jpg",
+            "/images/products/backpacks/79/detail.jpg",
+            "/images/products/backpacks/79/lifestyle.jpg"
         ]
     },
     {
@@ -1236,9 +1291,10 @@
         "slug": "naturenest-pro-80",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/80.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/80/main.jpg",
+            "/images/products/backpacks/80/angle.jpg",
+            "/images/products/backpacks/80/detail.jpg",
+            "/images/products/backpacks/80/lifestyle.jpg"
         ]
     },
     {
@@ -1251,9 +1307,10 @@
         "slug": "forestfound-daypack-81",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/81.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/81/main.jpg",
+            "/images/products/backpacks/81/angle.jpg",
+            "/images/products/backpacks/81/detail.jpg",
+            "/images/products/backpacks/81/lifestyle.jpg"
         ]
     },
     {
@@ -1266,9 +1323,10 @@
         "slug": "summitgear-trekker-82",
         "manual": "/manuals/manual_backpacks.md",
         "images": [
-            "/images/products/backpacks/82.jpg",
-            "/images/details/backpacks/1.jpg",
-            "/images/details/backpacks/2.jpg"
+            "/images/products/backpacks/82/main.jpg",
+            "/images/products/backpacks/82/angle.jpg",
+            "/images/products/backpacks/82/detail.jpg",
+            "/images/products/backpacks/82/lifestyle.jpg"
         ]
     },
     {
@@ -1281,9 +1339,10 @@
         "slug": "cloudwalker-alpine-trousers-83",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/83.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/83/main.jpg",
+            "/images/products/hiking-clothing/83/angle.jpg",
+            "/images/products/hiking-clothing/83/detail.jpg",
+            "/images/products/hiking-clothing/83/lifestyle.jpg"
         ]
     },
     {
@@ -1296,10 +1355,10 @@
         "slug": "swiftstream-trail-hoodie-84",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/84.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/84/main.jpg",
+            "/images/products/hiking-clothing/84/angle.jpg",
+            "/images/products/hiking-clothing/84/detail.jpg",
+            "/images/products/hiking-clothing/84/lifestyle.jpg"
         ]
     },
     {
@@ -1312,9 +1371,10 @@
         "slug": "cloudwalker-rapid-dry-tee-85",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/85.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/85/main.jpg",
+            "/images/products/hiking-clothing/85/angle.jpg",
+            "/images/products/hiking-clothing/85/detail.jpg",
+            "/images/products/hiking-clothing/85/lifestyle.jpg"
         ]
     },
     {
@@ -1327,9 +1387,10 @@
         "slug": "ecotrek-thermal-vest-86",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/86.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/86/main.jpg",
+            "/images/products/hiking-clothing/86/angle.jpg",
+            "/images/products/hiking-clothing/86/detail.jpg",
+            "/images/products/hiking-clothing/86/lifestyle.jpg"
         ]
     },
     {
@@ -1342,10 +1403,10 @@
         "slug": "terranova-merino-layer-87",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/87.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/87/main.jpg",
+            "/images/products/hiking-clothing/87/angle.jpg",
+            "/images/products/hiking-clothing/87/detail.jpg",
+            "/images/products/hiking-clothing/87/lifestyle.jpg"
         ]
     },
     {
@@ -1358,10 +1419,10 @@
         "slug": "peakperformance-vanguard-shorts-88",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/88.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/88/main.jpg",
+            "/images/products/hiking-clothing/88/angle.jpg",
+            "/images/products/hiking-clothing/88/detail.jpg",
+            "/images/products/hiking-clothing/88/lifestyle.jpg"
         ]
     },
     {
@@ -1374,10 +1435,10 @@
         "slug": "trailblazer-summit-parka-89",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/89.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/89/main.jpg",
+            "/images/products/hiking-clothing/89/angle.jpg",
+            "/images/products/hiking-clothing/89/detail.jpg",
+            "/images/products/hiking-clothing/89/lifestyle.jpg"
         ]
     },
     {
@@ -1390,9 +1451,10 @@
         "slug": "skyline-aero-jacket-90",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/90.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/90/main.jpg",
+            "/images/products/hiking-clothing/90/angle.jpg",
+            "/images/products/hiking-clothing/90/detail.jpg",
+            "/images/products/hiking-clothing/90/lifestyle.jpg"
         ]
     },
     {
@@ -1405,9 +1467,10 @@
         "slug": "summitgear-storm-shell-91",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/91.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/91/main.jpg",
+            "/images/products/hiking-clothing/91/angle.jpg",
+            "/images/products/hiking-clothing/91/detail.jpg",
+            "/images/products/hiking-clothing/91/lifestyle.jpg"
         ]
     },
     {
@@ -1420,10 +1483,10 @@
         "slug": "vistapoint-performance-base-92",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/92.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/92/main.jpg",
+            "/images/products/hiking-clothing/92/angle.jpg",
+            "/images/products/hiking-clothing/92/detail.jpg",
+            "/images/products/hiking-clothing/92/lifestyle.jpg"
         ]
     },
     {
@@ -1436,10 +1499,10 @@
         "slug": "oceanbreeze-alpine-trousers-93",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/93.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/93/main.jpg",
+            "/images/products/hiking-clothing/93/angle.jpg",
+            "/images/products/hiking-clothing/93/detail.jpg",
+            "/images/products/hiking-clothing/93/lifestyle.jpg"
         ]
     },
     {
@@ -1452,10 +1515,10 @@
         "slug": "vistapoint-trail-hoodie-94",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/94.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/94/main.jpg",
+            "/images/products/hiking-clothing/94/angle.jpg",
+            "/images/products/hiking-clothing/94/detail.jpg",
+            "/images/products/hiking-clothing/94/lifestyle.jpg"
         ]
     },
     {
@@ -1468,9 +1531,9 @@
         "slug": "cloudwalker-rapid-dry-tee-95",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/95.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/95/main.jpg",
+            "/images/products/hiking-clothing/95/angle.jpg",
+            "/images/products/hiking-clothing/95/lifestyle.jpg"
         ]
     },
     {
@@ -1483,9 +1546,10 @@
         "slug": "cloudwalker-thermal-vest-96",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/96.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/96/main.jpg",
+            "/images/products/hiking-clothing/96/angle.jpg",
+            "/images/products/hiking-clothing/96/detail.jpg",
+            "/images/products/hiking-clothing/96/lifestyle.jpg"
         ]
     },
     {
@@ -1498,9 +1562,10 @@
         "slug": "naturenest-merino-layer-97",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/97.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/97/main.jpg",
+            "/images/products/hiking-clothing/97/angle.jpg",
+            "/images/products/hiking-clothing/97/detail.jpg",
+            "/images/products/hiking-clothing/97/lifestyle.jpg"
         ]
     },
     {
@@ -1513,9 +1578,10 @@
         "slug": "alpineace-vanguard-shorts-98",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/98.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/98/main.jpg",
+            "/images/products/hiking-clothing/98/angle.jpg",
+            "/images/products/hiking-clothing/98/detail.jpg",
+            "/images/products/hiking-clothing/98/lifestyle.jpg"
         ]
     },
     {
@@ -1528,10 +1594,10 @@
         "slug": "swiftstream-summit-parka-99",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/99.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/99/main.jpg",
+            "/images/products/hiking-clothing/99/angle.jpg",
+            "/images/products/hiking-clothing/99/detail.jpg",
+            "/images/products/hiking-clothing/99/lifestyle.jpg"
         ]
     },
     {
@@ -1544,9 +1610,10 @@
         "slug": "ecotrek-aero-jacket-100",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/100.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/100/main.jpg",
+            "/images/products/hiking-clothing/100/angle.jpg",
+            "/images/products/hiking-clothing/100/detail.jpg",
+            "/images/products/hiking-clothing/100/lifestyle.jpg"
         ]
     },
     {
@@ -1559,9 +1626,10 @@
         "slug": "wildbound-storm-shell-101",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/101.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/101/main.jpg",
+            "/images/products/hiking-clothing/101/angle.jpg",
+            "/images/products/hiking-clothing/101/detail.jpg",
+            "/images/products/hiking-clothing/101/lifestyle.jpg"
         ]
     },
     {
@@ -1574,9 +1642,10 @@
         "slug": "ruggededge-performance-base-102",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/102.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/102/main.jpg",
+            "/images/products/hiking-clothing/102/angle.jpg",
+            "/images/products/hiking-clothing/102/detail.jpg",
+            "/images/products/hiking-clothing/102/lifestyle.jpg"
         ]
     },
     {
@@ -1589,10 +1658,10 @@
         "slug": "peakperformance-alpine-trousers-103",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/103.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/103/main.jpg",
+            "/images/products/hiking-clothing/103/angle.jpg",
+            "/images/products/hiking-clothing/103/detail.jpg",
+            "/images/products/hiking-clothing/103/lifestyle.jpg"
         ]
     },
     {
@@ -1605,9 +1674,10 @@
         "slug": "skyline-trail-hoodie-104",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/104.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/104/main.jpg",
+            "/images/products/hiking-clothing/104/angle.jpg",
+            "/images/products/hiking-clothing/104/detail.jpg",
+            "/images/products/hiking-clothing/104/lifestyle.jpg"
         ]
     },
     {
@@ -1620,9 +1690,10 @@
         "slug": "forestfound-rapid-dry-tee-105",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/105.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/105/main.jpg",
+            "/images/products/hiking-clothing/105/angle.jpg",
+            "/images/products/hiking-clothing/105/detail.jpg",
+            "/images/products/hiking-clothing/105/lifestyle.jpg"
         ]
     },
     {
@@ -1635,9 +1706,10 @@
         "slug": "naturenest-thermal-vest-106",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/106.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/106/main.jpg",
+            "/images/products/hiking-clothing/106/angle.jpg",
+            "/images/products/hiking-clothing/106/detail.jpg",
+            "/images/products/hiking-clothing/106/lifestyle.jpg"
         ]
     },
     {
@@ -1650,9 +1722,10 @@
         "slug": "summitgear-merino-layer-107",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/107.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/107/main.jpg",
+            "/images/products/hiking-clothing/107/angle.jpg",
+            "/images/products/hiking-clothing/107/detail.jpg",
+            "/images/products/hiking-clothing/107/lifestyle.jpg"
         ]
     },
     {
@@ -1665,9 +1738,10 @@
         "slug": "wildbound-vanguard-shorts-108",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/108.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/108/main.jpg",
+            "/images/products/hiking-clothing/108/angle.jpg",
+            "/images/products/hiking-clothing/108/detail.jpg",
+            "/images/products/hiking-clothing/108/lifestyle.jpg"
         ]
     },
     {
@@ -1680,9 +1754,10 @@
         "slug": "skyline-summit-parka-109",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/109.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/109/main.jpg",
+            "/images/products/hiking-clothing/109/angle.jpg",
+            "/images/products/hiking-clothing/109/detail.jpg",
+            "/images/products/hiking-clothing/109/lifestyle.jpg"
         ]
     },
     {
@@ -1695,10 +1770,10 @@
         "slug": "oceanbreeze-aero-jacket-110",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/110.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/110/main.jpg",
+            "/images/products/hiking-clothing/110/angle.jpg",
+            "/images/products/hiking-clothing/110/detail.jpg",
+            "/images/products/hiking-clothing/110/lifestyle.jpg"
         ]
     },
     {
@@ -1711,10 +1786,10 @@
         "slug": "peakperformance-storm-shell-111",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/111.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/111/main.jpg",
+            "/images/products/hiking-clothing/111/angle.jpg",
+            "/images/products/hiking-clothing/111/detail.jpg",
+            "/images/products/hiking-clothing/111/lifestyle.jpg"
         ]
     },
     {
@@ -1727,9 +1802,10 @@
         "slug": "cloudwalker-performance-base-112",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/112.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/112/main.jpg",
+            "/images/products/hiking-clothing/112/angle.jpg",
+            "/images/products/hiking-clothing/112/detail.jpg",
+            "/images/products/hiking-clothing/112/lifestyle.jpg"
         ]
     },
     {
@@ -1742,10 +1818,9 @@
         "slug": "oceanbreeze-alpine-trousers-113",
         "manual": "/manuals/manual_hiking_clothing.md",
         "images": [
-            "/images/products/hiking-clothing/113.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-clothing/1.jpg",
-            "/images/details/hiking-clothing/2.jpg"
+            "/images/products/hiking-clothing/113/main.jpg",
+            "/images/products/hiking-clothing/113/detail.jpg",
+            "/images/products/hiking-clothing/113/lifestyle.jpg"
         ]
     },
     {
@@ -1758,8 +1833,10 @@
         "slug": "summitgear-summit-mid-114",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/114.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/114/main.jpg",
+            "/images/products/hiking-footwear/114/angle.jpg",
+            "/images/products/hiking-footwear/114/detail.jpg",
+            "/images/products/hiking-footwear/114/lifestyle.jpg"
         ]
     },
     {
@@ -1772,8 +1849,10 @@
         "slug": "ecotrek-scout-low-115",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/115.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/115/main.jpg",
+            "/images/products/hiking-footwear/115/angle.jpg",
+            "/images/products/hiking-footwear/115/detail.jpg",
+            "/images/products/hiking-footwear/115/lifestyle.jpg"
         ]
     },
     {
@@ -1786,8 +1865,10 @@
         "slug": "naturenest-ridge-walker-116",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/116.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/116/main.jpg",
+            "/images/products/hiking-footwear/116/angle.jpg",
+            "/images/products/hiking-footwear/116/detail.jpg",
+            "/images/products/hiking-footwear/116/lifestyle.jpg"
         ]
     },
     {
@@ -1800,8 +1881,10 @@
         "slug": "cloudwalker-peak-performer-117",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/117.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/117/main.jpg",
+            "/images/products/hiking-footwear/117/angle.jpg",
+            "/images/products/hiking-footwear/117/detail.jpg",
+            "/images/products/hiking-footwear/117/lifestyle.jpg"
         ]
     },
     {
@@ -1814,8 +1897,10 @@
         "slug": "ecotrek-river-sandal-118",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/118.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/118/main.jpg",
+            "/images/products/hiking-footwear/118/angle.jpg",
+            "/images/products/hiking-footwear/118/detail.jpg",
+            "/images/products/hiking-footwear/118/lifestyle.jpg"
         ]
     },
     {
@@ -1828,9 +1913,10 @@
         "slug": "oceanbreeze-canyon-grip-119",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/119.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/119/main.jpg",
+            "/images/products/hiking-footwear/119/angle.jpg",
+            "/images/products/hiking-footwear/119/detail.jpg",
+            "/images/products/hiking-footwear/119/lifestyle.jpg"
         ]
     },
     {
@@ -1843,8 +1929,10 @@
         "slug": "alpineace-trek-boot-120",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/120.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/120/main.jpg",
+            "/images/products/hiking-footwear/120/angle.jpg",
+            "/images/products/hiking-footwear/120/detail.jpg",
+            "/images/products/hiking-footwear/120/lifestyle.jpg"
         ]
     },
     {
@@ -1857,8 +1945,10 @@
         "slug": "skyline-trail-runner-121",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/121.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/121/main.jpg",
+            "/images/products/hiking-footwear/121/angle.jpg",
+            "/images/products/hiking-footwear/121/detail.jpg",
+            "/images/products/hiking-footwear/121/lifestyle.jpg"
         ]
     },
     {
@@ -1871,8 +1961,10 @@
         "slug": "skyline-alpine-climber-122",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/122.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/122/main.jpg",
+            "/images/products/hiking-footwear/122/angle.jpg",
+            "/images/products/hiking-footwear/122/detail.jpg",
+            "/images/products/hiking-footwear/122/lifestyle.jpg"
         ]
     },
     {
@@ -1885,8 +1977,10 @@
         "slug": "ruggededge-all-terrain-shoe-123",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/123.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/123/main.jpg",
+            "/images/products/hiking-footwear/123/angle.jpg",
+            "/images/products/hiking-footwear/123/detail.jpg",
+            "/images/products/hiking-footwear/123/lifestyle.jpg"
         ]
     },
     {
@@ -1899,9 +1993,10 @@
         "slug": "trailblazer-summit-mid-124",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/124.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/124/main.jpg",
+            "/images/products/hiking-footwear/124/angle.jpg",
+            "/images/products/hiking-footwear/124/detail.jpg",
+            "/images/products/hiking-footwear/124/lifestyle.jpg"
         ]
     },
     {
@@ -1914,8 +2009,10 @@
         "slug": "cloudwalker-scout-low-125",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/125.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/125/main.jpg",
+            "/images/products/hiking-footwear/125/angle.jpg",
+            "/images/products/hiking-footwear/125/detail.jpg",
+            "/images/products/hiking-footwear/125/lifestyle.jpg"
         ]
     },
     {
@@ -1928,9 +2025,9 @@
         "slug": "terranova-ridge-walker-126",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/126.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/126/main.jpg",
+            "/images/products/hiking-footwear/126/detail.jpg",
+            "/images/products/hiking-footwear/126/lifestyle.jpg"
         ]
     },
     {
@@ -1943,8 +2040,10 @@
         "slug": "summitgear-peak-performer-127",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/127.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/127/main.jpg",
+            "/images/products/hiking-footwear/127/angle.jpg",
+            "/images/products/hiking-footwear/127/detail.jpg",
+            "/images/products/hiking-footwear/127/lifestyle.jpg"
         ]
     },
     {
@@ -1957,8 +2056,10 @@
         "slug": "ruggededge-river-sandal-128",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/128.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/128/main.jpg",
+            "/images/products/hiking-footwear/128/angle.jpg",
+            "/images/products/hiking-footwear/128/detail.jpg",
+            "/images/products/hiking-footwear/128/lifestyle.jpg"
         ]
     },
     {
@@ -1971,8 +2072,10 @@
         "slug": "ecotrek-canyon-grip-129",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/129.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/129/main.jpg",
+            "/images/products/hiking-footwear/129/angle.jpg",
+            "/images/products/hiking-footwear/129/detail.jpg",
+            "/images/products/hiking-footwear/129/lifestyle.jpg"
         ]
     },
     {
@@ -1985,9 +2088,10 @@
         "slug": "trailblazer-trek-boot-130",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/130.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/130/main.jpg",
+            "/images/products/hiking-footwear/130/angle.jpg",
+            "/images/products/hiking-footwear/130/detail.jpg",
+            "/images/products/hiking-footwear/130/lifestyle.jpg"
         ]
     },
     {
@@ -2000,9 +2104,10 @@
         "slug": "terranova-trail-runner-131",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/131.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/131/main.jpg",
+            "/images/products/hiking-footwear/131/angle.jpg",
+            "/images/products/hiking-footwear/131/detail.jpg",
+            "/images/products/hiking-footwear/131/lifestyle.jpg"
         ]
     },
     {
@@ -2015,9 +2120,10 @@
         "slug": "trailblazer-alpine-climber-132",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/132.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/132/main.jpg",
+            "/images/products/hiking-footwear/132/angle.jpg",
+            "/images/products/hiking-footwear/132/detail.jpg",
+            "/images/products/hiking-footwear/132/lifestyle.jpg"
         ]
     },
     {
@@ -2030,8 +2136,10 @@
         "slug": "wildbound-all-terrain-shoe-133",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/133.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/133/main.jpg",
+            "/images/products/hiking-footwear/133/angle.jpg",
+            "/images/products/hiking-footwear/133/detail.jpg",
+            "/images/products/hiking-footwear/133/lifestyle.jpg"
         ]
     },
     {
@@ -2044,8 +2152,10 @@
         "slug": "cloudwalker-summit-mid-134",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/134.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/134/main.jpg",
+            "/images/products/hiking-footwear/134/angle.jpg",
+            "/images/products/hiking-footwear/134/detail.jpg",
+            "/images/products/hiking-footwear/134/lifestyle.jpg"
         ]
     },
     {
@@ -2058,9 +2168,10 @@
         "slug": "trailblazer-scout-low-135",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/135.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/135/main.jpg",
+            "/images/products/hiking-footwear/135/angle.jpg",
+            "/images/products/hiking-footwear/135/detail.jpg",
+            "/images/products/hiking-footwear/135/lifestyle.jpg"
         ]
     },
     {
@@ -2073,8 +2184,10 @@
         "slug": "ruggededge-ridge-walker-136",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/136.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/136/main.jpg",
+            "/images/products/hiking-footwear/136/angle.jpg",
+            "/images/products/hiking-footwear/136/detail.jpg",
+            "/images/products/hiking-footwear/136/lifestyle.jpg"
         ]
     },
     {
@@ -2087,8 +2200,10 @@
         "slug": "ruggededge-peak-performer-137",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/137.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/137/main.jpg",
+            "/images/products/hiking-footwear/137/angle.jpg",
+            "/images/products/hiking-footwear/137/detail.jpg",
+            "/images/products/hiking-footwear/137/lifestyle.jpg"
         ]
     },
     {
@@ -2101,9 +2216,9 @@
         "slug": "swiftstream-river-sandal-138",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/138.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/138/main.jpg",
+            "/images/products/hiking-footwear/138/angle.jpg",
+            "/images/products/hiking-footwear/138/lifestyle.jpg"
         ]
     },
     {
@@ -2116,9 +2231,10 @@
         "slug": "terranova-canyon-grip-139",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/139.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/139/main.jpg",
+            "/images/products/hiking-footwear/139/angle.jpg",
+            "/images/products/hiking-footwear/139/detail.jpg",
+            "/images/products/hiking-footwear/139/lifestyle.jpg"
         ]
     },
     {
@@ -2131,9 +2247,10 @@
         "slug": "trailblazer-trek-boot-140",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/140.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/140/main.jpg",
+            "/images/products/hiking-footwear/140/angle.jpg",
+            "/images/products/hiking-footwear/140/detail.jpg",
+            "/images/products/hiking-footwear/140/lifestyle.jpg"
         ]
     },
     {
@@ -2146,8 +2263,10 @@
         "slug": "alpineace-trail-runner-141",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/141.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/141/main.jpg",
+            "/images/products/hiking-footwear/141/angle.jpg",
+            "/images/products/hiking-footwear/141/detail.jpg",
+            "/images/products/hiking-footwear/141/lifestyle.jpg"
         ]
     },
     {
@@ -2160,9 +2279,10 @@
         "slug": "terranova-alpine-climber-142",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/142.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/142/main.jpg",
+            "/images/products/hiking-footwear/142/angle.jpg",
+            "/images/products/hiking-footwear/142/detail.jpg",
+            "/images/products/hiking-footwear/142/lifestyle.jpg"
         ]
     },
     {
@@ -2175,8 +2295,10 @@
         "slug": "wildbound-all-terrain-shoe-143",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/143.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/143/main.jpg",
+            "/images/products/hiking-footwear/143/angle.jpg",
+            "/images/products/hiking-footwear/143/detail.jpg",
+            "/images/products/hiking-footwear/143/lifestyle.jpg"
         ]
     },
     {
@@ -2189,8 +2311,10 @@
         "slug": "forestfound-summit-mid-144",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/144.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/144/main.jpg",
+            "/images/products/hiking-footwear/144/angle.jpg",
+            "/images/products/hiking-footwear/144/detail.jpg",
+            "/images/products/hiking-footwear/144/lifestyle.jpg"
         ]
     },
     {
@@ -2203,8 +2327,10 @@
         "slug": "ecotrek-scout-low-145",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/145.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/145/main.jpg",
+            "/images/products/hiking-footwear/145/angle.jpg",
+            "/images/products/hiking-footwear/145/detail.jpg",
+            "/images/products/hiking-footwear/145/lifestyle.jpg"
         ]
     },
     {
@@ -2217,9 +2343,10 @@
         "slug": "terranova-ridge-walker-146",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/146.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/146/main.jpg",
+            "/images/products/hiking-footwear/146/angle.jpg",
+            "/images/products/hiking-footwear/146/detail.jpg",
+            "/images/products/hiking-footwear/146/lifestyle.jpg"
         ]
     },
     {
@@ -2232,9 +2359,10 @@
         "slug": "peakperformance-peak-performer-147",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/147.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/147/main.jpg",
+            "/images/products/hiking-footwear/147/angle.jpg",
+            "/images/products/hiking-footwear/147/detail.jpg",
+            "/images/products/hiking-footwear/147/lifestyle.jpg"
         ]
     },
     {
@@ -2247,9 +2375,10 @@
         "slug": "peakperformance-river-sandal-148",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/148.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/148/main.jpg",
+            "/images/products/hiking-footwear/148/angle.jpg",
+            "/images/products/hiking-footwear/148/detail.jpg",
+            "/images/products/hiking-footwear/148/lifestyle.jpg"
         ]
     },
     {
@@ -2262,8 +2391,10 @@
         "slug": "wildbound-canyon-grip-149",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/149.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/149/main.jpg",
+            "/images/products/hiking-footwear/149/angle.jpg",
+            "/images/products/hiking-footwear/149/detail.jpg",
+            "/images/products/hiking-footwear/149/lifestyle.jpg"
         ]
     },
     {
@@ -2276,9 +2407,10 @@
         "slug": "trailblazer-trek-boot-150",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/150.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/150/main.jpg",
+            "/images/products/hiking-footwear/150/angle.jpg",
+            "/images/products/hiking-footwear/150/detail.jpg",
+            "/images/products/hiking-footwear/150/lifestyle.jpg"
         ]
     },
     {
@@ -2291,8 +2423,10 @@
         "slug": "skyline-trail-runner-151",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/151.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/151/main.jpg",
+            "/images/products/hiking-footwear/151/angle.jpg",
+            "/images/products/hiking-footwear/151/detail.jpg",
+            "/images/products/hiking-footwear/151/lifestyle.jpg"
         ]
     },
     {
@@ -2305,9 +2439,10 @@
         "slug": "trailblazer-alpine-climber-152",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/152.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/152/main.jpg",
+            "/images/products/hiking-footwear/152/angle.jpg",
+            "/images/products/hiking-footwear/152/detail.jpg",
+            "/images/products/hiking-footwear/152/lifestyle.jpg"
         ]
     },
     {
@@ -2320,8 +2455,10 @@
         "slug": "wildbound-all-terrain-shoe-153",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/153.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/153/main.jpg",
+            "/images/products/hiking-footwear/153/angle.jpg",
+            "/images/products/hiking-footwear/153/detail.jpg",
+            "/images/products/hiking-footwear/153/lifestyle.jpg"
         ]
     },
     {
@@ -2334,8 +2471,10 @@
         "slug": "cloudwalker-summit-mid-154",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/154.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/154/main.jpg",
+            "/images/products/hiking-footwear/154/angle.jpg",
+            "/images/products/hiking-footwear/154/detail.jpg",
+            "/images/products/hiking-footwear/154/lifestyle.jpg"
         ]
     },
     {
@@ -2348,8 +2487,9 @@
         "slug": "skyline-scout-low-155",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/155.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/155/main.jpg",
+            "/images/products/hiking-footwear/155/angle.jpg",
+            "/images/products/hiking-footwear/155/detail.jpg"
         ]
     },
     {
@@ -2362,9 +2502,10 @@
         "slug": "terranova-ridge-walker-156",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/156.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/156/main.jpg",
+            "/images/products/hiking-footwear/156/angle.jpg",
+            "/images/products/hiking-footwear/156/detail.jpg",
+            "/images/products/hiking-footwear/156/lifestyle.jpg"
         ]
     },
     {
@@ -2377,9 +2518,10 @@
         "slug": "swiftstream-peak-performer-157",
         "manual": "/manuals/manual_hiking_footwear.md",
         "images": [
-            "/images/products/hiking-footwear/157.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/hiking-footwear/1.jpg"
+            "/images/products/hiking-footwear/157/main.jpg",
+            "/images/products/hiking-footwear/157/angle.jpg",
+            "/images/products/hiking-footwear/157/detail.jpg",
+            "/images/products/hiking-footwear/157/lifestyle.jpg"
         ]
     },
     {
@@ -2392,9 +2534,10 @@
         "slug": "peakperformance-nomad-desk-158",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/158.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/158/main.jpg",
+            "/images/products/camping-tables/158/angle.jpg",
+            "/images/products/camping-tables/158/detail.jpg",
+            "/images/products/camping-tables/158/lifestyle.jpg"
         ]
     },
     {
@@ -2407,8 +2550,10 @@
         "slug": "alpineace-peak-platform-159",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/159.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/159/main.jpg",
+            "/images/products/camping-tables/159/angle.jpg",
+            "/images/products/camping-tables/159/detail.jpg",
+            "/images/products/camping-tables/159/lifestyle.jpg"
         ]
     },
     {
@@ -2421,8 +2566,10 @@
         "slug": "ruggededge-basecamp-table-160",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/160.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/160/main.jpg",
+            "/images/products/camping-tables/160/angle.jpg",
+            "/images/products/camping-tables/160/detail.jpg",
+            "/images/products/camping-tables/160/lifestyle.jpg"
         ]
     },
     {
@@ -2435,8 +2582,10 @@
         "slug": "naturenest-folding-prep-161",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/161.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/161/main.jpg",
+            "/images/products/camping-tables/161/angle.jpg",
+            "/images/products/camping-tables/161/detail.jpg",
+            "/images/products/camping-tables/161/lifestyle.jpg"
         ]
     },
     {
@@ -2449,9 +2598,10 @@
         "slug": "oceanbreeze-alpine-surface-162",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/162.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/162/main.jpg",
+            "/images/products/camping-tables/162/angle.jpg",
+            "/images/products/camping-tables/162/detail.jpg",
+            "/images/products/camping-tables/162/lifestyle.jpg"
         ]
     },
     {
@@ -2464,8 +2614,10 @@
         "slug": "forestfound-compact-side-163",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/163.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/163/main.jpg",
+            "/images/products/camping-tables/163/angle.jpg",
+            "/images/products/camping-tables/163/detail.jpg",
+            "/images/products/camping-tables/163/lifestyle.jpg"
         ]
     },
     {
@@ -2478,8 +2630,10 @@
         "slug": "ecotrek-summit-station-164",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/164.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/164/main.jpg",
+            "/images/products/camping-tables/164/angle.jpg",
+            "/images/products/camping-tables/164/detail.jpg",
+            "/images/products/camping-tables/164/lifestyle.jpg"
         ]
     },
     {
@@ -2492,8 +2646,10 @@
         "slug": "summitgear-trail-dining-165",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/165.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/165/main.jpg",
+            "/images/products/camping-tables/165/angle.jpg",
+            "/images/products/camping-tables/165/detail.jpg",
+            "/images/products/camping-tables/165/lifestyle.jpg"
         ]
     },
     {
@@ -2506,8 +2662,10 @@
         "slug": "skyline-explorer-lite-166",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/166.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/166/main.jpg",
+            "/images/products/camping-tables/166/angle.jpg",
+            "/images/products/camping-tables/166/detail.jpg",
+            "/images/products/camping-tables/166/lifestyle.jpg"
         ]
     },
     {
@@ -2520,8 +2678,10 @@
         "slug": "ruggededge-gathering-table-167",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/167.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/167/main.jpg",
+            "/images/products/camping-tables/167/angle.jpg",
+            "/images/products/camping-tables/167/detail.jpg",
+            "/images/products/camping-tables/167/lifestyle.jpg"
         ]
     },
     {
@@ -2534,9 +2694,10 @@
         "slug": "peakperformance-nomad-desk-168",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/168.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/168/main.jpg",
+            "/images/products/camping-tables/168/angle.jpg",
+            "/images/products/camping-tables/168/detail.jpg",
+            "/images/products/camping-tables/168/lifestyle.jpg"
         ]
     },
     {
@@ -2549,8 +2710,10 @@
         "slug": "alpineace-peak-platform-169",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/169.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/169/main.jpg",
+            "/images/products/camping-tables/169/angle.jpg",
+            "/images/products/camping-tables/169/detail.jpg",
+            "/images/products/camping-tables/169/lifestyle.jpg"
         ]
     },
     {
@@ -2563,8 +2726,10 @@
         "slug": "ruggededge-basecamp-table-170",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/170.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/170/main.jpg",
+            "/images/products/camping-tables/170/angle.jpg",
+            "/images/products/camping-tables/170/detail.jpg",
+            "/images/products/camping-tables/170/lifestyle.jpg"
         ]
     },
     {
@@ -2577,8 +2742,10 @@
         "slug": "naturenest-folding-prep-171",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/171.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/171/main.jpg",
+            "/images/products/camping-tables/171/angle.jpg",
+            "/images/products/camping-tables/171/detail.jpg",
+            "/images/products/camping-tables/171/lifestyle.jpg"
         ]
     },
     {
@@ -2591,9 +2758,10 @@
         "slug": "vistapoint-alpine-surface-172",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/172.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/172/main.jpg",
+            "/images/products/camping-tables/172/angle.jpg",
+            "/images/products/camping-tables/172/detail.jpg",
+            "/images/products/camping-tables/172/lifestyle.jpg"
         ]
     },
     {
@@ -2606,8 +2774,10 @@
         "slug": "summitgear-compact-side-173",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/173.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/173/main.jpg",
+            "/images/products/camping-tables/173/angle.jpg",
+            "/images/products/camping-tables/173/detail.jpg",
+            "/images/products/camping-tables/173/lifestyle.jpg"
         ]
     },
     {
@@ -2620,8 +2790,10 @@
         "slug": "summitgear-summit-station-174",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/174.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/174/main.jpg",
+            "/images/products/camping-tables/174/angle.jpg",
+            "/images/products/camping-tables/174/detail.jpg",
+            "/images/products/camping-tables/174/lifestyle.jpg"
         ]
     },
     {
@@ -2634,8 +2806,10 @@
         "slug": "naturenest-trail-dining-175",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/175.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/175/main.jpg",
+            "/images/products/camping-tables/175/angle.jpg",
+            "/images/products/camping-tables/175/detail.jpg",
+            "/images/products/camping-tables/175/lifestyle.jpg"
         ]
     },
     {
@@ -2648,9 +2822,10 @@
         "slug": "peakperformance-explorer-lite-176",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/176.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/176/main.jpg",
+            "/images/products/camping-tables/176/angle.jpg",
+            "/images/products/camping-tables/176/detail.jpg",
+            "/images/products/camping-tables/176/lifestyle.jpg"
         ]
     },
     {
@@ -2663,8 +2838,10 @@
         "slug": "naturenest-gathering-table-177",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/177.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/177/main.jpg",
+            "/images/products/camping-tables/177/angle.jpg",
+            "/images/products/camping-tables/177/detail.jpg",
+            "/images/products/camping-tables/177/lifestyle.jpg"
         ]
     },
     {
@@ -2677,8 +2854,10 @@
         "slug": "naturenest-nomad-desk-178",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/178.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/178/main.jpg",
+            "/images/products/camping-tables/178/angle.jpg",
+            "/images/products/camping-tables/178/detail.jpg",
+            "/images/products/camping-tables/178/lifestyle.jpg"
         ]
     },
     {
@@ -2691,8 +2870,10 @@
         "slug": "naturenest-peak-platform-179",
         "manual": "/manuals/manual_camping_tables.md",
         "images": [
-            "/images/products/camping-tables/179.jpg",
-            "/images/details/camping-tables/1.jpg"
+            "/images/products/camping-tables/179/main.jpg",
+            "/images/products/camping-tables/179/angle.jpg",
+            "/images/products/camping-tables/179/detail.jpg",
+            "/images/products/camping-tables/179/lifestyle.jpg"
         ]
     },
     {
@@ -2705,10 +2886,10 @@
         "slug": "peakperformance-eco-burner-180",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/180.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/180/main.jpg",
+            "/images/products/camping-stoves/180/angle.jpg",
+            "/images/products/camping-stoves/180/detail.jpg",
+            "/images/products/camping-stoves/180/lifestyle.jpg"
         ]
     },
     {
@@ -2721,9 +2902,10 @@
         "slug": "cloudwalker-power-flame-181",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/181.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/181/main.jpg",
+            "/images/products/camping-stoves/181/angle.jpg",
+            "/images/products/camping-stoves/181/detail.jpg",
+            "/images/products/camping-stoves/181/lifestyle.jpg"
         ]
     },
     {
@@ -2736,9 +2918,10 @@
         "slug": "ruggededge-compact-cooker-182",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/182.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/182/main.jpg",
+            "/images/products/camping-stoves/182/angle.jpg",
+            "/images/products/camping-stoves/182/detail.jpg",
+            "/images/products/camping-stoves/182/lifestyle.jpg"
         ]
     },
     {
@@ -2751,10 +2934,10 @@
         "slug": "swiftstream-alpine-jet-183",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/183.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/183/main.jpg",
+            "/images/products/camping-stoves/183/angle.jpg",
+            "/images/products/camping-stoves/183/detail.jpg",
+            "/images/products/camping-stoves/183/lifestyle.jpg"
         ]
     },
     {
@@ -2767,9 +2950,10 @@
         "slug": "forestfound-summit-hearth-184",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/184.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/184/main.jpg",
+            "/images/products/camping-stoves/184/angle.jpg",
+            "/images/products/camping-stoves/184/detail.jpg",
+            "/images/products/camping-stoves/184/lifestyle.jpg"
         ]
     },
     {
@@ -2782,9 +2966,9 @@
         "slug": "cloudwalker-trail-fire-185",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/185.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/185/main.jpg",
+            "/images/products/camping-stoves/185/detail.jpg",
+            "/images/products/camping-stoves/185/lifestyle.jpg"
         ]
     },
     {
@@ -2797,10 +2981,10 @@
         "slug": "terranova-rapid-boil-186",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/186.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/186/main.jpg",
+            "/images/products/camping-stoves/186/angle.jpg",
+            "/images/products/camping-stoves/186/detail.jpg",
+            "/images/products/camping-stoves/186/lifestyle.jpg"
         ]
     },
     {
@@ -2813,10 +2997,10 @@
         "slug": "peakperformance-explorer-grill-187",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/187.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/187/main.jpg",
+            "/images/products/camping-stoves/187/angle.jpg",
+            "/images/products/camping-stoves/187/detail.jpg",
+            "/images/products/camping-stoves/187/lifestyle.jpg"
         ]
     },
     {
@@ -2829,9 +3013,10 @@
         "slug": "naturenest-micro-stove-188",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/188.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/188/main.jpg",
+            "/images/products/camping-stoves/188/angle.jpg",
+            "/images/products/camping-stoves/188/detail.jpg",
+            "/images/products/camping-stoves/188/lifestyle.jpg"
         ]
     },
     {
@@ -2844,10 +3029,10 @@
         "slug": "oceanbreeze-vortex-burner-189",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/189.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/189/main.jpg",
+            "/images/products/camping-stoves/189/angle.jpg",
+            "/images/products/camping-stoves/189/detail.jpg",
+            "/images/products/camping-stoves/189/lifestyle.jpg"
         ]
     },
     {
@@ -2860,10 +3045,10 @@
         "slug": "peakperformance-eco-burner-190",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/190.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/190/main.jpg",
+            "/images/products/camping-stoves/190/angle.jpg",
+            "/images/products/camping-stoves/190/detail.jpg",
+            "/images/products/camping-stoves/190/lifestyle.jpg"
         ]
     },
     {
@@ -2876,10 +3061,10 @@
         "slug": "oceanbreeze-power-flame-191",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/191.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/191/main.jpg",
+            "/images/products/camping-stoves/191/angle.jpg",
+            "/images/products/camping-stoves/191/detail.jpg",
+            "/images/products/camping-stoves/191/lifestyle.jpg"
         ]
     },
     {
@@ -2892,10 +3077,10 @@
         "slug": "swiftstream-compact-cooker-192",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/192.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/192/main.jpg",
+            "/images/products/camping-stoves/192/angle.jpg",
+            "/images/products/camping-stoves/192/detail.jpg",
+            "/images/products/camping-stoves/192/lifestyle.jpg"
         ]
     },
     {
@@ -2908,9 +3093,10 @@
         "slug": "alpineace-alpine-jet-193",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/193.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/193/main.jpg",
+            "/images/products/camping-stoves/193/angle.jpg",
+            "/images/products/camping-stoves/193/detail.jpg",
+            "/images/products/camping-stoves/193/lifestyle.jpg"
         ]
     },
     {
@@ -2923,9 +3109,10 @@
         "slug": "ruggededge-summit-hearth-194",
         "manual": "/manuals/manual_camping_stoves.md",
         "images": [
-            "/images/products/camping-stoves/194.jpg",
-            "/images/details/camping-stoves/1.jpg",
-            "/images/details/camping-stoves/2.jpg"
+            "/images/products/camping-stoves/194/main.jpg",
+            "/images/products/camping-stoves/194/angle.jpg",
+            "/images/products/camping-stoves/194/detail.jpg",
+            "/images/products/camping-stoves/194/lifestyle.jpg"
         ]
     },
     {
@@ -2938,10 +3125,10 @@
         "slug": "terranova-explorer-comfort-195",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/195.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/195/main.jpg",
+            "/images/products/sleeping-bags/195/angle.jpg",
+            "/images/products/sleeping-bags/195/detail.jpg",
+            "/images/products/sleeping-bags/195/lifestyle.jpg"
         ]
     },
     {
@@ -2954,9 +3141,10 @@
         "slug": "skyline-thermal-nest-196",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/196.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/196/main.jpg",
+            "/images/products/sleeping-bags/196/packed.jpg",
+            "/images/products/sleeping-bags/196/detail.jpg",
+            "/images/products/sleeping-bags/196/lifestyle.jpg"
         ]
     },
     {
@@ -2969,9 +3157,10 @@
         "slug": "cloudwalker-vantage-bag-197",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/197.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/197/main.jpg",
+            "/images/products/sleeping-bags/197/angle.jpg",
+            "/images/products/sleeping-bags/197/detail.jpg",
+            "/images/products/sleeping-bags/197/lifestyle.jpg"
         ]
     },
     {
@@ -2984,10 +3173,10 @@
         "slug": "oceanbreeze-cozy-shelter-198",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/198.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/198/main.jpg",
+            "/images/products/sleeping-bags/198/angle.jpg",
+            "/images/products/sleeping-bags/198/detail.jpg",
+            "/images/products/sleeping-bags/198/lifestyle.jpg"
         ]
     },
     {
@@ -3000,10 +3189,10 @@
         "slug": "peakperformance-horizon-sleeper-199",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/199.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/199/main.jpg",
+            "/images/products/sleeping-bags/199/angle.jpg",
+            "/images/products/sleeping-bags/199/detail.jpg",
+            "/images/products/sleeping-bags/199/lifestyle.jpg"
         ]
     },
     {
@@ -3016,10 +3205,10 @@
         "slug": "terranova-dream-cloud-200",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/200.jpg",
-            "/images/details/colors/red/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/200/main.jpg",
+            "/images/products/sleeping-bags/200/angle.jpg",
+            "/images/products/sleeping-bags/200/detail.jpg",
+            "/images/products/sleeping-bags/200/lifestyle.jpg"
         ]
     },
     {
@@ -3032,9 +3221,10 @@
         "slug": "naturenest-night-oasis-201",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/201.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/201/main.jpg",
+            "/images/products/sleeping-bags/201/angle.jpg",
+            "/images/products/sleeping-bags/201/detail.jpg",
+            "/images/products/sleeping-bags/201/lifestyle.jpg"
         ]
     },
     {
@@ -3047,10 +3237,10 @@
         "slug": "oceanbreeze-summit-sleep-202",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/202.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/202/main.jpg",
+            "/images/products/sleeping-bags/202/angle.jpg",
+            "/images/products/sleeping-bags/202/detail.jpg",
+            "/images/products/sleeping-bags/202/lifestyle.jpg"
         ]
     },
     {
@@ -3063,9 +3253,10 @@
         "slug": "summitgear-alpine-mummy-203",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/203.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/203/main.jpg",
+            "/images/products/sleeping-bags/203/angle.jpg",
+            "/images/products/sleeping-bags/203/detail.jpg",
+            "/images/products/sleeping-bags/203/lifestyle.jpg"
         ]
     },
     {
@@ -3078,9 +3269,10 @@
         "slug": "skyline-trail-snug-204",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/204.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/204/main.jpg",
+            "/images/products/sleeping-bags/204/angle.jpg",
+            "/images/products/sleeping-bags/204/detail.jpg",
+            "/images/products/sleeping-bags/204/lifestyle.jpg"
         ]
     },
     {
@@ -3093,10 +3285,10 @@
         "slug": "swiftstream-explorer-comfort-205",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/205.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/205/main.jpg",
+            "/images/products/sleeping-bags/205/angle.jpg",
+            "/images/products/sleeping-bags/205/detail.jpg",
+            "/images/products/sleeping-bags/205/lifestyle.jpg"
         ]
     },
     {
@@ -3109,10 +3301,10 @@
         "slug": "peakperformance-thermal-nest-206",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/206.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/206/main.jpg",
+            "/images/products/sleeping-bags/206/angle.jpg",
+            "/images/products/sleeping-bags/206/detail.jpg",
+            "/images/products/sleeping-bags/206/lifestyle.jpg"
         ]
     },
     {
@@ -3125,10 +3317,10 @@
         "slug": "oceanbreeze-vantage-bag-207",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/207.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/207/main.jpg",
+            "/images/products/sleeping-bags/207/angle.jpg",
+            "/images/products/sleeping-bags/207/detail.jpg",
+            "/images/products/sleeping-bags/207/lifestyle.jpg"
         ]
     },
     {
@@ -3141,10 +3333,10 @@
         "slug": "oceanbreeze-cozy-shelter-208",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/208.jpg",
-            "/images/details/colors/blue/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/208/main.jpg",
+            "/images/products/sleeping-bags/208/angle.jpg",
+            "/images/products/sleeping-bags/208/detail.jpg",
+            "/images/products/sleeping-bags/208/lifestyle.jpg"
         ]
     },
     {
@@ -3157,9 +3349,10 @@
         "slug": "forestfound-horizon-sleeper-209",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/209.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/209/main.jpg",
+            "/images/products/sleeping-bags/209/angle.jpg",
+            "/images/products/sleeping-bags/209/detail.jpg",
+            "/images/products/sleeping-bags/209/lifestyle.jpg"
         ]
     },
     {
@@ -3172,10 +3365,10 @@
         "slug": "peakperformance-dream-cloud-210",
         "manual": "/manuals/manual_sleeping_bags.md",
         "images": [
-            "/images/products/sleeping-bags/210.jpg",
-            "/images/details/colors/yellow/tent_detail.jpg",
-            "/images/details/sleeping-bags/1.jpg",
-            "/images/details/sleeping-bags/2.jpg"
+            "/images/products/sleeping-bags/210/main.jpg",
+            "/images/products/sleeping-bags/210/angle.jpg",
+            "/images/products/sleeping-bags/210/detail.jpg",
+            "/images/products/sleeping-bags/210/lifestyle.jpg"
         ]
     }
 ]
