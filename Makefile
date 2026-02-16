@@ -47,11 +47,9 @@ down: ## Stop all Docker services
 	$(DOCKER_COMPOSE) down
 
 migrate: ## Run Prisma migrations using DATABASE_URL
-	cd $(WEB_DIR) && npx prisma migrate dev --schema ../../prisma/schema.prisma
+	cd $(WEB_DIR) && npx prisma migrate dev --schema prisma/schema.prisma
 
 prisma-generate: ## Generate Prisma client for the web app
-	mkdir -p $(WEB_DIR)/prisma
-	cp prisma/schema.prisma $(WEB_DIR)/prisma/schema.prisma
 	cd $(WEB_DIR) && npx prisma generate --generator client --schema prisma/schema.prisma
 
 lint: ## Lint web app

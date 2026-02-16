@@ -16,8 +16,8 @@ Migrations run **automatically on application startup** via the Docker entrypoin
 - **Logic:** Executed in `infrastructure/scripts/docker-entrypoint.sh`.
 
 ### Seeding
-Initial data is sourced from `apps/web/public/*.json` files and managed by `prisma/seed.ts`.
-- **Manual Seed:** `cd apps/web && npx prisma db seed --schema ../../prisma/schema.prisma`
+Initial data is sourced from `apps/web/public/*.json` files and managed by `apps/web/prisma/seed.ts`.
+- **Manual Seed:** `cd apps/web && npx prisma db seed --schema prisma/schema.prisma`
 - **Development:** Seeding occurs automatically after `npm install` or during `prisma migrate dev`.
 
 ## Local Development Access
@@ -34,7 +34,7 @@ Access the private database locally using the **Cloud SQL Proxy**.
 With the proxy running, set your `DATABASE_URL` and execute:
 ```bash
 export DATABASE_URL="postgresql://prismauser:<password>@localhost:5432/contoso-db"
-cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma
+cd apps/web && npx prisma migrate dev --schema prisma/schema.prisma
 ```
 
 ### 3. Database Tools (psql, pgAdmin)
@@ -45,7 +45,7 @@ cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma
 ## Multi-Service Integration
 
 Both the **Web App (Next.js)** and **AI Chat (FastAPI)** share the same database and schema.
-- **Schema Source:** `prisma/schema.prisma` at the project root.
+- **Schema Source:** `apps/web/prisma/schema.prisma`.
 - **Web App:** Manages users, products, and orders.
 - **Chat Service:** Accesses product data for RAG and retrieves customer history.
 

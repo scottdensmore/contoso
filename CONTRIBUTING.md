@@ -50,9 +50,9 @@ Before submitting a Pull Request, ensure:
 ## Database Migrations
 
 If your change involves the database:
-1.  Modify `prisma/schema.prisma`.
-2.  Run `make migrate` (or `cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma --name your_change_description`).
-3.  Update the seed script (`prisma/seed.ts`) if necessary.
+1.  Modify `apps/web/prisma/schema.prisma`.
+2.  Run `make migrate` (or `cd apps/web && npx prisma migrate dev --schema prisma/schema.prisma --name your_change_description`).
+3.  Update the seed script (`apps/web/prisma/seed.ts`) if necessary.
 
 ## Need Help?
 

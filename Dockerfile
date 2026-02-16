@@ -7,9 +7,6 @@ RUN apk add --no-cache libc6-compat
 # Set working directories
 WORKDIR /app
 
-# Copy prisma schema
-COPY prisma ./prisma
-
 # Copy package files and install dependencies
 COPY apps/web/package*.json ./apps/web/
 WORKDIR /app/apps/web
@@ -23,7 +20,8 @@ COPY apps/web/tsconfig.json ./
 COPY apps/web/tailwind.config.ts ./
 COPY apps/web/postcss.config.js ./
 COPY apps/web/.eslintrc.json ./
-COPY prisma/schema.prisma ./prisma/schema.prisma
+COPY apps/web/prisma ./prisma
+COPY apps/web/prisma.config.ts ./prisma.config.ts
 
 # Generate prisma client
 RUN npx prisma generate --generator client --schema prisma/schema.prisma

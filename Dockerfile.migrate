@@ -7,8 +7,8 @@ WORKDIR /app
 
 # Copy package files
 COPY apps/web/package*.json ./apps/web/
-COPY prisma ./prisma/
-COPY prisma/schema.prisma ./apps/web/prisma/schema.prisma
+COPY apps/web/prisma ./apps/web/prisma/
+COPY apps/web/prisma.config.ts ./apps/web/prisma.config.ts
 
 # Install dependencies
 WORKDIR /app/apps/web
@@ -18,4 +18,4 @@ RUN npm ci
 RUN npx prisma generate --schema prisma/schema.prisma
 
 # The migration command will be run as the container command
-CMD ["npx", "prisma", "migrate", "deploy", "--schema=/app/prisma/schema.prisma"]
+CMD ["npx", "prisma", "migrate", "deploy", "--schema=/app/apps/web/prisma/schema.prisma"]

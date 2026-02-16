@@ -136,10 +136,10 @@ The project uses a PostgreSQL database managed by Prisma.
 make prisma-generate
 
 # Create a new migration
-cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma --name your_migration_name
+cd apps/web && npx prisma migrate dev --schema prisma/schema.prisma --name your_migration_name
 
 # Open Prisma Studio (database GUI)
-cd apps/web && npx prisma studio --schema ../../prisma/schema.prisma
+cd apps/web && npx prisma studio --schema prisma/schema.prisma
 ```
 
 ## Authentication
@@ -162,7 +162,7 @@ docker-compose down -v # Stop and remove data
 ```bash
 docker-compose up -d db chat # Start dependencies
 make dev-web                 # Start web app
-cd apps/web && npx prisma studio --schema ../../prisma/schema.prisma  # View database
+cd apps/web && npx prisma studio --schema prisma/schema.prisma  # View database
 ```
 
 ### GCP Deployment (Option 3)

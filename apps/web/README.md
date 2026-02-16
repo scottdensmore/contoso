@@ -37,4 +37,4 @@ make prisma-generate
 
 ## Prisma
 
-The web app shares the root Prisma schema at `prisma/schema.prisma`.
+The web app schema and migrations live in `apps/web/prisma/`.

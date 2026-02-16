@@ -45,7 +45,7 @@ RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements
 # Copy application code
 
 # Copy Prisma schema and generate client
-COPY --chown=appuser:appuser prisma/schema.prisma schema.prisma
+COPY --chown=appuser:appuser apps/web/prisma/schema.prisma schema.prisma
 RUN prisma generate --generator pyclient
 
 # Copy application code

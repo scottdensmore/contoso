@@ -52,9 +52,6 @@
     "typescript": "^5",
     "vitest": "^4.0.16"
   },
-  "prisma": {
-    "seed": "npx tsx ../../prisma/seed.ts"
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",

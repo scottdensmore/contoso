@@ -190,7 +190,7 @@ echo "Seeding data into GCP..."
 # Ensure python dependencies are installed
 pip install -r services/chat/src/api/requirements.txt
 # Generate python prisma client
-prisma generate --schema=prisma/schema.prisma
+prisma generate --schema=apps/web/prisma/schema.prisma
 # Run the master seeding script (skip DataStore seeding if it doesn't exist yet)
 python3 infrastructure/scripts/seed_gcp_all.py || {
   echo ""

@@ -27,12 +27,11 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
-              - 'prisma/**'
               - 'Dockerfile'
               - 'docker-compose.yml'
             chat:
               - 'services/chat/**'
-              - 'prisma/**'
+              - 'apps/web/prisma/**'
               - 'docker-compose.yml'
               - 'Dockerfile.migrate'
 
@@ -64,10 +63,7 @@ jobs:
 
       - name: Generate Prisma Client (JS)
         working-directory: ./apps/web
-        run: |
-          mkdir -p prisma
-          cp ../../prisma/schema.prisma prisma/schema.prisma
-          npx prisma generate --generator client --schema prisma/schema.prisma
+        run: npx prisma generate --generator client --schema prisma/schema.prisma
 
       - name: Type Check
         working-directory: ./apps/web
@@ -105,7 +101,7 @@ jobs:
 
       - name: Generate Prisma Client (Python)
         run: |
-          prisma-client-py generate --schema=${{ github.workspace }}/prisma/schema.prisma
+          prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
 
       - name: Run unit tests
         working-directory: ./services/chat

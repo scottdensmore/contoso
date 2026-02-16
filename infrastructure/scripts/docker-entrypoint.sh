@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PRISMA_SCHEMA="${PRISMA_SCHEMA:-/app/prisma/schema.prisma}"
+PRISMA_SCHEMA="${PRISMA_SCHEMA:-/app/apps/web/prisma/schema.prisma}"
 
 echo "Running database migrations..."
 npx prisma migrate deploy --schema "$PRISMA_SCHEMA"
