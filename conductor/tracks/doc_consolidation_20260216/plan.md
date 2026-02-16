@@ -18,10 +18,10 @@ Goal: Review, clean up, and standardize the formatting of all documents in the `
 - [x] Task: Implement: Add cross-links between related documents in `docs/` [ef29a2d]
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Audit and Standardization' (Protocol in workflow.md)
 
-## Phase 3: README Integration and Final Review
+## Phase 3: README Integration and Final Review [checkpoint: 161f86b]
 Goal: Update the main `README.md` and perform a final quality check.
 
 - [x] Task: Implement: Update root `README.md` to include a "Documentation Index" linking to `docs/` [d8b4422]
-- [~] Task: Implement: Ensure "Quick Local Setup" is retained and clear in the root `README.md`
-- [ ] Task: Implement: Perform a final audit of all links (internal and external) in the documentation
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: README Integration and Final Review' (Protocol in workflow.md)
+- [x] Task: Implement: Ensure "Quick Local Setup" is retained and clear in the root `README.md` [d8b4422]
+- [x] Task: Implement: Perform a final audit of all links (internal and external) in the documentation [d8b4422]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: README Integration and Final Review' (Protocol in workflow.md)
