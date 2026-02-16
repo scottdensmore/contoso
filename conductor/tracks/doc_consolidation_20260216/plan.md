@@ -12,8 +12,8 @@ Goal: Identify all existing documentation and consolidate it into the `docs/` di
 ## Phase 2: Audit and Standardization
 Goal: Review, clean up, and standardize the formatting of all documents in the `docs/` directory.
 
-- [~] Task: Write Tests: Verify all files in `docs/` are in Markdown format and have no broken internal links (using a script)
-- [ ] Task: Implement: Audit and rewrite `docs/DATABASE.md` for clarity and conciseness
+- [x] Task: Write Tests: Verify all files in `docs/` are in Markdown format and have no broken internal links (using a script) [fbbdfbe]
+- [~] Task: Implement: Audit and rewrite `docs/DATABASE.md` for clarity and conciseness
 - [ ] Task: Implement: Standardize formatting (headers, styles) across all files in `docs/`
 - [ ] Task: Implement: Add cross-links between related documents in `docs/`
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Audit and Standardization' (Protocol in workflow.md)
