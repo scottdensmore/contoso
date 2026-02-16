@@ -44,11 +44,11 @@ def test_create_response_mock_mode():
         assert response.status_code == 200
 
         data = response.json()
-        assert "response" in data
+        assert "answer" in data
         assert data["customer_id"] == "1"
         assert data["chat_history"] == "[]"
         assert data["mock"] == True
-        assert "What are the best tents?" in data["response"]
+        assert "What are the best tents?" in data["answer"]
 
 @patch('main.get_response')
 def test_create_response_real_mode(mock_get_response):
@@ -95,7 +95,7 @@ def test_create_response_error_handling(mock_get_response):
         assert response.status_code == 200
 
         data = response.json()
-        assert "response" in data
+        assert "answer" in data
         assert data["fallback"] == True
         assert data["customer_id"] == "1"
         assert "error" in data
@@ -113,17 +113,18 @@ def test_create_response_validation_error():
 
 def test_create_response_default_values():
     """Test default values for optional fields"""
-    payload = {
-        "question": "Hello"
-    }
+    with patch('main.REAL_CHAT_AVAILABLE', False):
+        payload = {
+            "question": "Hello"
+        }
 
-    response = client.post("/api/create_response", json=payload)
-    assert response.status_code == 200
+        response = client.post("/api/create_response", json=payload)
+        assert response.status_code == 200
 
-    data = response.json()
-    # Should use default customer_id and chat_history
-    assert data["customer_id"] == "1"
-    assert data["chat_history"] == "[]"
+        data = response.json()
+        # Should use default customer_id (None) and chat_history ("[]")
+        assert data["customer_id"] is None
+        assert data["chat_history"] == "[]"
 
 def test_cors_headers():
     """Test CORS headers are present"""

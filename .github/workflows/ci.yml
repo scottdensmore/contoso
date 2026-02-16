@@ -66,3 +66,6 @@ jobs:
         working-directory: ./services/chat
         run: |
           pytest tests/unit/ --cov=src/api --cov-report=term-missing -v
+        env:
+          PROJECT_ID: local-project
+          REGION: us-central1
