@@ -32,8 +32,8 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      - name: Generate Prisma Client
-        run: npx prisma generate
+      - name: Generate Prisma Client (JS)
+        run: npx prisma generate --generator client
 
       - name: Build
         run: npm run build
@@ -56,7 +56,11 @@ jobs:
         run: |
           pip install -r src/api/requirements.txt
           pip install -r tests/requirements-test.txt
-          pip install httpx pytest-cov
+          pip install httpx pytest-cov prisma
+
+      - name: Generate Prisma Client (Python)
+        run: |
+          npx prisma generate --generator pyclient
 
       - name: Run unit tests
         working-directory: ./services/chat
