@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Chat from "@/components/chat";
 import Block from "@/components/block";
 import Providers from "@/components/providers";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Contoso Outdoors Company",
@@ -31,7 +32,9 @@ export default async function RootLayout({
                 &copy;Microsoft 2024
               </Block>
             </main>
-            <Chat />
+            <Suspense fallback={null}>
+              <Chat />
+            </Suspense>
           </div>
         </Providers>
       </body>

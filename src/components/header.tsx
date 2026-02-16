@@ -6,6 +6,7 @@ import { Bars3Icon } from "@heroicons/react/24/outline";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import SidebarWrapper from "./sidebar-wrapper";
+import { Suspense } from "react";
 
 export const Header = () => {
   const { data: session, status } = useSession();
@@ -76,10 +77,12 @@ export const Header = () => {
         </div>
       </Block>
 
-      <SidebarWrapper 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
+      <Suspense fallback={null}>
+        <SidebarWrapper 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
+      </Suspense>
     </>
   );
 };

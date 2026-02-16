@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from './route'
 import { createUser, getUserByEmail } from '@/lib/user'
-import { NextResponse } from 'next/server'
 
 vi.mock('@/lib/user', () => ({
   createUser: vi.fn(),

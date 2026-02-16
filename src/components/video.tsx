@@ -108,28 +108,31 @@ const Video = ({ onVideoClick, onClose }: Props) => {
               })}
             </select>
             {showCamera && (
-              <div
+              <button
                 className="bg-white rounded-full p-2 shadow-md border-zinc-40 hover:cursor-pointer"
                 onClick={handleVideoClick}
+                aria-label="Take picture"
               >
                 <CameraIcon className="w-6" />
-              </div>
+              </button>
             )}
-            <div
+            <button
               className="bg-white rounded-full p-2 shadow-md border-zinc-40 hover:cursor-pointer"
               onClick={() => onClose()}
+              aria-label="Close camera"
             >
               <XMarkIcon className="w-6" />
-            </div>
+            </button>
           </div>
           <div className="mt-4">
             <video
               ref={videoRef}
               autoPlay={true}
               className="rounded-lg shadow-lg aspect-auto outline-none overflow-hidden w-[640px]"
-              title="Click to take a picture"
-              onClick={handleVideoClick}
-            ></video>
+              title="Camera preview"
+            >
+              <track kind="captions" />
+            </video>
           </div>
         </div>
       </div>

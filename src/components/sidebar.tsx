@@ -16,9 +16,10 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
   return (
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm" 
+      <button 
+        className="fixed inset-0 bg-black/30 backdrop-blur-sm w-full h-full border-0 p-0" 
         onClick={onClose}
+        aria-label="Close sidebar"
       />
 
       {/* Sidebar Content */}
@@ -41,7 +42,7 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
               <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
                 {section.title}
               </h3>
-              <ul role="list" className="mt-4 space-y-4">
+              <ul className="mt-4 space-y-4">
                 {section.links.map((link) => (
                   <li key={link.title} className="flow-root">
                     <Link

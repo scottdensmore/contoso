@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import Header from './header'
 import { useSession } from 'next-auth/react'
 
@@ -18,29 +18,37 @@ describe('Header', () => {
     } as any))
   })
 
-  it('renders login/signup links when unauthenticated', () => {
+  it('renders login/signup links when unauthenticated', async () => {
     vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
-    render(<Header />)
+    await act(async () => {
+      render(<Header />)
+    })
     expect(screen.getByText(/sign in/i)).toBeDefined()
     expect(screen.getByText(/sign up/i)).toBeDefined()
   })
 
-  it('renders profile link and user name when authenticated', () => {
+  it('renders profile link and user name when authenticated', async () => {
     vi.mocked(useSession).mockReturnValue({ 
       status: 'authenticated', 
       data: { user: { name: 'John Doe', email: 'john@test.com' } } 
     } as any)
-    render(<Header />)
+    await act(async () => {
+      render(<Header />)
+    })
     expect(screen.getByText('John Doe')).toBeDefined()
     expect(screen.getByTitle(/profile settings/i)).toBeDefined()
     expect(screen.getByText(/sign out/i)).toBeDefined()
   })
 
-  it('should open the sidebar when clicking the hamburger icon', () => {
+  it('should open the sidebar when clicking the hamburger icon', async () => {
     vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
-    render(<Header />)
+    await act(async () => {
+      render(<Header />)
+    })
     const hamburger = screen.getByLabelText(/open menu/i)
-    fireEvent.click(hamburger)
+    await act(async () => {
+      fireEvent.click(hamburger)
+    })
     expect(screen.getByRole('complementary')).toBeDefined()
   })
 })

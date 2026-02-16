@@ -2,6 +2,21 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import Sidebar from './sidebar'
 
+vi.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, href, onClick }: any) => (
+    <a 
+      href={href} 
+      onClick={(e) => {
+        e.preventDefault();
+        if (onClick) onClick(e);
+      }}
+    >
+      {children}
+    </a>
+  ),
+}))
+
 describe('Sidebar Component', () => {
   it('should not be visible when isOpen is false', () => {
     render(<Sidebar isOpen={false} onClose={() => {}} sections={[]} />)
@@ -17,8 +32,8 @@ describe('Sidebar Component', () => {
   it('should call onClose when clicking the close button', () => {
     const onClose = vi.fn()
     render(<Sidebar isOpen={true} onClose={onClose} sections={[]} />)
-    const closeButton = screen.getByLabelText(/close/i)
-    fireEvent.click(closeButton)
+    const closeButtons = screen.getAllByLabelText(/close/i)
+    fireEvent.click(closeButtons[1]) // Index 1 is the actual X button
     expect(onClose).toHaveBeenCalled()
   })
 

@@ -264,13 +264,18 @@ export const Chat = () => {
             </div>
             {/* image section */}
             {currentImage && (
-              <div className="pt-3 pl-3 pr-3 hover:cursor-pointer">
-                <img
-                  src={currentImage}
-                  className="object-contain w-full h-full rounded-xl"
-                  alt="Current Image"
+              <div className="pt-3 pl-3 pr-3">
+                <button
+                  className="w-full h-full p-0 border-0 bg-transparent hover:cursor-pointer"
                   onClick={() => setCurrentImage(null)}
-                />
+                  aria-label="Remove current image"
+                >
+                  <img
+                    src={currentImage}
+                    className="object-contain w-full h-full rounded-xl"
+                    alt="Current upload preview"
+                  />
+                </button>
               </div>
             )}
             {/* chat input section */}
@@ -312,16 +317,17 @@ export const Chat = () => {
             </div>
           </div>
         )}
-        <div
+        <button
           className="bg-white rounded-full p-2 shadow-lg border-zinc-40 hover:cursor-pointer"
           onClick={toggleChat}
+          aria-label={showChat ? "Close chat" : "Open chat"}
         >
           {showChat ? (
             <XMarkIcon className="w-6" />
           ) : (
             <ChatBubbleLeftRightIcon className="w-6" />
           )}
-        </div>
+        </button>
       </div>
       {showVideo && (
         <Video onVideoClick={onVideoClick} onClose={onVideoClose} />
