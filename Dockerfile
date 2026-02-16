@@ -4,29 +4,29 @@ FROM node:18-alpine
 # Install dependencies needed for sharp and prisma
 RUN apk add --no-cache libc6-compat
 
-# Set working directory
+# Set working directories
 WORKDIR /app
-
-# Copy package.json and lock files
-COPY package*.json ./
 
 # Copy prisma schema
 COPY prisma ./prisma
 
-# Install dependencies
-RUN npm install
+# Copy package files and install dependencies
+COPY apps/web/package*.json ./apps/web/
+WORKDIR /app/apps/web
+RUN npm ci
 
 # Copy application source
-COPY src ./src
-COPY public ./public
-COPY next.config.js ./
-COPY tsconfig.json ./
-COPY tailwind.config.ts ./
-COPY postcss.config.js ./
-COPY .eslintrc.json ./
+COPY apps/web/src ./src
+COPY apps/web/public ./public
+COPY apps/web/next.config.js ./
+COPY apps/web/tsconfig.json ./
+COPY apps/web/tailwind.config.ts ./
+COPY apps/web/postcss.config.js ./
+COPY apps/web/.eslintrc.json ./
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 # Generate prisma client
-RUN npx prisma generate --generator client
+RUN npx prisma generate --generator client --schema prisma/schema.prisma
 
 # Build the Next.js application
 RUN npm run build

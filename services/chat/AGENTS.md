@@ -37,6 +37,6 @@ Most common local values:
 
 ## Guardrails
 
-- Preserve API compatibility for web callers in `src/lib/messaging.ts`.
+- Preserve API compatibility for web callers in `apps/web/src/lib/messaging.ts`.
 - If request or response schema changes, update both unit tests and web proxy behavior.
 - Keep external provider configuration behind environment variables.

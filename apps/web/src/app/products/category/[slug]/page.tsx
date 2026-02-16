@@ -4,6 +4,14 @@ import { getProductsByCategory } from "@/lib/products";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 
+type CategoryProductCard = {
+  id: string;
+  slug: string;
+  image: string | null;
+  name: string;
+  price: number;
+};
+
 export default async function CategoryPage({
   params,
   searchParams,
@@ -31,7 +39,7 @@ export default async function CategoryPage({
 
       <Block innerClassName="p-8">
         <div className="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
-          {category.products.map((product) => (
+          {category.products.map((product: CategoryProductCard) => (
             <a
               key={product.id}
               href={`/products/${product.slug}${

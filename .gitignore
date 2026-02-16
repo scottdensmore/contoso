@@ -68,6 +68,7 @@ infrastructure/terraform/*.json
 
 # Databases / AI / Search / Prompty
 /src/generated/prisma
+apps/web/prisma/
 cloud_sql_proxy
 **/.prompty/
 **/eval/downloaded_artifacts/

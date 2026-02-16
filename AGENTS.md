@@ -2,16 +2,16 @@
 
 This repository contains two runtime surfaces:
 
-- `src/` for the Next.js web app (UI + API routes).
+- `apps/web/` for the Next.js web app (UI + API routes).
 - `services/chat/` for the FastAPI chat service.
 
 Use this file as the default runbook for coding agents.
 
 ## Repo map
 
-- `src/app/`: Next.js pages and API routes.
-- `src/components/`: UI components.
-- `src/lib/`: shared web helpers and domain logic.
+- `apps/web/src/app/`: Next.js pages and API routes.
+- `apps/web/src/components/`: UI components.
+- `apps/web/src/lib/`: shared web helpers and domain logic.
 - `services/chat/src/api/`: chat service API and chat logic.
 - `services/chat/tests/`: chat unit and integration tests.
 - `prisma/`: shared data model and migrations.
@@ -25,6 +25,7 @@ Run from repository root:
 ```bash
 make help
 make setup
+make prisma-generate
 make dev
 make test
 make ci
@@ -50,7 +51,7 @@ Copy templates to `.env` before local development.
 ## Change boundaries
 
 - If you change web API payloads for chat, validate both:
-  - `src/app/api/chat/*`
+  - `apps/web/src/app/api/chat/*`
   - `services/chat/src/api/*`
 - If you change Prisma schema, run migrations and validate both web/chat tests.
 - Prefer keeping generated artifacts and local runtime outputs out of commits.

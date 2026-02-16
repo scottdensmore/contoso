@@ -16,8 +16,8 @@ Migrations run **automatically on application startup** via the Docker entrypoin
 - **Logic:** Executed in `infrastructure/scripts/docker-entrypoint.sh`.
 
 ### Seeding
-Initial data is sourced from `public/*.json` files and managed by `prisma/seed.ts`.
-- **Manual Seed:** `npx prisma db seed`
+Initial data is sourced from `apps/web/public/*.json` files and managed by `prisma/seed.ts`.
+- **Manual Seed:** `cd apps/web && npx prisma db seed --schema ../../prisma/schema.prisma`
 - **Development:** Seeding occurs automatically after `npm install` or during `prisma migrate dev`.
 
 ## Local Development Access
@@ -34,7 +34,7 @@ Access the private database locally using the **Cloud SQL Proxy**.
 With the proxy running, set your `DATABASE_URL` and execute:
 ```bash
 export DATABASE_URL="postgresql://prismauser:<password>@localhost:5432/contoso-db"
-npx prisma migrate dev
+cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma
 ```
 
 ### 3. Database Tools (psql, pgAdmin)

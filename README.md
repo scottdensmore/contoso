@@ -2,6 +2,8 @@
 
 A modern e-commerce website for "Contoso Outdoors" with integrated AI features, built with Next.js, Tailwind CSS, and PostgreSQL.
 
+The web application source lives in `apps/web/`, and the chat service lives in `services/chat/`.
+
 ## Table of Contents
 
 - [Quick Start](#getting-started)
@@ -60,12 +62,12 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
 
 3.  **Run Migrations:**
     ```bash
-    npx prisma migrate dev
+    make migrate
     ```
 
 4.  **Start Web App:**
     ```bash
-    npm run dev
+    make dev-web
     ```
 
 ### Option 3: Deploy to Google Cloud Platform (GCP)
@@ -119,6 +121,7 @@ Comprehensive documentation is available in the [docs/](./docs/) directory:
 
 - **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
 - **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
+- **[Web App Runbook](./apps/web/README.md):** Web app development and verification commands.
 - **[Chat Service Runbook](./services/chat/README.md):** Chat API local development and testing.
 - **[Contributing Guide](./CONTRIBUTING.md):** Standards and workflow for developers.
 
@@ -130,13 +133,13 @@ The project uses a PostgreSQL database managed by Prisma.
 
 ```bash
 # Generate Prisma Client
-npx prisma generate
+make prisma-generate
 
 # Create a new migration
-npx prisma migrate dev --name your_migration_name
+cd apps/web && npx prisma migrate dev --schema ../../prisma/schema.prisma --name your_migration_name
 
 # Open Prisma Studio (database GUI)
-npx prisma studio
+cd apps/web && npx prisma studio --schema ../../prisma/schema.prisma
 ```
 
 ## Authentication
@@ -158,8 +161,8 @@ docker-compose down -v # Stop and remove data
 ### Local Dev (Option 2)
 ```bash
 docker-compose up -d db chat # Start dependencies
-npm run dev                  # Start web app
-npx prisma studio            # View database
+make dev-web                 # Start web app
+cd apps/web && npx prisma studio --schema ../../prisma/schema.prisma  # View database
 ```
 
 ### GCP Deployment (Option 3)

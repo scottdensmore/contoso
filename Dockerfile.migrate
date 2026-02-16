@@ -6,14 +6,16 @@ RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY apps/web/package*.json ./apps/web/
 COPY prisma ./prisma/
+COPY prisma/schema.prisma ./apps/web/prisma/schema.prisma
 
 # Install dependencies
+WORKDIR /app/apps/web
 RUN npm ci
 
 # Generate Prisma Client
-RUN npx prisma generate
+RUN npx prisma generate --schema prisma/schema.prisma
 
 # The migration command will be run as the container command
-CMD ["npx", "prisma", "migrate", "deploy"]
+CMD ["npx", "prisma", "migrate", "deploy", "--schema=/app/prisma/schema.prisma"]
