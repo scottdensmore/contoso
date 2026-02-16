@@ -28,6 +28,7 @@ make setup
 make prisma-generate
 make dev
 make test
+make quick-ci
 make ci
 ```
 
@@ -37,6 +38,8 @@ Unified npm command surface (root `package.json`):
 npm run setup
 npm run dev:web
 npm run dev:chat
+npm run quick-ci
+npm run quick-ci:chat
 npm run ci:web
 npm run ci:chat
 npm run ci
@@ -70,5 +73,5 @@ Copy templates to `.env` before local development.
 ## Validation expectations
 
 - Web-only change: `make lint && make typecheck && make test-web`
-- Chat-only change: `make test-chat`
+- Chat-only change: `make quick-ci-chat`
 - Cross-surface change (web + chat + schema): `make ci`

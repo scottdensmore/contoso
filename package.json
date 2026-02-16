@@ -21,6 +21,9 @@
     "prisma:generate": "make prisma-generate",
     "migrate": "make migrate",
     "docs:check": "make docs-check",
+    "quick-ci": "make quick-ci",
+    "quick-ci:web": "make quick-ci-web",
+    "quick-ci:chat": "make quick-ci-chat",
     "ci": "make ci",
     "ci:web": "npm run lint:web && npm run typecheck:web && npm run test:web && npm run build:web",
     "ci:chat": "npm run test:chat"

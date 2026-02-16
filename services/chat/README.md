@@ -54,6 +54,7 @@ From repository root:
 ```bash
 make test-chat
 SERVICE_URL=http://localhost:8000 make test-chat-integration
+npm run quick-ci:chat
 npm run ci:chat
 ```
 

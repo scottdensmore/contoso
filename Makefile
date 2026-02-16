@@ -11,7 +11,7 @@ CHAT_SRC_DIR := $(CHAT_DIR)/src/api
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-web test-chat test-chat-integration build docs-check ci
+.PHONY: help setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -79,6 +79,17 @@ build: ## Build web app
 	$(MAKE) sync-web-env
 	$(MAKE) prisma-generate
 	$(NPM) --prefix $(WEB_DIR) run build
+
+quick-ci-web: ## Fast web checks (no build)
+	$(MAKE) lint
+	$(MAKE) typecheck
+	$(MAKE) test-web
+
+quick-ci-chat: ## Fast chat checks
+	$(MAKE) test-chat
+
+quick-ci: ## Fast local checks for common iteration loop
+	$(MAKE) quick-ci-web
 
 docs-check: ## Validate docs links
 	$(PYTHON) scripts/verify_docs.py

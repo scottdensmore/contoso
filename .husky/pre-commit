@@ -1,3 +1,2 @@
 cd apps/web || exit 1
 npx lint-staged
-npm test

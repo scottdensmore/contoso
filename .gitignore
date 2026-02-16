@@ -120,3 +120,4 @@ docs/workshop/site
 !public/**/*.json
 !infrastructure/terraform/*.tf
 !infrastructure/terraform/*.tfvars
+!apps/web/next-env.d.ts

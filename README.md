@@ -99,6 +99,7 @@ make help
 make setup
 make dev
 make test
+make quick-ci
 make ci
 ```
 
@@ -108,6 +109,8 @@ There is also a root `package.json` workspace command surface:
 npm run setup
 npm run dev:web
 npm run dev:chat
+npm run quick-ci
+npm run quick-ci:chat
 npm run ci:web
 npm run ci:chat
 npm run ci

@@ -33,8 +33,10 @@ From repository root:
 make lint
 make typecheck
 make test-web
+make quick-ci-web
 make build
 make prisma-generate
+npm run quick-ci:web
 npm run ci:web
 ```
 
