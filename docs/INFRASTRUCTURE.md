@@ -6,6 +6,8 @@ This document outlines the infrastructure-as-code, deployment processes, and rol
 
 Contoso Outdoor uses a unified deployment process targeting **Google Cloud Run**.
 
+For details on database migrations and connectivity, see [DATABASE.md](./DATABASE.md).
+
 ### Local Simulation
 Verify deployment logic locally before pushing:
 ```bash

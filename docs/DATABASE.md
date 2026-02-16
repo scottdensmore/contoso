@@ -6,7 +6,7 @@ This document details the architecture, management, and access patterns for the 
 
 The database is a **Cloud SQL (PostgreSQL)** instance configured with **private IP only**.
 - **Network:** Only accessible via the GCP VPC network or through a secure tunnel.
-- **Connectivity:** Cloud Run services (Web and AI Chat) connect via a VPC Connector.
+- **Connectivity:** Cloud Run services (Web and AI Chat) connect via a VPC Connector. See [INFRASTRUCTURE.md](./INFRASTRUCTURE.md) for deployment details.
 
 ## Migrations & Seeding
 
