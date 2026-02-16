@@ -4,10 +4,11 @@ A modern e-commerce website for "Contoso Outdoors" with integrated AI features, 
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
+- [Quick Start](#getting-started)
 - [Features](#features)
-- [Local Development](#local-development)
-- [Deployment](#deployment-to-google-cloud-platform)
+- [Project Documentation](#project-documentation)
+- [Local Development](#option-2-local-development-hybrid)
+- [Deployment](#option-3-deploy-to-google-cloud-platform-gcp)
 - [Database](#database)
 - [Authentication](#authentication)
 - [Contributing](#contributing)
@@ -104,6 +105,14 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
 - **FAQ:** Common questions regarding ordering, shipping, and returns (`/faq`).
 - **AI Chat Assistant:** Intelligent customer service chatbot powered by Gemini 2.5 Flash (Cloud) or Ollama (Local).
 - **Category Filtering:** Dedicated pages for viewing products within specific categories.
+
+## Project Documentation
+
+Comprehensive documentation is available in the [docs/](./docs/) directory:
+
+- **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
+- **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
+- **[Contributing Guide](./CONTRIBUTING.md):** Standards and workflow for developers.
 
 ## Database
 
