@@ -1,6 +1,6 @@
 # Initial Concept
 
-A modern e-commerce website for "Contoso Outdoors" with integrated AI features, built for high scalability and secure deployment on Google Cloud Platform.
+A modern e-commerce website for "Contoso Outdoors" with integrated AI features, built for high scalability and quality-assured development through a test-focused CI pipeline.
 
 # Product Guide
 
@@ -24,4 +24,4 @@ Outdoor enthusiasts looking for high-performance gear and detailed specification
 The platform should feel modern and sleek, utilizing contemporary design patterns and smooth transitions to provide a premium shopping experience.
 
 ## Technical Goals
-Establish a scalable and secure infrastructure using modern cloud deployment practices, specifically targeted for Google Cloud Platform.
+Establish a scalable and secure infrastructure using modern development practices, with a robust CI pipeline ensuring code quality and reliability.

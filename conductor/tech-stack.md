@@ -32,7 +32,7 @@
   - **Databases:**
     - Cloud SQL for PostgreSQL - Fully managed PostgreSQL database service for the main application and AI Chat service.
 - **Infrastructure as Code (IaC):** [Terraform](https://www.terraform.io/) - For provisioning and managing cloud infrastructure through configuration files.
-- **Deployment Strategy:** Unified automated deployments using consolidated scripts and GitHub Actions, with coordinated deployment of both the web application and chat service.
+- **CI/CD Strategy:** Test-focused Continuous Integration via GitHub Actions, performing automated linting, unit testing, and build verification for both the web application and chat service.
 
 ## Development Tools
 - **Containerization:** [Docker](https://www.docker.com/) - For consistent local development and production environments.
