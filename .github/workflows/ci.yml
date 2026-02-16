@@ -60,7 +60,7 @@ jobs:
 
       - name: Generate Prisma Client (Python)
         run: |
-          npx prisma generate --generator pyclient
+          prisma-client-py generate --schema=../../prisma/schema.prisma
 
       - name: Run unit tests
         working-directory: ./services/chat
