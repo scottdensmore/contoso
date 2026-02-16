@@ -18,7 +18,7 @@ vi.mock('@/components/block', () => ({
 // Mock image to avoid Next.js Image issues in test
 vi.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => <img {...props} />,
+  default: ({ alt, ...props }: any) => <img alt={alt || ""} {...props} />,
 }))
 
 describe('About Page', () => {

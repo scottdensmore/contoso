@@ -1,20 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Block from "@/components/block";
 import { Bars3Icon } from "@heroicons/react/24/outline";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import SidebarWrapper from "./sidebar-wrapper";
 
-export const Header = ({
-  params,
-  searchParams,
-}: {
-  params?: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) => {
+export const Header = () => {
   const { data: session, status } = useSession();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 

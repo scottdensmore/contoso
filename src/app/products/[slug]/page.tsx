@@ -45,10 +45,8 @@ function getRange(header1:string, header2:string, markdown: string[]): string {
 
 export default async function Page({
   params,
-  searchParams,
 }: {
   params: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const product = await getData(params.slug);
 
@@ -108,7 +106,7 @@ export default async function Page({
     "[&_ol]:list-decimal [&_ol]:list-outside [&_ul]:list-outside";
   return (
     <>
-      <Header params={params} searchParams={searchParams} />
+      <Header />
       <Block innerClassName="pt-6 pb-6">
         <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {product.name}

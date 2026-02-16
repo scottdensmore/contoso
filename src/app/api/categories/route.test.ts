@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GET } from './route'
 import { getCategories } from '@/lib/categories'
-import { NextResponse } from 'next/server'
 
 vi.mock('@/lib/categories', () => ({
   getCategories: vi.fn(),

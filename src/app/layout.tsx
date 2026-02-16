@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata } from "next";
 import Chat from "@/components/chat";
 import Block from "@/components/block";
-import Header from "@/components/header";
 import Providers from "@/components/providers";
 
 export const metadata: Metadata = {

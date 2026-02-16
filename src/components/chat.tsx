@@ -104,7 +104,7 @@ export const Chat = () => {
       // ask for camera access
       navigator.mediaDevices
         .getUserMedia({ video: true })
-        .then((stream) => {
+        .then((_stream) => {
           // show camera
           setShowVideo(true);
         })
@@ -167,8 +167,6 @@ export const Chat = () => {
       avatar: userAvatar,
       image: currentImage,
     };
-
-    const t0 = performance.now();
 
     if (chatType === ChatType.Grounded) {
       // using "Add Your Data"

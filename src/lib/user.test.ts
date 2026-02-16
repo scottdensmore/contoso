@@ -32,7 +32,7 @@ describe('User Service', () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.user.create).mockResolvedValue(mockUser)
+      vi.mocked(prisma.user.create).mockResolvedValue(mockUser as any)
 
       const result = await createUser(userData)
 
@@ -59,7 +59,7 @@ describe('User Service', () => {
         updatedAt: new Date(),
       }
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser)
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any)
 
       const result = await getUserByEmail(email)
 

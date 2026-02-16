@@ -1,6 +1,4 @@
-import { ChatTurn, Citation, Product } from "@/lib/types";
-import { OpenAIStream, StreamingTextResponse } from "ai";
-import { OpenAIClient, AzureKeyCredential } from "@azure/openai";
+import { Citation, Product } from "@/lib/types";
 import { type NextRequest } from "next/server";
 import { ChatMessage } from "@azure/openai/rest";
 import { promises as fs } from "fs";

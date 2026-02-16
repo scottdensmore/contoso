@@ -15,17 +15,15 @@ async function getData(): Promise<ProductGroup[]> {
 }
 
 export default async function Home({
-  params,
   searchParams,
 }: {
-  params: { slug: string };
   searchParams?: { [key: string]: string | string[] | undefined };
 }) {
   const categories = await getData();
 
   return (
     <>
-      <Header params={params} searchParams={searchParams} />
+      <Header />
       <Block
         outerClassName="bg-blend-multiply bg-center bg-hero-image h-80 bg-neutral-600"
         innerClassName=""

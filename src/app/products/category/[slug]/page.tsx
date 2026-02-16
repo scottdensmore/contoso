@@ -19,7 +19,7 @@ export default async function CategoryPage({
 
   return (
     <>
-      <Header params={params} searchParams={searchParams} />
+      <Header />
       <Block innerClassName="pt-12 pb-6">
         <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {category.name}
