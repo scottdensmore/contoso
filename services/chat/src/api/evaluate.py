@@ -1,4 +1,5 @@
 # %%
+import asyncio
 import json
 
 import jsonlines
@@ -24,31 +25,35 @@ def load_data():
     return df
 
 # %%
-@trace
-def create_response_data(df):
+async def create_response_data_async(df):
     results = []
 
-    for index, row in df.iterrows():
-        customerId = row['customerId']
-        question = row['question']
-        
-        # Run contoso-chat/chat_request flow to get response
-        response = get_response(customerId=customerId, question=question, chat_history=[])
+    for _, row in df.iterrows():
+        customer_id = row["customerId"]
+        question = row["question"]
+
+        # Run contoso-chat/chat_request flow to get response.
+        response = await get_response(customer_id=customer_id, question=question, chat_history=[])
         print(response)
-        
-        # Add results to list
+
+        # Add results to list.
         result = {
-            'question': question,
-            'context': response["context"],
-            'answer': response["answer"]
+            "question": question,
+            "context": response["context"],
+            "answer": response["answer"],
         }
         results.append(result)
 
-    # Save results to a JSONL file
-    with open('result.jsonl', 'w') as file:
+    # Save results to a JSONL file.
+    with open("result.jsonl", "w") as file:
         for result in results:
-            file.write(json.dumps(result) + '\n')
+            file.write(json.dumps(result) + "\n")
     return results
+
+
+@trace
+def create_response_data(df):
+    return asyncio.run(create_response_data_async(df))
 
 # %%
 @trace
@@ -114,6 +119,5 @@ if __name__ == "__main__":
    response_results = create_response_data(test_data_df)
    result_evaluated = evaluate()
    create_summary(result_evaluated)
-
 
 

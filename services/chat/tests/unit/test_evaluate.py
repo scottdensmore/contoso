@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pandas as pd
 from evaluate import create_response_data, create_summary, evaluate, load_data
@@ -24,11 +24,11 @@ def test_create_response_data_writes_result_file(tmp_path, monkeypatch):
     df = pd.DataFrame([{"customerId": "1", "question": "Best tent?"}])
     mocked_response = {"context": [{"sku": "abc123"}], "answer": "Trailmaster X4"}
 
-    with patch("evaluate.get_response", new=MagicMock(return_value=mocked_response)) as mock_get_response:
+    with patch("evaluate.get_response", new=AsyncMock(return_value=mocked_response)) as mock_get_response:
         results = create_response_data(df)
 
     assert results == [{"question": "Best tent?", "context": [{"sku": "abc123"}], "answer": "Trailmaster X4"}]
-    mock_get_response.assert_called_once_with(customerId="1", question="Best tent?", chat_history=[])
+    mock_get_response.assert_awaited_once_with(customer_id="1", question="Best tent?", chat_history=[])
 
     result_lines = (tmp_path / "result.jsonl").read_text(encoding="utf-8").strip().splitlines()
     assert len(result_lines) == 1
