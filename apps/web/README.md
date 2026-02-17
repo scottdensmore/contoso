@@ -17,6 +17,8 @@ make setup
 make dev-web
 npm run setup:web
 npm run dev:web
+make -C apps/web setup
+make -C apps/web dev
 ```
 
 Run web with dependencies (db + chat) in Docker:
@@ -38,6 +40,8 @@ make build
 make prisma-generate
 npm run quick-ci:web
 npm run ci:web
+make -C apps/web quick-ci
+make -C apps/web ci
 ```
 
 ## Prisma

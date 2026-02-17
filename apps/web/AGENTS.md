@@ -18,6 +18,18 @@ make dev-web
 make lint
 make typecheck
 make test-web
+npm run dev:web
+npm run ci:web
+```
+
+From web app directory:
+
+```bash
+make help
+make setup
+make dev
+make quick-ci
+make ci
 ```
 
 ## Chat integration touchpoints

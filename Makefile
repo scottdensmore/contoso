@@ -6,6 +6,7 @@ PYTHON ?= python3
 PIP ?= pip3
 
 WEB_DIR := apps/web
+WEB_MAKE := $(MAKE) -C $(WEB_DIR)
 CHAT_DIR := services/chat
 CHAT_MAKE := $(MAKE) -C $(CHAT_DIR)
 
@@ -17,11 +18,10 @@ help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
 
 setup: ## Install web dependencies
-	$(NPM) --prefix $(WEB_DIR) ci
-	$(MAKE) prisma-generate
+	$(WEB_MAKE) setup
 
 sync-web-env: ## Sync root .env into apps/web/.env when present
-	@if [ -f .env ]; then cp .env $(WEB_DIR)/.env; fi
+	$(WEB_MAKE) sync-env
 
 setup-chat: ## Install chat dependencies in the active Python environment
 	$(CHAT_MAKE) setup
@@ -29,11 +29,10 @@ setup-chat: ## Install chat dependencies in the active Python environment
 dev: ## Run web locally with db+chat in Docker
 	$(MAKE) sync-web-env
 	$(DOCKER_COMPOSE) up -d db chat
-	$(NPM) --prefix $(WEB_DIR) run dev
+	$(WEB_MAKE) dev
 
 dev-web: ## Run only the web app
-	$(MAKE) sync-web-env
-	$(NPM) --prefix $(WEB_DIR) run dev
+	$(WEB_MAKE) dev
 
 dev-chat: ## Run chat service locally with hot reload
 	$(CHAT_MAKE) dev
@@ -45,27 +44,23 @@ down: ## Stop all Docker services
 	$(DOCKER_COMPOSE) down
 
 migrate: ## Run Prisma migrations using DATABASE_URL
-	cd $(WEB_DIR) && npx prisma migrate dev --schema prisma/schema.prisma
+	$(WEB_MAKE) migrate
 
 prisma-generate: ## Generate Prisma client for the web app
-	cd $(WEB_DIR) && npx prisma generate --generator client --schema prisma/schema.prisma
+	$(WEB_MAKE) prisma-generate
 
 lint: ## Lint web app
-	$(MAKE) sync-web-env
-	$(NPM) --prefix $(WEB_DIR) run lint
+	$(WEB_MAKE) lint
 
 typecheck: ## Type-check web app
-	$(MAKE) sync-web-env
-	$(MAKE) prisma-generate
-	cd $(WEB_DIR) && npx tsc --noEmit
+	$(WEB_MAKE) typecheck
 
 test: ## Run web tests and chat unit tests
 	$(MAKE) test-web
 	$(MAKE) test-chat
 
 test-web: ## Run web tests
-	$(MAKE) sync-web-env
-	$(NPM) --prefix $(WEB_DIR) run test
+	$(WEB_MAKE) test
 
 test-chat: ## Run chat unit tests
 	$(CHAT_MAKE) test
@@ -74,14 +69,10 @@ test-chat-integration: ## Run chat integration tests (requires SERVICE_URL)
 	$(CHAT_MAKE) test-integration
 
 build: ## Build web app
-	$(MAKE) sync-web-env
-	$(MAKE) prisma-generate
-	$(NPM) --prefix $(WEB_DIR) run build
+	$(WEB_MAKE) build
 
 quick-ci-web: ## Fast web checks (no build)
-	$(MAKE) lint
-	$(MAKE) typecheck
-	$(MAKE) test-web
+	$(WEB_MAKE) quick-ci
 
 quick-ci-chat: ## Fast chat checks
 	$(CHAT_MAKE) quick-ci

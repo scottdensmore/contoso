@@ -12,6 +12,7 @@ Use this file as the default runbook for coding agents.
 - `apps/web/src/app/`: Next.js pages and API routes.
 - `apps/web/src/components/`: UI components.
 - `apps/web/src/lib/`: shared web helpers and domain logic.
+- `apps/web/Makefile`: web-owned dev/test/build command surface.
 - `services/chat/src/api/`: chat service API and chat logic.
 - `services/chat/tests/`: chat unit and integration tests.
 - `services/chat/Makefile`: chat-owned dev/test command surface.
@@ -54,6 +55,7 @@ make dev-chat
 make test-web
 make test-chat
 make docs-check
+make -C apps/web help
 make -C services/chat help
 ```
 
@@ -74,6 +76,6 @@ Copy templates to `.env` before local development.
 
 ## Validation expectations
 
-- Web-only change: `make lint && make typecheck && make test-web`
+- Web-only change: `make -C apps/web quick-ci`
 - Chat-only change: `make quick-ci-chat`
 - Cross-surface change (web + chat + schema): `make ci`

@@ -123,6 +123,10 @@ npm run ci
 Service-owned command surface:
 
 ```bash
+make -C apps/web help
+make -C apps/web setup
+make -C apps/web dev
+make -C apps/web ci
 make -C services/chat help
 make -C services/chat setup
 make -C services/chat dev
