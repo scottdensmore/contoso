@@ -16,6 +16,7 @@ jobs:
     outputs:
       web: ${{ steps.filter.outputs.web }}
       chat: ${{ steps.filter.outputs.chat }}
+      runtime: ${{ steps.filter.outputs.runtime }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,24 +26,32 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
+            runtime:
+              - '.github/workflows/ci.yml'
+              - 'Makefile'
+              - 'mise.toml'
+              - 'package.json'
+              - 'scripts/check_toolchain.py'
+              - 'apps/web/package-lock.json'
+              - 'apps/web/package.json'
+              - 'services/chat/constraints.txt'
+              - 'services/chat/src/api/requirements.txt'
+              - 'services/chat/tests/requirements-test.txt'
+              - 'services/chat/requirements-dev.txt'
             web:
               - 'apps/web/**'
               - 'Dockerfile'
               - 'docker-compose.yml'
-              - 'Makefile'
-              - 'package.json'
             chat:
               - 'services/chat/**'
               - 'apps/web/prisma/**'
               - 'docker-compose.yml'
               - 'Dockerfile.migrate'
-              - 'Makefile'
-              - 'package.json'
 
   web-ci:
     name: Web App CI
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.runtime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -51,9 +60,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: apps/web/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Toolchain preflight
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
 
       - name: Install dependencies
         env:
@@ -66,17 +83,25 @@ jobs:
   chat-ci:
     name: Chat Service CI
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.chat == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.chat == 'true' || needs.changes.outputs.runtime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
+
+      - name: Toolchain preflight
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
 
       - name: Install dependencies
         run: make -C services/chat setup
