@@ -125,6 +125,7 @@ make test
 make test-scripts
 make quick-ci
 make quick-ci-changed
+make release-dry-run
 make ci
 ```
 
@@ -141,6 +142,7 @@ npm run test:scripts
 npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
+npm run release:dry-run
 npm run ci:web
 npm run ci:chat
 npm run ci
@@ -173,6 +175,8 @@ Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so 
 Fix broken relative links in `docs/*.md`, `README.md`, `AGENTS.md`, or `CONTRIBUTING.md`.
 - `make quick-ci-changed` runs no checks:
 Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
+- `make release-dry-run` fails:
+Ensure release guardrail files exist and the tag follows `vMAJOR.MINOR.PATCH` format.
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
@@ -198,6 +202,7 @@ Comprehensive documentation is available in the [docs/](./docs/) directory:
 - **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
 - **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
 - **[Environment Contract](./docs/ENV_CONTRACT.md):** Source of truth and drift checks for required env keys.
+- **[Release Runbook](./docs/RELEASE.md):** Tag-based release drafting and branch protection guidance.
 - **[Web App Runbook](./apps/web/README.md):** Web app development and verification commands.
 - **[Chat Service Runbook](./services/chat/README.md):** Chat API local development and testing.
 - **[Contributing Guide](./CONTRIBUTING.md):** Standards and workflow for developers.

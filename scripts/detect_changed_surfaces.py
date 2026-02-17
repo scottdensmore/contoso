@@ -14,6 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 
 RUNTIME_PATTERNS = (
     ".github/workflows/ci.yml",
+    ".github/workflows/release.yml",
+    ".github/CODEOWNERS",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/ISSUE_TEMPLATE/**",
     "Makefile",
     "mise.toml",
     "package.json",
@@ -25,6 +29,7 @@ RUNTIME_PATTERNS = (
     "scripts/check_toolchain.py",
     "scripts/check_env_contract.py",
     "scripts/detect_changed_surfaces.py",
+    "scripts/release_dry_run.py",
     "scripts/verify_docs.py",
     "tests/scripts/**",
     "apps/web/package-lock.json",

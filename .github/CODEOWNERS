@@ -1,0 +1,18 @@
+# Global ownership
+* @scottdensmore
+
+# Runtime and automation guardrails
+/.github/ @scottdensmore
+/scripts/ @scottdensmore
+/tests/scripts/ @scottdensmore
+
+# Service surfaces
+/apps/web/ @scottdensmore
+/services/chat/ @scottdensmore
+/apps/web/prisma/ @scottdensmore
+
+# Runbooks
+/docs/ @scottdensmore
+/README.md @scottdensmore
+/AGENTS.md @scottdensmore
+/CONTRIBUTING.md @scottdensmore

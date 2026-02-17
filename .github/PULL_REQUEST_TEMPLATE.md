@@ -1,45 +1,31 @@
-## Purpose
-<!-- Describe the intention of the changes being proposed. What problem does it solve or functionality does it add? -->
-* ...
+## Summary
+- What changed:
+- Why:
 
-## Does this introduce a breaking change?
-<!-- Mark one with an "x". -->
-```
-[ ] Yes
-[ ] No
-```
+## Scope
+- Surface: web / chat / runtime / docs / infra
+- Risk level: low / medium / high
+- Breaking change: yes / no
 
-## Pull Request Type
-What kind of change does this Pull Request introduce?
+## Verification Evidence
+Paste command output snippets or concise summaries for what you actually ran.
 
-<!-- Please check the one that applies to this PR using "x". -->
-```
-[ ] Bugfix
-[ ] Feature
-[ ] Code style update (formatting, local variables)
-[ ] Refactoring (no functional changes, no api changes)
-[ ] Documentation content changes
-[ ] Other... Please describe:
-```
+### Required
+- [ ] `make quick-ci-changed`
+- [ ] `make test-scripts` (for runtime/scripts/docs automation changes)
+- [ ] `make docs-check` (for docs/runbook changes)
 
-## How to Test
-*  Get the code
+### Optional / Contextual
+- [ ] `make quick-ci`
+- [ ] `make ci` (run outside restricted sandbox if `next build` hits `listen EPERM`)
+- [ ] Manual UX/API validation
 
-```
-git clone [repo-address]
-cd [repo-name]
-git checkout [branch-name]
-npm install
-```
+## Release and Ops Impact
+- Env contract change: yes / no
+- Migration required: yes / no
+- Runbook updates needed: yes / no
+- Follow-up tasks:
 
-* Test the code
-<!-- Add steps to run the tests suite and/or manually test -->
-```
-```
-
-## What to Check
-Verify that the following are valid
-* ...
-
-## Other Information
-<!-- Add any other helpful information that may be needed here. -->
+## Reviewer Notes
+- Areas that need close review:
+- Known limitations or deferred cleanup:

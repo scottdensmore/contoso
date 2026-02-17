@@ -8,6 +8,7 @@ TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
 ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
 CHANGED_SURFACES_SCRIPT := scripts/detect_changed_surfaces.py
+RELEASE_DRY_RUN_SCRIPT := scripts/release_dry_run.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -22,7 +23,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat release-dry-run docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -133,6 +134,12 @@ quick-ci-changed: ## Fast local checks scoped to changed files (set CHANGED_BASE
 	for target in $$TARGETS; do \
 		$(MAKE) $$target; \
 	done
+
+release-dry-run: ## Validate release prerequisites without publishing
+	$(PYTHON) $(RELEASE_DRY_RUN_SCRIPT) $(if $(RELEASE_TAG),--tag "$(RELEASE_TAG)",)
+	TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 $(MAKE) quick-ci
+	$(MAKE) test-scripts
+	$(MAKE) docs-check
 
 docs-check: ## Validate docs links
 	$(PYTHON) scripts/verify_docs.py
