@@ -2,6 +2,7 @@
 python-dotenv==1.0.1
 jsonlines
 pandas
+tabulate
 requests
 
 # API server

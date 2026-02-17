@@ -113,6 +113,7 @@ The repository now includes a root `Makefile` for a consistent command surface:
 
 ```bash
 make help
+make toolchain-doctor
 make setup
 make dev
 make test

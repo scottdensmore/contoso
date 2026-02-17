@@ -1,9 +1,12 @@
 import json
 import os
-
-from prisma import Prisma
+from typing import Any
 
 from .search_service import get_search_service
+
+# Keep Prisma patchable in tests while avoiding import-time runtime errors
+# when the generated client is unavailable.
+Prisma: Any = None
 
 
 async def get_customer_from_postgres(customer_id: str):
@@ -11,6 +14,12 @@ async def get_customer_from_postgres(customer_id: str):
     if not customer_id:
         return None
     try:
+        global Prisma
+        if Prisma is None:
+            from prisma import Prisma as PrismaClient  # type: ignore[attr-defined]
+
+            Prisma = PrismaClient
+
         db = Prisma()
         await db.connect()
         

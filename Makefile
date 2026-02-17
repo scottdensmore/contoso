@@ -2,8 +2,9 @@ SHELL := /bin/bash
 
 DOCKER_COMPOSE ?= docker compose
 NPM ?= npm
-PYTHON ?= python3
+PYTHON ?= mise exec python@3.11 -- python
 PIP ?= pip3
+TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -12,10 +13,13 @@ CHAT_MAKE := $(MAKE) -C $(CHAT_DIR)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
+
+toolchain-doctor: ## Verify local toolchain matches project baseline
+	$(PYTHON) $(TOOLCHAIN_CHECK_SCRIPT)
 
 setup: ## Install web dependencies
 	$(WEB_MAKE) setup
@@ -78,6 +82,7 @@ quick-ci-chat: ## Fast chat checks
 	$(CHAT_MAKE) quick-ci
 
 quick-ci: ## Fast local checks for web + chat (no web build)
+	$(MAKE) toolchain-doctor
 	$(MAKE) quick-ci-web
 	$(MAKE) quick-ci-chat
 

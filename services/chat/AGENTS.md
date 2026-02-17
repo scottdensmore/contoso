@@ -36,6 +36,7 @@ From service directory:
 
 ```bash
 make help
+make check-python
 make setup
 make dev
 make deps-check

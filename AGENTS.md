@@ -37,6 +37,7 @@ Run from repository root:
 
 ```bash
 make help
+make toolchain-doctor
 make setup
 make prisma-generate
 make dev

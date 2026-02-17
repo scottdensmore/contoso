@@ -66,6 +66,7 @@ npm run quick-ci:chat
 npm run ci:chat
 make -C services/chat test
 make -C services/chat test-integration
+make -C services/chat check-python
 make -C services/chat deps-check
 make -C services/chat lint
 make -C services/chat typecheck
