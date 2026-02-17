@@ -19,6 +19,19 @@ The web application source lives in `apps/web/`, and the chat service lives in `
 
 Choose one of the following three options to run the application:
 
+## Toolchain Baseline
+
+Local development and coding-agent workflows are standardized on:
+
+- Node.js `22`
+- Python `3.11`
+
+This repo uses `mise` for local runtime pinning:
+
+```bash
+mise install
+```
+
 ### Option 1: Run Everything Locally (Docker)
 **Best for:** Trying out the application quickly without installing dependencies.
 

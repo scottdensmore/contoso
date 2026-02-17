@@ -30,6 +30,7 @@ This project uses the **Conductor** framework to manage features and tasks.
 - **Functional Components:** Use React Hooks and functional components.
 - **Tailwind:** Use utility classes for styling.
 - **TDD:** Write tests *before* implementation.
+- **Runtime Parity:** Use pinned local tool versions via `mise install` (Node.js 22, Python 3.11).
 
 ## Quality Gates
 

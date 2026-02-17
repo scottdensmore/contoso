@@ -9,6 +9,16 @@ FastAPI chat service scope for coding agents.
 - Evaluators: `services/chat/src/api/evaluators/`
 - Tests: `services/chat/tests/unit/`, `services/chat/tests/integration/`
 
+## Toolchain baseline
+
+- Python `3.11` (matches CI for chat checks)
+
+From repository root:
+
+```bash
+mise install
+```
+
 ## Local commands
 
 From repository root:

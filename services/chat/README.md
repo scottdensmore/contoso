@@ -22,7 +22,13 @@ Service endpoint: `http://localhost:8000`
 
 ### Option 2: Run directly with Python
 
-1. Install dependencies (from repository root):
+1. Install pinned tool versions (from repository root):
+
+```bash
+mise install
+```
+
+2. Install dependencies (from repository root):
 
 ```bash
 make setup-chat
@@ -30,13 +36,13 @@ npm run setup:chat
 make -C services/chat setup
 ```
 
-2. Create env file:
+3. Create env file:
 
 ```bash
 cp services/chat/.env.example services/chat/.env
 ```
 
-3. Start service:
+4. Start service:
 
 ```bash
 make dev-chat

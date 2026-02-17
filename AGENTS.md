@@ -20,6 +20,17 @@ Use this file as the default runbook for coding agents.
 - `infrastructure/`: deployment scripts and Terraform.
 - `docs/`: operator and architecture docs.
 
+## Toolchain baseline
+
+- Node.js `22`
+- Python `3.11`
+
+Use `mise` at repo root before running setup/CI commands:
+
+```bash
+mise install
+```
+
 ## Canonical commands
 
 Run from repository root:
