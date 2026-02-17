@@ -38,6 +38,7 @@ From service directory:
 make help
 make setup
 make dev
+make deps-check
 make lint
 make typecheck
 make test

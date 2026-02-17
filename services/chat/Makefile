@@ -5,6 +5,7 @@ PIP ?= pip3
 UVICORN ?= uvicorn
 RUFF ?= ruff
 MYPY ?= mypy
+PYTHON ?= python3
 
 API_DIR := src/api
 REQ_FILE := $(API_DIR)/requirements.txt
@@ -12,10 +13,11 @@ TEST_REQ_FILE := tests/requirements-test.txt
 DEV_REQ_FILE := requirements-dev.txt
 CONSTRAINTS_FILE := constraints.txt
 COVERAGE_TMP_DIR := .pytest_cache/coverage
+DEPS_CHECK_SCRIPT := scripts/check_dependency_policy.py
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup dev lint typecheck test test-integration quick-ci ci
+.PHONY: help setup dev deps-check lint typecheck test test-integration quick-ci ci
 
 help: ## Show available chat-service tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nChat service tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -27,6 +29,9 @@ setup: ## Install chat runtime and test dependencies
 
 dev: ## Run chat service with hot reload
 	cd $(API_DIR) && $(UVICORN) main:app --reload --host 0.0.0.0 --port 8000
+
+deps-check: ## Validate dependency pinning policy for chat service
+	$(PYTHON) $(DEPS_CHECK_SCRIPT)
 
 lint: ## Lint chat service
 	$(RUFF) check src/api tests
@@ -43,6 +48,7 @@ test-integration: ## Run chat integration tests (requires SERVICE_URL)
 	$(PYTEST) tests/integration/ -v
 
 quick-ci: ## Fast chat checks
+	$(MAKE) deps-check
 	$(MAKE) lint
 	$(MAKE) typecheck
 	$(MAKE) test
