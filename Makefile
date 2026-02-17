@@ -77,15 +77,14 @@ quick-ci-web: ## Fast web checks (no build)
 quick-ci-chat: ## Fast chat checks
 	$(CHAT_MAKE) quick-ci
 
-quick-ci: ## Fast local checks for common iteration loop
+quick-ci: ## Fast local checks for web + chat (no web build)
 	$(MAKE) quick-ci-web
+	$(MAKE) quick-ci-chat
 
 docs-check: ## Validate docs links
 	$(PYTHON) scripts/verify_docs.py
 
 ci: ## Run local CI checks
-	$(MAKE) lint
-	$(MAKE) typecheck
-	$(MAKE) test
+	$(MAKE) quick-ci
 	$(MAKE) build
 	$(MAKE) docs-check
