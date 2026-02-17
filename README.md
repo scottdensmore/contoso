@@ -155,6 +155,17 @@ make -C services/chat ci
 
 For coding agents, see [AGENTS.md](./AGENTS.md).
 
+## Bootstrap Troubleshooting
+
+- `make toolchain-doctor` fails:
+Run `mise install`, then retry `make bootstrap`.
+- `make prisma-generate-chat` fails in a sandbox with permission errors:
+Run the command in a normal local shell (outside restricted sandboxing).
+- `make agent-doctor` reports missing env files/keys:
+Run `make env-init`, then fill required values in `.env` and `services/chat/.env`.
+- `next build` fails in restricted sandbox with `listen EPERM`:
+Run `make ci` in a non-restricted local shell.
+
 ## Features
 
 - **Product Catalog:** Browse products by category (Tents, Backpacks, etc.).

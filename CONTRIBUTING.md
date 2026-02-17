@@ -62,3 +62,9 @@ Refer to:
 
 - `AGENTS.md` for coding agent runbooks and command conventions.
 - `conductor/` for product goals and track context.
+
+### Quick Troubleshooting
+
+- If runtime checks fail, run `mise install` then `make toolchain-doctor`.
+- If env checks fail, run `make env-init` and fill required values in `.env` files.
+- If chat Prisma client checks fail, run `make prisma-generate-chat`.

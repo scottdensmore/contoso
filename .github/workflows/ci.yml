@@ -31,6 +31,7 @@ jobs:
               - 'Makefile'
               - 'mise.toml'
               - 'package.json'
+              - 'scripts/agent_doctor.py'
               - 'scripts/check_toolchain.py'
               - 'apps/web/package-lock.json'
               - 'apps/web/package.json'
@@ -115,3 +116,31 @@ jobs:
         env:
           PROJECT_ID: local-project
           REGION: us-central1
+
+  onboarding-smoke:
+    name: Onboarding Smoke
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.runtime == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Bootstrap and doctor
+        env:
+          TOOLCHAIN_CHECK_ALLOW_NON_MISE: '1'
+          HUSKY: '0'
+        run: make bootstrap PYTHON=python

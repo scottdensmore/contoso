@@ -77,7 +77,7 @@ prisma-generate: ## Generate Prisma client for the web app
 	$(WEB_MAKE) prisma-generate
 
 prisma-generate-chat: ## Generate Prisma client for the chat Python runtime
-	$(PYTHON) -m prisma py generate --schema=$(WEB_PRISMA_SCHEMA)
+	$(PYTHON) -m prisma py generate --schema=$(WEB_PRISMA_SCHEMA) --generator pyclient
 
 lint: ## Lint web app
 	$(WEB_MAKE) lint

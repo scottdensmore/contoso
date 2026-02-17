@@ -97,3 +97,10 @@ Copy templates to `.env` before local development.
 - Web-only change: `make -C apps/web quick-ci`
 - Chat-only change: `make quick-ci-chat`
 - Cross-surface change (web + chat + schema): `make ci`
+
+## Troubleshooting
+
+- Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
+- Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
+- Python Prisma client missing: run `make prisma-generate-chat`.
+- Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.

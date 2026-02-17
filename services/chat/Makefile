@@ -15,6 +15,8 @@ CONSTRAINTS_FILE := constraints.txt
 COVERAGE_TMP_DIR := .pytest_cache/coverage
 DEPS_CHECK_SCRIPT := scripts/check_dependency_policy.py
 
+export PIP_DISABLE_PIP_VERSION_CHECK := 1
+
 .DEFAULT_GOAL := help
 
 .PHONY: help check-python setup dev deps-check lint typecheck test test-integration quick-ci ci
