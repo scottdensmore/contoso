@@ -31,8 +31,13 @@ jobs:
               - 'Makefile'
               - 'mise.toml'
               - 'package.json'
+              - 'config/env_contract.json'
+              - '.env.example'
+              - 'services/chat/.env.example'
+              - 'docs/ENV_CONTRACT.md'
               - 'scripts/agent_doctor.py'
               - 'scripts/check_toolchain.py'
+              - 'scripts/check_env_contract.py'
               - 'apps/web/package-lock.json'
               - 'apps/web/package.json'
               - 'services/chat/constraints.txt'
@@ -48,6 +53,23 @@ jobs:
               - 'apps/web/prisma/**'
               - 'docker-compose.yml'
               - 'Dockerfile.migrate'
+
+  env-contract:
+    name: Env Contract Drift Check
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.runtime == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate env contract
+        run: make env-contract-check PYTHON=python
 
   web-ci:
     name: Web App CI

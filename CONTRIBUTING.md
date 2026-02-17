@@ -43,11 +43,12 @@ Before submitting a Pull Request, ensure:
 ## Making Changes
 
 1.  **Bootstrap once:** `make bootstrap` (or `npm run bootstrap`) for a full local setup.
-2.  **Create a Branch:** `git checkout -b feature/your-feature-name`
-3.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
-4.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
-5.  **Verify:** Run preflight (`make agent-doctor`) and full local checks (`make ci`).
-6.  **Push & PR:** Push your branch and open a Pull Request.
+2.  **Validate env contract drift:** `make env-contract-check`.
+3.  **Create a Branch:** `git checkout -b feature/your-feature-name`
+4.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
+5.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
+6.  **Verify:** Run preflight (`make agent-doctor`) and full local checks (`make ci`).
+7.  **Push & PR:** Push your branch and open a Pull Request.
 
 ## Database Migrations
 
@@ -66,5 +67,6 @@ Refer to:
 ### Quick Troubleshooting
 
 - If runtime checks fail, run `mise install` then `make toolchain-doctor`.
+- If env contract drift check fails, run `make env-contract-check` and align `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md`.
 - If env checks fail, run `make env-init` and fill required values in `.env` files.
 - If chat Prisma client checks fail, run `make prisma-generate-chat`.

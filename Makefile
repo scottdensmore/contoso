@@ -6,6 +6,7 @@ PYTHON ?= mise exec python@3.11 -- python
 PIP ?= pip3
 TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
+ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -20,13 +21,16 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
 
 toolchain-doctor: ## Verify local toolchain matches project baseline
 	$(PYTHON) $(TOOLCHAIN_CHECK_SCRIPT)
+
+env-contract-check: ## Verify env contract matches templates and docs
+	$(PYTHON) $(ENV_CONTRACT_CHECK_SCRIPT)
 
 agent-doctor: ## Verify agent-local environment is fully ready
 	$(PYTHON) $(AGENT_DOCTOR_SCRIPT)
@@ -37,6 +41,7 @@ env-init: ## Create local .env files from templates when missing
 
 bootstrap: ## One-command bootstrap for local and coding-agent development
 	$(MAKE) toolchain-doctor
+	$(MAKE) env-contract-check
 	$(MAKE) env-init
 	$(MAKE) setup
 	$(MAKE) setup-chat
@@ -109,6 +114,7 @@ quick-ci-chat: ## Fast chat checks
 
 quick-ci: ## Fast local checks for web + chat (no web build)
 	$(MAKE) toolchain-doctor
+	$(MAKE) env-contract-check
 	$(MAKE) quick-ci-web
 	$(MAKE) quick-ci-chat
 

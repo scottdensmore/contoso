@@ -115,6 +115,7 @@ The repository now includes a root `Makefile` for a consistent command surface:
 make help
 make bootstrap
 make toolchain-doctor
+make env-contract-check
 make agent-doctor
 make env-init
 make setup
@@ -130,6 +131,7 @@ There is also a root `package.json` workspace command surface:
 ```bash
 npm run bootstrap
 npm run doctor
+npm run env-contract-check
 npm run setup
 npm run dev:web
 npm run dev:chat
@@ -159,6 +161,8 @@ For coding agents, see [AGENTS.md](./AGENTS.md).
 
 - `make toolchain-doctor` fails:
 Run `mise install`, then retry `make bootstrap`.
+- `make env-contract-check` fails:
+Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
@@ -183,6 +187,7 @@ Comprehensive documentation is available in the [docs/](./docs/) directory:
 
 - **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
 - **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
+- **[Environment Contract](./docs/ENV_CONTRACT.md):** Source of truth and drift checks for required env keys.
 - **[Web App Runbook](./apps/web/README.md):** Web app development and verification commands.
 - **[Chat Service Runbook](./services/chat/README.md):** Chat API local development and testing.
 - **[Contributing Guide](./CONTRIBUTING.md):** Standards and workflow for developers.

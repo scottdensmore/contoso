@@ -39,6 +39,7 @@ Run from repository root:
 make help
 make bootstrap
 make toolchain-doctor
+make env-contract-check
 make agent-doctor
 make env-init
 make setup
@@ -55,6 +56,7 @@ Unified npm command surface (root `package.json`):
 ```bash
 npm run bootstrap
 npm run doctor
+npm run env-contract-check
 npm run setup
 npm run dev:web
 npm run dev:chat
@@ -81,6 +83,8 @@ make -C services/chat help
 
 - Root app template: `.env.example`
 - Chat service template: `services/chat/.env.example`
+- Required keys contract: `config/env_contract.json`
+- Required keys docs: `docs/ENV_CONTRACT.md`
 
 Copy templates to `.env` before local development.
 
@@ -101,6 +105,7 @@ Copy templates to `.env` before local development.
 ## Troubleshooting
 
 - Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
+- Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
 - Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
 - Python Prisma client missing: run `make prisma-generate-chat`.
 - Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.

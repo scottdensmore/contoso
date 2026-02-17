@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "docs_path": "docs/ENV_CONTRACT.md",
+  "environments": [
+    {
+      "name": "root",
+      "template_path": ".env.example",
+      "docs_marker": "ROOT_REQUIRED_KEYS",
+      "required_keys": [
+        "DATABASE_URL",
+        "NEXTAUTH_SECRET",
+        "CHAT_ENDPOINT"
+      ]
+    },
+    {
+      "name": "chat",
+      "template_path": "services/chat/.env.example",
+      "docs_marker": "CHAT_REQUIRED_KEYS",
+      "required_keys": [
+        "DATABASE_URL",
+        "LLM_PROVIDER",
+        "ALLOWED_ORIGINS"
+      ]
+    }
+  ]
+}

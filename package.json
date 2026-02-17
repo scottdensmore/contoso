@@ -7,6 +7,7 @@
   "scripts": {
     "bootstrap": "make bootstrap",
     "doctor": "make agent-doctor",
+    "env-contract-check": "make env-contract-check",
     "dev": "make dev",
     "dev:web": "make -C apps/web dev",
     "dev:chat": "make -C services/chat dev",

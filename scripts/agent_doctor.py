@@ -3,22 +3,22 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 
 TOOLCHAIN_CHECK = ROOT / "scripts/check_toolchain.py"
+ENV_CONTRACT = ROOT / "config/env_contract.json"
 ROOT_ENV = ROOT / ".env"
 CHAT_ENV = ROOT / "services/chat/.env"
 
 WEB_NODE_MODULES = ROOT / "apps/web/node_modules"
 WEB_PRISMA_CLIENT = ROOT / "apps/web/node_modules/.prisma/client/index.js"
 WEB_PRISMA_PACKAGE = ROOT / "apps/web/node_modules/@prisma/client/index.js"
-
-ROOT_REQUIRED_VARS = ("DATABASE_URL", "NEXTAUTH_SECRET", "CHAT_ENDPOINT")
-CHAT_REQUIRED_VARS = ("DATABASE_URL", "LLM_PROVIDER", "ALLOWED_ORIGINS")
 
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess[str]:
@@ -44,6 +44,39 @@ def normalize_output(result: subprocess.CompletedProcess[str]) -> str:
     return output if output else f"exit code {result.returncode}"
 
 
+def load_required_vars_from_contract() -> tuple[tuple[str, ...], tuple[str, ...]]:
+    try:
+        payload: Any = json.loads(ENV_CONTRACT.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise RuntimeError(f"Missing {ENV_CONTRACT.relative_to(ROOT)}.") from exc
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Invalid JSON in {ENV_CONTRACT.relative_to(ROOT)}: {exc}.") from exc
+
+    environments = payload.get("environments")
+    if not isinstance(environments, list):
+        raise RuntimeError("`environments` must be a list in env contract.")
+
+    required_by_name: dict[str, tuple[str, ...]] = {}
+    for entry in environments:
+        if not isinstance(entry, dict):
+            continue
+        name = entry.get("name")
+        required_keys = entry.get("required_keys")
+        if (
+            isinstance(name, str)
+            and isinstance(required_keys, list)
+            and all(isinstance(key, str) for key in required_keys)
+        ):
+            required_by_name[name] = tuple(required_keys)
+
+    missing_contract_entries = [name for name in ("root", "chat") if name not in required_by_name]
+    if missing_contract_entries:
+        joined = ", ".join(missing_contract_entries)
+        raise RuntimeError(f"Missing env contract entries for: {joined}.")
+
+    return required_by_name["root"], required_by_name["chat"]
+
+
 def main() -> int:
     passes: list[str] = []
     warnings: list[str] = []
@@ -58,6 +91,19 @@ def main() -> int:
             ("Toolchain check failed.", "Run `mise install` and re-run `make toolchain-doctor`."),
         )
 
+    root_required_vars: tuple[str, ...] = ()
+    chat_required_vars: tuple[str, ...] = ()
+    try:
+        root_required_vars, chat_required_vars = load_required_vars_from_contract()
+        passes.append("Env contract loaded from config/env_contract.json.")
+    except RuntimeError as exc:
+        failures.append(
+            (
+                f"Env contract load failed: {exc}",
+                "Run `make env-contract-check` and fix config/env_contract.json.",
+            ),
+        )
+
     # Environment files and required keys
     if not ROOT_ENV.exists():
         failures.append(
@@ -66,12 +112,14 @@ def main() -> int:
         root_env = {}
     else:
         root_env = parse_env_file(ROOT_ENV)
-        missing_root = [key for key in ROOT_REQUIRED_VARS if not root_env.get(key)]
-        if missing_root:
+        missing_root = [key for key in root_required_vars if not root_env.get(key)]
+        if not root_required_vars:
+            warnings.append("Skipped root required-key check because env contract failed to load.")
+        elif missing_root:
             failures.append(
                 (
                     f"Missing required keys in .env: {', '.join(missing_root)}",
-                    "Populate .env using .env.example.",
+                    "Populate .env using .env.example and docs/ENV_CONTRACT.md.",
                 ),
             )
         else:
@@ -90,12 +138,14 @@ def main() -> int:
         chat_env = {}
     else:
         chat_env = parse_env_file(CHAT_ENV)
-        missing_chat = [key for key in CHAT_REQUIRED_VARS if not chat_env.get(key)]
-        if missing_chat:
+        missing_chat = [key for key in chat_required_vars if not chat_env.get(key)]
+        if not chat_required_vars:
+            warnings.append("Skipped chat required-key check because env contract failed to load.")
+        elif missing_chat:
             failures.append(
                 (
                     f"Missing required keys in services/chat/.env: {', '.join(missing_chat)}",
-                    "Populate services/chat/.env using services/chat/.env.example.",
+                    "Populate services/chat/.env using services/chat/.env.example and docs/ENV_CONTRACT.md.",
                 ),
             )
         else:
