@@ -123,6 +123,7 @@ make prisma-generate-chat
 make dev
 make test
 make quick-ci
+make quick-ci-changed
 make ci
 ```
 
@@ -136,6 +137,7 @@ npm run setup
 npm run dev:web
 npm run dev:chat
 npm run quick-ci
+npm run quick-ci:changed
 npm run quick-ci:chat
 npm run ci:web
 npm run ci:chat
@@ -157,12 +159,16 @@ make -C services/chat ci
 
 For coding agents, see [AGENTS.md](./AGENTS.md).
 
+PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
+
 ## Bootstrap Troubleshooting
 
 - `make toolchain-doctor` fails:
 Run `mise install`, then retry `make bootstrap`.
 - `make env-contract-check` fails:
 Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
+- `make quick-ci-changed` runs no checks:
+Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:

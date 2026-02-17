@@ -48,6 +48,7 @@ make prisma-generate-chat
 make dev
 make test
 make quick-ci
+make quick-ci-changed
 make ci
 ```
 
@@ -61,6 +62,7 @@ npm run setup
 npm run dev:web
 npm run dev:chat
 npm run quick-ci
+npm run quick-ci:changed
 npm run quick-ci:chat
 npm run ci:web
 npm run ci:chat
@@ -98,6 +100,8 @@ Copy templates to `.env` before local development.
 
 ## Validation expectations
 
+- Default agent loop: `make quick-ci-changed`
+- Range-scoped agent validation: `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`
 - Web-only change: `make -C apps/web quick-ci`
 - Chat-only change: `make quick-ci-chat`
 - Cross-surface change (web + chat + schema): `make ci`

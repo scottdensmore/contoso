@@ -25,6 +25,7 @@
     "migrate": "make -C apps/web migrate",
     "docs:check": "make docs-check",
     "quick-ci": "make quick-ci",
+    "quick-ci:changed": "make quick-ci-changed",
     "quick-ci:web": "make -C apps/web quick-ci",
     "quick-ci:chat": "make -C services/chat quick-ci",
     "ci": "make ci",

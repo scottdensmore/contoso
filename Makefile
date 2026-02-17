@@ -7,6 +7,7 @@ PIP ?= pip3
 TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
 ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
+CHANGED_SURFACES_SCRIPT := scripts/detect_changed_surfaces.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -21,7 +22,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -117,6 +118,18 @@ quick-ci: ## Fast local checks for web + chat (no web build)
 	$(MAKE) env-contract-check
 	$(MAKE) quick-ci-web
 	$(MAKE) quick-ci-chat
+
+quick-ci-changed: ## Fast local checks scoped to changed files (set CHANGED_BASE/CHANGED_HEAD for git range)
+	@set -euo pipefail; \
+	TARGETS="$$(CHANGED_BASE="$(CHANGED_BASE)" CHANGED_HEAD="$(CHANGED_HEAD)" $(PYTHON) $(CHANGED_SURFACES_SCRIPT) --print-targets)"; \
+	if [ -z "$$TARGETS" ]; then \
+		echo "No scoped checks required for current changes."; \
+		exit 0; \
+	fi; \
+	echo "Running changed-scope checks: $$TARGETS"; \
+	for target in $$TARGETS; do \
+		$(MAKE) $$target; \
+	done
 
 docs-check: ## Validate docs links
 	$(PYTHON) scripts/verify_docs.py

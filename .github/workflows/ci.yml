@@ -14,50 +14,75 @@ jobs:
     name: Detect Changed Surfaces
     runs-on: ubuntu-latest
     outputs:
-      web: ${{ steps.filter.outputs.web }}
-      chat: ${{ steps.filter.outputs.chat }}
-      runtime: ${{ steps.filter.outputs.runtime }}
+      web: ${{ steps.detector.outputs.web }}
+      chat: ${{ steps.detector.outputs.chat }}
+      runtime: ${{ steps.detector.outputs.runtime }}
+      docs: ${{ steps.detector.outputs.docs }}
+      unknown: ${{ steps.detector.outputs.unknown }}
+      none: ${{ steps.detector.outputs.none }}
+      targets: ${{ steps.detector.outputs.targets }}
+      base: ${{ steps.detector.outputs.base }}
+      head: ${{ steps.detector.outputs.head }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Filter paths
-        id: filter
-        uses: dorny/paths-filter@v3
         with:
-          filters: |
-            runtime:
-              - '.github/workflows/ci.yml'
-              - 'Makefile'
-              - 'mise.toml'
-              - 'package.json'
-              - 'config/env_contract.json'
-              - '.env.example'
-              - 'services/chat/.env.example'
-              - 'docs/ENV_CONTRACT.md'
-              - 'scripts/agent_doctor.py'
-              - 'scripts/check_toolchain.py'
-              - 'scripts/check_env_contract.py'
-              - 'apps/web/package-lock.json'
-              - 'apps/web/package.json'
-              - 'services/chat/constraints.txt'
-              - 'services/chat/src/api/requirements.txt'
-              - 'services/chat/tests/requirements-test.txt'
-              - 'services/chat/requirements-dev.txt'
-            web:
-              - 'apps/web/**'
-              - 'Dockerfile'
-              - 'docker-compose.yml'
-            chat:
-              - 'services/chat/**'
-              - 'apps/web/prisma/**'
-              - 'docker-compose.yml'
-              - 'Dockerfile.migrate'
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect scoped changes
+        id: detector
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "base=" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "runtime=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "chat=true" >> "$GITHUB_OUTPUT"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            echo "unknown=false" >> "$GITHUB_OUTPUT"
+            echo "none=false" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          HEAD_SHA="${{ github.sha }}"
+
+          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+          if [[ -z "$BASE_SHA" || "$BASE_SHA" == "0000000000000000000000000000000000000000" ]]; then
+            echo "runtime=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "chat=true" >> "$GITHUB_OUTPUT"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            echo "unknown=false" >> "$GITHUB_OUTPUT"
+            echo "none=false" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python scripts/detect_changed_surfaces.py \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --github-output "$GITHUB_OUTPUT"
 
   env-contract:
     name: Env Contract Drift Check
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.runtime == 'true' }}
+    if: ${{ github.event_name != 'push' && needs.changes.outputs.runtime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -74,7 +99,7 @@ jobs:
   web-ci:
     name: Web App CI
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.web == 'true' || needs.changes.outputs.runtime == 'true' }}
+    if: ${{ github.event_name != 'push' && (needs.changes.outputs.web == 'true' || needs.changes.outputs.runtime == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -106,7 +131,7 @@ jobs:
   chat-ci:
     name: Chat Service CI
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.chat == 'true' || needs.changes.outputs.runtime == 'true' }}
+    if: ${{ github.event_name != 'push' && (needs.changes.outputs.chat == 'true' || needs.changes.outputs.runtime == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -142,7 +167,7 @@ jobs:
   onboarding-smoke:
     name: Onboarding Smoke
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.runtime == 'true' }}
+    if: ${{ github.event_name != 'push' && needs.changes.outputs.runtime == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -166,3 +191,48 @@ jobs:
           TOOLCHAIN_CHECK_ALLOW_NON_MISE: '1'
           HUSKY: '0'
         run: make bootstrap PYTHON=python
+
+  full-ci-main:
+    name: Full CI (Main Branch)
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Toolchain preflight
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
+
+      - name: Install web dependencies
+        env:
+          HUSKY: '0'
+        run: make -C apps/web setup
+
+      - name: Install chat dependencies
+        run: make -C services/chat setup
+
+      - name: Generate Prisma Client (Python)
+        run: prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
+
+      - name: Run full CI checks
+        env:
+          TOOLCHAIN_CHECK_ALLOW_NON_MISE: '1'
+          HUSKY: '0'
+          PROJECT_ID: local-project
+          REGION: us-central1
+        run: make ci PYTHON=python

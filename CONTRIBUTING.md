@@ -47,7 +47,7 @@ Before submitting a Pull Request, ensure:
 3.  **Create a Branch:** `git checkout -b feature/your-feature-name`
 4.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
 5.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
-6.  **Verify:** Run preflight (`make agent-doctor`) and full local checks (`make ci`).
+6.  **Verify:** Run preflight (`make agent-doctor`), fast changed-scope checks (`make quick-ci-changed`), and full local checks (`make ci`).
 7.  **Push & PR:** Push your branch and open a Pull Request.
 
 ## Database Migrations
