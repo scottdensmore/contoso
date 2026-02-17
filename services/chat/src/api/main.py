@@ -1,12 +1,13 @@
-import os
 import logging
+import os
 import time
 from pathlib import Path
-from fastapi import FastAPI, Request, Response
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from typing import Any, Optional
+
 from dotenv import load_dotenv
-import json
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ConfigDict
 
 # Import our real chat logic (simplified)
 try:
@@ -79,16 +80,14 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-from typing import List, Any, Optional
 
 # Request model
 class ChatRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     question: str
     customer_id: Optional[str] = None
     chat_history: Optional[Any] = "[]"
-
-    class Config:
-        extra = "allow" # Allow extra fields like customerId (camelCase)
 
 @app.get("/")
 async def root():
@@ -112,7 +111,7 @@ async def create_response(request: ChatRequest):
         extra={
             "customer_id": request.customer_id,
             "question_length": len(request.question),
-            "has_chat_history": len(request.chat_history) > 2,
+            "has_chat_history": len(str(request.chat_history or "")) > 2,
             "real_chat_available": REAL_CHAT_AVAILABLE
         }
     )

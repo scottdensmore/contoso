@@ -1,8 +1,9 @@
-import os
 import json
+import os
+
 import vertexai
-from vertexai.generative_models import GenerativeModel
 from dotenv import load_dotenv
+from vertexai.generative_models import GenerativeModel
 
 load_dotenv()
 

@@ -1,8 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
-import sys
 import os
+import sys
+from unittest.mock import patch
+
+from fastapi.testclient import TestClient
 
 # Add the src/api directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src/api'))
@@ -47,7 +47,7 @@ def test_create_response_mock_mode():
         assert "answer" in data
         assert data["customer_id"] == "1"
         assert data["chat_history"] == "[]"
-        assert data["mock"] == True
+        assert data["mock"] is True
         assert "What are the best tents?" in data["answer"]
 
 @patch('main.get_response')
@@ -96,7 +96,7 @@ def test_create_response_error_handling(mock_get_response):
 
         data = response.json()
         assert "answer" in data
-        assert data["fallback"] == True
+        assert data["fallback"] is True
         assert data["customer_id"] == "1"
         assert "error" in data
 

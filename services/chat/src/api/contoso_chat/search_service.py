@@ -1,7 +1,9 @@
 import os
+
 import chromadb
 from chromadb.utils import embedding_functions
 from google.cloud import discoveryengine_v1alpha as discoveryengine
+
 
 class SearchService:
     def search(self, query: str, limit: int = 5) -> list:
@@ -67,8 +69,11 @@ def get_search_service() -> SearchService:
     provider = os.getenv("LLM_PROVIDER", "gcp")
     if provider == "local":
         return LocalVectorSearch()
-    else:
-        project_id = os.getenv("PROJECT_ID")
-        location = os.getenv("REGION")
-        search_app_id = os.getenv("DISCOVERY_ENGINE_DATASTORE_ID")
-        return VertexAISearch(project_id, location, search_app_id)
+
+    project_id = os.getenv("PROJECT_ID")
+    location = os.getenv("REGION")
+    search_app_id = os.getenv("DISCOVERY_ENGINE_DATASTORE_ID")
+    if not project_id or not location or not search_app_id:
+        raise ValueError("PROJECT_ID, REGION, and DISCOVERY_ENGINE_DATASTORE_ID must be set")
+
+    return VertexAISearch(project_id, location, search_app_id)

@@ -1,7 +1,8 @@
-import pytest
 import os
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add the src/api directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src/api'))
@@ -13,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src/api'))
 class TestEvaluators:
     """Test the evaluator functions"""
 
-    @patch('vertexai.generative_models.GenerativeModel')
+    @patch('evaluators.custom_evals.relevance.GenerativeModel')
     def test_relevance_evaluation(self, mock_model):
         """Test relevance evaluation"""
         # Mock the model response
@@ -31,7 +32,7 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('vertexai.generative_models.GenerativeModel')
+    @patch('evaluators.custom_evals.fluency.GenerativeModel')
     def test_fluency_evaluation(self, mock_model):
         """Test fluency evaluation"""
         # Mock the model response
@@ -49,7 +50,7 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('vertexai.generative_models.GenerativeModel')
+    @patch('evaluators.custom_evals.coherence.GenerativeModel')
     def test_coherence_evaluation(self, mock_model):
         """Test coherence evaluation"""
         # Mock the model response
@@ -67,7 +68,7 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('vertexai.generative_models.GenerativeModel')
+    @patch('evaluators.custom_evals.groundedness.GenerativeModel')
     def test_groundedness_evaluation(self, mock_model):
         """Test groundedness evaluation"""
         # Mock the model response
@@ -88,8 +89,8 @@ class TestEvaluators:
     def test_evaluator_imports(self):
         """Test that evaluator modules can be imported"""
         try:
-            from evaluators.custom_evals import relevance, fluency, coherence, groundedness
-            assert True
+            from evaluators.custom_evals import coherence, fluency, groundedness, relevance
+            assert all(module is not None for module in (coherence, fluency, groundedness, relevance))
         except ImportError as e:
             pytest.fail(f"Failed to import evaluator modules: {e}")
 

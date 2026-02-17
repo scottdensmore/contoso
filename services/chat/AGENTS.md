@@ -28,7 +28,10 @@ From service directory:
 make help
 make setup
 make dev
+make lint
+make typecheck
 make test
+make quick-ci
 make ci
 ```
 

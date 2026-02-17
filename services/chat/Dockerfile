@@ -35,12 +35,13 @@ ENV PATH="/app/venv/bin:$PATH"
 
 # Copy requirements first for better caching
 COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements.txt
+COPY --chown=appuser:appuser services/chat/constraints.txt constraints.txt
 
 # Pre-install PyTorch separately (915MB package needs a longer socket timeout to avoid read timeouts)
 RUN pip install --no-cache-dir --default-timeout=600 --retries 3 torch
 
 # Install remaining Python dependencies
-RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements.txt
+RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements.txt -c constraints.txt
 
 # Copy application code
 

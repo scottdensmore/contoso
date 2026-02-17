@@ -1,7 +1,10 @@
-import os
 import json
+import os
+
 from prisma import Prisma
+
 from .search_service import get_search_service
+
 
 async def get_customer_from_postgres(customer_id: str):
     """Retrieves a customer's data from PostgreSQL."""

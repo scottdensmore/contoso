@@ -1,16 +1,15 @@
 # %%
-import os
 import json
-import prompty
-from evaluators.custom_evals.coherence import coherence_evaluation
-from evaluators.custom_evals.relevance import relevance_evaluation
-from evaluators.custom_evals.fluency import fluency_evaluation
-from evaluators.custom_evals.groundedness import groundedness_evaluation
+
 import jsonlines
 import pandas as pd
+from contoso_chat.chat_request import get_response
+from evaluators.custom_evals.coherence import coherence_evaluation
+from evaluators.custom_evals.fluency import fluency_evaluation
+from evaluators.custom_evals.groundedness import groundedness_evaluation
+from evaluators.custom_evals.relevance import relevance_evaluation
 from prompty.tracer import trace
 from tracing import init_tracing
-from contoso_chat.chat_request import get_response
 
 # %% [markdown]
 # ## Get output from data and save to results jsonl file

@@ -1,14 +1,14 @@
-import os
-import json
-import logging
 import contextlib
-from typing import AsyncIterator, List
-from prompty.tracer import Tracer, PromptyTracer
+
 from opentelemetry import trace as oteltrace
-from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+from prompty.tracer import PromptyTracer, Tracer
+
+try:
+    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
+except ImportError:  # pragma: no cover - optional dependency in local/test envs
+    CloudTraceSpanExporter = None
 
 _tracer = "prompty"
 
@@ -42,9 +42,11 @@ def init_tracing(local_tracing: bool = False):
     else:
         Tracer.add("OpenTelemetry", trace_span)
 
-        oteltrace.set_tracer_provider(TracerProvider())
-        oteltrace.get_tracer_provider().add_span_processor(
-            BatchSpanProcessor(CloudTraceSpanExporter())
-        )
+        tracer_provider = TracerProvider()
+        oteltrace.set_tracer_provider(tracer_provider)
+        if CloudTraceSpanExporter is not None:
+            tracer_provider.add_span_processor(
+                BatchSpanProcessor(CloudTraceSpanExporter())
+            )
 
         return oteltrace.get_tracer(_tracer)
