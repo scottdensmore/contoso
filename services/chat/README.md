@@ -31,7 +31,9 @@ mise install
 2. Install dependencies (from repository root):
 
 ```bash
+make bootstrap
 make setup-chat
+make prisma-generate-chat
 npm run setup:chat
 make -C services/chat setup
 ```

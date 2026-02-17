@@ -113,8 +113,12 @@ The repository now includes a root `Makefile` for a consistent command surface:
 
 ```bash
 make help
+make bootstrap
 make toolchain-doctor
+make agent-doctor
+make env-init
 make setup
+make prisma-generate-chat
 make dev
 make test
 make quick-ci
@@ -124,6 +128,8 @@ make ci
 There is also a root `package.json` workspace command surface:
 
 ```bash
+npm run bootstrap
+npm run doctor
 npm run setup
 npm run dev:web
 npm run dev:chat

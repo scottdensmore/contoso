@@ -16,7 +16,7 @@ async def get_customer_from_postgres(customer_id: str):
     try:
         global Prisma
         if Prisma is None:
-            from prisma import Prisma as PrismaClient  # type: ignore[attr-defined]
+            from prisma import Prisma as PrismaClient
 
             Prisma = PrismaClient
 

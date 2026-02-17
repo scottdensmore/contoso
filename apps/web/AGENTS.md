@@ -14,10 +14,14 @@ Web app scope for coding agents.
 From repository root:
 
 ```bash
+make bootstrap
+make agent-doctor
 make dev-web
 make lint
 make typecheck
 make test-web
+npm run bootstrap
+npm run doctor
 npm run dev:web
 npm run ci:web
 ```

@@ -13,6 +13,7 @@ Next.js web application for Contoso Outdoors.
 From repository root:
 
 ```bash
+make bootstrap
 make setup
 make dev-web
 npm run setup:web

@@ -24,9 +24,14 @@ mise install
 From repository root:
 
 ```bash
+make bootstrap
+make agent-doctor
 make setup-chat
+make prisma-generate-chat
 make dev-chat
 make test-chat
+npm run bootstrap
+npm run doctor
 npm run setup:chat
 npm run dev:chat
 npm run ci:chat

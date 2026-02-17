@@ -42,11 +42,12 @@ Before submitting a Pull Request, ensure:
 
 ## Making Changes
 
-1.  **Create a Branch:** `git checkout -b feature/your-feature-name`
-2.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
-3.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
-4.  **Verify:** Run the full local checks (`make ci`).
-5.  **Push & PR:** Push your branch and open a Pull Request.
+1.  **Bootstrap once:** `make bootstrap` (or `npm run bootstrap`) for a full local setup.
+2.  **Create a Branch:** `git checkout -b feature/your-feature-name`
+3.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
+4.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
+5.  **Verify:** Run preflight (`make agent-doctor`) and full local checks (`make ci`).
+6.  **Push & PR:** Push your branch and open a Pull Request.
 
 ## Database Migrations
 

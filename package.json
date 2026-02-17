@@ -5,6 +5,8 @@
     "apps/web"
   ],
   "scripts": {
+    "bootstrap": "make bootstrap",
+    "doctor": "make agent-doctor",
     "dev": "make dev",
     "dev:web": "make -C apps/web dev",
     "dev:chat": "make -C services/chat dev",

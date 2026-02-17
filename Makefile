@@ -5,21 +5,44 @@ NPM ?= npm
 PYTHON ?= mise exec python@3.11 -- python
 PIP ?= pip3
 TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
+AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
 CHAT_DIR := services/chat
 CHAT_MAKE := $(MAKE) -C $(CHAT_DIR)
+WEB_PRISMA_SCHEMA := $(WEB_DIR)/prisma/schema.prisma
+
+ENV_FILE := .env
+ENV_TEMPLATE := .env.example
+CHAT_ENV_FILE := $(CHAT_DIR)/.env
+CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
 
 toolchain-doctor: ## Verify local toolchain matches project baseline
 	$(PYTHON) $(TOOLCHAIN_CHECK_SCRIPT)
+
+agent-doctor: ## Verify agent-local environment is fully ready
+	$(PYTHON) $(AGENT_DOCTOR_SCRIPT)
+
+env-init: ## Create local .env files from templates when missing
+	@if [ ! -f "$(ENV_FILE)" ]; then cp "$(ENV_TEMPLATE)" "$(ENV_FILE)"; echo "Created $(ENV_FILE) from $(ENV_TEMPLATE)."; else echo "$(ENV_FILE) already exists."; fi
+	@if [ ! -f "$(CHAT_ENV_FILE)" ]; then cp "$(CHAT_ENV_TEMPLATE)" "$(CHAT_ENV_FILE)"; echo "Created $(CHAT_ENV_FILE) from $(CHAT_ENV_TEMPLATE)."; else echo "$(CHAT_ENV_FILE) already exists."; fi
+
+bootstrap: ## One-command bootstrap for local and coding-agent development
+	$(MAKE) toolchain-doctor
+	$(MAKE) env-init
+	$(MAKE) setup
+	$(MAKE) setup-chat
+	$(MAKE) prisma-generate-chat
+	$(MAKE) sync-web-env
+	$(MAKE) agent-doctor
 
 setup: ## Install web dependencies
 	$(WEB_MAKE) setup
@@ -52,6 +75,9 @@ migrate: ## Run Prisma migrations using DATABASE_URL
 
 prisma-generate: ## Generate Prisma client for the web app
 	$(WEB_MAKE) prisma-generate
+
+prisma-generate-chat: ## Generate Prisma client for the chat Python runtime
+	$(PYTHON) -m prisma py generate --schema=$(WEB_PRISMA_SCHEMA)
 
 lint: ## Lint web app
 	$(WEB_MAKE) lint

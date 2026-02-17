@@ -37,9 +37,13 @@ Run from repository root:
 
 ```bash
 make help
+make bootstrap
 make toolchain-doctor
+make agent-doctor
+make env-init
 make setup
 make prisma-generate
+make prisma-generate-chat
 make dev
 make test
 make quick-ci
@@ -49,6 +53,8 @@ make ci
 Unified npm command surface (root `package.json`):
 
 ```bash
+npm run bootstrap
+npm run doctor
 npm run setup
 npm run dev:web
 npm run dev:chat
