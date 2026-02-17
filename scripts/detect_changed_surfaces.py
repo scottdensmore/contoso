@@ -25,6 +25,8 @@ RUNTIME_PATTERNS = (
     "scripts/check_toolchain.py",
     "scripts/check_env_contract.py",
     "scripts/detect_changed_surfaces.py",
+    "scripts/verify_docs.py",
+    "tests/scripts/**",
     "apps/web/package-lock.json",
     "apps/web/package.json",
     "services/chat/constraints.txt",
@@ -136,7 +138,15 @@ def recommended_targets(flags: dict[str, bool]) -> list[str]:
     ordered: list[str] = []
 
     if flags["runtime"]:
-        ordered.extend(["toolchain-doctor", "env-contract-check", "quick-ci-web", "quick-ci-chat"])
+        ordered.extend(
+            [
+                "toolchain-doctor",
+                "env-contract-check",
+                "test-scripts",
+                "quick-ci-web",
+                "quick-ci-chat",
+            ]
+        )
     else:
         if flags["web"]:
             ordered.append("quick-ci-web")

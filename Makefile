@@ -22,7 +22,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -95,6 +95,9 @@ test: ## Run web tests and chat unit tests
 	$(MAKE) test-web
 	$(MAKE) test-chat
 
+test-scripts: ## Run root script guardrail tests
+	$(PYTHON) -m unittest discover -s tests/scripts -p "test_*.py" -v
+
 test-web: ## Run web tests
 	$(WEB_MAKE) test
 
@@ -136,5 +139,6 @@ docs-check: ## Validate docs links
 
 ci: ## Run local CI checks
 	$(MAKE) quick-ci
+	$(MAKE) test-scripts
 	$(MAKE) build
 	$(MAKE) docs-check

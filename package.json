@@ -17,6 +17,7 @@
     "lint:web": "make -C apps/web lint",
     "typecheck:web": "make -C apps/web typecheck",
     "test": "make test",
+    "test:scripts": "make test-scripts",
     "test:web": "make -C apps/web test",
     "test:chat": "make -C services/chat test",
     "test:chat:integration": "make -C services/chat test-integration",

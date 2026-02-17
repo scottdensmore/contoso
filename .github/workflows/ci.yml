@@ -49,7 +49,7 @@ jobs:
             echo "docs=true" >> "$GITHUB_OUTPUT"
             echo "unknown=false" >> "$GITHUB_OUTPUT"
             echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "targets=toolchain-doctor env-contract-check quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -70,7 +70,7 @@ jobs:
             echo "docs=true" >> "$GITHUB_OUTPUT"
             echo "unknown=false" >> "$GITHUB_OUTPUT"
             echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "targets=toolchain-doctor env-contract-check quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -95,6 +95,40 @@ jobs:
 
       - name: Validate env contract
         run: make env-contract-check PYTHON=python
+
+  script-tests:
+    name: Script Guardrail Tests
+    needs: changes
+    if: ${{ github.event_name != 'push' && needs.changes.outputs.runtime == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run script tests
+        run: make test-scripts PYTHON=python
+
+  docs-ci:
+    name: Documentation Link Checks
+    needs: changes
+    if: ${{ github.event_name != 'push' && (needs.changes.outputs.docs == 'true' || needs.changes.outputs.runtime == 'true') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify docs links
+        run: make docs-check PYTHON=python
 
   web-ci:
     name: Web App CI

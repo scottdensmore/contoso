@@ -122,6 +122,7 @@ make setup
 make prisma-generate-chat
 make dev
 make test
+make test-scripts
 make quick-ci
 make quick-ci-changed
 make ci
@@ -136,6 +137,7 @@ npm run env-contract-check
 npm run setup
 npm run dev:web
 npm run dev:chat
+npm run test:scripts
 npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
@@ -167,6 +169,8 @@ PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`)
 Run `mise install`, then retry `make bootstrap`.
 - `make env-contract-check` fails:
 Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
+- `make docs-check` fails:
+Fix broken relative links in `docs/*.md`, `README.md`, `AGENTS.md`, or `CONTRIBUTING.md`.
 - `make quick-ci-changed` runs no checks:
 Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
 - `make prisma-generate-chat` fails in a sandbox with permission errors:

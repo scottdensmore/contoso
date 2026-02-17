@@ -47,6 +47,7 @@ make prisma-generate
 make prisma-generate-chat
 make dev
 make test
+make test-scripts
 make quick-ci
 make quick-ci-changed
 make ci
@@ -61,6 +62,7 @@ npm run env-contract-check
 npm run setup
 npm run dev:web
 npm run dev:chat
+npm run test:scripts
 npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
@@ -104,12 +106,14 @@ Copy templates to `.env` before local development.
 - Range-scoped agent validation: `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`
 - Web-only change: `make -C apps/web quick-ci`
 - Chat-only change: `make quick-ci-chat`
+- Scripts/tooling change: `make test-scripts`
 - Cross-surface change (web + chat + schema): `make ci`
 
 ## Troubleshooting
 
 - Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
 - Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
+- Docs link drift (including root runbooks): run `make docs-check`.
 - Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
 - Python Prisma client missing: run `make prisma-generate-chat`.
 - Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.
