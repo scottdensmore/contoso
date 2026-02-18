@@ -47,7 +47,7 @@ Before submitting a Pull Request, ensure:
 3.  **Create a Branch:** `git checkout -b feature/your-feature-name`
 4.  **Implement:** Follow the TDD cycle (Red -> Green -> Refactor).
 5.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
-6.  **Verify:** Run preflight (`make agent-doctor`), fast changed-scope checks (`make quick-ci-changed`), script tests (`make test-scripts`), release preflight (`make release-dry-run`), and full local checks (`make ci`).
+6.  **Verify:** Run preflight (`make agent-doctor`), fast changed-scope checks (`make quick-ci-changed`), script tests (`make test-scripts`), integration smoke (`make e2e-smoke` for cross-surface changes), release preflight (`make release-dry-run`), and full local checks (`make ci`).
 7.  **Push & PR:** Push your branch and open a Pull Request.
 
 ## Database Migrations
@@ -71,3 +71,4 @@ Refer to:
 - If env checks fail, run `make env-init` and fill required values in `.env` files.
 - If chat Prisma client checks fail, run `make prisma-generate-chat`.
 - If release preflight fails, run `make release-dry-run RELEASE_TAG=vX.Y.Z` and fix missing guardrail files.
+- If integration smoke fails, run `make e2e-smoke KEEP_STACK=1` and inspect compose logs.

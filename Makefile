@@ -9,6 +9,7 @@ AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
 ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
 CHANGED_SURFACES_SCRIPT := scripts/detect_changed_surfaces.py
 RELEASE_DRY_RUN_SCRIPT := scripts/release_dry_run.py
+E2E_SMOKE_SCRIPT := scripts/e2e_smoke.py
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -23,7 +24,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat release-dry-run docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke release-dry-run docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -134,6 +135,25 @@ quick-ci-changed: ## Fast local checks scoped to changed files (set CHANGED_BASE
 	for target in $$TARGETS; do \
 		$(MAKE) $$target; \
 	done
+
+e2e-smoke: ## Run dockerized end-to-end smoke check (web -> chat -> db)
+	@set -euo pipefail; \
+	keep_stack="$(KEEP_STACK)"; \
+	cleanup() { \
+		status="$$1"; \
+		if [ "$$status" -ne 0 ]; then \
+			echo "E2E smoke failed; recent compose logs:"; \
+			$(DOCKER_COMPOSE) ps || true; \
+			$(DOCKER_COMPOSE) logs --no-color --tail=200 db chat web || true; \
+		fi; \
+		if [ "$$keep_stack" != "1" ]; then \
+			$(DOCKER_COMPOSE) down --volumes --remove-orphans || true; \
+		fi; \
+		exit "$$status"; \
+	}; \
+	trap 'cleanup $$?' EXIT; \
+	$(DOCKER_COMPOSE) up -d --build --force-recreate db chat web; \
+	$(PYTHON) $(E2E_SMOKE_SCRIPT) --web-url "http://127.0.0.1:3000" --chat-url "http://127.0.0.1:8000" --timeout 240
 
 release-dry-run: ## Validate release prerequisites without publishing
 	$(PYTHON) $(RELEASE_DRY_RUN_SCRIPT) $(if $(RELEASE_TAG),--tag "$(RELEASE_TAG)",)

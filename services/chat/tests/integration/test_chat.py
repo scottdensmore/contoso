@@ -18,6 +18,19 @@ def test_health_endpoint():
     assert "status" in data
     assert data["status"] == "healthy"
 
+
+def test_dependencies_health_endpoint():
+    """Test the dependency health endpoint"""
+    response = requests.get(f"{SERVICE_URL}/health/dependencies")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "status" in data
+    assert "database" in data
+    assert "connected" in data["database"]
+    assert data["database"]["connected"] is True
+
+
 def test_root_endpoint():
     """Test the root endpoint"""
     response = requests.get(f"{SERVICE_URL}/")

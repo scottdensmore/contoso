@@ -30,6 +30,7 @@ RUNTIME_PATTERNS = (
     "scripts/check_env_contract.py",
     "scripts/detect_changed_surfaces.py",
     "scripts/release_dry_run.py",
+    "scripts/e2e_smoke.py",
     "scripts/verify_docs.py",
     "tests/scripts/**",
     "apps/web/package-lock.json",

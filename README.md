@@ -125,6 +125,7 @@ make test
 make test-scripts
 make quick-ci
 make quick-ci-changed
+make e2e-smoke
 make release-dry-run
 make ci
 ```
@@ -142,6 +143,7 @@ npm run test:scripts
 npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
+npm run e2e:smoke
 npm run release:dry-run
 npm run ci:web
 npm run ci:chat
@@ -177,6 +179,8 @@ Fix broken relative links in `docs/*.md`, `README.md`, `AGENTS.md`, or `CONTRIBU
 Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
 - `make release-dry-run` fails:
 Ensure release guardrail files exist and the tag follows `vMAJOR.MINOR.PATCH` format.
+- `make e2e-smoke` fails:
+Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db chat web`.
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
@@ -202,6 +206,7 @@ Comprehensive documentation is available in the [docs/](./docs/) directory:
 - **[Database & Migrations](./docs/DATABASE.md):** Architecture, local access, and migration workflows.
 - **[Infrastructure & Deployment](./docs/INFRASTRUCTURE.md):** GCP setup, rollbacks, and teardown procedures.
 - **[Environment Contract](./docs/ENV_CONTRACT.md):** Source of truth and drift checks for required env keys.
+- **[Integration Runbook](./docs/INTEGRATION.md):** E2E smoke checks, triage, and rerun flow.
 - **[Release Runbook](./docs/RELEASE.md):** Tag-based release drafting and branch protection guidance.
 - **[Web App Runbook](./apps/web/README.md):** Web app development and verification commands.
 - **[Chat Service Runbook](./services/chat/README.md):** Chat API local development and testing.

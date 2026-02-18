@@ -104,6 +104,33 @@ async def health():
     logger.info("Health check endpoint accessed")
     return {"status": "healthy", "real_chat": REAL_CHAT_AVAILABLE}
 
+
+async def check_database_connection() -> tuple[bool, str | None]:
+    try:
+        from prisma import Prisma
+
+        db = Prisma()
+        await db.connect()
+        await db.disconnect()
+        return True, None
+    except Exception as exc:  # noqa: BLE001
+        return False, str(exc)
+
+
+@app.get("/health/dependencies")
+async def health_dependencies():
+    logger.info("Dependency health endpoint accessed")
+    db_connected, db_error = await check_database_connection()
+    status = "healthy" if db_connected else "degraded"
+    return {
+        "status": status,
+        "real_chat": REAL_CHAT_AVAILABLE,
+        "database": {
+            "connected": db_connected,
+            "error": db_error,
+        },
+    }
+
 @app.post("/api/create_response")
 async def create_response(request: ChatRequest):
     logger.info(

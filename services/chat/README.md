@@ -55,6 +55,7 @@ make -C services/chat dev
 ## Endpoints
 
 - `GET /health`
+- `GET /health/dependencies`
 - `POST /api/create_response`
 
 ## Tests

@@ -29,6 +29,7 @@
     "quick-ci:changed": "make quick-ci-changed",
     "quick-ci:web": "make -C apps/web quick-ci",
     "quick-ci:chat": "make -C services/chat quick-ci",
+    "e2e:smoke": "make e2e-smoke",
     "release:dry-run": "make release-dry-run",
     "ci": "make ci",
     "ci:web": "make -C apps/web ci",

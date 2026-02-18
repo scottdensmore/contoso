@@ -31,6 +31,31 @@ def test_health_endpoint():
     assert data["status"] == "healthy"
     assert "real_chat" in data
 
+
+@patch("main.check_database_connection")
+def test_health_dependencies_endpoint(mock_check_database_connection):
+    mock_check_database_connection.return_value = (True, None)
+    response = client.get("/health/dependencies")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["database"]["connected"] is True
+    assert data["database"]["error"] is None
+
+
+@patch("main.check_database_connection")
+def test_health_dependencies_endpoint_degraded(mock_check_database_connection):
+    mock_check_database_connection.return_value = (False, "connection failed")
+    response = client.get("/health/dependencies")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "degraded"
+    assert data["database"]["connected"] is False
+    assert "connection failed" in data["database"]["error"]
+
+
 def test_create_response_mock_mode():
     """Test chat response in mock mode"""
     with patch('main.REAL_CHAT_AVAILABLE', False):
