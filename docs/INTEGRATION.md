@@ -27,6 +27,7 @@ What it does:
 1. starts `db`, `chat`, and `web` with Docker Compose
 2. waits for chat health (`/health`)
 3. verifies chat database dependency health (`/health/dependencies`)
+   and fails immediately if `local_provider.enabled=true` with `local_provider.ready=false`
 4. sends a web proxy request to `/api/chat/service`
 5. validates the response contract (`answer` or `response` string)
 6. tears down the stack (unless `KEEP_STACK=1`)
@@ -122,6 +123,7 @@ For full-profile failures:
 5. if chat fails fast during startup in local-provider mode, verify:
    `CHAT_INSTALL_LOCAL_STACK=1`, `OLLAMA_BASE_URL=http://host.docker.internal:11434`, `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`
    then run `make local-provider-check` to confirm prerequisites
+   and `make diagnose-chat-local` for full local diagnostics
 6. if chat starts but request path fails, verify `LLM_PROVIDER`/local-provider envs and optional dependency imports
 
 ## Common Failure Classes

@@ -39,6 +39,7 @@ Use profile-oriented smoke commands from repo root:
 make e2e-smoke-lite # core/default profile
 make e2e-smoke-full # full local-provider profile
 make local-provider-check # preflight for LLM_PROVIDER=local
+make diagnose-chat-local # full local diagnostics from repo root
 ```
 
 Service endpoint: `http://localhost:8000`
@@ -83,11 +84,12 @@ make -C services/chat dev
 - Core (default): `make -C services/chat setup` or `make -C services/chat setup-core`
 - Full (local-provider): `make -C services/chat setup-full`
 - Local-provider preflight: `make -C services/chat local-provider-check`
+- Local diagnostics: `make diagnose-chat-local` (root) or `make -C services/chat diagnose-chat-local`
 
 ## Endpoints
 
 - `GET /health`
-- `GET /health/dependencies`
+- `GET /health/dependencies` (includes `local_provider` readiness details)
 - `POST /api/create_response`
 
 ## Tests

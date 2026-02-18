@@ -21,7 +21,7 @@ export PIP_DISABLE_PIP_VERSION_CHECK := 1
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-python setup setup-core setup-full local-provider-check dev deps-check lint typecheck test test-integration quick-ci ci
+.PHONY: help check-python setup setup-core setup-full local-provider-check diagnose-chat-local dev deps-check lint typecheck test test-integration quick-ci ci
 
 help: ## Show available chat-service tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nChat service tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -50,6 +50,23 @@ setup-full: ## Install chat with full local-LLM/vector dependency profile
 
 local-provider-check: ## Validate local-provider runtime prerequisites (LLM_PROVIDER=local)
 	$(PYTHON) $(API_DIR)/local_provider_health.py --json
+
+diagnose-chat-local: ## Print local-provider diagnostics (checks + health endpoint snapshot)
+	@echo "== Chat Local Diagnostics =="
+	@echo "LLM_PROVIDER=$${LLM_PROVIDER:-gcp}"
+	@echo "LOCAL_MODEL_NAME=$${LOCAL_MODEL_NAME:-gemma3:12b}"
+	@echo "OLLAMA_BASE_URL=$${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+	@echo ""
+	@echo "-- local-provider-check --"
+	@$(MAKE) local-provider-check || true
+	@echo ""
+	@echo "-- /health/dependencies snapshot --"
+	@if command -v curl >/dev/null 2>&1; then \
+		curl --silent --show-error --max-time 8 "http://127.0.0.1:8000/health/dependencies" || \
+		echo "Chat service not reachable at http://127.0.0.1:8000"; \
+	else \
+		echo "curl not found; skipping endpoint snapshot."; \
+	fi
 
 dev: ## Run chat service with hot reload
 	cd $(API_DIR) && $(UVICORN) main:app --reload --host 0.0.0.0 --port 8000

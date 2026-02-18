@@ -121,6 +121,7 @@ make env-init
 make setup
 make setup-chat-full
 make local-provider-check
+make diagnose-chat-local
 make prisma-generate-chat
 make dev
 make test
@@ -143,6 +144,7 @@ npm run env-contract-check
 npm run setup
 npm run setup:chat:full
 npm run local-provider-check
+npm run diagnose:chat:local
 npm run dev:web
 npm run dev:chat
 npm run test:scripts
@@ -222,6 +224,8 @@ Run `make e2e-smoke-lite` (minimal chat dependency profile).
 Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
 - Need a one-command local-provider preflight:
 Run `make local-provider-check` (or `npm run local-provider-check`).
+- Need fuller local chat diagnostics (preflight + health payload + compose status/log tail):
+Run `make diagnose-chat-local` (or `npm run diagnose:chat:local`).
 - Chat fails fast in local-provider mode (`LLM_PROVIDER=local`) at startup:
 Ensure all of the following:
 `CHAT_INSTALL_LOCAL_STACK=1` (docker image profile),

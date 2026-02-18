@@ -55,6 +55,8 @@ class ChatProfileWiringTests(unittest.TestCase):
         self.assertIn("CHAT_SETUP_PROFILE ?= core", content)
         self.assertIn("setup-chat-full:", content)
         self.assertIn("local-provider-check:", content)
+        self.assertIn("diagnose-chat-local:", content)
+        self.assertIn("$(CHAT_MAKE) diagnose-chat-local", content)
         self.assertIn("$(CHAT_MAKE) local-provider-check", content)
         self.assertIn("$(CHAT_MAKE) setup CHAT_SETUP_PROFILE=$(CHAT_SETUP_PROFILE)", content)
         self.assertIn("e2e-smoke-full:", content)
@@ -65,6 +67,7 @@ class ChatProfileWiringTests(unittest.TestCase):
         self.assertEqual(scripts.get("setup:chat:full"), "make -C services/chat setup-full")
         self.assertEqual(scripts.get("e2e:smoke:full"), "make e2e-smoke-full")
         self.assertEqual(scripts.get("local-provider-check"), "make local-provider-check")
+        self.assertEqual(scripts.get("diagnose:chat:local"), "make diagnose-chat-local")
 
     def test_chat_entrypoint_guards_local_indexing_dependencies(self):
         content = (REPO_ROOT / "services/chat/src/api/chat-entrypoint.sh").read_text(encoding="utf-8")
@@ -78,6 +81,7 @@ class ChatProfileWiringTests(unittest.TestCase):
     def test_chat_makefile_exposes_local_provider_check_target(self):
         content = (REPO_ROOT / "services/chat/Makefile").read_text(encoding="utf-8")
         self.assertIn("local-provider-check:", content)
+        self.assertIn("diagnose-chat-local:", content)
         self.assertIn("local_provider_health.py --json", content)
 
     def test_chat_dockerfile_copies_local_provider_health_module(self):

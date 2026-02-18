@@ -11,6 +11,10 @@ import urllib.request
 from typing import Any
 
 
+class NonRetryableSmokeError(RuntimeError):
+    """Error that should stop smoke polling immediately."""
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--web-url", default="http://127.0.0.1:3000", help="Base URL for web app.")
@@ -66,6 +70,27 @@ def dependencies_db_connected(payload: dict[str, Any] | None) -> bool:
     return database.get("connected") is True
 
 
+def local_provider_ready(payload: dict[str, Any] | None) -> tuple[bool, str | None]:
+    if not isinstance(payload, dict):
+        return True, None
+    local_provider = payload.get("local_provider")
+    if not isinstance(local_provider, dict):
+        return True, None
+    if local_provider.get("enabled") is not True:
+        return True, None
+    if local_provider.get("ready") is True:
+        return True, None
+
+    errors = local_provider.get("errors")
+    if isinstance(errors, list) and errors:
+        message = "; ".join(str(item) for item in errors)
+    elif isinstance(errors, str) and errors.strip():
+        message = errors.strip()
+    else:
+        message = "Local provider readiness failed without error details."
+    return False, message
+
+
 def wait_for(
     label: str,
     timeout_seconds: int,
@@ -80,6 +105,8 @@ def wait_for(
             check()
             print(f"[PASS] {label}")
             return
+        except NonRetryableSmokeError:
+            raise
         except Exception as exc:  # noqa: BLE001
             last_error = str(exc)
             time.sleep(interval_seconds)
@@ -101,6 +128,12 @@ def check_chat_dependencies(chat_url: str) -> None:
         raise RuntimeError(f"Dependency endpoint returned {status}: {raw}")
     if not dependencies_db_connected(payload):
         raise RuntimeError(f"Chat DB dependency is not healthy: {payload}")
+    is_ready, message = local_provider_ready(payload)
+    if not is_ready:
+        raise NonRetryableSmokeError(
+            "Chat local-provider dependency is not healthy: "
+            f"{message}. Run `make diagnose-chat-local` for detailed diagnostics."
+        )
 
 
 def check_web_chat_proxy(web_url: str) -> None:

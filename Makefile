@@ -29,7 +29,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -75,6 +75,19 @@ local-provider-check: ## Validate local-provider prerequisites (Ollama/model/dep
 	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
 	set +a; \
 	$(CHAT_MAKE) local-provider-check
+
+diagnose-chat-local: ## Run local chat diagnostics (preflight, health snapshot, compose state/log tail)
+	@set -euo pipefail; \
+	set -a; \
+	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
+	set +a; \
+	$(CHAT_MAKE) diagnose-chat-local; \
+	echo ""; \
+	echo "-- docker compose chat status --"; \
+	$(DOCKER_COMPOSE) ps chat || true; \
+	echo ""; \
+	echo "-- docker compose chat logs (tail 80) --"; \
+	$(DOCKER_COMPOSE) logs --no-color --tail=80 chat || true
 
 dev: ## Run web locally with db+chat in Docker
 	$(MAKE) sync-web-env

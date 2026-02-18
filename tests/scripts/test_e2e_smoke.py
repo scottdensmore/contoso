@@ -31,6 +31,22 @@ class E2ESmokeTests(unittest.TestCase):
         self.assertTrue(e2e_smoke.dependencies_db_connected({"database": {"connected": True}}))
         self.assertFalse(e2e_smoke.dependencies_db_connected({"database": {"connected": False}}))
 
+    def test_local_provider_ready_defaults_to_true_without_local_provider_payload(self):
+        self.assertEqual(e2e_smoke.local_provider_ready({"database": {"connected": True}}), (True, None))
+
+    def test_local_provider_ready_returns_false_when_enabled_but_unready(self):
+        payload = {
+            "local_provider": {
+                "enabled": True,
+                "ready": False,
+                "errors": ["Unable to reach Ollama"],
+            }
+        }
+        self.assertEqual(
+            e2e_smoke.local_provider_ready(payload),
+            (False, "Unable to reach Ollama"),
+        )
+
     def test_check_web_chat_proxy_passes(self):
         with patch.object(
             e2e_smoke,
@@ -47,6 +63,38 @@ class E2ESmokeTests(unittest.TestCase):
         ):
             with self.assertRaises(RuntimeError):
                 e2e_smoke.check_web_chat_proxy("http://localhost:3000")
+
+    def test_check_chat_dependencies_fails_fast_for_unready_local_provider(self):
+        payload = {
+            "database": {"connected": True},
+            "local_provider": {"enabled": True, "ready": False, "errors": ["Unable to reach Ollama"]},
+        }
+        with patch.object(
+            e2e_smoke,
+            "request_json",
+            return_value=(200, payload, '{"status":"degraded"}'),
+        ):
+            with self.assertRaises(e2e_smoke.NonRetryableSmokeError):
+                e2e_smoke.check_chat_dependencies("http://localhost:8000")
+
+    def test_wait_for_aborts_immediately_on_non_retryable_error(self):
+        calls = {"count": 0}
+
+        def fail_once():
+            calls["count"] += 1
+            raise e2e_smoke.NonRetryableSmokeError("stop now")
+
+        with patch.object(e2e_smoke.time, "sleep") as mock_sleep:
+            with self.assertRaises(e2e_smoke.NonRetryableSmokeError):
+                e2e_smoke.wait_for(
+                    label="fail-fast-check",
+                    timeout_seconds=30,
+                    interval_seconds=1.0,
+                    check=fail_once,
+                )
+
+        self.assertEqual(calls["count"], 1)
+        mock_sleep.assert_not_called()
 
 
 if __name__ == "__main__":
