@@ -28,7 +28,6 @@ RUN python -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
 # Copy requirements first for better caching
-COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements.txt
 COPY --chown=appuser:appuser services/chat/src/api/requirements-core.txt requirements-core.txt
 COPY --chown=appuser:appuser services/chat/src/api/requirements-local.txt requirements-local.txt
 COPY --chown=appuser:appuser services/chat/constraints.txt constraints.txt

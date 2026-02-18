@@ -15,7 +15,6 @@ import sys
 from pathlib import Path
 
 REQUIREMENT_FILES = (
-    Path("src/api/requirements.txt"),
     Path("src/api/requirements-core.txt"),
     Path("src/api/requirements-local.txt"),
     Path("tests/requirements-test.txt"),

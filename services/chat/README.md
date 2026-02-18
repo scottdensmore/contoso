@@ -40,9 +40,12 @@ mise install
 ```bash
 make bootstrap
 make setup-chat
+make setup-chat-full # optional: include local LLM/vector dependencies
 make prisma-generate-chat
 npm run setup:chat
+npm run setup:chat:full # optional: include local LLM/vector dependencies
 make -C services/chat setup
+make -C services/chat setup-full # optional: include local LLM/vector dependencies
 ```
 
 3. Create env file:
@@ -89,5 +92,5 @@ make -C services/chat ci
 Use `services/chat/.env.example` for local defaults and provider settings.
 
 When running with `LLM_PROVIDER=local`, ensure optional local dependencies are installed
-(`services/chat/src/api/requirements-local.txt`) or build Docker chat with
-`CHAT_INSTALL_LOCAL_STACK=1`.
+(`services/chat/src/api/requirements-local.txt`) via `make -C services/chat setup-full`
+or build Docker chat with `CHAT_INSTALL_LOCAL_STACK=1`.

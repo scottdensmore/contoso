@@ -28,7 +28,15 @@ pip install -r tests/requirements-test.txt
 
 # Install main dependencies for testing
 log_info "Installing main dependencies..."
-pip install -r src/api/requirements.txt
+CHAT_SETUP_PROFILE=${CHAT_SETUP_PROFILE:-core}
+if [ "${CHAT_SETUP_PROFILE}" != "core" ] && [ "${CHAT_SETUP_PROFILE}" != "full" ]; then
+    log_error "Unsupported CHAT_SETUP_PROFILE='${CHAT_SETUP_PROFILE}' (expected core or full)"
+    exit 2
+fi
+pip install -r src/api/requirements-core.txt
+if [ "${CHAT_SETUP_PROFILE}" = "full" ]; then
+    pip install -r src/api/requirements-local.txt
+fi
 
 # Add FastAPI test client
 pip install httpx

@@ -263,6 +263,7 @@ jobs:
           docker compose logs --no-color db chat web > e2e-compose.log || true
 
       - name: Capture e2e metrics
+        id: metrics
         if: always()
         run: |
           duration="${{ steps.run_smoke.outputs.duration_seconds }}"
@@ -272,20 +273,40 @@ jobs:
           max_duration=420
           max_chat_size=2500000000
           max_web_size=1500000000
+          budget_failed=0
+          warnings=()
+          if [ "$duration" != "unknown" ] && [ "$duration" -gt "$max_duration" ]; then
+            warnings+=("duration_above_budget")
+            budget_failed=1
+          fi
+          if [ "$chat_size" -gt "$max_chat_size" ]; then
+            warnings+=("chat_image_above_budget")
+            budget_failed=1
+          fi
+          if [ "$web_size" -gt "$max_web_size" ]; then
+            warnings+=("web_image_above_budget")
+            budget_failed=1
+          fi
           {
             echo "duration_seconds=$duration"
+            echo "max_duration_seconds=$max_duration"
             echo "chat_image_bytes=$chat_size"
+            echo "max_chat_image_bytes=$max_chat_size"
             echo "web_image_bytes=$web_size"
-            if [ "$duration" != "unknown" ] && [ "$duration" -gt "$max_duration" ]; then
-              echo "warning=duration_above_budget"
-            fi
-            if [ "$chat_size" -gt "$max_chat_size" ]; then
-              echo "warning=chat_image_above_budget"
-            fi
-            if [ "$web_size" -gt "$max_web_size" ]; then
-              echo "warning=web_image_above_budget"
-            fi
+            echo "max_web_image_bytes=$max_web_size"
+            for warning in "${warnings[@]}"; do
+              echo "warning=$warning"
+            done
           } | tee e2e-metrics.txt
+          echo "budget_failed=$budget_failed" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce e2e budgets
+        if: ${{ always() && steps.run_smoke.outcome == 'success' }}
+        run: |
+          if [ "${{ steps.metrics.outputs.budget_failed }}" = "1" ]; then
+            echo "::error::E2E smoke exceeded duration/image-size budget. See e2e-metrics.txt artifact."
+            exit 1
+          fi
 
       - name: Upload e2e logs
         if: always()

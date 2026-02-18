@@ -36,7 +36,8 @@ RUNTIME_PATTERNS = (
     "apps/web/package-lock.json",
     "apps/web/package.json",
     "services/chat/constraints.txt",
-    "services/chat/src/api/requirements.txt",
+    "services/chat/src/api/requirements-core.txt",
+    "services/chat/src/api/requirements-local.txt",
     "services/chat/tests/requirements-test.txt",
     "services/chat/requirements-dev.txt",
 )

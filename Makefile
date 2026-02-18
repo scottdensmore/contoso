@@ -14,6 +14,7 @@ E2E_SMOKE_TIMEOUT ?= 240
 E2E_COMPOSE_UP_FLAGS ?= -d --build --force-recreate
 E2E_LOG_TAIL ?= 200
 CHAT_INSTALL_LOCAL_STACK ?= 0
+CHAT_SETUP_PROFILE ?= core
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -28,7 +29,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite release-dry-run docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite release-dry-run docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -63,7 +64,10 @@ sync-web-env: ## Sync root .env into apps/web/.env when present
 	$(WEB_MAKE) sync-env
 
 setup-chat: ## Install chat dependencies in the active Python environment
-	$(CHAT_MAKE) setup
+	$(CHAT_MAKE) setup CHAT_SETUP_PROFILE=$(CHAT_SETUP_PROFILE)
+
+setup-chat-full: ## Install chat dependencies including local LLM/vector stack
+	$(CHAT_MAKE) setup-full
 
 dev: ## Run web locally with db+chat in Docker
 	$(MAKE) sync-web-env

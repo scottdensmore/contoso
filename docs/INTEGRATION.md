@@ -49,8 +49,9 @@ Behavior:
 3. executes `make e2e-smoke-lite KEEP_STACK=1`
 4. captures compose logs to `e2e-compose.log`
 5. captures duration/image-size metrics to `e2e-metrics.txt`
-6. uploads both files as artifact `e2e-compose-logs-<run_id>`
-7. tears down the stack
+6. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
+7. uploads both files as artifact `e2e-compose-logs-<run_id>`
+8. tears down the stack
 
 ## Failure Triage
 

@@ -119,6 +119,7 @@ make env-contract-check
 make agent-doctor
 make env-init
 make setup
+make setup-chat-full
 make prisma-generate-chat
 make dev
 make test
@@ -138,6 +139,7 @@ npm run bootstrap
 npm run doctor
 npm run env-contract-check
 npm run setup
+npm run setup:chat:full
 npm run dev:web
 npm run dev:chat
 npm run test:scripts
@@ -185,6 +187,8 @@ Ensure release guardrail files exist and the tag follows `vMAJOR.MINOR.PATCH` fo
 Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db chat web`.
 - Need faster contract-only integration check:
 Run `make e2e-smoke-lite` (minimal chat dependency profile).
+- Need local Python chat setup with local LLM/vector dependencies:
+Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:

@@ -73,3 +73,4 @@ Refer to:
 - If release preflight fails, run `make release-dry-run RELEASE_TAG=vX.Y.Z` and fix missing guardrail files.
 - If integration smoke fails, run `make e2e-smoke KEEP_STACK=1` and inspect compose logs.
 - If chat local-provider dependencies are required in Docker, run with `CHAT_INSTALL_LOCAL_STACK=1`.
+- If chat local-provider dependencies are required in Python setup, run `make setup-chat-full`.
