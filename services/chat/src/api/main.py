@@ -7,8 +7,8 @@ from typing import Any, Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict
 from local_provider_health import evaluate_local_provider_health
+from pydantic import BaseModel, ConfigDict
 
 # Import our real chat logic (simplified)
 try:
