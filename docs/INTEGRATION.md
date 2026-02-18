@@ -60,9 +60,11 @@ Behavior:
 3. executes `make e2e-smoke-lite KEEP_STACK=1`
 4. captures compose logs to `e2e-compose.log`
 5. captures duration/image-size metrics to `e2e-metrics.txt`
-6. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
-7. uploads both files as artifact `e2e-compose-logs-<run_id>`
-8. tears down the stack
+6. compares against previous successful baseline and writes `e2e-metrics-summary.md`
+7. stores rolling metrics history in cache (`.ci-metrics/lite-history.json`)
+8. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
+9. uploads logs, raw metrics, summary, and history artifact `e2e-compose-logs-<run_id>`
+10. tears down the stack
 
 Manual full-profile validation:
 
@@ -75,6 +77,8 @@ Scheduled full-profile validation:
 
 1. same job also runs weekly via cron (`0 9 * * 1`, Mondays 09:00 UTC)
 2. schedule runs full-profile smoke only (changed-scope jobs remain skipped)
+3. workflow compares full-profile metrics against previous successful full-profile baseline
+4. if scheduled run fails, exceeds budget, or regresses significantly, CI auto-opens a GitHub issue
 
 ## Budget Baselines
 
@@ -108,7 +112,7 @@ If smoke fails:
 
 For full-profile failures:
 
-1. inspect `e2e-full-compose.log` and `e2e-full-metrics.txt` artifacts
+1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, and `e2e-full-metrics-summary.md` artifacts
 2. look for `warning=` lines in metrics output to identify budget class
 3. rerun locally with:
    `make e2e-smoke-full KEEP_STACK=1`

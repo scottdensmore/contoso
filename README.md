@@ -179,6 +179,7 @@ CI cadence:
 
 - PR/manual fast path: `e2e-smoke-lite`
 - Weekly scheduled full path: `e2e-smoke-full` (Mondays 09:00 UTC)
+- Scheduled full-path alerts auto-open a GitHub issue when smoke fails, exceeds budget, or regresses.
 
 Service-owned command surface:
 

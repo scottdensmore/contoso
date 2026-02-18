@@ -75,3 +75,4 @@ Refer to:
 - If chat local-provider dependencies are required in Docker, run with `CHAT_INSTALL_LOCAL_STACK=1`.
 - If chat local-provider dependencies are required in Python setup, run `make setup-chat-full`.
 - If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log` and `e2e-full-metrics.txt`.
+- Scheduled full-profile smoke alerts open an issue automatically; use the issue body + run artifacts for triage.
