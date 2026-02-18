@@ -10,6 +10,9 @@ ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
 CHANGED_SURFACES_SCRIPT := scripts/detect_changed_surfaces.py
 RELEASE_DRY_RUN_SCRIPT := scripts/release_dry_run.py
 E2E_SMOKE_SCRIPT := scripts/e2e_smoke.py
+E2E_SMOKE_TIMEOUT ?= 240
+E2E_COMPOSE_UP_FLAGS ?= -d --build --force-recreate
+E2E_LOG_TAIL ?= 200
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -144,7 +147,7 @@ e2e-smoke: ## Run dockerized end-to-end smoke check (web -> chat -> db)
 		if [ "$$status" -ne 0 ]; then \
 			echo "E2E smoke failed; recent compose logs:"; \
 			$(DOCKER_COMPOSE) ps || true; \
-			$(DOCKER_COMPOSE) logs --no-color --tail=200 db chat web || true; \
+			$(DOCKER_COMPOSE) logs --no-color --tail=$(E2E_LOG_TAIL) db chat web || true; \
 		fi; \
 		if [ "$$keep_stack" != "1" ]; then \
 			$(DOCKER_COMPOSE) down --volumes --remove-orphans || true; \
@@ -152,8 +155,8 @@ e2e-smoke: ## Run dockerized end-to-end smoke check (web -> chat -> db)
 		exit "$$status"; \
 	}; \
 	trap 'cleanup $$?' EXIT; \
-	$(DOCKER_COMPOSE) up -d --build --force-recreate db chat web; \
-	$(PYTHON) $(E2E_SMOKE_SCRIPT) --web-url "http://127.0.0.1:3000" --chat-url "http://127.0.0.1:8000" --timeout 240
+	$(DOCKER_COMPOSE) up $(E2E_COMPOSE_UP_FLAGS) db chat web; \
+	$(PYTHON) $(E2E_SMOKE_SCRIPT) --web-url "http://127.0.0.1:3000" --chat-url "http://127.0.0.1:8000" --timeout $(E2E_SMOKE_TIMEOUT)
 
 release-dry-run: ## Validate release prerequisites without publishing
 	$(PYTHON) $(RELEASE_DRY_RUN_SCRIPT) $(if $(RELEASE_TAG),--tag "$(RELEASE_TAG)",)

@@ -1,11 +1,15 @@
-# Use the official Node.js 18 image.
-FROM node:18-alpine
+# Use the official Node.js 22 image to match local/CI toolchain.
+FROM node:22-alpine
 
 # Install dependencies needed for sharp and prisma
 RUN apk add --no-cache libc6-compat
 
 # Set working directories
 WORKDIR /app
+
+# Provide a build-time DATABASE_URL so Prisma client init does not fail on missing env.
+ARG DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
+ENV DATABASE_URL=${DATABASE_URL}
 
 # Copy package files and install dependencies
 COPY apps/web/package*.json ./apps/web/
@@ -26,8 +30,8 @@ COPY apps/web/prisma.config.ts ./prisma.config.ts
 # Generate prisma client
 RUN npx prisma generate --generator client --schema prisma/schema.prisma
 
-# Build the Next.js application
-RUN npm run build
+# Build the Next.js application without hitting DB-backed routes at image build time.
+RUN NEXT_BUILD_SKIP_DB=1 npm run build
 
 # Copy entrypoint script
 COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/

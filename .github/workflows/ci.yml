@@ -216,7 +216,15 @@ jobs:
       - name: Run e2e smoke
         env:
           KEEP_STACK: '1'
-        run: make e2e-smoke PYTHON=python KEEP_STACK=1
+          DOCKER_BUILDKIT: '1'
+          COMPOSE_DOCKER_CLI_BUILD: '1'
+          E2E_SMOKE_TIMEOUT: '300'
+        run: |
+          make e2e-smoke \
+            PYTHON=python \
+            KEEP_STACK=1 \
+            E2E_SMOKE_TIMEOUT="${E2E_SMOKE_TIMEOUT}" \
+            E2E_COMPOSE_UP_FLAGS="-d --build --force-recreate --quiet-pull"
 
       - name: Capture compose logs
         if: always()

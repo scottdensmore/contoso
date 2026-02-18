@@ -7,18 +7,10 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    --no-install-recommends \
-    curl \
-    npm \
+# Prisma Python's nodeenv runtime requires libatomic at generation time.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libatomic1 \
     && rm -rf /var/lib/apt/lists/*
-
-# Explicitly install Prisma CLI via npm to avoid issues with automated downloads during client generation
-# Using a fixed version that matches what prisma-python expects
-RUN npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retries 5 && \
-    npm install -g prisma@5.17.0
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -m -g appuser appuser
@@ -47,7 +39,7 @@ RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements
 
 # Copy Prisma schema and generate client
 COPY --chown=appuser:appuser apps/web/prisma/schema.prisma schema.prisma
-RUN prisma generate --generator pyclient
+RUN python -m prisma py generate --schema=schema.prisma --generator pyclient
 
 # Copy application code
 COPY --chown=appuser:appuser services/chat/src/api/main.py main.py
@@ -63,7 +55,7 @@ FROM base AS production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
 
 # Set environment variables
 ENV PORT=8000 \
