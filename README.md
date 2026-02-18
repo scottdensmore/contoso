@@ -175,6 +175,11 @@ make setup-chat-full
 make e2e-smoke-full
 ```
 
+CI cadence:
+
+- PR/manual fast path: `e2e-smoke-lite`
+- Weekly scheduled full path: `e2e-smoke-full` (Mondays 09:00 UTC)
+
 Service-owned command surface:
 
 ```bash
@@ -210,6 +215,8 @@ Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db
 Run `make e2e-smoke-lite` (minimal chat dependency profile).
 - Need local Python chat setup with local LLM/vector dependencies:
 Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
+- Full-profile smoke failure in CI:
+Inspect `e2e-full-compose.log` and `e2e-full-metrics.txt` artifacts (see `docs/INTEGRATION.md`).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:

@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # Weekly full-profile runtime validation (Mondays at 09:00 UTC)
+    - cron: '0 9 * * 1'
   workflow_dispatch:
     inputs:
       run_full_profile_smoke:
@@ -56,6 +59,19 @@ jobs:
             echo "unknown=false" >> "$GITHUB_OUTPUT"
             echo "none=false" >> "$GITHUB_OUTPUT"
             echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            echo "base=" >> "$GITHUB_OUTPUT"
+            echo "head=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo "runtime=false" >> "$GITHUB_OUTPUT"
+            echo "web=false" >> "$GITHUB_OUTPUT"
+            echo "chat=false" >> "$GITHUB_OUTPUT"
+            echo "docs=false" >> "$GITHUB_OUTPUT"
+            echo "unknown=false" >> "$GITHUB_OUTPUT"
+            echo "none=true" >> "$GITHUB_OUTPUT"
+            echo "targets=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -330,7 +346,7 @@ jobs:
 
   integration-e2e-full-profile:
     name: Integration E2E Smoke (Full Chat Profile)
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_profile_smoke == 'true' }}
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_profile_smoke == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
@@ -398,8 +414,8 @@ jobs:
           [ -z "$duration" ] && duration="unknown"
           chat_size="$(docker image inspect contoso-chat:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
           web_size="$(docker image inspect contoso-web:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
-          max_duration=1200
-          max_chat_size=7000000000
+          max_duration=600
+          max_chat_size=2000000000
           max_web_size=1500000000
           budget_failed=0
           warnings=()

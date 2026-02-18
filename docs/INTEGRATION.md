@@ -69,7 +69,27 @@ Manual full-profile validation:
 1. run `Continuous Integration` via `workflow_dispatch`
 2. set input `run_full_profile_smoke=true`
 3. job `Integration E2E Smoke (Full Chat Profile)` runs `make e2e-smoke-full`
-4. enforces full-profile budgets (duration <= 1200s, chat image <= 7.0GB, web image <= 1.5GB)
+4. enforces full-profile budgets (duration <= 600s, chat image <= 2.0GB, web image <= 1.5GB)
+
+Scheduled full-profile validation:
+
+1. same job also runs weekly via cron (`0 9 * * 1`, Mondays 09:00 UTC)
+2. schedule runs full-profile smoke only (changed-scope jobs remain skipped)
+
+## Budget Baselines
+
+Reference observations from local runs on February 17, 2026:
+
+- `e2e-smoke-lite` runtime: ~33s
+- `e2e-smoke-full` runtime: ~143s
+- `contoso-chat` image size (`INSTALL_LOCAL_STACK=0`): ~356 MB (`356002891` bytes)
+- `contoso-chat` image size (`INSTALL_LOCAL_STACK=1`): ~714 MB (`713665560` bytes)
+- `contoso-web` image size: ~1.21 GB (`1211753576` bytes)
+
+Current enforced budgets:
+
+- Lite profile: duration <= `420s`, chat <= `2.5GB`, web <= `1.5GB`
+- Full profile: duration <= `600s`, chat <= `2.0GB`, web <= `1.5GB`
 
 ## Failure Triage
 
@@ -86,6 +106,15 @@ If smoke fails:
 5. retry smoke only:
    `python scripts/e2e_smoke.py --web-url http://127.0.0.1:3000 --chat-url http://127.0.0.1:8000`
 
+For full-profile failures:
+
+1. inspect `e2e-full-compose.log` and `e2e-full-metrics.txt` artifacts
+2. look for `warning=` lines in metrics output to identify budget class
+3. rerun locally with:
+   `make e2e-smoke-full KEEP_STACK=1`
+4. if dependency install is slow/failing, inspect chat build logs for `requirements-local.txt` packages
+5. if chat starts but request path fails, verify `LLM_PROVIDER`/local-provider envs and optional dependency imports
+
 ## Common Failure Classes
 
 1. `chat dependency health (db)` timeout:
@@ -94,3 +123,5 @@ If smoke fails:
    web route cannot reach chat endpoint or chat returned upstream error.
 3. missing `answer`/`response` field:
    response contract drift between web consumer and chat provider.
+4. full-profile dependency install timeout/failure:
+   heavy optional dependencies (`torch`, `chromadb`, `sentence-transformers`) failed or exceeded budget.
