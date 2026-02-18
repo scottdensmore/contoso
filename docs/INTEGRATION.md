@@ -121,6 +121,7 @@ For full-profile failures:
 4. if dependency install is slow/failing, inspect chat build logs for `requirements-local.txt` packages
 5. if chat fails fast during startup in local-provider mode, verify:
    `CHAT_INSTALL_LOCAL_STACK=1`, `OLLAMA_BASE_URL=http://host.docker.internal:11434`, `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`
+   then run `make local-provider-check` to confirm prerequisites
 6. if chat starts but request path fails, verify `LLM_PROVIDER`/local-provider envs and optional dependency imports
 
 ## Common Failure Classes

@@ -120,6 +120,7 @@ make agent-doctor
 make env-init
 make setup
 make setup-chat-full
+make local-provider-check
 make prisma-generate-chat
 make dev
 make test
@@ -141,6 +142,7 @@ npm run doctor
 npm run env-contract-check
 npm run setup
 npm run setup:chat:full
+npm run local-provider-check
 npm run dev:web
 npm run dev:chat
 npm run test:scripts
@@ -218,6 +220,8 @@ Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db
 Run `make e2e-smoke-lite` (minimal chat dependency profile).
 - Need local Python chat setup with local LLM/vector dependencies:
 Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
+- Need a one-command local-provider preflight:
+Run `make local-provider-check` (or `npm run local-provider-check`).
 - Chat fails fast in local-provider mode (`LLM_PROVIDER=local`) at startup:
 Ensure all of the following:
 `CHAT_INSTALL_LOCAL_STACK=1` (docker image profile),

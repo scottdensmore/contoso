@@ -14,6 +14,7 @@
     "setup:web": "make -C apps/web setup",
     "setup:chat": "make -C services/chat setup",
     "setup:chat:full": "make -C services/chat setup-full",
+    "local-provider-check": "make local-provider-check",
     "setup": "npm run setup:web && npm run setup:chat",
     "lint:web": "make -C apps/web lint",
     "typecheck:web": "make -C apps/web typecheck",

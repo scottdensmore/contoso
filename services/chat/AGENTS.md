@@ -28,11 +28,13 @@ make bootstrap
 make agent-doctor
 make setup-chat
 make prisma-generate-chat
+make local-provider-check
 make dev-chat
 make test-chat
 npm run bootstrap
 npm run doctor
 npm run setup:chat
+npm run local-provider-check
 npm run dev:chat
 npm run ci:chat
 ```
@@ -43,6 +45,7 @@ From service directory:
 make help
 make check-python
 make setup
+make local-provider-check
 make dev
 make deps-check
 make lint

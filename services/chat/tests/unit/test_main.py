@@ -32,9 +32,15 @@ def test_health_endpoint():
     assert "real_chat" in data
 
 
+@patch("main.evaluate_local_provider_health")
 @patch("main.check_database_connection")
-def test_health_dependencies_endpoint(mock_check_database_connection):
+def test_health_dependencies_endpoint(mock_check_database_connection, mock_local_provider_health):
     mock_check_database_connection.return_value = (True, None)
+    mock_local_provider_health.return_value = {
+        "provider": "gcp",
+        "enabled": False,
+        "ready": True,
+    }
     response = client.get("/health/dependencies")
     assert response.status_code == 200
 
@@ -42,11 +48,18 @@ def test_health_dependencies_endpoint(mock_check_database_connection):
     assert data["status"] == "healthy"
     assert data["database"]["connected"] is True
     assert data["database"]["error"] is None
+    assert data["local_provider"]["ready"] is True
 
 
+@patch("main.evaluate_local_provider_health")
 @patch("main.check_database_connection")
-def test_health_dependencies_endpoint_degraded(mock_check_database_connection):
+def test_health_dependencies_endpoint_degraded(mock_check_database_connection, mock_local_provider_health):
     mock_check_database_connection.return_value = (False, "connection failed")
+    mock_local_provider_health.return_value = {
+        "provider": "gcp",
+        "enabled": False,
+        "ready": True,
+    }
     response = client.get("/health/dependencies")
     assert response.status_code == 200
 
@@ -54,6 +67,27 @@ def test_health_dependencies_endpoint_degraded(mock_check_database_connection):
     assert data["status"] == "degraded"
     assert data["database"]["connected"] is False
     assert "connection failed" in data["database"]["error"]
+
+
+@patch("main.evaluate_local_provider_health")
+@patch("main.check_database_connection")
+def test_health_dependencies_endpoint_degraded_when_local_provider_unready(
+    mock_check_database_connection, mock_local_provider_health
+):
+    mock_check_database_connection.return_value = (True, None)
+    mock_local_provider_health.return_value = {
+        "provider": "local",
+        "enabled": True,
+        "ready": False,
+        "errors": ["Unable to reach Ollama"],
+    }
+    response = client.get("/health/dependencies")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["status"] == "degraded"
+    assert data["database"]["connected"] is True
+    assert data["local_provider"]["ready"] is False
 
 
 def test_create_response_mock_mode():

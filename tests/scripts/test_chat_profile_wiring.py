@@ -54,6 +54,8 @@ class ChatProfileWiringTests(unittest.TestCase):
         content = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
         self.assertIn("CHAT_SETUP_PROFILE ?= core", content)
         self.assertIn("setup-chat-full:", content)
+        self.assertIn("local-provider-check:", content)
+        self.assertIn("$(CHAT_MAKE) local-provider-check", content)
         self.assertIn("$(CHAT_MAKE) setup CHAT_SETUP_PROFILE=$(CHAT_SETUP_PROFILE)", content)
         self.assertIn("e2e-smoke-full:", content)
 
@@ -62,16 +64,25 @@ class ChatProfileWiringTests(unittest.TestCase):
         scripts = package["scripts"]
         self.assertEqual(scripts.get("setup:chat:full"), "make -C services/chat setup-full")
         self.assertEqual(scripts.get("e2e:smoke:full"), "make e2e-smoke-full")
+        self.assertEqual(scripts.get("local-provider-check"), "make local-provider-check")
 
     def test_chat_entrypoint_guards_local_indexing_dependencies(self):
         content = (REPO_ROOT / "services/chat/src/api/chat-entrypoint.sh").read_text(encoding="utf-8")
         self.assertIn('provider="${LLM_PROVIDER:-gcp}"', content)
         self.assertIn('if [[ "${provider}" == "local" ]]; then', content)
-        self.assertIn('python3 -c "import chromadb, litellm"', content)
+        self.assertIn("python3 local_provider_health.py", content)
         self.assertIn("Running local-provider preflight...", content)
-        self.assertIn("LOCAL_MODEL_NAME", content)
-        self.assertIn("ollama pull ${local_model}", content)
+        self.assertIn("ollama pull \\${LOCAL_MODEL_NAME:-gemma3:12b}", content)
         self.assertIn("Running local product indexing for vector search...", content)
+
+    def test_chat_makefile_exposes_local_provider_check_target(self):
+        content = (REPO_ROOT / "services/chat/Makefile").read_text(encoding="utf-8")
+        self.assertIn("local-provider-check:", content)
+        self.assertIn("local_provider_health.py --json", content)
+
+    def test_chat_dockerfile_copies_local_provider_health_module(self):
+        content = (REPO_ROOT / "services/chat/Dockerfile").read_text(encoding="utf-8")
+        self.assertIn("local_provider_health.py local_provider_health.py", content)
 
     def test_env_templates_document_correct_ollama_base_urls(self):
         root_env = (REPO_ROOT / ".env.example").read_text(encoding="utf-8")

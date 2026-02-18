@@ -21,7 +21,7 @@ export PIP_DISABLE_PIP_VERSION_CHECK := 1
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-python setup setup-core setup-full dev deps-check lint typecheck test test-integration quick-ci ci
+.PHONY: help check-python setup setup-core setup-full local-provider-check dev deps-check lint typecheck test test-integration quick-ci ci
 
 help: ## Show available chat-service tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nChat service tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -47,6 +47,9 @@ setup-core: ## Install chat with core dependency profile
 
 setup-full: ## Install chat with full local-LLM/vector dependency profile
 	$(MAKE) setup CHAT_SETUP_PROFILE=full
+
+local-provider-check: ## Validate local-provider runtime prerequisites (LLM_PROVIDER=local)
+	$(PYTHON) $(API_DIR)/local_provider_health.py --json
 
 dev: ## Run chat service with hot reload
 	cd $(API_DIR) && $(UVICORN) main:app --reload --host 0.0.0.0 --port 8000

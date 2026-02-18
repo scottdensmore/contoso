@@ -46,6 +46,7 @@ RUN python -m prisma py generate --schema=schema.prisma --generator pyclient
 
 # Copy application code
 COPY --chown=appuser:appuser services/chat/src/api/main.py main.py
+COPY --chown=appuser:appuser services/chat/src/api/local_provider_health.py local_provider_health.py
 COPY --chown=appuser:appuser services/chat/src/api/contoso_chat/ contoso_chat/
 COPY --chown=appuser:appuser services/chat/src/api/evaluators/ evaluators/
 COPY --chown=appuser:appuser services/chat/src/api/tracing.py tracing.py

@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict
+from local_provider_health import evaluate_local_provider_health
 
 # Import our real chat logic (simplified)
 try:
@@ -121,7 +122,9 @@ async def check_database_connection() -> tuple[bool, str | None]:
 async def health_dependencies():
     logger.info("Dependency health endpoint accessed")
     db_connected, db_error = await check_database_connection()
-    status = "healthy" if db_connected else "degraded"
+    local_provider = evaluate_local_provider_health()
+    local_provider_ready = bool(local_provider.get("ready", True))
+    status = "healthy" if db_connected and local_provider_ready else "degraded"
     return {
         "status": status,
         "real_chat": REAL_CHAT_AVAILABLE,
@@ -129,6 +132,7 @@ async def health_dependencies():
             "connected": db_connected,
             "error": db_error,
         },
+        "local_provider": local_provider,
     }
 
 @app.post("/api/create_response")
