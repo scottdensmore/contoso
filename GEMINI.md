@@ -2,12 +2,6 @@
 
 Before submitting any changes, it is crucial to validate them by running the full build and lint check. This command will build the repository and lint the code.
 
-To run the full suite of checks, execute the following command:
-
-```bash
-npm run lint && npm run build
-```
-
 When doing git operations use the GitHub CLI `gh` where possible.
 
 ## Git Repo

@@ -67,8 +67,17 @@ class ChatProfileWiringTests(unittest.TestCase):
         content = (REPO_ROOT / "services/chat/src/api/chat-entrypoint.sh").read_text(encoding="utf-8")
         self.assertIn('provider="${LLM_PROVIDER:-gcp}"', content)
         self.assertIn('if [[ "${provider}" == "local" ]]; then', content)
-        self.assertIn('python3 -c "import chromadb"', content)
-        self.assertIn("Skipping local product indexing: chromadb is not installed in this image.", content)
+        self.assertIn('python3 -c "import chromadb, litellm"', content)
+        self.assertIn("Running local-provider preflight...", content)
+        self.assertIn("LOCAL_MODEL_NAME", content)
+        self.assertIn("ollama pull ${local_model}", content)
+        self.assertIn("Running local product indexing for vector search...", content)
+
+    def test_env_templates_document_correct_ollama_base_urls(self):
+        root_env = (REPO_ROOT / ".env.example").read_text(encoding="utf-8")
+        chat_env = (REPO_ROOT / "services/chat/.env.example").read_text(encoding="utf-8")
+        self.assertIn("OLLAMA_BASE_URL=http://host.docker.internal:11434", root_env)
+        self.assertIn("OLLAMA_BASE_URL=http://localhost:11434", chat_env)
 
 
 if __name__ == "__main__":

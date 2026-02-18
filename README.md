@@ -173,6 +173,8 @@ Use `full` when validating `LLM_PROVIDER=local` behavior:
 ```bash
 make setup-chat-full
 make e2e-smoke-full
+ollama serve
+ollama pull gemma3:12b
 ```
 
 CI cadence:
@@ -216,6 +218,11 @@ Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db
 Run `make e2e-smoke-lite` (minimal chat dependency profile).
 - Need local Python chat setup with local LLM/vector dependencies:
 Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
+- Chat fails fast in local-provider mode (`LLM_PROVIDER=local`) at startup:
+Ensure all of the following:
+`CHAT_INSTALL_LOCAL_STACK=1` (docker image profile),
+`OLLAMA_BASE_URL=http://host.docker.internal:11434` (docker chat),
+`ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`.
 - Full-profile smoke failure in CI:
 Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:

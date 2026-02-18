@@ -25,6 +25,14 @@ Enable local LLM/vector dependencies when needed:
 CHAT_INSTALL_LOCAL_STACK=1 docker compose up -d --build chat
 ```
 
+Local-provider docker path (`LLM_PROVIDER=local`) requires:
+
+1. `CHAT_INSTALL_LOCAL_STACK=1`
+2. Ollama running on host (`ollama serve`)
+3. local model installed (`ollama pull gemma3:12b` by default)
+
+If any of these are missing, chat entrypoint now fails fast with a preflight error.
+
 Use profile-oriented smoke commands from repo root:
 
 ```bash
@@ -106,3 +114,8 @@ Use `services/chat/.env.example` for local defaults and provider settings.
 When running with `LLM_PROVIDER=local`, ensure optional local dependencies are installed
 (`services/chat/src/api/requirements-local.txt`) via `make -C services/chat setup-full`
 or build Docker chat with `CHAT_INSTALL_LOCAL_STACK=1`.
+
+`OLLAMA_BASE_URL` guidance:
+
+- Docker chat container: `http://host.docker.internal:11434`
+- Direct Python chat run on host: `http://localhost:11434`
