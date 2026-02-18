@@ -53,6 +53,7 @@ make quick-ci
 make quick-ci-changed
 make e2e-smoke
 make e2e-smoke-lite
+make e2e-smoke-full
 make release-dry-run
 make ci
 ```
@@ -73,6 +74,7 @@ npm run quick-ci:changed
 npm run quick-ci:chat
 npm run e2e:smoke
 npm run e2e:smoke:lite
+npm run e2e:smoke:full
 npm run release:dry-run
 npm run ci:web
 npm run ci:chat
@@ -118,6 +120,7 @@ Copy templates to `.env` before local development.
 - Cross-surface change (web + chat + schema): `make ci`
 - Cross-surface integration confidence: `make e2e-smoke`
 - Contract-only integration confidence (minimal chat stack): `make e2e-smoke-lite`
+- Full local-provider integration confidence: `make e2e-smoke-full`
 - Release preflight: `make release-dry-run RELEASE_TAG=vX.Y.Z`
 
 ## Troubleshooting

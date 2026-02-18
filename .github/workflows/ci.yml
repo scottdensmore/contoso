@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      run_full_profile_smoke:
+        description: 'Run full chat-profile smoke (includes local LLM/vector dependencies)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   changes:
@@ -319,6 +325,128 @@ jobs:
           if-no-files-found: warn
 
       - name: Teardown e2e stack
+        if: always()
+        run: docker compose down --volumes --remove-orphans
+
+  integration-e2e-full-profile:
+    name: Integration E2E Smoke (Full Chat Profile)
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_profile_smoke == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build web image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          tags: contoso-web:latest
+          cache-from: type=gha,scope=contoso-web
+          cache-to: type=gha,mode=max,scope=contoso-web
+
+      - name: Build chat image (cached, full profile)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/chat/Dockerfile
+          load: true
+          tags: contoso-chat:latest
+          build-args: |
+            INSTALL_LOCAL_STACK=1
+          cache-from: type=gha,scope=contoso-chat
+          cache-to: type=gha,mode=max,scope=contoso-chat
+
+      - name: Run e2e smoke (full profile)
+        id: run_smoke_full
+        env:
+          KEEP_STACK: '1'
+          DOCKER_BUILDKIT: '1'
+          COMPOSE_DOCKER_CLI_BUILD: '1'
+          E2E_SMOKE_TIMEOUT: '600'
+        run: |
+          start_epoch="$(date +%s)"
+          make e2e-smoke-full \
+            PYTHON=python \
+            KEEP_STACK=1 \
+            E2E_SMOKE_TIMEOUT="${E2E_SMOKE_TIMEOUT}" \
+            E2E_COMPOSE_UP_FLAGS="-d --force-recreate --quiet-pull"
+          end_epoch="$(date +%s)"
+          echo "duration_seconds=$((end_epoch-start_epoch))" >> "$GITHUB_OUTPUT"
+
+      - name: Capture compose logs (full profile)
+        if: always()
+        run: |
+          docker compose ps || true
+          docker compose logs --no-color db chat web > e2e-full-compose.log || true
+
+      - name: Capture e2e metrics (full profile)
+        id: metrics_full
+        if: always()
+        run: |
+          duration="${{ steps.run_smoke_full.outputs.duration_seconds }}"
+          [ -z "$duration" ] && duration="unknown"
+          chat_size="$(docker image inspect contoso-chat:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
+          web_size="$(docker image inspect contoso-web:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
+          max_duration=1200
+          max_chat_size=7000000000
+          max_web_size=1500000000
+          budget_failed=0
+          warnings=()
+          if [ "$duration" != "unknown" ] && [ "$duration" -gt "$max_duration" ]; then
+            warnings+=("duration_above_budget")
+            budget_failed=1
+          fi
+          if [ "$chat_size" -gt "$max_chat_size" ]; then
+            warnings+=("chat_image_above_budget")
+            budget_failed=1
+          fi
+          if [ "$web_size" -gt "$max_web_size" ]; then
+            warnings+=("web_image_above_budget")
+            budget_failed=1
+          fi
+          {
+            echo "duration_seconds=$duration"
+            echo "max_duration_seconds=$max_duration"
+            echo "chat_image_bytes=$chat_size"
+            echo "max_chat_image_bytes=$max_chat_size"
+            echo "web_image_bytes=$web_size"
+            echo "max_web_image_bytes=$max_web_size"
+            for warning in "${warnings[@]}"; do
+              echo "warning=$warning"
+            done
+          } | tee e2e-full-metrics.txt
+          echo "budget_failed=$budget_failed" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce e2e budgets (full profile)
+        if: ${{ always() && steps.run_smoke_full.outcome == 'success' }}
+        run: |
+          if [ "${{ steps.metrics_full.outputs.budget_failed }}" = "1" ]; then
+            echo "::error::Full-profile E2E smoke exceeded duration/image-size budget. See e2e-full-metrics.txt artifact."
+            exit 1
+          fi
+
+      - name: Upload e2e logs (full profile)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-full-compose-logs-${{ github.run_id }}
+          path: |
+            e2e-full-compose.log
+            e2e-full-metrics.txt
+          if-no-files-found: warn
+
+      - name: Teardown e2e stack (full profile)
         if: always()
         run: docker compose down --volumes --remove-orphans
 

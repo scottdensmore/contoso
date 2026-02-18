@@ -128,6 +128,7 @@ make quick-ci
 make quick-ci-changed
 make e2e-smoke
 make e2e-smoke-lite
+make e2e-smoke-full
 make release-dry-run
 make ci
 ```
@@ -148,10 +149,30 @@ npm run quick-ci:changed
 npm run quick-ci:chat
 npm run e2e:smoke
 npm run e2e:smoke:lite
+npm run e2e:smoke:full
 npm run release:dry-run
 npm run ci:web
 npm run ci:chat
 npm run ci
+```
+
+## Chat Dependency Profiles
+
+- `core` (default): fastest local/CI path, no local LLM/vector libraries.
+- `full`: includes local LLM/vector libraries (`torch`, `litellm`, `chromadb`, `sentence-transformers`).
+
+Use `core` for normal CI and contract checks:
+
+```bash
+make setup-chat
+make e2e-smoke-lite
+```
+
+Use `full` when validating `LLM_PROVIDER=local` behavior:
+
+```bash
+make setup-chat-full
+make e2e-smoke-full
 ```
 
 Service-owned command surface:

@@ -63,6 +63,15 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         }
         self.assertEqual(detect_changed.recommended_targets(flags), ["docs-check"])
 
+    def test_split_chat_requirement_paths_are_runtime(self):
+        for path in (
+            "services/chat/src/api/requirements-core.txt",
+            "services/chat/src/api/requirements-local.txt",
+        ):
+            with self.subTest(path=path):
+                flags = detect_changed.classify([path])
+                self.assertTrue(flags["runtime"])
+
     def test_changed_files_from_worktree_parses_porcelain(self):
         porcelain = "\n".join(
             [

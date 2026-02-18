@@ -25,6 +25,13 @@ Enable local LLM/vector dependencies when needed:
 CHAT_INSTALL_LOCAL_STACK=1 docker compose up -d --build chat
 ```
 
+Use profile-oriented smoke commands from repo root:
+
+```bash
+make e2e-smoke-lite # core/default profile
+make e2e-smoke-full # full local-provider profile
+```
+
 Service endpoint: `http://localhost:8000`
 
 ### Option 2: Run directly with Python
@@ -61,6 +68,11 @@ make dev-chat
 npm run dev:chat
 make -C services/chat dev
 ```
+
+### Dependency profiles
+
+- Core (default): `make -C services/chat setup` or `make -C services/chat setup-core`
+- Full (local-provider): `make -C services/chat setup-full`
 
 ## Endpoints
 

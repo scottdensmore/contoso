@@ -16,6 +16,12 @@ Fast contract-only profile (minimal chat dependency footprint):
 make e2e-smoke-lite
 ```
 
+Full local-provider profile:
+
+```bash
+make e2e-smoke-full
+```
+
 What it does:
 
 1. starts `db`, `chat`, and `web` with Docker Compose
@@ -37,6 +43,11 @@ Enable local LLM/vector stack in chat image when needed:
 make e2e-smoke CHAT_INSTALL_LOCAL_STACK=1
 ```
 
+## Profile Selection
+
+- `e2e-smoke-lite`: default for PRs and fast contract validation.
+- `e2e-smoke-full`: use when validating local provider/runtime behavior (`LLM_PROVIDER=local`).
+
 ## CI Integration Job
 
 Workflow: `.github/workflows/ci.yml`  
@@ -52,6 +63,13 @@ Behavior:
 6. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
 7. uploads both files as artifact `e2e-compose-logs-<run_id>`
 8. tears down the stack
+
+Manual full-profile validation:
+
+1. run `Continuous Integration` via `workflow_dispatch`
+2. set input `run_full_profile_smoke=true`
+3. job `Integration E2E Smoke (Full Chat Profile)` runs `make e2e-smoke-full`
+4. enforces full-profile budgets (duration <= 1200s, chat image <= 7.0GB, web image <= 1.5GB)
 
 ## Failure Triage
 
