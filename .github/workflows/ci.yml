@@ -287,6 +287,69 @@ jobs:
           end_epoch="$(date +%s)"
           echo "duration_seconds=$((end_epoch-start_epoch))" >> "$GITHUB_OUTPUT"
 
+      - name: Capture dependency health snapshot
+        id: dependencies_health_lite
+        if: always()
+        env:
+          OUT_FILE: e2e-dependencies-health.json
+          PROFILE_LABEL: Lite Profile
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          out_file = os.environ["OUT_FILE"]
+          profile_label = os.environ["PROFILE_LABEL"]
+          url = "http://127.0.0.1:8000/health/dependencies"
+
+          payload = None
+          capture_error = None
+          http_status = None
+          try:
+              with urllib.request.urlopen(url, timeout=8) as response:
+                  http_status = response.getcode()
+                  raw = response.read().decode("utf-8", errors="replace")
+              payload = json.loads(raw) if raw else None
+          except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+              capture_error = str(exc)
+
+          if not isinstance(payload, dict):
+              payload = {
+                  "status": "unavailable",
+                  "error": capture_error or "Unable to parse dependency health response.",
+              }
+          if http_status is not None:
+              payload.setdefault("http_status", http_status)
+          if capture_error:
+              payload.setdefault("capture_error", capture_error)
+
+          with open(out_file, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          db_connected = payload.get("database", {}).get("connected")
+          local_provider = payload.get("local_provider")
+          local_provider_ready = (
+              local_provider.get("ready")
+              if isinstance(local_provider, dict)
+              else None
+          )
+          local_provider_enabled = (
+              local_provider.get("enabled")
+              if isinstance(local_provider, dict)
+              else None
+          )
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write(f"### Dependency Health Snapshot ({profile_label})\n")
+              summary.write(f"- status: `{payload.get('status', 'unknown')}`\n")
+              summary.write(f"- database.connected: `{db_connected}`\n")
+              summary.write(f"- local_provider.enabled: `{local_provider_enabled}`\n")
+              summary.write(f"- local_provider.ready: `{local_provider_ready}`\n")
+          PY
+
       - name: Capture compose logs
         if: always()
         run: |
@@ -369,6 +432,7 @@ jobs:
             e2e-compose.log
             e2e-metrics.txt
             e2e-metrics-summary.md
+            e2e-dependencies-health.json
             .ci-metrics/lite-history.json
           if-no-files-found: warn
 
@@ -451,6 +515,84 @@ jobs:
           end_epoch="$(date +%s)"
           echo "duration_seconds=$((end_epoch-start_epoch))" >> "$GITHUB_OUTPUT"
 
+      - name: Capture dependency health snapshot (full profile)
+        id: dependencies_health_full
+        if: always()
+        env:
+          OUT_FILE: e2e-full-dependencies-health.json
+          PROFILE_LABEL: Full Profile
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+
+          out_file = os.environ["OUT_FILE"]
+          profile_label = os.environ["PROFILE_LABEL"]
+          url = "http://127.0.0.1:8000/health/dependencies"
+
+          payload = None
+          capture_error = None
+          http_status = None
+          try:
+              with urllib.request.urlopen(url, timeout=8) as response:
+                  http_status = response.getcode()
+                  raw = response.read().decode("utf-8", errors="replace")
+              payload = json.loads(raw) if raw else None
+          except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+              capture_error = str(exc)
+
+          if not isinstance(payload, dict):
+              payload = {
+                  "status": "unavailable",
+                  "error": capture_error or "Unable to parse dependency health response.",
+              }
+          if http_status is not None:
+              payload.setdefault("http_status", http_status)
+          if capture_error:
+              payload.setdefault("capture_error", capture_error)
+
+          with open(out_file, "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+
+          db_connected = payload.get("database", {}).get("connected")
+          local_provider = payload.get("local_provider")
+          local_provider_ready = (
+              local_provider.get("ready")
+              if isinstance(local_provider, dict)
+              else None
+          )
+          local_provider_enabled = (
+              local_provider.get("enabled")
+              if isinstance(local_provider, dict)
+              else None
+          )
+          local_provider_errors = []
+          if isinstance(local_provider, dict):
+              errors_value = local_provider.get("errors")
+              if isinstance(errors_value, list):
+                  local_provider_errors = [str(item) for item in errors_value]
+              elif isinstance(errors_value, str) and errors_value.strip():
+                  local_provider_errors = [errors_value.strip()]
+
+          error_summary = "; ".join(local_provider_errors).replace("\n", " ").strip()
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"local_provider_ready={'true' if local_provider_ready is True else 'false'}\n")
+              output.write(f"local_provider_enabled={'true' if local_provider_enabled is True else 'false'}\n")
+              output.write(f"dependency_status={payload.get('status', 'unknown')}\n")
+              output.write(f"local_provider_error_summary={error_summary}\n")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write(f"### Dependency Health Snapshot ({profile_label})\n")
+              summary.write(f"- status: `{payload.get('status', 'unknown')}`\n")
+              summary.write(f"- database.connected: `{db_connected}`\n")
+              summary.write(f"- local_provider.enabled: `{local_provider_enabled}`\n")
+              summary.write(f"- local_provider.ready: `{local_provider_ready}`\n")
+          PY
+
       - name: Capture compose logs (full profile)
         if: always()
         run: |
@@ -515,6 +657,29 @@ jobs:
       - name: Flag e2e regression signal (full profile)
         if: ${{ always() && steps.analyze_metrics_full.outputs.regression_detected == 'true' }}
         run: echo "::warning::E2E full profile regression signal detected vs previous successful baseline."
+
+      - name: Enforce local-provider readiness (full profile)
+        if: ${{ always() && steps.run_smoke_full.outcome == 'success' }}
+        env:
+          LOCAL_PROVIDER_READY: ${{ steps.dependencies_health_full.outputs.local_provider_ready }}
+          LOCAL_PROVIDER_ENABLED: ${{ steps.dependencies_health_full.outputs.local_provider_enabled }}
+          LOCAL_PROVIDER_ERROR_SUMMARY: ${{ steps.dependencies_health_full.outputs.local_provider_error_summary }}
+        run: |
+          if [ "${LOCAL_PROVIDER_READY}" != "true" ]; then
+            echo "::error::Full-profile dependency health gate failed: local_provider.ready is not true."
+            {
+              echo "### Full-Profile Local Provider Gate Failed"
+              echo ""
+              echo "- local_provider.ready: \`${LOCAL_PROVIDER_READY}\`"
+              echo "- local_provider.enabled: \`${LOCAL_PROVIDER_ENABLED}\`"
+              if [ -n "${LOCAL_PROVIDER_ERROR_SUMMARY}" ]; then
+                echo "- local_provider.errors: \`${LOCAL_PROVIDER_ERROR_SUMMARY}\`"
+              fi
+              echo ""
+              echo "See artifact \`e2e-full-dependencies-health.json\` for full payload."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Compute alert state (full profile)
         id: alert_state_full
@@ -647,7 +812,7 @@ EOF
               `- Regression detected: \`${process.env.REGRESSION_DETECTED}\``,
               `- Run URL: ${runUrl}`,
               '',
-              'Artifacts: `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-alert-state.md`.',
+              'Artifacts: `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, `e2e-full-alert-state.md`.',
               '',
               '---',
               '',
@@ -742,6 +907,7 @@ EOF
             e2e-full-compose.log
             e2e-full-metrics.txt
             e2e-full-metrics-summary.md
+            e2e-full-dependencies-health.json
             e2e-full-alert-state.md
             .ci-metrics/full-history.json
           if-no-files-found: warn

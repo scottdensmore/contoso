@@ -60,12 +60,13 @@ Behavior:
 2. prebuilds `contoso-web` and `contoso-chat` with Buildx cache
 3. executes `make e2e-smoke-lite KEEP_STACK=1`
 4. captures compose logs to `e2e-compose.log`
-5. captures duration/image-size metrics to `e2e-metrics.txt`
-6. compares against previous successful baseline and writes `e2e-metrics-summary.md`
-7. stores rolling metrics history in cache (`.ci-metrics/lite-history.json`)
-8. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
-9. uploads logs, raw metrics, summary, and history artifact `e2e-compose-logs-<run_id>`
-10. tears down the stack
+5. captures dependency health snapshot to `e2e-dependencies-health.json`
+6. captures duration/image-size metrics to `e2e-metrics.txt`
+7. compares against previous successful baseline and writes `e2e-metrics-summary.md`
+8. stores rolling metrics history in cache (`.ci-metrics/lite-history.json`)
+9. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
+10. uploads logs, raw metrics, summary, and history artifact `e2e-compose-logs-<run_id>`
+11. tears down the stack
 
 Manual full-profile validation:
 
@@ -73,6 +74,7 @@ Manual full-profile validation:
 2. set input `run_full_profile_smoke=true`
 3. job `Integration E2E Smoke (Full Chat Profile)` runs `make e2e-smoke-full`
 4. enforces full-profile budgets (duration <= 600s, chat image <= 2.0GB, web image <= 1.5GB)
+5. captures dependency health snapshot `e2e-full-dependencies-health.json` and gates on `local_provider.ready=true`
 
 Scheduled full-profile validation:
 
@@ -115,7 +117,7 @@ If smoke fails:
 
 For full-profile failures:
 
-1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md` artifacts
+1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts
 2. look for `warning=` lines in metrics output to identify budget class
 3. rerun locally with:
    `make e2e-smoke-full KEEP_STACK=1`

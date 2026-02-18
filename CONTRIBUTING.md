@@ -77,5 +77,5 @@ Refer to:
 - If local-provider runtime is flaky, run `make local-provider-check` before debugging request-path failures.
 - For a full local diagnostics bundle (preflight + health payload + compose status/logs), run `make diagnose-chat-local`.
 - If local-provider startup preflight fails, ensure `ollama serve` is running, `ollama pull <LOCAL_MODEL_NAME>` exists, and docker chat uses `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
-- If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md`.
+- If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md`.
 - Scheduled full-profile smoke alerts keep one open issue per alert class, append updates while failing, and auto-close on recovery.

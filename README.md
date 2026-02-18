@@ -232,7 +232,7 @@ Ensure all of the following:
 `OLLAMA_BASE_URL=http://host.docker.internal:11434` (docker chat),
 `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`.
 - Full-profile smoke failure in CI:
-Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
+Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
