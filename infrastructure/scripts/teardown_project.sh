@@ -25,10 +25,12 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # Track results for final summary
 SUCCEEDED=()
 FAILED=()
+WARNED=()
 SKIPPED=()
 
 log_success() { SUCCEEDED+=("$1"); echo "  ✓ $1"; }
 log_fail()    { FAILED+=("$1: $2"); echo "  ✗ $1 — $2"; }
+log_warn()    { WARNED+=("$1: $2"); echo "  ! $1 — $2"; }
 log_skip()    { SKIPPED+=("$1"); echo "  - $1 (not found, skipping)"; }
 
 # --- Pre-flight Checks ---
@@ -85,7 +87,7 @@ if gcloud sql instances describe "${DB_INSTANCE}" &>/dev/null; then
   if gcloud sql instances patch "${DB_INSTANCE}" --no-deletion-protection --quiet 2>/dev/null; then
     log_success "Cloud SQL deletion protection disabled"
   else
-    log_fail "Cloud SQL deletion protection" "patch command failed (may already be disabled)"
+    log_warn "Cloud SQL deletion protection" "patch command failed (may already be disabled)"
   fi
 else
   log_skip "Cloud SQL deletion protection (instance not found)"
@@ -274,7 +276,7 @@ if gcloud services vpc-peerings list --network=default --project="${PROJECT_ID}"
     log_success "VPC peering deleted"
   else
     # Peering delete can fail if Cloud SQL is still being deleted. This is non-critical.
-    log_fail "VPC peering" "delete failed (Cloud SQL may still be shutting down — safe to ignore)"
+    log_warn "VPC peering" "delete failed (Cloud SQL may still be shutting down — safe to ignore)"
   fi
 else
   log_skip "VPC peering"
@@ -361,6 +363,14 @@ if [ ${#SUCCEEDED[@]} -gt 0 ]; then
   echo "Succeeded (${#SUCCEEDED[@]}):"
   for item in "${SUCCEEDED[@]}"; do
     echo "  ✓ ${item}"
+  done
+fi
+
+if [ ${#WARNED[@]} -gt 0 ]; then
+  echo ""
+  echo "Warnings (${#WARNED[@]}):"
+  for item in "${WARNED[@]}"; do
+    echo "  ! ${item}"
   done
 fi
 
