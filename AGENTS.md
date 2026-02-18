@@ -51,6 +51,7 @@ make test-scripts
 make quick-ci
 make quick-ci-changed
 make e2e-smoke
+make e2e-smoke-lite
 make release-dry-run
 make ci
 ```
@@ -69,6 +70,7 @@ npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
 npm run e2e:smoke
+npm run e2e:smoke:lite
 npm run release:dry-run
 npm run ci:web
 npm run ci:chat
@@ -113,6 +115,7 @@ Copy templates to `.env` before local development.
 - Scripts/tooling change: `make test-scripts`
 - Cross-surface change (web + chat + schema): `make ci`
 - Cross-surface integration confidence: `make e2e-smoke`
+- Contract-only integration confidence (minimal chat stack): `make e2e-smoke-lite`
 - Release preflight: `make release-dry-run RELEASE_TAG=vX.Y.Z`
 
 ## Troubleshooting
@@ -122,6 +125,7 @@ Copy templates to `.env` before local development.
 - Docs link drift (including root runbooks): run `make docs-check`.
 - Release guardrail failure: run `make release-dry-run` and fix missing guardrail files.
 - E2E smoke failure: run `make e2e-smoke KEEP_STACK=1`, then inspect `docker compose logs`.
+- Need local LLM/vector dependencies in Docker chat image: rerun with `CHAT_INSTALL_LOCAL_STACK=1`.
 - Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
 - Python Prisma client missing: run `make prisma-generate-chat`.
 - Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.

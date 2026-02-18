@@ -1,8 +1,18 @@
 import os
+from types import SimpleNamespace
+from typing import Any
 
-import chromadb
-from chromadb.utils import embedding_functions
 from google.cloud import discoveryengine_v1alpha as discoveryengine
+
+try:
+    import chromadb as _chromadb
+    from chromadb.utils import embedding_functions as _embedding_functions
+
+    chromadb: Any = _chromadb
+    embedding_functions: Any = _embedding_functions
+except ImportError:
+    chromadb = SimpleNamespace(PersistentClient=None)
+    embedding_functions = SimpleNamespace(DefaultEmbeddingFunction=None)
 
 
 class SearchService:
@@ -11,6 +21,14 @@ class SearchService:
 
 class LocalVectorSearch(SearchService):
     def __init__(self):
+        if not callable(getattr(chromadb, "PersistentClient", None)) or not callable(
+            getattr(embedding_functions, "DefaultEmbeddingFunction", None)
+        ):
+            raise RuntimeError(
+                "Local vector search dependencies are not installed. "
+                "Rebuild with CHAT_INSTALL_LOCAL_STACK=1 or install requirements-local.txt."
+            )
+
         # Path relative to where the app runs (/app)
         # We store data in /app/data/chroma_db
         self.chroma_path = os.getenv("CHROMA_DB_PATH", "/app/data/chroma_db")

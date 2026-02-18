@@ -18,6 +18,13 @@ From repository root:
 docker compose up -d db chat
 ```
 
+The default chat Docker image uses a lightweight dependency profile.
+Enable local LLM/vector dependencies when needed:
+
+```bash
+CHAT_INSTALL_LOCAL_STACK=1 docker compose up -d --build chat
+```
+
 Service endpoint: `http://localhost:8000`
 
 ### Option 2: Run directly with Python
@@ -80,3 +87,7 @@ make -C services/chat ci
 ## Environment
 
 Use `services/chat/.env.example` for local defaults and provider settings.
+
+When running with `LLM_PROVIDER=local`, ensure optional local dependencies are installed
+(`services/chat/src/api/requirements-local.txt`) or build Docker chat with
+`CHAT_INSTALL_LOCAL_STACK=1`.

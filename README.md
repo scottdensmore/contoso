@@ -35,7 +35,7 @@ mise install
 ### Option 1: Run Everything Locally (Docker)
 **Best for:** Trying out the application quickly without installing dependencies.
 
-This runs the Web App, AI Chat Service (with Local AI), and Database in containers. The database and search index are automatically set up on startup.
+This runs the Web App, AI Chat Service, and Database in containers. The default chat image uses a lightweight dependency profile for faster CI and local startup.
 
 1.  **Clone the repository:**
     ```bash
@@ -43,7 +43,7 @@ This runs the Web App, AI Chat Service (with Local AI), and Database in containe
     cd contoso
     ```
 
-2.  **Prepare Local AI:**
+2.  **(Optional) Prepare Local AI:**
     - Install [Ollama](https://ollama.com/) and run `ollama pull gemma3:12b`.
 
 3.  **Create `.env`:**
@@ -126,6 +126,7 @@ make test-scripts
 make quick-ci
 make quick-ci-changed
 make e2e-smoke
+make e2e-smoke-lite
 make release-dry-run
 make ci
 ```
@@ -144,6 +145,7 @@ npm run quick-ci
 npm run quick-ci:changed
 npm run quick-ci:chat
 npm run e2e:smoke
+npm run e2e:smoke:lite
 npm run release:dry-run
 npm run ci:web
 npm run ci:chat
@@ -181,6 +183,8 @@ Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha
 Ensure release guardrail files exist and the tag follows `vMAJOR.MINOR.PATCH` format.
 - `make e2e-smoke` fails:
 Run `make e2e-smoke KEEP_STACK=1` and inspect `docker compose logs --no-color db chat web`.
+- Need faster contract-only integration check:
+Run `make e2e-smoke-lite` (minimal chat dependency profile).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
@@ -256,4 +260,9 @@ cd apps/web && npx prisma studio --schema prisma/schema.prisma  # View database
 ```bash
 ./infrastructure/scripts/setup_project.sh    # Deploy everything
 ./infrastructure/scripts/teardown_project.sh # Delete all resources
+```
+To enable the local LLM/vector stack in chat image builds:
+
+```bash
+CHAT_INSTALL_LOCAL_STACK=1 docker compose up -d --build chat
 ```

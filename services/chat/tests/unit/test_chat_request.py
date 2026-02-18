@@ -107,6 +107,24 @@ async def test_generate_llm_response_local_provider():
 
 
 @pytest.mark.anyio
+async def test_generate_llm_response_local_provider_requires_optional_dependencies():
+    with patch.dict(sys.modules, {"litellm": None}):
+        with pytest.raises(
+            RuntimeError,
+            match="Local LLM provider dependencies are not installed",
+        ):
+            await generate_llm_response(
+                prompt="Best tent?",
+                context='[{"sku":"abc123"}]',
+                user_name="Taylor",
+                provider="local",
+                project_id="unused-project",
+                location="unused-region",
+                model_name="unused-model",
+            )
+
+
+@pytest.mark.anyio
 async def test_generate_llm_response_gcp_provider():
     mock_init = MagicMock()
     mock_part = MagicMock(return_value="prompt-part")

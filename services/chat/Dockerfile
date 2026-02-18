@@ -7,6 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_DEFAULT_TIMEOUT=100
 
+ARG INSTALL_LOCAL_STACK=0
+
 # Prisma Python's nodeenv runtime requires libatomic at generation time.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libatomic1 \
@@ -27,13 +29,15 @@ ENV PATH="/app/venv/bin:$PATH"
 
 # Copy requirements first for better caching
 COPY --chown=appuser:appuser services/chat/src/api/requirements.txt requirements.txt
+COPY --chown=appuser:appuser services/chat/src/api/requirements-core.txt requirements-core.txt
+COPY --chown=appuser:appuser services/chat/src/api/requirements-local.txt requirements-local.txt
 COPY --chown=appuser:appuser services/chat/constraints.txt constraints.txt
 
-# Pre-install PyTorch separately (915MB package needs a longer socket timeout to avoid read timeouts)
-RUN pip install --no-cache-dir --default-timeout=600 --retries 3 torch
-
-# Install remaining Python dependencies
-RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements.txt -c constraints.txt
+# Install core dependencies first; optionally install the heavier local stack.
+RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements-core.txt -c constraints.txt && \
+    if [ "${INSTALL_LOCAL_STACK}" = "1" ]; then \
+      pip install --no-cache-dir --default-timeout=600 --retries 3 -r requirements-local.txt -c constraints.txt; \
+    fi
 
 # Copy application code
 

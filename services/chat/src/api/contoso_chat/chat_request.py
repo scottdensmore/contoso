@@ -64,7 +64,13 @@ async def generate_llm_response(prompt: str, context: str, user_name: str, provi
     """
 
     if provider == "local":
-        from litellm import completion
+        try:
+            from litellm import completion
+        except ImportError as exc:
+            raise RuntimeError(
+                "Local LLM provider dependencies are not installed. "
+                "Rebuild with CHAT_INSTALL_LOCAL_STACK=1 or install requirements-local.txt."
+            ) from exc
         api_base = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
         local_model = os.getenv("LOCAL_MODEL_NAME", "gemma3:12b")
         

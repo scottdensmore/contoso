@@ -213,18 +213,48 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build web image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          tags: contoso-web:latest
+          cache-from: type=gha,scope=contoso-web
+          cache-to: type=gha,mode=max,scope=contoso-web
+
+      - name: Build chat image (cached, minimal profile)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/chat/Dockerfile
+          load: true
+          tags: contoso-chat:latest
+          build-args: |
+            INSTALL_LOCAL_STACK=0
+          cache-from: type=gha,scope=contoso-chat
+          cache-to: type=gha,mode=max,scope=contoso-chat
+
       - name: Run e2e smoke
+        id: run_smoke
         env:
           KEEP_STACK: '1'
           DOCKER_BUILDKIT: '1'
           COMPOSE_DOCKER_CLI_BUILD: '1'
           E2E_SMOKE_TIMEOUT: '300'
         run: |
-          make e2e-smoke \
+          start_epoch="$(date +%s)"
+          make e2e-smoke-lite \
             PYTHON=python \
             KEEP_STACK=1 \
             E2E_SMOKE_TIMEOUT="${E2E_SMOKE_TIMEOUT}" \
-            E2E_COMPOSE_UP_FLAGS="-d --build --force-recreate --quiet-pull"
+            CHAT_INSTALL_LOCAL_STACK=0 \
+            E2E_COMPOSE_UP_FLAGS="-d --force-recreate --quiet-pull"
+          end_epoch="$(date +%s)"
+          echo "duration_seconds=$((end_epoch-start_epoch))" >> "$GITHUB_OUTPUT"
 
       - name: Capture compose logs
         if: always()
@@ -232,12 +262,39 @@ jobs:
           docker compose ps || true
           docker compose logs --no-color db chat web > e2e-compose.log || true
 
+      - name: Capture e2e metrics
+        if: always()
+        run: |
+          duration="${{ steps.run_smoke.outputs.duration_seconds }}"
+          [ -z "$duration" ] && duration="unknown"
+          chat_size="$(docker image inspect contoso-chat:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
+          web_size="$(docker image inspect contoso-web:latest --format '{{.Size}}' 2>/dev/null || echo 0)"
+          max_duration=420
+          max_chat_size=2500000000
+          max_web_size=1500000000
+          {
+            echo "duration_seconds=$duration"
+            echo "chat_image_bytes=$chat_size"
+            echo "web_image_bytes=$web_size"
+            if [ "$duration" != "unknown" ] && [ "$duration" -gt "$max_duration" ]; then
+              echo "warning=duration_above_budget"
+            fi
+            if [ "$chat_size" -gt "$max_chat_size" ]; then
+              echo "warning=chat_image_above_budget"
+            fi
+            if [ "$web_size" -gt "$max_web_size" ]; then
+              echo "warning=web_image_above_budget"
+            fi
+          } | tee e2e-metrics.txt
+
       - name: Upload e2e logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-compose-logs-${{ github.run_id }}
-          path: e2e-compose.log
+          path: |
+            e2e-compose.log
+            e2e-metrics.txt
           if-no-files-found: warn
 
       - name: Teardown e2e stack

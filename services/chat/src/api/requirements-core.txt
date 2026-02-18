@@ -1,0 +1,27 @@
+# General
+python-dotenv==1.0.1
+jsonlines
+pandas
+tabulate
+requests
+
+# API server
+fastapi
+uvicorn[standard]
+
+# Google Cloud Services
+google-cloud-aiplatform
+google-cloud-discoveryengine
+google-auth
+vertexai
+
+# OpenTelemetry and tracing
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-instrumentation-fastapi
+
+# Prompty (simplified)
+prompty
+
+# Database
+prisma

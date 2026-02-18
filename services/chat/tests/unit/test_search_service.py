@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import contoso_chat.search_service as search_service
 import pytest
 from contoso_chat.search_service import LocalVectorSearch, VertexAISearch, get_search_service
 
@@ -93,6 +94,23 @@ def test_get_search_service_returns_local_provider():
 
     assert result is local_service
     mock_local.assert_called_once_with()
+
+
+def test_get_search_service_local_requires_optional_dependencies():
+    with patch.dict("os.environ", {"LLM_PROVIDER": "local"}, clear=True), patch.object(
+        search_service,
+        "chromadb",
+        SimpleNamespace(PersistentClient=None),
+    ), patch.object(
+        search_service,
+        "embedding_functions",
+        SimpleNamespace(DefaultEmbeddingFunction=None),
+    ):
+        with pytest.raises(
+            RuntimeError,
+            match="Local vector search dependencies are not installed",
+        ):
+            get_search_service()
 
 
 def test_get_search_service_requires_vertex_env_vars():
