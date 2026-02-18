@@ -179,7 +179,7 @@ CI cadence:
 
 - PR/manual fast path: `e2e-smoke-lite`
 - Weekly scheduled full path: `e2e-smoke-full` (Mondays 09:00 UTC)
-- Scheduled full-path alerts auto-open a GitHub issue when smoke fails, exceeds budget, or regresses.
+- Scheduled full-path alerts keep one open issue per alert class, append updates while failing, and auto-close on recovery.
 
 Service-owned command surface:
 
@@ -217,7 +217,7 @@ Run `make e2e-smoke-lite` (minimal chat dependency profile).
 - Need local Python chat setup with local LLM/vector dependencies:
 Run `make setup-chat-full` (or `make setup-chat CHAT_SETUP_PROFILE=full`).
 - Full-profile smoke failure in CI:
-Inspect `e2e-full-compose.log` and `e2e-full-metrics.txt` artifacts (see `docs/INTEGRATION.md`).
+Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
 - `make prisma-generate-chat` fails in a sandbox with permission errors:
 Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:

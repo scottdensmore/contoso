@@ -74,5 +74,5 @@ Refer to:
 - If integration smoke fails, run `make e2e-smoke KEEP_STACK=1` and inspect compose logs.
 - If chat local-provider dependencies are required in Docker, run with `CHAT_INSTALL_LOCAL_STACK=1`.
 - If chat local-provider dependencies are required in Python setup, run `make setup-chat-full`.
-- If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log` and `e2e-full-metrics.txt`.
-- Scheduled full-profile smoke alerts open an issue automatically; use the issue body + run artifacts for triage.
+- If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md`.
+- Scheduled full-profile smoke alerts keep one open issue per alert class, append updates while failing, and auto-close on recovery.

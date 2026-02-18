@@ -78,7 +78,9 @@ Scheduled full-profile validation:
 1. same job also runs weekly via cron (`0 9 * * 1`, Mondays 09:00 UTC)
 2. schedule runs full-profile smoke only (changed-scope jobs remain skipped)
 3. workflow compares full-profile metrics against previous successful full-profile baseline
-4. if scheduled run fails, exceeds budget, or regresses significantly, CI auto-opens a GitHub issue
+4. if scheduled run fails, exceeds budget, or regresses significantly, CI creates or updates one open issue per alert class
+5. if a later scheduled run is healthy, CI auto-closes open full-profile smoke alert issues
+6. workflow writes `e2e-full-alert-state.md` summarizing issue lifecycle action for the run
 
 ## Budget Baselines
 
@@ -112,7 +114,7 @@ If smoke fails:
 
 For full-profile failures:
 
-1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, and `e2e-full-metrics-summary.md` artifacts
+1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, and `e2e-full-alert-state.md` artifacts
 2. look for `warning=` lines in metrics output to identify budget class
 3. rerun locally with:
    `make e2e-smoke-full KEEP_STACK=1`

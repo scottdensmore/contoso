@@ -516,13 +516,55 @@ jobs:
         if: ${{ always() && steps.analyze_metrics_full.outputs.regression_detected == 'true' }}
         run: echo "::warning::E2E full profile regression signal detected vs previous successful baseline."
 
-      - name: Create issue for scheduled full-profile smoke alert
-        if: ${{ always() && github.event_name == 'schedule' && (steps.run_smoke_full.outcome != 'success' || steps.metrics_full.outputs.budget_failed == '1' || steps.analyze_metrics_full.outputs.regression_detected == 'true') }}
+      - name: Compute alert state (full profile)
+        id: alert_state_full
+        if: ${{ always() }}
+        env:
+          RUN_OUTCOME: ${{ steps.run_smoke_full.outcome }}
+          BUDGET_FAILED: ${{ steps.metrics_full.outputs.budget_failed }}
+          REGRESSION_DETECTED: ${{ steps.analyze_metrics_full.outputs.regression_detected }}
+        run: |
+          alert_needed=false
+          alert_key="none"
+          classes=()
+          if [ "${RUN_OUTCOME}" != "success" ]; then
+            classes+=("smoke_failure")
+          fi
+          if [ "${BUDGET_FAILED}" = "1" ]; then
+            classes+=("budget_failure")
+          fi
+          if [ "${REGRESSION_DETECTED}" = "true" ]; then
+            classes+=("regression_signal")
+          fi
+          if [ "${#classes[@]}" -gt 0 ]; then
+            alert_needed=true
+            alert_key="$(IFS=+; echo "${classes[*]}")"
+          fi
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "alert_needed=${alert_needed}"
+            echo "alert_key=${alert_key}"
+          } >> "$GITHUB_OUTPUT"
+          cat > e2e-full-alert-state.md <<EOF
+# Full-Profile Smoke Alert State
+
+- Event: \`${{ github.event_name }}\`
+- Run outcome: \`${RUN_OUTCOME}\`
+- Budget failed: \`${BUDGET_FAILED}\`
+- Regression detected: \`${REGRESSION_DETECTED}\`
+- Alert needed: \`${alert_needed}\`
+- Alert key: \`${alert_key}\`
+- Run URL: ${run_url}
+EOF
+
+      - name: Create or update issue for scheduled full-profile smoke alert
+        if: ${{ always() && github.event_name == 'schedule' && steps.alert_state_full.outputs.alert_needed == 'true' }}
         uses: actions/github-script@v7
         env:
           RUN_OUTCOME: ${{ steps.run_smoke_full.outcome }}
           BUDGET_FAILED: ${{ steps.metrics_full.outputs.budget_failed }}
           REGRESSION_DETECTED: ${{ steps.analyze_metrics_full.outputs.regression_detected }}
+          ALERT_KEY: ${{ steps.alert_state_full.outputs.alert_key }}
         with:
           script: |
             const fs = require('fs');
@@ -530,12 +572,65 @@ jobs:
             const repo = context.repo.repo;
             const runId = context.runId;
             const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`;
-            const title = `[CI] Full-profile smoke alert run ${runId}`;
-            const existing = await github.rest.search.issuesAndPullRequests({
-              q: `repo:${owner}/${repo} is:issue is:open "${title}"`
+            const title = `[CI] Full-profile smoke alert: ${process.env.ALERT_KEY}`;
+            const updateBody = [
+              'Latest scheduled full-profile smoke still reports an alert condition.',
+              '',
+              `- Run outcome: \`${process.env.RUN_OUTCOME}\``,
+              `- Budget failed: \`${process.env.BUDGET_FAILED}\``,
+              `- Regression detected: \`${process.env.REGRESSION_DETECTED}\``,
+              `- Run URL: ${runUrl}`,
+            ].join('\n');
+            const prefix = '[CI] Full-profile smoke alert:';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
             });
-            if (existing.data.total_count > 0) {
-              core.info(`Issue already exists for run ${runId}; skipping create.`);
+            const openAlerts = issues.filter((issue) => !issue.pull_request && issue.title.startsWith(prefix));
+            const staleAlerts = openAlerts.filter((issue) => issue.title !== title);
+            for (const stale of staleAlerts) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: stale.number,
+                body: [
+                  'Closing because scheduled alert classification changed to a new active class.',
+                  '',
+                  `- Latest run: ${runUrl}`,
+                  `- Active alert key: \`${process.env.ALERT_KEY}\``,
+                ].join('\n'),
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: stale.number,
+                state: 'closed',
+              });
+            }
+
+            const existing = openAlerts.find((issue) => issue.title === title);
+            if (existing) {
+              const issue = existing;
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.number,
+                body: updateBody,
+              });
+              fs.appendFileSync(
+                'e2e-full-alert-state.md',
+                [
+                  '',
+                  '## Alert Lifecycle',
+                  `- Issue action: \`commented_existing\``,
+                  `- Stale issues closed: ${staleAlerts.length}`,
+                  `- Issue number: #${issue.number}`,
+                  `- Issue URL: ${issue.html_url}`,
+                ].join('\n') + '\n'
+              );
+              core.info(`Updated existing issue #${issue.number} for alert key ${process.env.ALERT_KEY}.`);
               return;
             }
 
@@ -552,19 +647,83 @@ jobs:
               `- Regression detected: \`${process.env.REGRESSION_DETECTED}\``,
               `- Run URL: ${runUrl}`,
               '',
-              'Artifacts: `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`.',
+              'Artifacts: `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-alert-state.md`.',
               '',
               '---',
               '',
               summary,
             ].join('\n');
 
-            await github.rest.issues.create({
+            const created = await github.rest.issues.create({
               owner,
               repo,
               title,
               body,
             });
+            fs.appendFileSync(
+              'e2e-full-alert-state.md',
+              [
+                '',
+                '## Alert Lifecycle',
+                `- Issue action: \`created\``,
+                `- Stale issues closed: ${staleAlerts.length}`,
+                `- Issue number: #${created.data.number}`,
+                `- Issue URL: ${created.data.html_url}`,
+              ].join('\n') + '\n'
+            );
+
+      - name: Close scheduled full-profile smoke alert issues on recovery
+        if: ${{ always() && github.event_name == 'schedule' && steps.alert_state_full.outputs.alert_needed != 'true' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const runId = context.runId;
+            const runUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${runId}`;
+            const prefix = '[CI] Full-profile smoke alert:';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const openAlerts = issues.filter((issue) => !issue.pull_request && issue.title.startsWith(prefix));
+            for (const issue of openAlerts) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.number,
+                body: [
+                  'Scheduled full-profile smoke recovered and no alert conditions were detected.',
+                  '',
+                  `- Recovery run: ${runUrl}`,
+                ].join('\n'),
+              });
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: issue.number,
+                state: 'closed',
+              });
+            }
+            fs.appendFileSync(
+              'e2e-full-alert-state.md',
+              [
+                '',
+                '## Alert Lifecycle',
+                `- Issue action: \`closed_on_recovery\``,
+                `- Closed issue count: ${openAlerts.length}`,
+              ].join('\n') + '\n'
+            );
+
+      - name: Publish alert lifecycle summary (full profile)
+        if: always()
+        run: |
+          if [ -f e2e-full-alert-state.md ]; then
+            cat e2e-full-alert-state.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Enforce e2e budgets (full profile)
         if: ${{ always() && steps.run_smoke_full.outcome == 'success' }}
@@ -583,6 +742,7 @@ jobs:
             e2e-full-compose.log
             e2e-full-metrics.txt
             e2e-full-metrics-summary.md
+            e2e-full-alert-state.md
             .ci-metrics/full-history.json
           if-no-files-found: warn
 
