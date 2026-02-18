@@ -63,6 +63,13 @@ class ChatProfileWiringTests(unittest.TestCase):
         self.assertEqual(scripts.get("setup:chat:full"), "make -C services/chat setup-full")
         self.assertEqual(scripts.get("e2e:smoke:full"), "make e2e-smoke-full")
 
+    def test_chat_entrypoint_guards_local_indexing_dependencies(self):
+        content = (REPO_ROOT / "services/chat/src/api/chat-entrypoint.sh").read_text(encoding="utf-8")
+        self.assertIn('provider="${LLM_PROVIDER:-gcp}"', content)
+        self.assertIn('if [[ "${provider}" == "local" ]]; then', content)
+        self.assertIn('python3 -c "import chromadb"', content)
+        self.assertIn("Skipping local product indexing: chromadb is not installed in this image.", content)
+
 
 if __name__ == "__main__":
     unittest.main()
