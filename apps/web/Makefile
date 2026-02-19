@@ -10,7 +10,7 @@ help: ## Show available web-app tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nWeb app tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
 
 setup: ## Install web dependencies and generate Prisma client
-	$(NPM) ci --workspaces=false --no-audit --no-fund
+	$(NPM) ci --workspaces=false --include=dev --no-audit --no-fund
 	$(MAKE) prisma-generate
 
 sync-env: ## Sync repo root .env into apps/web/.env when present
