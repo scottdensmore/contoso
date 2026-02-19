@@ -1,6 +1,9 @@
 # Release Runbook
 
-This repository uses a tag-driven release draft workflow with guardrails for agent-friendly verification.
+This repository uses two release paths:
+
+1. automated build releases from successful `main` CI runs
+2. tag-driven draft releases for semver/promoted releases
 
 ## Local Preflight
 
@@ -29,6 +32,21 @@ make release-dry-run RELEASE_TAG=v1.2.3
 2. runs `make release-dry-run`
 3. creates a **draft** GitHub Release with generated release notes
 
+## Automated Main Build Releases
+
+- Workflow file: `.github/workflows/release-main-build.yml`
+- Trigger: completion of `Continuous Integration` with:
+1. `conclusion == success`
+2. `event == push`
+3. `head_branch == main`
+- Behavior:
+1. creates an immutable build tag:
+   `build-main-YYYYMMDD-run<run_id>-a<attempt>-<sha7>`
+2. creates/publishes a prerelease GitHub Release for that tag
+3. links the release body back to the source CI run and commit
+
+This gives a reproducible baseline artifact for every green `main` build.
+
 ## Branch Protection Guidance
 
 Use `main` branch protection with:
@@ -55,4 +73,5 @@ Conditionally expected CI jobs should pass when triggered by changed surfaces:
 ## Notes
 
 - Release drafts are intentionally non-publishing; promotion to a published release is manual.
+- Automated main-build releases are prereleases and are intended as CI baselines, not semver promotions.
 - If local `make ci` fails with sandbox `listen EPERM`, run build/release checks in a non-restricted shell.

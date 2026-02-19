@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RUNTIME_PATTERNS = (
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
+    ".github/workflows/release-main-build.yml",
     ".github/CODEOWNERS",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/**",
