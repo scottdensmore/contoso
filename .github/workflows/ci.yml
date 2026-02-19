@@ -203,6 +203,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: |
+            services/chat/src/api/requirements-core.txt
+            services/chat/src/api/requirements-local.txt
+            services/chat/tests/requirements-test.txt
+            services/chat/requirements-dev.txt
+            services/chat/constraints.txt
 
       - name: Toolchain preflight
         run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
@@ -944,6 +950,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: |
+            services/chat/src/api/requirements-core.txt
+            services/chat/src/api/requirements-local.txt
+            services/chat/tests/requirements-test.txt
+            services/chat/requirements-dev.txt
+            services/chat/constraints.txt
 
       - name: Bootstrap and doctor
         env:
@@ -973,6 +985,12 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: |
+            services/chat/src/api/requirements-core.txt
+            services/chat/src/api/requirements-local.txt
+            services/chat/tests/requirements-test.txt
+            services/chat/requirements-dev.txt
+            services/chat/constraints.txt
 
       - name: Toolchain preflight
         run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
