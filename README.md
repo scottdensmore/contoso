@@ -87,6 +87,12 @@ This runs the Web App, AI Chat Service, and Database in containers. The default 
     npm run dev:web
     ```
 
+For a fresh Docker DB volume (schema + seed + chat reindex) use:
+
+```bash
+make docker-init-fresh
+```
+
 ### Option 3: Deploy to Google Cloud Platform (GCP)
 **Best for:** Production deployment with Vertex AI.
 
@@ -122,6 +128,7 @@ make setup
 make setup-chat-full
 make local-provider-check
 make diagnose-chat-local
+make docker-init-fresh
 make prisma-generate-chat
 make dev
 make test
@@ -299,6 +306,7 @@ docker-compose down -v # Stop and remove data
 
 ### Local Dev (Option 2)
 ```bash
+make docker-init-fresh       # Initialize DB data and restart chat indexing
 docker-compose up -d db chat # Start dependencies
 make dev-web                 # Start web app
 cd apps/web && npx prisma studio --schema prisma/schema.prisma  # View database

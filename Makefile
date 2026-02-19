@@ -15,6 +15,7 @@ E2E_COMPOSE_UP_FLAGS ?= -d --build --force-recreate
 E2E_LOG_TAIL ?= 200
 CHAT_INSTALL_LOCAL_STACK ?= 0
 CHAT_SETUP_PROFILE ?= core
+DOCKER_DATABASE_URL ?= postgresql://postgres:postgres@localhost:5432/contoso-db
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -29,7 +30,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -88,6 +89,17 @@ diagnose-chat-local: ## Run local chat diagnostics (preflight, health snapshot, 
 	echo ""; \
 	echo "-- docker compose chat logs (tail 80) --"; \
 	$(DOCKER_COMPOSE) logs --no-color --tail=80 chat || true
+
+docker-init-fresh: ## Initialize fresh Docker DB data (migrate+seed) and restart chat indexing
+	@set -euo pipefail; \
+	$(DOCKER_COMPOSE) up -d db; \
+	echo "Applying migrations to $(DOCKER_DATABASE_URL)..."; \
+	cd "$(WEB_DIR)" && DATABASE_URL="$(DOCKER_DATABASE_URL)" npx prisma migrate deploy --schema prisma/schema.prisma; \
+	echo "Seeding data into $(DOCKER_DATABASE_URL)..."; \
+	cd "$(WEB_DIR)" && DATABASE_URL="$(DOCKER_DATABASE_URL)" npx prisma db seed --schema prisma/schema.prisma; \
+	$(DOCKER_COMPOSE) up -d chat web; \
+	$(DOCKER_COMPOSE) restart chat; \
+	echo "docker-init-fresh complete."
 
 dev: ## Run web locally with db+chat in Docker
 	$(MAKE) sync-web-env

@@ -46,6 +46,7 @@ make setup
 make setup-chat-full
 make local-provider-check
 make diagnose-chat-local
+make docker-init-fresh
 make prisma-generate
 make prisma-generate-chat
 make dev
@@ -138,6 +139,7 @@ Copy templates to `.env` before local development.
 - Need local LLM/vector dependencies in Python chat setup: run `make setup-chat-full`.
 - Need one-command local-provider preflight checks: run `make local-provider-check`.
 - Need fuller local chat diagnostics (preflight + health payload + compose logs): run `make diagnose-chat-local`.
+- Need to initialize a fresh Docker DB volume and rebuild chat product index: run `make docker-init-fresh`.
 - Local-provider startup preflight fails (`LLM_PROVIDER=local`): start Ollama (`ollama serve`), pull model (`ollama pull <LOCAL_MODEL_NAME>`), and for docker chat use `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 - Full-profile smoke failure in CI: inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts.
 - Scheduled full-profile smoke alerts keep one open issue per alert class and auto-close when scheduled runs recover; include run URL and summary when triaging.

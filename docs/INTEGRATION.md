@@ -132,6 +132,7 @@ For full-profile failures:
 
 1. `chat dependency health (db)` timeout:
    DB not reachable from chat container or Prisma client cannot connect.
+   For fresh local Docker volumes, run `make docker-init-fresh` before retrying.
 2. `web -> chat proxy call` non-200:
    web route cannot reach chat endpoint or chat returned upstream error.
 3. missing `answer`/`response` field:
