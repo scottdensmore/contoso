@@ -710,17 +710,17 @@ jobs:
             echo "alert_needed=${alert_needed}"
             echo "alert_key=${alert_key}"
           } >> "$GITHUB_OUTPUT"
-          cat > e2e-full-alert-state.md <<EOF
-# Full-Profile Smoke Alert State
-
-- Event: \`${{ github.event_name }}\`
-- Run outcome: \`${RUN_OUTCOME}\`
-- Budget failed: \`${BUDGET_FAILED}\`
-- Regression detected: \`${REGRESSION_DETECTED}\`
-- Alert needed: \`${alert_needed}\`
-- Alert key: \`${alert_key}\`
-- Run URL: ${run_url}
-EOF
+          {
+            echo "# Full-Profile Smoke Alert State"
+            echo
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Run outcome: \`${RUN_OUTCOME}\`"
+            echo "- Budget failed: \`${BUDGET_FAILED}\`"
+            echo "- Regression detected: \`${REGRESSION_DETECTED}\`"
+            echo "- Alert needed: \`${alert_needed}\`"
+            echo "- Alert key: \`${alert_key}\`"
+            echo "- Run URL: ${run_url}"
+          } > e2e-full-alert-state.md
 
       - name: Create or update issue for scheduled full-profile smoke alert
         if: ${{ always() && github.event_name == 'schedule' && steps.alert_state_full.outputs.alert_needed == 'true' }}
