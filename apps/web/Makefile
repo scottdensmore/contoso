@@ -27,7 +27,7 @@ lint: ## Lint web app
 typecheck: ## Type-check web app
 	$(MAKE) sync-env
 	$(MAKE) prisma-generate
-	npx tsc --noEmit
+	./node_modules/.bin/tsc --noEmit
 
 test: ## Run web tests
 	$(MAKE) sync-env
