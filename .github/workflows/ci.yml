@@ -214,7 +214,7 @@ jobs:
         run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
 
       - name: Install dependencies
-        run: make -C services/chat setup
+        run: make -C services/chat setup PYTHON=python
 
       - name: Generate Prisma Client (Python)
         run: |
@@ -223,6 +223,7 @@ jobs:
       - name: Run unit tests
         run: npm run ci:chat
         env:
+          PYTHON: python
           PROJECT_ID: local-project
           REGION: us-central1
 
@@ -1001,7 +1002,7 @@ jobs:
         run: make -C apps/web setup
 
       - name: Install chat dependencies
-        run: make -C services/chat setup
+        run: make -C services/chat setup PYTHON=python
 
       - name: Generate Prisma Client (Python)
         run: prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
