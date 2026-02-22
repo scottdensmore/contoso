@@ -6,7 +6,7 @@ google-cloud-discoveryengine==0.13.11
 httpx==0.28.1
 jsonlines==4.0.0
 litellm==1.81.9
-mypy==1.13.0
+mypy==1.19.1
 opentelemetry-api==1.37.0
 opentelemetry-instrumentation-fastapi==0.58b0
 opentelemetry-sdk==1.37.0
