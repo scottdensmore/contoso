@@ -1,5 +1,5 @@
 chromadb==1.4.1
-fastapi==0.116.1
+fastapi==0.129.0
 google-auth==2.40.3
 google-cloud-aiplatform==1.71.1
 google-cloud-discoveryengine==0.13.11
