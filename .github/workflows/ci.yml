@@ -432,7 +432,7 @@ jobs:
 
       - name: Upload e2e logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-compose-logs-${{ github.run_id }}
           path: |
@@ -907,7 +907,7 @@ jobs:
 
       - name: Upload e2e logs (full profile)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-full-compose-logs-${{ github.run_id }}
           path: |
