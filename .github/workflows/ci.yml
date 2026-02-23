@@ -247,7 +247,7 @@ jobs:
 
       - name: Restore lite metrics history cache
         id: restore_lite_history
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: .ci-metrics
           key: e2e-metrics-lite-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -445,7 +445,7 @@ jobs:
 
       - name: Save lite metrics history cache
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .ci-metrics
           key: e2e-metrics-lite-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -476,7 +476,7 @@ jobs:
 
       - name: Restore full metrics history cache
         id: restore_full_history
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: .ci-metrics
           key: e2e-metrics-full-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -921,7 +921,7 @@ jobs:
 
       - name: Save full metrics history cache
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .ci-metrics
           key: e2e-metrics-full-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
