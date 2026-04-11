@@ -1,5 +1,5 @@
 # Optional local LLM + vector search stack
-torch
-litellm
-chromadb
-sentence-transformers
+torch==2.10.0
+litellm==1.83.0
+chromadb==1.4.1
+sentence-transformers==5.2.2
