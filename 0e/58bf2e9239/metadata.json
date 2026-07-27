@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "0e58bf2e9239",
+  "strategy": "manual-commit",
+  "branch": "docs/agents-source-of-truth",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".github/copilot-instructions.md",
+    ".github/workflows/ci.yml",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "GEMINI.md",
+    "Makefile",
+    "README.md",
+    "apps/web/AGENTS.md",
+    "apps/web/CLAUDE.md",
+    "apps/web/GEMINI.md",
+    "package.json",
+    "scripts/check_agent_docs.py",
+    "scripts/detect_changed_surfaces.py",
+    "scripts/verify_docs.py",
+    "services/chat/AGENTS.md",
+    "services/chat/CLAUDE.md",
+    "services/chat/GEMINI.md",
+    "tests/scripts/test_check_agent_docs.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0e/58bf2e9239/0/metadata.json",
+      "transcript": "/0e/58bf2e9239/0/full.jsonl",
+      "compact_transcript": "/0e/58bf2e9239/0/transcript.jsonl",
+      "content_hash": "/0e/58bf2e9239/0/content_hash.txt",
+      "prompt": "/0e/58bf2e9239/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 124,
+    "cache_creation_tokens": 100038,
+    "cache_read_tokens": 5633315,
+    "output_tokens": 49278,
+    "api_call_count": 67
+  }
+}

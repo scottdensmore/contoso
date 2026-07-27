@@ -1,0 +1,9 @@
+First thing lets make sure AGENTS.md is the source of truth so we can link it in CLAUDE.md. We should add something to CI so it makes sure that even when '#' is pressed.. it gets flagged so AGENTS.md is updated.
+
+---
+
+lets remove GEMII.md
+
+---
+
+Yes lets do it for gemini and copilot
