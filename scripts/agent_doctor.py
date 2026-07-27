@@ -12,6 +12,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 
 TOOLCHAIN_CHECK = ROOT / "scripts/check_toolchain.py"
+VENV_DIR = ROOT / ".venv"
+VENV_PYTHON = VENV_DIR / "bin/python"
 ENV_CONTRACT = ROOT / "config/env_contract.json"
 ROOT_ENV = ROOT / ".env"
 CHAT_ENV = ROOT / "services/chat/.env"
@@ -81,6 +83,31 @@ def main() -> int:
     passes: list[str] = []
     warnings: list[str] = []
     failures: list[tuple[str, str]] = []
+
+    # Project virtualenv: every Python command must run from .venv
+    if not VENV_PYTHON.exists():
+        failures.append(
+            (
+                "Project virtualenv is missing (.venv).",
+                "Run `make venv` (or `make bootstrap`).",
+            ),
+        )
+    elif Path(sys.executable).resolve() != VENV_PYTHON.resolve():
+        failures.append(
+            (
+                f"Running outside the project virtualenv: {sys.executable}",
+                "Run agent-doctor via `make agent-doctor` so it uses .venv/bin/python.",
+            ),
+        )
+    elif sys.prefix == sys.base_prefix:
+        failures.append(
+            (
+                ".venv/bin/python is not an isolated virtualenv.",
+                "Delete .venv and run `make venv`.",
+            ),
+        )
+    else:
+        passes.append("Running inside the project virtualenv (.venv).")
 
     # Runtime parity
     toolchain = run([sys.executable, str(TOOLCHAIN_CHECK)])

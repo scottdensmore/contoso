@@ -32,6 +32,14 @@ This repo uses `mise` for local runtime pinning:
 mise install
 ```
 
+All Python runs from a project virtualenv at `.venv` (git-ignored). `make bootstrap`
+creates it, and every Make target invokes `.venv/bin/python` directly — there is
+nothing to activate. To create it on its own:
+
+```bash
+make venv
+```
+
 ### Option 1: Run Everything Locally (Docker)
 **Best for:** Trying out the application quickly without installing dependencies.
 
@@ -120,6 +128,7 @@ The repository now includes a root `Makefile` for a consistent command surface:
 ```bash
 make help
 make bootstrap
+make venv
 make toolchain-doctor
 make env-contract-check
 make agent-doctor
@@ -217,6 +226,8 @@ PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`)
 
 - `make toolchain-doctor` fails:
 Run `mise install`, then retry `make bootstrap`.
+- Python dependency missing or `.venv` is on the wrong version:
+Run `rm -rf .venv && make venv`, then `make setup-chat`. If you invoke Python directly, use `.venv/bin/python`.
 - `make env-contract-check` fails:
 Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
 - `make docs-check` fails:

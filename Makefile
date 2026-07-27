@@ -2,8 +2,18 @@ SHELL := /bin/bash
 
 DOCKER_COMPOSE ?= docker compose
 NPM ?= npm
-PYTHON ?= mise exec python@3.11 -- python
-PIP ?= pip3
+
+# All Python runs from the project virtualenv. PYTHON_BASE is only used to
+# create it (override to `python` where mise is unavailable, e.g. CI).
+VENV_DIR ?= .venv
+VENV_PYTHON := $(VENV_DIR)/bin/python
+PYTHON_BASE ?= mise exec python@3.11 -- python
+PYTHON ?= $(VENV_PYTHON)
+PIP ?= $(PYTHON) -m pip
+
+# Put the venv's bin dir first so console scripts installed into it resolve
+# without activation (prisma-client-py, ruff, mypy, pytest, uvicorn).
+export PATH := $(abspath $(VENV_DIR))/bin:$(PATH)
 TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
 ENV_CONTRACT_CHECK_SCRIPT := scripts/check_env_contract.py
@@ -30,18 +40,26 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
 
-toolchain-doctor: ## Verify local toolchain matches project baseline
+$(VENV_PYTHON):
+	@echo "Creating Python virtualenv in $(VENV_DIR)..."
+	$(PYTHON_BASE) -m venv $(VENV_DIR)
+	$(VENV_PYTHON) -m pip install --quiet --upgrade pip
+
+venv: $(VENV_PYTHON) ## Create the project Python virtualenv (.venv)
+	@$(VENV_PYTHON) -c "import sys; print(f'Virtualenv ready: {sys.executable} ({sys.version.split()[0]})')"
+
+toolchain-doctor: | $(VENV_PYTHON) ## Verify local toolchain matches project baseline
 	$(PYTHON) $(TOOLCHAIN_CHECK_SCRIPT)
 
-env-contract-check: ## Verify env contract matches templates and docs
+env-contract-check: | $(VENV_PYTHON) ## Verify env contract matches templates and docs
 	$(PYTHON) $(ENV_CONTRACT_CHECK_SCRIPT)
 
-agent-doctor: ## Verify agent-local environment is fully ready
+agent-doctor: | $(VENV_PYTHON) ## Verify agent-local environment is fully ready
 	$(PYTHON) $(AGENT_DOCTOR_SCRIPT)
 
 env-init: ## Create local .env files from templates when missing
@@ -49,6 +67,7 @@ env-init: ## Create local .env files from templates when missing
 	@if [ ! -f "$(CHAT_ENV_FILE)" ]; then cp "$(CHAT_ENV_TEMPLATE)" "$(CHAT_ENV_FILE)"; echo "Created $(CHAT_ENV_FILE) from $(CHAT_ENV_TEMPLATE)."; else echo "$(CHAT_ENV_FILE) already exists."; fi
 
 bootstrap: ## One-command bootstrap for local and coding-agent development
+	$(MAKE) venv
 	$(MAKE) toolchain-doctor
 	$(MAKE) env-contract-check
 	$(MAKE) env-init
@@ -124,7 +143,7 @@ migrate: ## Run Prisma migrations using DATABASE_URL
 prisma-generate: ## Generate Prisma client for the web app
 	$(WEB_MAKE) prisma-generate
 
-prisma-generate-chat: ## Generate Prisma client for the chat Python runtime
+prisma-generate-chat: | $(VENV_PYTHON) ## Generate Prisma client for the chat Python runtime
 	$(PYTHON) -m prisma py generate --schema=$(WEB_PRISMA_SCHEMA) --generator pyclient
 
 lint: ## Lint web app
@@ -137,7 +156,7 @@ test: ## Run web tests and chat unit tests
 	$(MAKE) test-web
 	$(MAKE) test-chat
 
-test-scripts: ## Run root script guardrail tests
+test-scripts: | $(VENV_PYTHON) ## Run root script guardrail tests
 	$(PYTHON) -m unittest discover -s tests/scripts -p "test_*.py" -v
 
 test-web: ## Run web tests
@@ -164,7 +183,7 @@ quick-ci: ## Fast local checks for web + chat (no web build)
 	$(MAKE) quick-ci-web
 	$(MAKE) quick-ci-chat
 
-quick-ci-changed: ## Fast local checks scoped to changed files (set CHANGED_BASE/CHANGED_HEAD for git range)
+quick-ci-changed: | $(VENV_PYTHON) ## Fast local checks scoped to changed files (set CHANGED_BASE/CHANGED_HEAD for git range)
 	@set -euo pipefail; \
 	TARGETS="$$(CHANGED_BASE="$(CHANGED_BASE)" CHANGED_HEAD="$(CHANGED_HEAD)" $(PYTHON) $(CHANGED_SURFACES_SCRIPT) --print-targets)"; \
 	if [ -z "$$TARGETS" ]; then \
@@ -176,7 +195,7 @@ quick-ci-changed: ## Fast local checks scoped to changed files (set CHANGED_BASE
 		$(MAKE) $$target; \
 	done
 
-e2e-smoke: ## Run dockerized end-to-end smoke check (web -> chat -> db)
+e2e-smoke: | $(VENV_PYTHON) ## Run dockerized end-to-end smoke check (web -> chat -> db)
 	@set -euo pipefail; \
 	keep_stack="$(KEEP_STACK)"; \
 	cleanup() { \
@@ -201,17 +220,17 @@ e2e-smoke-lite: ## Run dockerized contract smoke with minimal chat dependency pr
 e2e-smoke-full: ## Run dockerized smoke with full chat dependency profile
 	$(MAKE) e2e-smoke CHAT_INSTALL_LOCAL_STACK=1
 
-release-dry-run: ## Validate release prerequisites without publishing
+release-dry-run: | $(VENV_PYTHON) ## Validate release prerequisites without publishing
 	$(PYTHON) $(RELEASE_DRY_RUN_SCRIPT) $(if $(RELEASE_TAG),--tag "$(RELEASE_TAG)",)
 	TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 $(MAKE) quick-ci
 	$(MAKE) test-scripts
 	$(MAKE) docs-check
 
-docs-check: ## Validate docs links and agent doc pointers
+docs-check: | $(VENV_PYTHON) ## Validate docs links and agent doc pointers
 	$(PYTHON) scripts/verify_docs.py
 	$(MAKE) agent-docs-check
 
-agent-docs-check: ## Verify CLAUDE.md/GEMINI.md/copilot-instructions.md stay pointers to AGENTS.md (set FIX=1 to restore)
+agent-docs-check: | $(VENV_PYTHON) ## Verify CLAUDE.md/GEMINI.md/copilot-instructions.md stay pointers to AGENTS.md (set FIX=1 to restore)
 	$(PYTHON) scripts/check_agent_docs.py $(if $(FIX),--fix,)
 
 ci: ## Run local CI checks

@@ -22,9 +22,19 @@ if [ ! -f "src/api/main.py" ]; then
     exit 1
 fi
 
+# All Python runs from the shared project virtualenv at the repository root.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PY="${REPO_ROOT}/.venv/bin/python"
+if [ ! -x "${PY}" ]; then
+    log_error "Project virtualenv not found at ${REPO_ROOT}/.venv"
+    log_error "Run 'make venv' (or 'make bootstrap') from the repository root first."
+    exit 1
+fi
+log_info "Using $(${PY} -c 'import sys; print(sys.executable)')"
+
 # Install test dependencies
 log_info "Installing test dependencies..."
-pip install -r tests/requirements-test.txt
+"${PY}" -m pip install -r tests/requirements-test.txt
 
 # Install main dependencies for testing
 log_info "Installing main dependencies..."
@@ -33,17 +43,17 @@ if [ "${CHAT_SETUP_PROFILE}" != "core" ] && [ "${CHAT_SETUP_PROFILE}" != "full" 
     log_error "Unsupported CHAT_SETUP_PROFILE='${CHAT_SETUP_PROFILE}' (expected core or full)"
     exit 2
 fi
-pip install -r src/api/requirements-core.txt
+"${PY}" -m pip install -r src/api/requirements-core.txt
 if [ "${CHAT_SETUP_PROFILE}" = "full" ]; then
-    pip install -r src/api/requirements-local.txt
+    "${PY}" -m pip install -r src/api/requirements-local.txt
 fi
 
 # Add FastAPI test client
-pip install httpx
+"${PY}" -m pip install httpx
 
 # Run unit tests
 log_info "Running unit tests..."
-pytest tests/unit/ --cov=src/api --cov-report=term-missing -v
+"${PY}" -m pytest tests/unit/ --cov=src/api --cov-report=term-missing -v
 
 if [ $? -eq 0 ]; then
     log_success "Unit tests passed!"
@@ -55,7 +65,7 @@ fi
 # Run integration tests if SERVICE_URL is provided
 if [ -n "$SERVICE_URL" ]; then
     log_info "Running integration tests against $SERVICE_URL..."
-    pytest tests/integration/ -v
+    "${PY}" -m pytest tests/integration/ -v
 
     if [ $? -eq 0 ]; then
         log_success "Integration tests passed!"
@@ -71,9 +81,9 @@ fi
 # Validate code structure
 log_info "Validating code structure..."
 cd src/api
-python -m py_compile main.py
-python -m py_compile contoso_chat/chat_request.py
-python -m py_compile evaluators/custom_evals/relevance.py
+"${PY}" -m py_compile main.py
+"${PY}" -m py_compile contoso_chat/chat_request.py
+"${PY}" -m py_compile evaluators/custom_evals/relevance.py
 cd ../..
 
 log_success "All tests completed successfully! 🎉"

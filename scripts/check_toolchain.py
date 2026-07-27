@@ -7,9 +7,13 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 EXPECTED_NODE_MAJOR = 22
 EXPECTED_PYTHON_MAJOR_MINOR = (3, 11)
+
+ROOT = Path(__file__).resolve().parent.parent
+VENV_PYTHON = ROOT / ".venv/bin/python"
 
 
 def run(cmd: list[str]) -> str:
@@ -76,6 +80,25 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             errors.append(str(exc))
 
+    venv_status = "not created"
+    if VENV_PYTHON.exists():
+        try:
+            venv_version = run([str(VENV_PYTHON), "--version"])
+            venv_major_minor = parse_python_major_minor(venv_version)
+            if venv_major_minor != EXPECTED_PYTHON_MAJOR_MINOR:
+                errors.append(
+                    "Project virtualenv runs "
+                    f"{venv_version}, expected Python "
+                    f"{EXPECTED_PYTHON_MAJOR_MINOR[0]}.{EXPECTED_PYTHON_MAJOR_MINOR[1]}.x. "
+                    "Delete .venv and run `make venv`."
+                )
+                venv_status = f"{venv_version} (wrong version)"
+            else:
+                venv_status = venv_version
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"Unable to inspect project virtualenv: {exc}")
+            venv_status = "unusable"
+
     if errors:
         print("Toolchain check failed:")
         for err in errors:
@@ -85,7 +108,8 @@ def main() -> int:
 
     print(
         "Toolchain check passed: "
-        f"Node {node_version}, Python {python_version} (via {python_source})."
+        f"Node {node_version}, Python {python_version} (via {python_source}), "
+        f"venv {venv_status}."
     )
     return 0
 
