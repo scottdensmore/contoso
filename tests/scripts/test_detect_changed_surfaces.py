@@ -63,6 +63,25 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         }
         self.assertEqual(detect_changed.recommended_targets(flags), ["docs-check"])
 
+    def test_agent_doc_paths_route_to_docs_check(self):
+        for path in (
+            "CLAUDE.md",
+            "GEMINI.md",
+            "AGENTS.md",
+            ".github/copilot-instructions.md",
+            "apps/web/CLAUDE.md",
+            "apps/web/GEMINI.md",
+            "apps/web/AGENTS.md",
+            "services/chat/CLAUDE.md",
+            "services/chat/GEMINI.md",
+            "services/chat/AGENTS.md",
+        ):
+            with self.subTest(path=path):
+                flags = detect_changed.classify([path])
+                self.assertTrue(flags["docs"])
+                self.assertFalse(flags["unknown"])
+                self.assertIn("docs-check", detect_changed.recommended_targets(flags))
+
     def test_split_chat_requirement_paths_are_runtime(self):
         for path in (
             "services/chat/src/api/requirements-core.txt",

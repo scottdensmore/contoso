@@ -1,6 +1,8 @@
 # AGENTS (Chat Service)
 
-FastAPI chat service scope for coding agents.
+FastAPI chat service scope for coding agents. Source of truth for this scope: put
+instructions here, never in `services/chat/CLAUDE.md`. See the repo-root `AGENTS.md`
+for the policy.
 
 ## Entry points
 

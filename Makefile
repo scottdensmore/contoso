@@ -30,7 +30,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check ci
+.PHONY: help toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -207,8 +207,12 @@ release-dry-run: ## Validate release prerequisites without publishing
 	$(MAKE) test-scripts
 	$(MAKE) docs-check
 
-docs-check: ## Validate docs links
+docs-check: ## Validate docs links and agent doc pointers
 	$(PYTHON) scripts/verify_docs.py
+	$(MAKE) agent-docs-check
+
+agent-docs-check: ## Verify CLAUDE.md/GEMINI.md/copilot-instructions.md stay pointers to AGENTS.md (set FIX=1 to restore)
+	$(PYTHON) scripts/check_agent_docs.py $(if $(FIX),--fix,)
 
 ci: ## Run local CI checks
 	$(MAKE) quick-ci

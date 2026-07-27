@@ -207,7 +207,9 @@ make -C services/chat dev
 make -C services/chat ci
 ```
 
-For coding agents, see [AGENTS.md](./AGENTS.md).
+For coding agents, see [AGENTS.md](./AGENTS.md). It is the single source of truth for
+agent instructions; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are
+pointers to it and must stay that way (CI enforces this via `make agent-docs-check`).
 
 PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
 
@@ -219,6 +221,8 @@ Run `mise install`, then retry `make bootstrap`.
 Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
 - `make docs-check` fails:
 Fix broken relative links in `docs/*.md`, `README.md`, `AGENTS.md`, or `CONTRIBUTING.md`.
+- `make agent-docs-check` fails:
+A pointer file (`CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md`) gained content, often a `#` memory from Claude Code. Move the flagged lines into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.
 - `make quick-ci-changed` runs no checks:
 Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
 - `make release-dry-run` fails:

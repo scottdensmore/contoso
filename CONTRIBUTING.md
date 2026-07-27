@@ -61,7 +61,7 @@ If your change involves the database:
 
 Refer to:
 
-- `AGENTS.md` for coding agent runbooks and command conventions.
+- `AGENTS.md` for coding agent runbooks and command conventions. It is the single source of truth for agent instructions; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
 - `conductor/` for product goals and track context.
 
 ### Quick Troubleshooting
@@ -70,6 +70,7 @@ Refer to:
 - If env contract drift check fails, run `make env-contract-check` and align `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md`.
 - If env checks fail, run `make env-init` and fill required values in `.env` files.
 - If chat Prisma client checks fail, run `make prisma-generate-chat`.
+- If `make agent-docs-check` fails, move the flagged pointer-file content into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.
 - If release preflight fails, run `make release-dry-run RELEASE_TAG=vX.Y.Z` and fix missing guardrail files.
 - If integration smoke fails, run `make e2e-smoke KEEP_STACK=1` and inspect compose logs.
 - If chat local-provider dependencies are required in Docker, run with `CHAT_INSTALL_LOCAL_STACK=1`.
