@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "a0d9da7a5359",
+  "strategy": "manual-commit",
+  "branch": "fix/web-image-size",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "Dockerfile"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a0/d9da7a5359/0/metadata.json",
+      "transcript": "/a0/d9da7a5359/0/full.jsonl",
+      "compact_transcript": "/a0/d9da7a5359/0/transcript.jsonl",
+      "content_hash": "/a0/d9da7a5359/0/content_hash.txt",
+      "prompt": "/a0/d9da7a5359/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 171,
+    "cache_creation_tokens": 113871,
+    "cache_read_tokens": 17950799,
+    "output_tokens": 60027,
+    "api_call_count": 92
+  }
+}
