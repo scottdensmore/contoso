@@ -7,6 +7,8 @@ DOCS_DIR = ROOT / "docs"
 ROOT_RUNBOOKS = (
     ROOT / "README.md",
     ROOT / "AGENTS.md",
+    ROOT / "CLAUDE.md",
+    ROOT / "GEMINI.md",
     ROOT / "CONTRIBUTING.md",
 )
 LINK_PATTERN = re.compile(r"\[.*?\]\((.*?)\)")

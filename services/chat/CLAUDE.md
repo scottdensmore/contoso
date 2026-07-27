@@ -1,4 +1,4 @@
-# GEMINI.md
+# CLAUDE.md
 
 `AGENTS.md` is the single source of truth for agent instructions in this scope.
 This file is a pointer only; it intentionally carries no instructions of its own.

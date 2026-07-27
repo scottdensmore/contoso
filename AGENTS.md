@@ -7,15 +7,46 @@ This repository contains two runtime surfaces:
 
 Use this file as the default runbook for coding agents.
 
+## Source of truth
+
+`AGENTS.md` is the single source of truth for agent instructions. Assistants that read
+their own context file get a pointer to `AGENTS.md` and nothing else:
+
+| Assistant | Pointer file | Points at |
+| --- | --- | --- |
+| Claude Code | `CLAUDE.md` (per scope) | sibling `AGENTS.md` |
+| Gemini CLI | `GEMINI.md` (per scope) | sibling `AGENTS.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` | root `AGENTS.md` |
+
+Scopes with their own runbook:
+
+- `AGENTS.md` (repo-wide)
+- `apps/web/AGENTS.md`
+- `services/chat/AGENTS.md`
+
+Never add instructions to a pointer file. That includes memories captured by pressing
+`#` in Claude Code, which append to the nearest `CLAUDE.md` — move that text into the
+matching `AGENTS.md` instead.
+
+`make agent-docs-check` (part of `make docs-check`, and gated in CI) fails when a
+pointer drifts and prints the added lines. To restore the pointers locally after
+moving the content across:
+
+```bash
+make agent-docs-check FIX=1
+```
+
 ## Repo map
 
 - `apps/web/src/app/`: Next.js pages and API routes.
 - `apps/web/src/components/`: UI components.
 - `apps/web/src/lib/`: shared web helpers and domain logic.
 - `apps/web/Makefile`: web-owned dev/test/build command surface.
+- `apps/web/AGENTS.md`: web-scoped agent runbook.
 - `services/chat/src/api/`: chat service API and chat logic.
 - `services/chat/tests/`: chat unit and integration tests.
 - `services/chat/Makefile`: chat-owned dev/test command surface.
+- `services/chat/AGENTS.md`: chat-scoped agent runbook.
 - `apps/web/prisma/`: shared data model and migrations.
 - `infrastructure/`: deployment scripts and Terraform.
 - `docs/`: operator and architecture docs.
@@ -58,6 +89,8 @@ make e2e-smoke
 make e2e-smoke-lite
 make e2e-smoke-full
 make release-dry-run
+make docs-check
+make agent-docs-check
 make ci
 ```
 
@@ -81,6 +114,8 @@ npm run e2e:smoke
 npm run e2e:smoke:lite
 npm run e2e:smoke:full
 npm run release:dry-run
+npm run docs:check
+npm run agent-docs:check
 npm run ci:web
 npm run ci:chat
 npm run ci
@@ -133,6 +168,7 @@ Copy templates to `.env` before local development.
 - Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
 - Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
 - Docs link drift (including root runbooks): run `make docs-check`.
+- Agent doc drift (a `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` gained content): move the flagged lines into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.
 - Release guardrail failure: run `make release-dry-run` and fix missing guardrail files.
 - E2E smoke failure: run `make e2e-smoke KEEP_STACK=1`, then inspect `docker compose logs`.
 - Need local LLM/vector dependencies in Docker chat image: rerun with `CHAT_INSTALL_LOCAL_STACK=1`.
@@ -153,6 +189,16 @@ Before submitting any changes, it is crucial to validate them by running the ful
 
 When doing git operations use the GitHub CLI `gh` where possible.
 
+## Git repo
+
+The main branch for this project is called `main`.
+
 ## Comments policy
 
 Only write high-value comments if at all. Avoid talking to the user through comments.
+
+## General style requirements
+
+Use hyphens instead of underscores in flag names (e.g. `my-flag` instead of `my_flag`).
+
+JavaScript/TypeScript and React conventions live in `apps/web/AGENTS.md`.
