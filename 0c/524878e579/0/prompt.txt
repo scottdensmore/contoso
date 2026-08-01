@@ -172,3 +172,7 @@ Web App CI: pass</event>
 <status>completed</status>
 <summary>Monitor "CI check results on image fix PR #37" stream ended</summary>
 </task-notification>
+
+---
+
+Ok what is the next thing to do
