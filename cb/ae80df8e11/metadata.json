@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "cbae80df8e11",
+  "strategy": "manual-commit",
+  "branch": "fix/drop-prisma-client-py",
+  "checkpoints_count": 4,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/cb/ae80df8e11/0/metadata.json",
+      "transcript": "/cb/ae80df8e11/0/full.jsonl",
+      "compact_transcript": "/cb/ae80df8e11/0/transcript.jsonl",
+      "content_hash": "/cb/ae80df8e11/0/content_hash.txt",
+      "prompt": "/cb/ae80df8e11/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 796,
+    "cache_creation_tokens": 1383619,
+    "cache_read_tokens": 104702225,
+    "output_tokens": 261694,
+    "api_call_count": 431
+  }
+}
