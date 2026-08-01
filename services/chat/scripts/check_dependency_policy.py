@@ -4,8 +4,12 @@
 Policy:
 - `constraints.txt` must pin packages with exact `==` versions.
 - Every package referenced in requirement manifests must exist in `constraints.txt`.
-- Requirement manifests may use bare package names or exact `==` pins only.
-- If a requirement manifest uses `==`, it must match the constraint pin.
+- Requirement manifests must use bare package names only.
+
+Versions live in exactly one place. A package pinned in both a requirement
+manifest and `constraints.txt` gives Dependabot two places to edit; it updates
+one, and `pip install -c` then fails with ResolutionImpossible before any
+check in this repo gets a chance to run.
 """
 
 from __future__ import annotations
@@ -87,25 +91,16 @@ def check_requirements(requirement_files: tuple[Path, ...], constraints: dict[st
                 continue
 
             name, operator, version = parsed
-            if operator not in (None, "=="):
+            if operator is not None:
                 errors.append(
-                    f"{req_file}:{idx}: only bare names or exact '==' pins are allowed (got '{raw.strip()}')"
+                    f"{req_file}:{idx}: requirement manifests must use bare package names; "
+                    f"pin the version in {CONSTRAINTS_FILE} instead (got '{raw.strip()}')"
                 )
-                continue
-            if operator == "==" and not version:
-                errors.append(f"{req_file}:{idx}: missing version after '=='")
                 continue
 
             if name not in constraints:
                 errors.append(
                     f"{req_file}:{idx}: package '{name}' must be pinned in {CONSTRAINTS_FILE}"
-                )
-                continue
-
-            if operator == "==" and constraints[name] != version:
-                errors.append(
-                    f"{req_file}:{idx}: version '{name}=={version}' does not match "
-                    f"{CONSTRAINTS_FILE} pin '{name}=={constraints[name]}'"
                 )
 
     return errors

@@ -1,5 +1,7 @@
 import importlib.util
 import json
+import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -40,6 +42,59 @@ class ChatProfileWiringTests(unittest.TestCase):
         self.assertIn("src/api/requirements-core.txt", files)
         self.assertIn("src/api/requirements-local.txt", files)
         self.assertNotIn("src/api/requirements.txt", files)
+
+    def test_requirement_manifests_carry_no_inline_pins(self):
+        """Versions live only in constraints.txt, so Dependabot has one place to edit."""
+        chat_root = REPO_ROOT / "services/chat"
+        for relative in dependency_policy.REQUIREMENT_FILES:
+            manifest = chat_root / relative
+            with self.subTest(manifest=str(relative)):
+                for line_no, raw in enumerate(
+                    manifest.read_text(encoding="utf-8").splitlines(), start=1
+                ):
+                    line = raw.split("#", 1)[0].strip()
+                    if not line:
+                        continue
+                    self.assertNotIn(
+                        "==",
+                        line,
+                        msg=(
+                            f"{relative}:{line_no} pins a version inline; "
+                            "pin it in constraints.txt instead"
+                        ),
+                    )
+
+    def test_dependency_policy_rejects_inline_pins(self):
+        constraints = {"python-dotenv": "1.0.1"}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            manifest = Path(temp_dir) / "requirements-core.txt"
+
+            manifest.write_text("python-dotenv\n", encoding="utf-8")
+            self.assertEqual(
+                dependency_policy.check_requirements((manifest,), constraints),
+                [],
+            )
+
+            # This is the exact shape that broke PR #33: a manifest pin that
+            # disagrees with constraints.txt, which pip cannot resolve.
+            manifest.write_text("python-dotenv==1.2.2\n", encoding="utf-8")
+            errors = dependency_policy.check_requirements((manifest,), constraints)
+
+        self.assertTrue(any("bare package names" in error for error in errors))
+
+    def test_dependabot_groups_keep_package_families_together(self):
+        # Asserted as text rather than parsed YAML: this suite runs in a bare
+        # venv without the chat dependencies, so PyYAML is not available.
+        content = (REPO_ROOT / ".github/dependabot.yml").read_text(encoding="utf-8")
+
+        ecosystems = re.findall(r"^\s*- package-ecosystem:", content, re.M)
+        self.assertEqual(len(ecosystems), content.count("    groups:"))
+
+        # opentelemetry-sdk moving without opentelemetry-api is what broke #6.
+        self.assertEqual(content.count('- "opentelemetry-*"'), 3)
+        for pattern in ('- "google-cloud-*"', '- "pytest-*"', '- "eslint-*"', '- "@prisma/*"'):
+            with self.subTest(pattern=pattern):
+                self.assertIn(pattern, content)
 
     def test_chat_makefile_exposes_profile_setup_targets(self):
         content = (REPO_ROOT / "services/chat/Makefile").read_text(encoding="utf-8")
