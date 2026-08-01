@@ -1,0 +1,174 @@
+What needs to be installed locally so we can run things locally to test?
+
+---
+
+we should make sure to use a venv each time. So update to make sure that exists for all the python used
+
+---
+
+<task-notification>
+<task-id>bdjqloq3q</task-id>
+<summary>Monitor event: "CI check results on PR #34 after enabling workflow"</summary>
+<event>Chat Service CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bdjqloq3q</task-id>
+<summary>Monitor event: "CI check results on PR #34 after enabling workflow"</summary>
+<event>Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+ALL CHECKS COMPLETE
+Chat Service CI: pass
+Detect Changed Surfaces: pass
+Documentation and Agent Doc Checks: pass
+Env Contract Drift Check: pass
+Full CI (Main Branch): skipping
+Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+Onboarding Smoke: pass
+Script Guardrail Tests: pass
+Web App CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bdjqloq3q</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/tasks/bdjqloq3q.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR #34 after enabling workflow" stream ended</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<summary>Monitor event: "CI check results on venv PR #35"</summary>
+<event>Full CI (Main Branch): skipping
+Integration E2E Smoke (Full Chat Profile): skipping</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<summary>Monitor event: "CI check results on venv PR #35"</summary>
+<event>Detect Changed Surfaces: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<summary>Monitor event: "CI check results on venv PR #35"</summary>
+<event>Documentation and Agent Doc Checks: pass
+Env Contract Drift Check: pass
+Script Guardrail Tests: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<summary>Monitor event: "CI check results on venv PR #35"</summary>
+<event>Chat Service CI: pass
+Onboarding Smoke: pass
+Web App CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<summary>Monitor event: "CI check results on venv PR #35"</summary>
+<event>Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+ALL CHECKS COMPLETE
+Chat Service CI: pass
+Detect Changed Surfaces: pass
+Documentation and Agent Doc Checks: pass
+Env Contract Drift Check: pass
+Full CI (Main Branch): skipping
+Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+Onboarding Smoke: pass
+Script Guardrail Tests: pass
+Web App CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bs09r42ua</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/tasks/bs09r42ua.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on venv PR #35" stream ended</summary>
+</task-notification>
+
+---
+
+lets clear out the red.. once all that is fixed we can squash merge everything in order
+
+---
+
+<task-notification>
+<task-id>btsy4a1ub</task-id>
+<summary>Monitor event: "CI check results on image fix PR #37"</summary>
+<event>Full CI (Main Branch): skipping
+Integration E2E Smoke (Full Chat Profile): skipping</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>btsy4a1ub</task-id>
+<summary>Monitor event: "CI check results on image fix PR #37"</summary>
+<event>Chat Service CI: skipping
+Detect Changed Surfaces: pass
+Documentation and Agent Doc Checks: skipping
+Env Contract Drift Check: skipping
+Onboarding Smoke: skipping
+Script Guardrail Tests: skipping</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>btsy4a1ub</task-id>
+<summary>Monitor event: "CI check results on image fix PR #37"</summary>
+<event>Web App CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>btsy4a1ub</task-id>
+<summary>Monitor event: "CI check results on image fix PR #37"</summary>
+<event>Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+ALL CHECKS COMPLETE
+Chat Service CI: skipping
+Detect Changed Surfaces: pass
+Documentation and Agent Doc Checks: skipping
+Env Contract Drift Check: skipping
+Full CI (Main Branch): skipping
+Integration E2E Smoke: fail
+Integration E2E Smoke (Full Chat Profile): skipping
+Onboarding Smoke: skipping
+Script Guardrail Tests: skipping
+Web App CI: pass</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>btsy4a1ub</task-id>
+<tool-use-id>toolu_013weHqvp881oDsPBAPG74o2</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/tasks/btsy4a1ub.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on image fix PR #37" stream ended</summary>
+</task-notification>
