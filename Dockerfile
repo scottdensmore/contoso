@@ -52,33 +52,47 @@ ARG DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
 ENV DATABASE_URL=${DATABASE_URL}
 ENV NODE_ENV=production
 
-COPY apps/web/package*.json ./
+# Migration tooling lives in its own prefix, deliberately outside the traced
+# standalone tree. Installing it into /app/apps/web would mean running
+# `npm install` against the standalone package.json, which still lists every
+# original dependency and would reinstall the full tree we just pruned away.
+COPY apps/web/package.json /tmp/web-package.json
+RUN mkdir -p /opt/migrate \
+    && cd /opt/migrate \
+    && npm init -y > /dev/null \
+    && npm install --no-audit --no-fund \
+        "prisma@$(node -p "require('/tmp/web-package.json').devDependencies.prisma")" \
+        "tsx@$(node -p "require('/tmp/web-package.json').devDependencies.tsx")" \
+    && npm cache clean --force \
+    && rm /tmp/web-package.json
 
-# Production dependencies only, plus the two dev tools the entrypoint needs at
-# runtime: the Prisma CLI for `migrate deploy`, and tsx for the seed script
-# (see the `migrations.seed` command in prisma.config.ts).
-RUN npm ci --omit=dev --no-audit --no-fund \
-    && npm install --no-save --no-audit --no-fund \
-        "prisma@$(node -p "require('./package.json').devDependencies.prisma")" \
-        "tsx@$(node -p "require('./package.json').devDependencies.tsx")" \
-    && npm cache clean --force
+# The traced server bundle carries its own minimal node_modules.
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+COPY --from=builder /app/apps/web/public ./public
+
+# Tracing does not reliably pick up the generated Prisma client, which the app
+# and the seed script both import.
+COPY --from=builder /app/apps/web/node_modules/.prisma ./node_modules/.prisma
 
 COPY apps/web/prisma ./prisma
 COPY apps/web/prisma.config.ts ./prisma.config.ts
-COPY apps/web/next.config.js ./
 
-COPY --from=builder /app/apps/web/.next ./.next
-COPY --from=builder /app/apps/web/public ./public
-
-# The build cache is only useful for rebuilds, never at runtime.
-RUN rm -rf .next/cache
-
-# Regenerate the client against the runtime engines.
-RUN npx prisma generate --generator client --schema prisma/schema.prisma
+# prisma.config.ts does `import { defineConfig } from 'prisma/config'`, resolved
+# from this directory, and `prisma db seed` runs `npx tsx ./prisma/seed.ts`,
+# which resolves from the local .bin first. Link both into the standalone tree;
+# Node follows the symlinks to /opt/migrate, where their own deps resolve.
+RUN mkdir -p node_modules/.bin \
+    && ln -sf /opt/migrate/node_modules/prisma node_modules/prisma \
+    && ln -sf /opt/migrate/node_modules/.bin/tsx node_modules/.bin/tsx
 
 # Copy entrypoint script
 COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# The standalone server reads these rather than next.config.js at runtime.
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 # Expose port 3000
 EXPOSE 3000
