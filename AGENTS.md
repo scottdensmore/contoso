@@ -62,6 +62,24 @@ Use `mise` at repo root before running setup/CI commands:
 mise install
 ```
 
+### Python virtualenv
+
+All Python runs from a single project virtualenv at `.venv` (git-ignored). Make
+targets create it on demand and invoke `.venv/bin/python` directly, so there is
+nothing to activate — `make test-scripts`, `make quick-ci-chat`, and friends all
+work from a clean shell.
+
+```bash
+make venv
+```
+
+Never install project Python dependencies into a system or mise interpreter. If
+you run Python by hand, use `.venv/bin/python`, not `python`/`python3`.
+
+`PYTHON_BASE` is the interpreter used to *create* the venv (default
+`mise exec python@3.11 -- python`); CI overrides it with `PYTHON_BASE=python`.
+Do not override `PYTHON` itself — that bypasses the venv.
+
 ## Canonical commands
 
 Run from repository root:
@@ -69,6 +87,7 @@ Run from repository root:
 ```bash
 make help
 make bootstrap
+make venv
 make toolchain-doctor
 make env-contract-check
 make agent-doctor
@@ -166,6 +185,8 @@ Copy templates to `.env` before local development.
 ## Troubleshooting
 
 - Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
+- Virtualenv missing, broken, or on the wrong Python: run `rm -rf .venv && make venv`.
+- `ModuleNotFoundError` for a chat dependency: you are probably outside the venv — re-run through `make`, or use `.venv/bin/python`.
 - Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
 - Docs link drift (including root runbooks): run `make docs-check`.
 - Agent doc drift (a `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` gained content): move the flagged lines into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.

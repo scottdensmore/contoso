@@ -19,7 +19,13 @@ From repository root:
 
 ```bash
 mise install
+make venv
 ```
+
+All chat Python runs from the shared repo-root virtualenv at `.venv`. The Make
+targets here create it on demand and call `.venv/bin/python` directly, so no
+activation step is needed. Do not `pip install` chat dependencies into a system
+or mise interpreter.
 
 ## Local commands
 

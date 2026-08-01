@@ -48,7 +48,7 @@ jobs:
         env:
           TOOLCHAIN_CHECK_ALLOW_NON_MISE: "1"
           HUSKY: "0"
-        run: make release-dry-run PYTHON=python RELEASE_TAG="${RELEASE_TAG}"
+        run: make release-dry-run PYTHON_BASE=python RELEASE_TAG="${RELEASE_TAG}"
 
   draft:
     name: Draft GitHub Release

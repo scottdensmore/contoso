@@ -96,7 +96,8 @@ jobs:
             exit 0
           fi
 
-          python scripts/detect_changed_surfaces.py \
+          make venv PYTHON_BASE=python
+          .venv/bin/python scripts/detect_changed_surfaces.py \
             --base "$BASE_SHA" \
             --head "$HEAD_SHA" \
             --github-output "$GITHUB_OUTPUT"
@@ -116,7 +117,7 @@ jobs:
           python-version: '3.11'
 
       - name: Validate env contract
-        run: make env-contract-check PYTHON=python
+        run: make env-contract-check PYTHON_BASE=python
 
   script-tests:
     name: Script Guardrail Tests
@@ -133,7 +134,7 @@ jobs:
           python-version: '3.11'
 
       - name: Run script tests
-        run: make test-scripts PYTHON=python
+        run: make test-scripts PYTHON_BASE=python
 
   docs-ci:
     name: Documentation and Agent Doc Checks
@@ -150,7 +151,7 @@ jobs:
           python-version: '3.11'
 
       - name: Verify docs links and AGENTS.md pointers
-        run: make docs-check PYTHON=python
+        run: make docs-check PYTHON_BASE=python
 
   web-ci:
     name: Web App CI
@@ -174,7 +175,7 @@ jobs:
           python-version: '3.11'
 
       - name: Toolchain preflight
-        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON_BASE=python
 
       - name: Install dependencies
         env:
@@ -211,19 +212,17 @@ jobs:
             services/chat/constraints.txt
 
       - name: Toolchain preflight
-        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON_BASE=python
 
       - name: Install dependencies
-        run: make -C services/chat setup PYTHON=python
+        run: make -C services/chat setup PYTHON_BASE=python
 
       - name: Generate Prisma Client (Python)
-        run: |
-          prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
+        run: make prisma-generate-chat PYTHON_BASE=python
 
       - name: Run unit tests
         run: npm run ci:chat
         env:
-          PYTHON: python
           PROJECT_ID: local-project
           REGION: us-central1
 
@@ -286,7 +285,7 @@ jobs:
         run: |
           start_epoch="$(date +%s)"
           make e2e-smoke-lite \
-            PYTHON=python \
+            PYTHON_BASE=python \
             KEEP_STACK=1 \
             E2E_SMOKE_TIMEOUT="${E2E_SMOKE_TIMEOUT}" \
             CHAT_INSTALL_LOCAL_STACK=0 \
@@ -515,7 +514,7 @@ jobs:
         run: |
           start_epoch="$(date +%s)"
           make e2e-smoke-full \
-            PYTHON=python \
+            PYTHON_BASE=python \
             KEEP_STACK=1 \
             E2E_SMOKE_TIMEOUT="${E2E_SMOKE_TIMEOUT}" \
             E2E_COMPOSE_UP_FLAGS="-d --force-recreate --quiet-pull"
@@ -962,7 +961,7 @@ jobs:
         env:
           TOOLCHAIN_CHECK_ALLOW_NON_MISE: '1'
           HUSKY: '0'
-        run: make bootstrap PYTHON=python
+        run: make bootstrap PYTHON_BASE=python
 
   full-ci-main:
     name: Full CI (Main Branch)
@@ -994,7 +993,7 @@ jobs:
             services/chat/constraints.txt
 
       - name: Toolchain preflight
-        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON=python
+        run: TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 make toolchain-doctor PYTHON_BASE=python
 
       - name: Install web dependencies
         env:
@@ -1002,10 +1001,10 @@ jobs:
         run: make -C apps/web setup
 
       - name: Install chat dependencies
-        run: make -C services/chat setup PYTHON=python
+        run: make -C services/chat setup PYTHON_BASE=python
 
       - name: Generate Prisma Client (Python)
-        run: prisma-client-py generate --schema=${{ github.workspace }}/apps/web/prisma/schema.prisma
+        run: make prisma-generate-chat PYTHON_BASE=python
 
       - name: Run full CI checks
         env:
@@ -1013,4 +1012,4 @@ jobs:
           HUSKY: '0'
           PROJECT_ID: local-project
           REGION: us-central1
-        run: make ci PYTHON=python
+        run: make ci PYTHON_BASE=python
