@@ -9,11 +9,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 ARG INSTALL_LOCAL_STACK=0
 
-# Prisma Python's nodeenv runtime requires libatomic at generation time.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libatomic1 \
-    && rm -rf /var/lib/apt/lists/*
-
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -m -g appuser appuser
 
@@ -40,12 +35,9 @@ RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements
 
 # Copy application code
 
-# Copy Prisma schema and generate client
-COPY --chown=appuser:appuser apps/web/prisma/schema.prisma schema.prisma
-RUN python -m prisma py generate --schema=schema.prisma --generator pyclient
-
 # Copy application code
 COPY --chown=appuser:appuser services/chat/src/api/main.py main.py
+COPY --chown=appuser:appuser services/chat/src/api/db.py db.py
 COPY --chown=appuser:appuser services/chat/src/api/local_provider_health.py local_provider_health.py
 COPY --chown=appuser:appuser services/chat/src/api/contoso_chat/ contoso_chat/
 COPY --chown=appuser:appuser services/chat/src/api/evaluators/ evaluators/

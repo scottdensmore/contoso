@@ -18,58 +18,36 @@ def anyio_backend():
 
 @pytest.mark.anyio
 async def test_get_customer_from_postgres_returns_none_for_empty_id():
-    with patch("contoso_chat.chat_request.Prisma") as mock_prisma:
+    with patch("db.fetch_customer") as mock_fetch:
         result = await get_customer_from_postgres("")
 
     assert result is None
-    mock_prisma.assert_not_called()
+    mock_fetch.assert_not_called()
 
 
 @pytest.mark.anyio
-async def test_get_customer_from_postgres_returns_customer_dump():
-    mock_db = MagicMock()
-    mock_db.connect = AsyncMock()
-    mock_db.disconnect = AsyncMock()
-    mock_user = MagicMock()
-    mock_user.model_dump.return_value = {"firstName": "Taylor"}
-    mock_db.user.find_unique = AsyncMock(return_value=mock_user)
-
-    with patch("contoso_chat.chat_request.Prisma", return_value=mock_db):
+async def test_get_customer_from_postgres_returns_customer():
+    with patch("db.fetch_customer", AsyncMock(return_value={"firstName": "Taylor"})) as mock_fetch:
         result = await get_customer_from_postgres("cust-1")
 
     assert result == {"firstName": "Taylor"}
-    mock_db.connect.assert_awaited_once()
-    mock_db.user.find_unique.assert_awaited_once()
-    mock_db.disconnect.assert_awaited_once()
+    mock_fetch.assert_awaited_once_with("cust-1")
 
 
 @pytest.mark.anyio
 async def test_get_customer_from_postgres_returns_none_when_missing():
-    mock_db = MagicMock()
-    mock_db.connect = AsyncMock()
-    mock_db.disconnect = AsyncMock()
-    mock_db.user.find_unique = AsyncMock(return_value=None)
-
-    with patch("contoso_chat.chat_request.Prisma", return_value=mock_db):
+    with patch("db.fetch_customer", AsyncMock(return_value=None)):
         result = await get_customer_from_postgres("cust-1")
 
     assert result is None
-    mock_db.connect.assert_awaited_once()
-    mock_db.user.find_unique.assert_awaited_once()
-    mock_db.disconnect.assert_awaited_once()
 
 
 @pytest.mark.anyio
 async def test_get_customer_from_postgres_returns_none_on_exception():
-    mock_db = MagicMock()
-    mock_db.connect = AsyncMock(side_effect=RuntimeError("db down"))
-    mock_db.disconnect = AsyncMock()
-
-    with patch("contoso_chat.chat_request.Prisma", return_value=mock_db):
+    with patch("db.fetch_customer", AsyncMock(side_effect=RuntimeError("db down"))):
         result = await get_customer_from_postgres("cust-1")
 
     assert result is None
-    mock_db.connect.assert_awaited_once()
 
 
 @pytest.mark.anyio

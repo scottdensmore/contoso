@@ -12,7 +12,7 @@ PYTHON ?= $(VENV_PYTHON)
 PIP ?= $(PYTHON) -m pip
 
 # Put the venv's bin dir first so console scripts installed into it resolve
-# without activation (prisma-client-py, ruff, mypy, pytest, uvicorn).
+# without activation (ruff, mypy, pytest, uvicorn).
 export PATH := $(abspath $(VENV_DIR))/bin:$(PATH)
 TOOLCHAIN_CHECK_SCRIPT := scripts/check_toolchain.py
 AGENT_DOCTOR_SCRIPT := scripts/agent_doctor.py
@@ -31,7 +31,6 @@ WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
 CHAT_DIR := services/chat
 CHAT_MAKE := $(MAKE) -C $(CHAT_DIR)
-WEB_PRISMA_SCHEMA := $(WEB_DIR)/prisma/schema.prisma
 
 ENV_FILE := .env
 ENV_TEMPLATE := .env.example
@@ -40,7 +39,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate prisma-generate-chat lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -73,7 +72,6 @@ bootstrap: ## One-command bootstrap for local and coding-agent development
 	$(MAKE) env-init
 	$(MAKE) setup
 	$(MAKE) setup-chat
-	$(MAKE) prisma-generate-chat
 	$(MAKE) sync-web-env
 	$(MAKE) agent-doctor
 
@@ -142,9 +140,6 @@ migrate: ## Run Prisma migrations using DATABASE_URL
 
 prisma-generate: ## Generate Prisma client for the web app
 	$(WEB_MAKE) prisma-generate
-
-prisma-generate-chat: | $(VENV_PYTHON) ## Generate Prisma client for the chat Python runtime
-	$(PYTHON) -m prisma py generate --schema=$(WEB_PRISMA_SCHEMA) --generator pyclient
 
 lint: ## Lint web app
 	$(WEB_MAKE) lint

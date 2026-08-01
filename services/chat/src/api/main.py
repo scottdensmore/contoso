@@ -108,12 +108,9 @@ async def health():
 
 async def check_database_connection() -> tuple[bool, str | None]:
     try:
-        from prisma import Prisma
+        from db import check_connection
 
-        db = Prisma()
-        await db.connect()
-        await db.disconnect()
-        return True, None
+        return await check_connection()
     except Exception as exc:  # noqa: BLE001
         return False, str(exc)
 

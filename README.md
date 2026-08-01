@@ -138,7 +138,6 @@ make setup-chat-full
 make local-provider-check
 make diagnose-chat-local
 make docker-init-fresh
-make prisma-generate-chat
 make dev
 make test
 make test-scripts
@@ -255,8 +254,6 @@ Ensure all of the following:
 `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`.
 - Full-profile smoke failure in CI:
 Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
-- `make prisma-generate-chat` fails in a sandbox with permission errors:
-Run the command in a normal local shell (outside restricted sandboxing).
 - `make agent-doctor` reports missing env files/keys:
 Run `make env-init`, then fill required values in `.env` and `services/chat/.env`.
 - `next build` fails in restricted sandbox with `listen EPERM`:

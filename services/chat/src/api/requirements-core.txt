@@ -24,4 +24,4 @@ opentelemetry-instrumentation-fastapi
 prompty
 
 # Database
-prisma
+asyncpg
