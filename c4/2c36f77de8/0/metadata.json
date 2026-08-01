@@ -1,0 +1,115 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "c42c36f77de8",
+  "session_id": "db47ca28-f071-4586-ad2f-266019892058",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-01T23:45:44.857824136Z",
+  "branch": "fix/drop-prisma-client-py",
+  "checkpoints_count": 12,
+  "save_step_count": 2,
+  "files_touched": [
+    ".github/workflows/ci.yml",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "Makefile",
+    "README.md",
+    "apps/web/prisma/schema.prisma",
+    "scripts/agent_doctor.py",
+    "services/chat/AGENTS.md",
+    "services/chat/Dockerfile",
+    "services/chat/README.md",
+    "services/chat/constraints.txt",
+    "services/chat/src/api/contoso_chat/chat_request.py",
+    "services/chat/src/api/db.py",
+    "services/chat/src/api/main.py",
+    "services/chat/src/api/requirements-core.txt",
+    "services/chat/tests/unit/test_chat_request.py",
+    "services/chat/tests/unit/test_db.py",
+    "tests/scripts/test_venv_wiring.py"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "6ddb9e9184a7",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 728,
+    "cache_creation_tokens": 1356576,
+    "cache_read_tokens": 102304404,
+    "output_tokens": 247432,
+    "api_call_count": 394
+  },
+  "session_metrics": {
+    "turn_count": 15
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-01T23:45:44.167638633Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 175,
+    "human_modified": 170,
+    "human_removed": 0,
+    "total_committed": 176,
+    "total_lines_changed": 345,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 585,
+      "user_lines_removed": 170,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        ".github/workflows/ci.yml": 30,
+        "Makefile": 2,
+        "scripts/agent_doctor.py": 3,
+        "services/chat/AGENTS.md": 16,
+        "services/chat/constraints.txt": 15,
+        "services/chat/src/api/contoso_chat/chat_request.py": 4,
+        "services/chat/src/api/db.py": 178,
+        "services/chat/src/api/main.py": 2,
+        "services/chat/src/api/requirements-core.txt": 1,
+        "services/chat/tests/unit/test_chat_request.py": 7,
+        "services/chat/tests/unit/test_db.py": 87
+      },
+      "user_removed_per_file": {
+        ".github/workflows/ci.yml": 34,
+        "AGENTS.md": 2,
+        "CONTRIBUTING.md": 1,
+        "Makefile": 7,
+        "README.md": 3,
+        "apps/web/prisma/schema.prisma": 5,
+        "scripts/agent_doctor.py": 21,
+        "services/chat/AGENTS.md": 1,
+        "services/chat/Dockerfile": 9,
+        "services/chat/README.md": 1,
+        "services/chat/constraints.txt": 15,
+        "services/chat/src/api/contoso_chat/chat_request.py": 35,
+        "services/chat/src/api/main.py": 5,
+        "services/chat/src/api/requirements-core.txt": 1,
+        "services/chat/tests/unit/test_chat_request.py": 29,
+        "tests/scripts/test_venv_wiring.py": 1
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 240,
+      "user_lines_removed": 0,
+      "agent_lines_added": 303,
+      "agent_lines_removed": 127,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61
+      }
+    }
+  ]
+}
