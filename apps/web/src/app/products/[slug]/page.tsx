@@ -46,9 +46,10 @@ function getRange(header1:string, header2:string, markdown: string[]): string {
 export default async function Page({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const product = await getData(params.slug);
+  const { slug } = await params;
+  const product = await getData(slug);
 
   if (!product) {
     notFound();
