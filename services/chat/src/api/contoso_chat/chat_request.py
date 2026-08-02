@@ -55,12 +55,12 @@ async def generate_llm_response(prompt: str, context: str, user_name: str, provi
         return response.choices[0].message.content
     else:
         import vertexai
-        from vertexai.generative_models import GenerativeModel, Part
+        from vertexai.generative_models import GenerativeModel
         vertexai.init(project=project_id, location=location)
         model = GenerativeModel(model_name)
-        
+
         full_prompt = f"{system_instruction}\n\nCatalog Context:\n{context}\n\nUser Question: {prompt}"
-        response = model.generate_content([Part.from_text(full_prompt)])
+        response = model.generate_content(full_prompt)
         return response.text
 
 async def get_response(customer_id, question, chat_history):

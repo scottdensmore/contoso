@@ -10,10 +10,12 @@ fastapi
 uvicorn[standard]
 
 # Google Cloud Services
+# The standalone `vertexai` package is deliberately absent: it pins
+# google-cloud-aiplatform to an exact version, which blocks every aiplatform
+# bump. google-cloud-aiplatform ships the `vertexai` module itself.
 google-cloud-aiplatform
 google-cloud-discoveryengine
 google-auth
-vertexai
 
 # OpenTelemetry and tracing
 opentelemetry-api
