@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getSidebarLinks, NavSection } from "@/lib/navigation";
 import Sidebar from "./sidebar";
@@ -13,7 +13,6 @@ interface SidebarWrapperProps {
 export default function SidebarWrapper({ isOpen, onClose }: SidebarWrapperProps) {
   const { data: session } = useSession();
   const [categories, setCategories] = useState([]);
-  const [sections, setSections] = useState<NavSection[]>([]);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -31,9 +30,10 @@ export default function SidebarWrapper({ isOpen, onClose }: SidebarWrapperProps)
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    setSections(getSidebarLinks(session, categories));
-  }, [session, categories]);
+  const sections: NavSection[] = useMemo(
+    () => getSidebarLinks(session, categories),
+    [session, categories],
+  );
 
   return (
     <Sidebar 

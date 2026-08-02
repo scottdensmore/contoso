@@ -25,8 +25,6 @@ export default function ProfilePage() {
           console.error("Failed to fetch profile", err);
           setIsLoadingProfile(false);
         });
-    } else if (status === "unauthenticated") {
-      setIsLoadingProfile(false);
     }
   }, [status]);
 
