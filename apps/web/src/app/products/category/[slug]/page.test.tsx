@@ -44,7 +44,7 @@ describe('Category Page', () => {
 
     vi.mocked(getProductsByCategory).mockResolvedValue(mockCategory as any)
 
-    const result = await CategoryPage({ params: { slug: 'hiking' } })
+    const result = await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) })
     render(result)
 
     expect(screen.getByText('Hiking')).toBeDefined()
@@ -55,7 +55,7 @@ describe('Category Page', () => {
   it('calls notFound if category does not exist', async () => {
     vi.mocked(getProductsByCategory).mockResolvedValue(null)
 
-    await expect(CategoryPage({ params: { slug: 'invalid' } })).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(CategoryPage({ params: Promise.resolve({ slug: 'invalid' }) })).rejects.toThrow('NEXT_NOT_FOUND')
     expect(notFound).toHaveBeenCalled()
   })
 })

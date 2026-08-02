@@ -16,10 +16,12 @@ export default async function CategoryPage({
   params,
   searchParams,
 }: {
-  params: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const category = await getProductsByCategory(params.slug);
+  const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const category = await getProductsByCategory(slug);
 
   if (!category) {
     notFound();
@@ -43,7 +45,9 @@ export default async function CategoryPage({
             <a
               key={product.id}
               href={`/products/${product.slug}${
-                searchParams?.type ? "?type=" + searchParams.type : ""
+                resolvedSearchParams?.type
+                  ? "?type=" + resolvedSearchParams.type
+                  : ""
               }`}
               className="group"
             >
