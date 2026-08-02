@@ -63,6 +63,8 @@ RUN mkdir -p /opt/migrate \
     && npm install --no-audit --no-fund \
         "prisma@$(node -p "require('/tmp/web-package.json').devDependencies.prisma")" \
         "tsx@$(node -p "require('/tmp/web-package.json').devDependencies.tsx")" \
+        "@prisma/adapter-pg@$(node -p "require('/tmp/web-package.json').dependencies['@prisma/adapter-pg']")" \
+        "pg@$(node -p "require('/tmp/web-package.json').dependencies.pg")" \
     && npm cache clean --force \
     && rm /tmp/web-package.json
 
@@ -80,11 +82,14 @@ COPY apps/web/prisma.config.ts ./prisma.config.ts
 
 # prisma.config.ts does `import { defineConfig } from 'prisma/config'`, resolved
 # from this directory, and `prisma db seed` runs `npx tsx ./prisma/seed.ts`,
-# which resolves from the local .bin first. Link both into the standalone tree;
-# Node follows the symlinks to /opt/migrate, where their own deps resolve.
-RUN mkdir -p node_modules/.bin \
+# which resolves from the local .bin first. seed.ts imports the driver adapter,
+# which the build bundles into the server chunks rather than emitting as a
+# traced package. Link all three into the standalone tree; Node follows the
+# symlinks to /opt/migrate, where their own deps resolve.
+RUN mkdir -p node_modules/.bin node_modules/@prisma \
     && ln -sf /opt/migrate/node_modules/prisma node_modules/prisma \
-    && ln -sf /opt/migrate/node_modules/.bin/tsx node_modules/.bin/tsx
+    && ln -sf /opt/migrate/node_modules/.bin/tsx node_modules/.bin/tsx \
+    && ln -sf /opt/migrate/node_modules/@prisma/adapter-pg node_modules/@prisma/adapter-pg
 
 # Copy entrypoint script
 COPY infrastructure/scripts/docker-entrypoint.sh /usr/local/bin/
