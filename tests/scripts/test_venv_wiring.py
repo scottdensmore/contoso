@@ -44,7 +44,6 @@ class VenvWiringTests(unittest.TestCase):
             "test-scripts",
             "docs-check",
             "agent-docs-check",
-            "prisma-generate-chat",
             "release-dry-run",
         ):
             with self.subTest(target=target):

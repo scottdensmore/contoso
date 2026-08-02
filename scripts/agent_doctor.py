@@ -189,31 +189,13 @@ def main() -> int:
     else:
         failures.append(("Web Prisma client is missing.", "Run `make prisma-generate`."))
 
-    # Chat Python dependencies and generated Prisma client
-    deps_check = run([sys.executable, "-c", "import fastapi, pytest"])
+    # Chat Python dependencies. The chat service talks to Postgres through
+    # asyncpg; there is no generated Python client to check for.
+    deps_check = run([sys.executable, "-c", "import asyncpg, fastapi, pytest"])
     if deps_check.returncode == 0:
         passes.append("Chat Python dependencies are available.")
     else:
         failures.append(("Chat Python dependencies are incomplete.", "Run `make setup-chat`."))
-
-    chat_prisma = run([sys.executable, "-c", "from prisma import Prisma; print(Prisma.__name__)"])
-    if chat_prisma.returncode == 0:
-        passes.append("Chat Prisma client is generated.")
-    else:
-        output = normalize_output(chat_prisma)
-        if "No module named 'prisma'" in output:
-            failures.append(("Python prisma package is missing.", "Run `make setup-chat`."))
-        elif "Client hasn't been generated yet" in output:
-            failures.append(
-                ("Chat Prisma client has not been generated.", "Run `make prisma-generate-chat`."),
-            )
-        else:
-            failures.append(
-                (
-                    f"Unable to validate chat Prisma client: {output}",
-                    "Run `make prisma-generate-chat` and retry.",
-                ),
-            )
 
     for line in passes:
         print(f"[PASS] {line}")

@@ -35,7 +35,6 @@ From repository root:
 make bootstrap
 make agent-doctor
 make setup-chat
-make prisma-generate-chat
 make local-provider-check
 make diagnose-chat-local
 make dev-chat
@@ -81,6 +80,22 @@ Most common local values:
 - `LLM_PROVIDER=local`
 - `OLLAMA_BASE_URL=http://localhost:11434`
 - `ALLOWED_ORIGINS=http://localhost:3000`
+
+## Database access
+
+The chat service reads Postgres directly through `asyncpg` in
+`services/chat/src/api/db.py`. There is no generated Python ORM client and no
+code generation step.
+
+`prisma-client-py` was removed: it pinned Prisma 5.17.0 and required a `url` in
+the shared schema's `datasource` block, which Prisma 7 removes. Generating both
+a JS and a Python client from `apps/web/prisma/schema.prisma` meant the Python
+client dictated which Prisma versions the web app could adopt.
+
+`apps/web/prisma/schema.prisma` remains the source of truth for the data model
+and migrations. When it changes, update the SQL in `db.py` to match — the
+queries name tables and columns explicitly and nothing verifies them at build
+time.
 
 ## Guardrails
 

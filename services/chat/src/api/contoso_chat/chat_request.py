@@ -1,12 +1,7 @@
 import json
 import os
-from typing import Any
 
 from .search_service import get_search_service
-
-# Keep Prisma patchable in tests while avoiding import-time runtime errors
-# when the generated client is unavailable.
-Prisma: Any = None
 
 
 async def get_customer_from_postgres(customer_id: str):
@@ -14,37 +9,11 @@ async def get_customer_from_postgres(customer_id: str):
     if not customer_id:
         return None
     try:
-        global Prisma
-        if Prisma is None:
-            from prisma import Prisma as PrismaClient
+        # Imported lazily so unit tests can exercise this module without a
+        # database driver present, matching the previous client's behaviour.
+        from db import fetch_customer
 
-            Prisma = PrismaClient
-
-        db = Prisma()
-        await db.connect()
-        
-        # Try to find by ID
-        user = await db.user.find_unique(
-            where={'id': customer_id},
-            include={
-                'orders': {
-                    'include': {
-                        'items': {
-                            'include': {
-                                'product': True
-                            }
-                        }
-                    }
-                }
-            }
-        )
-        
-        await db.disconnect()
-        
-        if user:
-            return user.model_dump()
-        else:
-            return None
+        return await fetch_customer(customer_id)
     except Exception as e:
         print(f"Error retrieving customer from Postgres: {e}")
         return None

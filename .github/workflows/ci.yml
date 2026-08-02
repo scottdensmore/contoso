@@ -217,8 +217,6 @@ jobs:
       - name: Install dependencies
         run: make -C services/chat setup PYTHON_BASE=python
 
-      - name: Generate Prisma Client (Python)
-        run: make prisma-generate-chat PYTHON_BASE=python
 
       - name: Run unit tests
         run: npm run ci:chat
@@ -1003,8 +1001,6 @@ jobs:
       - name: Install chat dependencies
         run: make -C services/chat setup PYTHON_BASE=python
 
-      - name: Generate Prisma Client (Python)
-        run: make prisma-generate-chat PYTHON_BASE=python
 
       - name: Run full CI checks
         env:

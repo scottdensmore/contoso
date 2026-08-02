@@ -98,7 +98,6 @@ make local-provider-check
 make diagnose-chat-local
 make docker-init-fresh
 make prisma-generate
-make prisma-generate-chat
 make dev
 make test
 make test-scripts
@@ -201,7 +200,6 @@ Copy templates to `.env` before local development.
 - Full-profile smoke failure in CI: inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts.
 - Scheduled full-profile smoke alerts keep one open issue per alert class and auto-close when scheduled runs recover; include run URL and summary when triaging.
 - Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
-- Python Prisma client missing: run `make prisma-generate-chat`.
 - Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.
 
 ## Building and running

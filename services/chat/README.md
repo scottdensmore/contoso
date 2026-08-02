@@ -58,7 +58,6 @@ mise install
 make bootstrap
 make setup-chat
 make setup-chat-full # optional: include local LLM/vector dependencies
-make prisma-generate-chat
 npm run setup:chat
 npm run setup:chat:full # optional: include local LLM/vector dependencies
 make -C services/chat setup
