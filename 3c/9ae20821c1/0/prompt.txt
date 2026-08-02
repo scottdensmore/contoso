@@ -791,3 +791,13 @@ Lets merge all the prs in the order they need to be
 <status>failed</status>
 <summary>Background command "Run E2E smoke and products check with Next 16" failed with exit code 1</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>bnxeyvkvo</task-id>
+<tool-use-id>toolu_01BvSvoed1uoa67SYyzTPsjS</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/fa5784b2-be08-4378-9dc6-21e283daaf56/tasks/bnxeyvkvo.output</output-file>
+<status>failed</status>
+<summary>Background command "Re-run E2E and products check" failed with exit code 23</summary>
+</task-notification>
