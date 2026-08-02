@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "5b6111eaeb5b",
+  "strategy": "manual-commit",
+  "branch": "deps/next16-react19",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "Dockerfile"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5b/6111eaeb5b/0/metadata.json",
+      "transcript": "/5b/6111eaeb5b/0/full.jsonl",
+      "compact_transcript": "/5b/6111eaeb5b/0/transcript.jsonl",
+      "content_hash": "/5b/6111eaeb5b/0/content_hash.txt",
+      "prompt": "/5b/6111eaeb5b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1297,
+    "cache_creation_tokens": 1842358,
+    "cache_read_tokens": 153836389,
+    "output_tokens": 379539,
+    "api_call_count": 701
+  }
+}
