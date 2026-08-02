@@ -1,0 +1,86 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "3c9ae20821c1",
+  "session_id": "db47ca28-f071-4586-ad2f-266019892058",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-02T05:38:38.529813036Z",
+  "branch": "deps/next16-react19",
+  "checkpoints_count": 2,
+  "save_step_count": 3,
+  "files_touched": [
+    "Dockerfile",
+    "apps/web/.eslintrc.json",
+    "apps/web/eslint.config.mjs",
+    "apps/web/next-env.d.ts",
+    "apps/web/package-lock.json",
+    "apps/web/package.json",
+    "apps/web/src/app/profile/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/sidebar-wrapper.tsx",
+    "apps/web/src/lib/prisma.ts",
+    "apps/web/tsconfig.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "5a6c0de7c97d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 1237,
+    "cache_creation_tokens": 1814611,
+    "cache_read_tokens": 145093559,
+    "output_tokens": 363830,
+    "api_call_count": 669
+  },
+  "session_metrics": {
+    "turn_count": 52
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-02T05:38:37.644597704Z",
+    "agent_lines": 3322,
+    "agent_removed": 1603,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3322,
+    "total_lines_changed": 4925,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 240,
+      "user_lines_removed": 0,
+      "agent_lines_added": 3321,
+      "agent_lines_removed": 1602,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 240,
+      "user_lines_removed": 0,
+      "agent_lines_added": 3322,
+      "agent_lines_removed": 1603,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61
+      }
+    }
+  ]
+}

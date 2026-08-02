@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "3c9ae20821c1",
+  "strategy": "manual-commit",
+  "branch": "deps/next16-react19",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "Dockerfile",
+    "apps/web/.eslintrc.json",
+    "apps/web/eslint.config.mjs",
+    "apps/web/next-env.d.ts",
+    "apps/web/package-lock.json",
+    "apps/web/package.json",
+    "apps/web/src/app/profile/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/sidebar-wrapper.tsx",
+    "apps/web/src/lib/prisma.ts",
+    "apps/web/tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3c/9ae20821c1/0/metadata.json",
+      "transcript": "/3c/9ae20821c1/0/full.jsonl",
+      "compact_transcript": "/3c/9ae20821c1/0/transcript.jsonl",
+      "content_hash": "/3c/9ae20821c1/0/content_hash.txt",
+      "prompt": "/3c/9ae20821c1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1237,
+    "cache_creation_tokens": 1814611,
+    "cache_read_tokens": 145093559,
+    "output_tokens": 363830,
+    "api_call_count": 669
+  }
+}
