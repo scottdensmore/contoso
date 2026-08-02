@@ -771,3 +771,13 @@ MAIN COMPLETE</event>
 ---
 
 Lets merge all the prs in the order they need to be
+
+---
+
+<task-notification>
+<task-id>bpu08o4yx</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/fa5784b2-be08-4378-9dc6-21e283daaf56/tasks/bpu08o4yx.output</output-file>
+<status>completed</status>
+<summary>Background command "Run E2E smoke with new google deps" completed (exit code 0)</summary>
+</task-notification>
