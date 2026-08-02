@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "100e3c7edd26",
+  "strategy": "manual-commit",
+  "branch": "deps/marked-and-drop-azure-openai",
+  "checkpoints_count": 6,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/10/0e3c7edd26/0/metadata.json",
+      "transcript": "/10/0e3c7edd26/0/full.jsonl",
+      "compact_transcript": "/10/0e3c7edd26/0/transcript.jsonl",
+      "content_hash": "/10/0e3c7edd26/0/content_hash.txt",
+      "prompt": "/10/0e3c7edd26/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1386,
+    "cache_creation_tokens": 1876855,
+    "cache_read_tokens": 168356196,
+    "output_tokens": 403273,
+    "api_call_count": 749
+  }
+}
