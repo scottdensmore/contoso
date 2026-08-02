@@ -44,6 +44,20 @@ make ci
 
 When changing request/response shape, update chat service and tests in `services/chat/` as part of the same change.
 
+## Database access
+
+Prisma 7 removed `url` from the schema's `datasource` block. The connection URL
+now lives in two places, both reading `DATABASE_URL`:
+
+- `prisma.config.ts` — used by `prisma migrate` and `prisma db seed`.
+- A `PrismaPg` driver adapter passed to every `PrismaClient` constructor
+  (`src/lib/prisma.ts` and `prisma/seed.ts`). Constructing `PrismaClient`
+  without an adapter fails at runtime.
+
+The production image builds with `NEXT_BUILD_SKIP_DB=1`, so anything Next
+prerenders at build time captures the no-database response permanently. Route
+handlers that read the database must opt out of static prerendering.
+
 ## Guardrails
 
 - Keep environment usage centralized and explicit.
