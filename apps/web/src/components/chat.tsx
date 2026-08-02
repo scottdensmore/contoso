@@ -46,34 +46,26 @@ function chatReducer(state: ChatState, action: ChatAction) {
 export const Chat = () => {
   const { data: session } = useSession();
   const [showChat, setShowChat] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const [video, setVideo] = useState(false);
   const [message, setMessage] = useState("");
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  const [chatType, setChatType] = useState<ChatType>(ChatType.Grounded);
 
   const [state, dispatch] = useReducer(chatReducer, { turns: [] });
 
   const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const params = searchParams.getAll("type");
-    if (params.includes("grounded")) {
-      setShowCamera(false);
-      setChatType(ChatType.Grounded);
-    } else if (params.includes("video")) {
-      setVideo(true);
-      setShowCamera(true);
-      setChatType(ChatType.Video);
-    } else if (params.includes("visual")) {
-      setShowCamera(true);
-      setChatType(ChatType.Visual);
-    } else {
-      setShowCamera(false);
-      setChatType(ChatType.Standard);
-    }
-  }, [searchParams]);
+  // Derived from the URL rather than synced into state via an effect. These
+  // were only ever assigned here, so the effect just mirrored searchParams.
+  const typeParams = searchParams.getAll("type");
+  const chatType: ChatType = typeParams.includes("grounded")
+    ? ChatType.Grounded
+    : typeParams.includes("video")
+      ? ChatType.Video
+      : typeParams.includes("visual")
+        ? ChatType.Visual
+        : ChatType.Standard;
+  const showCamera = chatType === ChatType.Video || chatType === ChatType.Visual;
+  const video = chatType === ChatType.Video;
 
   const chatDiv = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);

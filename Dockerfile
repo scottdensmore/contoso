@@ -32,7 +32,7 @@ COPY apps/web/next.config.js ./
 COPY apps/web/tsconfig.json ./
 COPY apps/web/tailwind.config.ts ./
 COPY apps/web/postcss.config.js ./
-COPY apps/web/.eslintrc.json ./
+COPY apps/web/eslint.config.mjs ./
 COPY apps/web/prisma ./prisma
 COPY apps/web/prisma.config.ts ./prisma.config.ts
 
@@ -68,10 +68,12 @@ RUN mkdir -p /opt/migrate \
     && npm cache clean --force \
     && rm /tmp/web-package.json
 
-# The traced server bundle carries its own minimal node_modules.
+# The traced server bundle carries its own minimal node_modules, and since
+# Next 16 it also carries public/. Copying public/ separately would duplicate
+# ~730MB into a second layer, since image size sums layers rather than the
+# merged filesystem. static/ is still not included, so it stays explicit.
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
-COPY --from=builder /app/apps/web/public ./public
 
 # Tracing does not reliably pick up the generated Prisma client, which the app
 # and the seed script both import.
