@@ -40,7 +40,9 @@ function getRange(header1:string, header2:string, markdown: string[]): string {
   const start = markdown.findIndex((m) => m.startsWith(header1));
   const end = header2.length > 0 ? markdown.findIndex((m) => m.startsWith(header2)) : markdown.length - 1;
   const range = markdown.slice(start, end);
-  return marked.parse(range.join("\n"));
+  // marked >=9 types parse as string | Promise<string>; async: false selects
+  // the synchronous overload, which is what this synchronous helper returns.
+  return marked.parse(range.join("\n"), { async: false });
 }
 
 export default async function Page({
