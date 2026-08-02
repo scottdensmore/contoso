@@ -1,6 +1,5 @@
-import { Citation, Product } from "@/lib/types";
+import { ChatMessage, Citation, Product } from "@/lib/types";
 import { type NextRequest } from "next/server";
-import { ChatMessage } from "@azure/openai/rest";
 import { promises as fs } from "fs";
 
 const searchendpoint = process.env.CONTOSO_SEARCH_ENDPOINT!;
