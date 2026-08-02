@@ -851,3 +851,13 @@ PR60 COMPLETE</event>
 <status>completed</status>
 <summary>Monitor "CI on PR #60 (Next 16 cluster)" stream ended</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>bw6gomsgp</task-id>
+<tool-use-id>toolu_01LvJjDuCKESEv2YPphoEW49</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/fa5784b2-be08-4378-9dc6-21e283daaf56/tasks/bw6gomsgp.output</output-file>
+<status>failed</status>
+<summary>Background command "Re-verify after removing duplicate public copy" failed with exit code 23</summary>
+</task-notification>
