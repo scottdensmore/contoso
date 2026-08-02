@@ -8,6 +8,7 @@ import json
 import time
 import urllib.error
 import urllib.request
+from html import escape
 from typing import Any
 
 
@@ -153,6 +154,39 @@ def check_web_chat_proxy(web_url: str) -> None:
         raise RuntimeError(f"Web chat proxy response missing answer/response field: {response_payload}")
 
 
+def check_web_dynamic_page(web_url: str) -> None:
+    """Render a page with a dynamic [slug] segment.
+
+    Every other check here targets a route handler, and route handlers receive
+    no route params. That blind spot let a Next 16 upgrade ship pages that
+    404'd on every product because `params` became a Promise and was not
+    awaited, while the whole suite stayed green.
+
+    The slug is read from the API rather than hard-coded so this does not need
+    updating when seed data changes.
+    """
+    status, payload, raw = request_json("GET", f"{web_url}/api/products")
+    if status != 200:
+        raise RuntimeError(f"/api/products returned {status}: {raw[:200]}")
+    if not isinstance(payload, list) or not payload:
+        raise RuntimeError("No products returned; cannot exercise a dynamic page.")
+
+    product = payload[0]
+    slug = product.get("slug") if isinstance(product, dict) else None
+    name = product.get("name") if isinstance(product, dict) else None
+    if not slug:
+        raise RuntimeError(f"First product has no slug to request: {product}")
+
+    status, _payload, html = request_json("GET", f"{web_url}/products/{slug}", timeout=20.0)
+    if status != 200:
+        raise RuntimeError(
+            f"/products/{slug} returned {status}. A dynamic segment failed to "
+            "resolve (unawaited params render every slug as not-found)."
+        )
+    if name and name not in html and escape(name) not in html:
+        raise RuntimeError(f"/products/{slug} rendered without product name {name!r}.")
+
+
 def main() -> int:
     args = parse_args()
 
@@ -173,6 +207,12 @@ def main() -> int:
         timeout_seconds=args.timeout,
         interval_seconds=args.interval,
         check=lambda: check_web_chat_proxy(args.web_url),
+    )
+    wait_for(
+        label="web dynamic [slug] page",
+        timeout_seconds=args.timeout,
+        interval_seconds=args.interval,
+        check=lambda: check_web_dynamic_page(args.web_url),
     )
 
     print("E2E smoke passed.")
