@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "bbad7087566b",
+  "strategy": "manual-commit",
+  "branch": "docs/subagents-exist",
+  "checkpoints_count": 5,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/bb/ad7087566b/0/metadata.json",
+      "transcript": "/bb/ad7087566b/0/full.jsonl",
+      "compact_transcript": "/bb/ad7087566b/0/transcript.jsonl",
+      "content_hash": "/bb/ad7087566b/0/content_hash.txt",
+      "prompt": "/bb/ad7087566b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2171,
+    "cache_creation_tokens": 3929511,
+    "cache_read_tokens": 374598733,
+    "output_tokens": 634236,
+    "api_call_count": 1175
+  }
+}
