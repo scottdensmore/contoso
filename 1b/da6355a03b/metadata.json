@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "1bda6355a03b",
+  "strategy": "manual-commit",
+  "branch": "fix/db-startup-race",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "docker-compose.yml",
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_compose_startup_ordering.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1b/da6355a03b/0/metadata.json",
+      "transcript": "/1b/da6355a03b/0/full.jsonl",
+      "compact_transcript": "/1b/da6355a03b/0/transcript.jsonl",
+      "content_hash": "/1b/da6355a03b/0/content_hash.txt",
+      "prompt": "/1b/da6355a03b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2476,
+    "cache_creation_tokens": 4777468,
+    "cache_read_tokens": 499951912,
+    "output_tokens": 743939,
+    "api_call_count": 1340
+  }
+}
