@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "3168b6b974df",
+  "strategy": "manual-commit",
+  "branch": "fix/profile-mass-assignment",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/web/src/app/api/profile/address/route.test.ts",
+    "apps/web/src/app/api/profile/address/route.ts",
+    "apps/web/src/app/api/profile/password/route.test.ts",
+    "apps/web/src/app/api/profile/password/route.ts",
+    "apps/web/src/app/api/profile/route.test.ts",
+    "apps/web/src/app/api/profile/route.ts",
+    "apps/web/src/lib/profile-fields.test.ts",
+    "apps/web/src/lib/profile-fields.ts",
+    "apps/web/src/lib/user.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/31/68b6b974df/0/metadata.json",
+      "transcript": "/31/68b6b974df/0/full.jsonl",
+      "compact_transcript": "/31/68b6b974df/0/transcript.jsonl",
+      "content_hash": "/31/68b6b974df/0/content_hash.txt",
+      "prompt": "/31/68b6b974df/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2386,
+    "cache_creation_tokens": 4718468,
+    "cache_read_tokens": 459277134,
+    "output_tokens": 711586,
+    "api_call_count": 1291
+  }
+}

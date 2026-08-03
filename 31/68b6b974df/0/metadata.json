@@ -1,0 +1,101 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "3168b6b974df",
+  "session_id": "db47ca28-f071-4586-ad2f-266019892058",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-03T22:32:02.03193157Z",
+  "branch": "fix/profile-mass-assignment",
+  "checkpoints_count": 3,
+  "save_step_count": 4,
+  "files_touched": [
+    "apps/web/src/app/api/profile/address/route.test.ts",
+    "apps/web/src/app/api/profile/address/route.ts",
+    "apps/web/src/app/api/profile/password/route.test.ts",
+    "apps/web/src/app/api/profile/password/route.ts",
+    "apps/web/src/app/api/profile/route.test.ts",
+    "apps/web/src/app/api/profile/route.ts",
+    "apps/web/src/lib/profile-fields.test.ts",
+    "apps/web/src/lib/profile-fields.ts",
+    "apps/web/src/lib/user.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "f5cc9760b9cf",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 2386,
+    "cache_creation_tokens": 4718468,
+    "cache_read_tokens": 459277134,
+    "output_tokens": 711586,
+    "api_call_count": 1291
+  },
+  "session_metrics": {
+    "turn_count": 156
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-03T22:31:59.305020062Z",
+    "agent_lines": 207,
+    "agent_removed": 12,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 207,
+    "total_lines_changed": 219,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 113,
+      "agent_lines_removed": 10,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 143,
+      "agent_lines_removed": 12,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 207,
+      "agent_lines_removed": 12,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    }
+  ]
+}
