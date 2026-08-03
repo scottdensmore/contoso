@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PUT } from './route'
-import { updateUser, getUserById } from '@/lib/user'
+import { updateUserPassword, getUserById } from '@/lib/user'
 import { getServerSession } from 'next-auth'
 import { compare, hash } from 'bcryptjs'
 
 vi.mock('@/lib/user', () => ({
-  updateUser: vi.fn(),
+  updateUserPassword: vi.fn(),
   getUserById: vi.fn(),
 }))
 
@@ -67,7 +67,7 @@ describe('Password API', () => {
     vi.mocked(getUserById).mockResolvedValue({ password: 'hashed_old' } as any)
     vi.mocked(compare).mockResolvedValue(true as any)
     vi.mocked(hash).mockResolvedValue('hashed_new' as any)
-    vi.mocked(updateUser).mockResolvedValue({ id: 'user_1' } as any)
+    vi.mocked(updateUserPassword).mockResolvedValue({ id: 'user_1' } as any)
 
     const request = new Request('http://localhost/api/profile/password', {
       method: 'PUT',
@@ -76,6 +76,6 @@ describe('Password API', () => {
 
     const response = await PUT(request)
     expect(response.status).toBe(200)
-    expect(updateUser).toHaveBeenCalledWith('user_1', { password: 'hashed_new' })
+    expect(updateUserPassword).toHaveBeenCalledWith('user_1', 'hashed_new')
   })
 })

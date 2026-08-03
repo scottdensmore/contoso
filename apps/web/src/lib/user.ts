@@ -17,7 +17,6 @@ export interface UpdateUserInput {
   zipCode?: string
   country?: string
   phoneNumber?: string
-  password?: string // Added password here
 }
 
 export async function createUser(data: CreateUserInput) {
@@ -48,5 +47,14 @@ export async function updateUser(id: string, data: UpdateUserInput) {
   return prisma.user.update({
     where: { id },
     data,
+  })
+}
+
+// Separate from updateUser so a password can only be written through a call
+// that names it. The caller is responsible for hashing.
+export async function updateUserPassword(id: string, hashedPassword: string) {
+  return prisma.user.update({
+    where: { id },
+    data: { password: hashedPassword },
   })
 }

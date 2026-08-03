@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { updateUser, getUserById } from '@/lib/user'
+import { updateUserPassword, getUserById } from '@/lib/user'
 import { compare, hash } from 'bcryptjs'
 
 export async function PUT(request: Request) {
@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
     }
 
     const hashedPassword = await hash(newPassword, 12)
-    await updateUser(userId, { password: hashedPassword })
+    await updateUserPassword(userId, hashedPassword)
 
     return NextResponse.json({ message: 'Password updated' })
   } catch (error) {
