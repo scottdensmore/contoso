@@ -36,6 +36,9 @@ RUNTIME_PATTERNS = (
     "scripts/verify_docs.py",
     "scripts/check_agent_docs.py",
     "tests/scripts/**",
+    # Agent definitions are repo tooling. Without this they classify as
+    # "unknown", which forces runtime by accident rather than by intent.
+    ".claude/agents/**",
     "apps/web/package-lock.json",
     "apps/web/package.json",
     "services/chat/constraints.txt",

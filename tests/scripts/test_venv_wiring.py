@@ -76,5 +76,20 @@ class VenvWiringTests(unittest.TestCase):
         self.assertIn(".venv/", read(".gitignore"))
 
 
+class DocsCheckWiringTests(unittest.TestCase):
+    def test_docs_check_runs_the_agent_definition_guard(self):
+        """AGENTS.md classifies as docs, so docs-check is the only path that
+        runs for an AGENTS.md-only change. The guard reads AGENTS.md, so it has
+        to be invoked here or that drift goes unchecked."""
+        makefile = read("Makefile")
+        recipe = makefile.split("docs-check:", 1)[1].split("\n\n", 1)[0]
+        self.assertIn(
+            "test_agent_definitions.py",
+            recipe,
+            "docs-check must run the agent-definition guard; without it, "
+            "renumbering the workflow in AGENTS.md would not be caught",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
