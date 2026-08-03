@@ -127,10 +127,17 @@ Follow these steps in order for every change.
 
 ### Sub-agents this workflow depends on
 
-Steps 6 through 8 require `ui-review`, `verifier`, and `code-review`. These are
-not yet defined in this repository. Until they exist, carry out each step's
-intent directly and say which agent was unavailable, rather than skipping the
-step or reporting it as done.
+Steps 6 through 8 use `ui-review`, `verifier`, and `code-review`, defined in
+`.claude/agents/`. All three run unattended: they cannot ask a question and
+cannot modify the repository they assess.
+
+If one is unavailable — a different assistant, or a session started before the
+definitions landed — carry out that step's intent directly and say which agent
+was unavailable, rather than skipping the step or reporting it as done.
+
+`ui-review` needs a browser to satisfy step 6's rendered-journey requirement.
+Where none is installed it falls back to reviewing source and must say so; a
+review that claims viewports it never rendered is worse than none.
 
 ## Repo map
 
