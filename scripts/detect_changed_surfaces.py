@@ -39,6 +39,10 @@ RUNTIME_PATTERNS = (
     # Agent definitions are repo tooling. Without this they classify as
     # "unknown", which forces runtime by accident rather than by intent.
     ".claude/agents/**",
+    # Compose is web+chat, but the guard that protects its startup ordering
+    # lives in tests/scripts. Without this, a change dropping the healthcheck
+    # would never run that guard.
+    "docker-compose.yml",
     "apps/web/package-lock.json",
     "apps/web/package.json",
     "services/chat/constraints.txt",

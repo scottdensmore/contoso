@@ -91,6 +91,15 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 flags = detect_changed.classify([path])
                 self.assertTrue(flags["runtime"])
 
+    def test_compose_changes_are_runtime(self):
+        """docker-compose.yml already matched web and chat, so it never reached
+        the unknown fallback. Without an explicit runtime pattern, a
+        compose-only change would skip test-scripts and the startup-ordering
+        guard that protects it."""
+        flags = detect_changed.classify(["docker-compose.yml"])
+        self.assertTrue(flags["runtime"])
+        self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
+
     def test_agent_definitions_are_runtime(self):
         """Agent definitions are repo tooling, not an unclassified path.
 

@@ -4,7 +4,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
@@ -14,6 +15,20 @@ services:
   db:
     image: postgres:15
     restart: always
+    # Postgres reports "started" well before it accepts connections. Without
+    # this, dependents race the socket and fail with P1001.
+    #
+    # -h forces the probe onto TCP. Without it pg_isready checks the Unix
+    # socket, and the entrypoint runs a temporary socket-only server during
+    # first-boot initialisation to create the database. A probe landing in that
+    # window reports healthy while port 5432 is still closed, which leaves the
+    # exact race this healthcheck exists to close.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d contoso-db"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -28,6 +43,9 @@ services:
       dockerfile: services/chat/Dockerfile
       args:
         INSTALL_LOCAL_STACK: ${CHAT_INSTALL_LOCAL_STACK:-0}
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     environment:
