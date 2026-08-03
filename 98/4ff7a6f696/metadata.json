@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "984ff7a6f696",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-full-image-cpu-torch",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "services/chat/Dockerfile"
+  ],
+  "sessions": [
+    {
+      "metadata": "/98/4ff7a6f696/0/metadata.json",
+      "transcript": "/98/4ff7a6f696/0/full.jsonl",
+      "compact_transcript": "/98/4ff7a6f696/0/transcript.jsonl",
+      "content_hash": "/98/4ff7a6f696/0/content_hash.txt",
+      "prompt": "/98/4ff7a6f696/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1640,
+    "cache_creation_tokens": 2702200,
+    "cache_read_tokens": 218864754,
+    "output_tokens": 478385,
+    "api_call_count": 888
+  }
+}
