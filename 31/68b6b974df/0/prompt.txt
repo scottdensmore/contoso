@@ -2380,3 +2380,22 @@ docker compose -f docker-compose.yml -f &lt;scratch&gt;/docker-compose.e2e-overr
 `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/api/profile/password/route.test.ts`</result>
 <usage><subagent_tokens>42767</subagent_tokens><tool_uses>41</tool_uses><duration_ms>429925</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>bl0n6k6rq</task-id>
+<summary>Monitor event: "CI on PR #108"</summary>
+<event>Integration E2E Smoke: fail
+PR108 COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bl0n6k6rq</task-id>
+<tool-use-id>toolu_014cQuggN1m4zkM3wmDs2esk</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/bl0n6k6rq.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI on PR #108" stream ended</summary>
+</task-notification>
