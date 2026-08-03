@@ -240,7 +240,7 @@ jobs:
           python-version: '3.11'
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Restore lite metrics history cache
         id: restore_lite_history
@@ -469,7 +469,7 @@ jobs:
           python-version: '3.11'
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Restore full metrics history cache
         id: restore_full_history
