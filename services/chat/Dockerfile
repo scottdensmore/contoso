@@ -28,9 +28,20 @@ COPY --chown=appuser:appuser services/chat/src/api/requirements-local.txt requir
 COPY --chown=appuser:appuser services/chat/constraints.txt constraints.txt
 
 # Install core dependencies first; optionally install the heavier local stack.
+#
+# The local stack resolves torch from PyTorch's CPU-only index. The default
+# PyPI wheel drags in ~2.5GB of nvidia-* CUDA runtime plus triton, none of
+# which this image can use: there is no GPU in CI, Ollama runs outside the
+# container, and torch is only here to back sentence-transformers embeddings.
+# The local stack installs with --no-compile. PYTHONDONTWRITEBYTECODE only stops
+# runtime writes, so pip still compiled it to ~560MB of __pycache__. Skipping it
+# costs ~25s of import time on first use, which is why the core stack — the one
+# the default production image ships — keeps its bytecode.
 RUN pip install --no-cache-dir --default-timeout=300 --retries 5 -r requirements-core.txt -c constraints.txt && \
     if [ "${INSTALL_LOCAL_STACK}" = "1" ]; then \
-      pip install --no-cache-dir --default-timeout=600 --retries 3 -r requirements-local.txt -c constraints.txt; \
+      pip install --no-cache-dir --no-compile --default-timeout=600 --retries 3 \
+        --extra-index-url https://download.pytorch.org/whl/cpu \
+        -r requirements-local.txt -c constraints.txt; \
     fi
 
 # Copy application code
