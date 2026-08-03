@@ -109,7 +109,7 @@ const Video = ({ onVideoClick, onClose }: Props) => {
             </select>
             {showCamera && (
               <button
-                className="bg-white rounded-full p-2 shadow-md border-zinc-40 hover:cursor-pointer"
+                className="bg-white rounded-full p-2 shadow-md hover:cursor-pointer"
                 onClick={handleVideoClick}
                 aria-label="Take picture"
               >
@@ -117,7 +117,7 @@ const Video = ({ onVideoClick, onClose }: Props) => {
               </button>
             )}
             <button
-              className="bg-white rounded-full p-2 shadow-md border-zinc-40 hover:cursor-pointer"
+              className="bg-white rounded-full p-2 shadow-md hover:cursor-pointer"
               onClick={() => onClose()}
               aria-label="Close camera"
             >
