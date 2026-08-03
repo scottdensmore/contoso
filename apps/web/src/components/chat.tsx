@@ -310,7 +310,7 @@ export const Chat = () => {
           </div>
         )}
         <button
-          className="bg-white rounded-full p-2 shadow-lg border-zinc-40 hover:cursor-pointer"
+          className="bg-white rounded-full p-2 shadow-lg hover:cursor-pointer"
           onClick={toggleChat}
           aria-label={showChat ? "Close chat" : "Open chat"}
         >
