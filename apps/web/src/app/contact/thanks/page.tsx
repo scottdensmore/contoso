@@ -12,7 +12,7 @@ export default function ContactThanksPage() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-lg bg-white/90 backdrop-blur-sm p-12 rounded-xl shadow-2xl">
+      <div className="relative z-10 w-full max-w-lg bg-white/90 backdrop-blur-xs p-12 rounded-xl shadow-2xl">
         <ContactThanks />
       </div>
     </main>

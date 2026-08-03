@@ -17,7 +17,7 @@ export default function ContactPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl drop-shadow-md">
             Get in Touch
           </h1>
-          <p className="mt-4 text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-sm">
+          <p className="mt-4 text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-xs">
             Ready for your next adventure? Our team is here to help you gear up.
           </p>
         </div>

@@ -281,7 +281,7 @@ export const Chat = () => {
                 onKeyUp={(e) => {
                   if (e.code === "Enter") sendMessage();
                 }}
-                className="block p-2 grow rounded-md text-zinc-700 shadow-sm ring-2 ring-inset ring-zinc-300 focus:ring-zinc-300 focus:border-zinc-300"
+                className="block p-2 grow rounded-md text-zinc-700 shadow-xs ring-2 ring-inset ring-zinc-300 focus:ring-zinc-300 focus:border-zinc-300"
               />
               <button
                 className="rounded-md p-2 border-solid border-2 border-zinc-300 hover:cursor-pointer hover:bg-zinc-100"

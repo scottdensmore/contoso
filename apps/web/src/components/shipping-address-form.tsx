@@ -62,7 +62,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.name || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div className="sm:col-span-2">
@@ -74,7 +74,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.addressLine1 || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div className="sm:col-span-2">
@@ -86,7 +86,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.addressLine2 || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div>
@@ -98,7 +98,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.city || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div>
@@ -110,7 +110,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.state || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div>
@@ -122,7 +122,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.zipCode || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div>
@@ -134,7 +134,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.country || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
         <div className="sm:col-span-2">
@@ -146,7 +146,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.phoneNumber || ""}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
           />
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400"
+        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400"
       >
         {isSubmitting ? "Saving..." : "Save Address"}
       </button>

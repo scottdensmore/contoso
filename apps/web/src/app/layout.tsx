@@ -22,7 +22,7 @@ export default async function RootLayout({
       <body className="bg-zinc-50 text-zinc-900">
         <Providers>
           <div className="flex min-h-screen flex-col">
-            <main className="flex-grow">
+            <main className="grow">
 
               {children}
               <Block
