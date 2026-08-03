@@ -60,7 +60,7 @@ export default function PasswordChangeForm() {
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
         />
       </div>
       <div>
@@ -76,7 +76,7 @@ export default function PasswordChangeForm() {
           required
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
         />
       </div>
       <div>
@@ -92,7 +92,7 @@ export default function PasswordChangeForm() {
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
         />
       </div>
 
@@ -102,7 +102,7 @@ export default function PasswordChangeForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400"
+        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400"
       >
         {isSubmitting ? "Updating..." : "Update Password"}
       </button>

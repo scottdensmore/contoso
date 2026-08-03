@@ -83,14 +83,14 @@ const Video = ({ onVideoClick, onClose }: Props) => {
   };
 
   return (
-    <div className="fixed backdrop-blur-sm backdrop-brightness-50 h-full w-full z-20">
+    <div className="fixed backdrop-blur-xs backdrop-brightness-50 h-full w-full z-20">
       <div className="grid h-screen place-items-center z-50">
         <div className="bg-white rounded-lg p-4 flex flex-col shadow-lg">
           <div className="w-full flex flex-row gap-2">
             <select
               id="device"
               name="country"
-              className="grow rounded-md shadow-md ring-2 ring-zinc-200 focus:border-zinc-500 focus:ring focus:ring-zinc-200 focus:ring-opacity-50"
+              className="grow rounded-md shadow-md ring-2 ring-zinc-200 focus:border-zinc-500 focus:ring-3 focus:ring-zinc-200 focus:ring-opacity-50"
               value={selectedDevice?.deviceId}
               title="Select a device"
               onInput={(e: FormEvent<HTMLSelectElement>) =>
@@ -128,7 +128,7 @@ const Video = ({ onVideoClick, onClose }: Props) => {
             <video
               ref={videoRef}
               autoPlay={true}
-              className="rounded-lg shadow-lg aspect-auto outline-none overflow-hidden w-[640px]"
+              className="rounded-lg shadow-lg aspect-auto outline-hidden overflow-hidden w-[640px]"
               title="Camera preview"
             >
               <track kind="captions" />

@@ -52,7 +52,7 @@ export default function ContactForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-2xl space-y-6 max-w-lg w-full"
+      className="bg-white/90 backdrop-blur-xs p-8 rounded-xl shadow-2xl space-y-6 max-w-lg w-full"
     >
       <div className="space-y-2">
         <label
@@ -68,7 +68,7 @@ export default function ContactForm() {
           required
           value={formData.name}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
           placeholder="Your name"
         />
       </div>
@@ -87,7 +87,7 @@ export default function ContactForm() {
           required
           value={formData.email}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
           placeholder="you@example.com"
         />
       </div>
@@ -107,7 +107,7 @@ export default function ContactForm() {
             required
             value={formData.subject}
             onChange={handleChange}
-            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
             placeholder="How can we help?"
           />
         </div>
@@ -124,7 +124,7 @@ export default function ContactForm() {
             name="orderNumber"
             value={formData.orderNumber}
             onChange={handleChange}
-            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
             placeholder="Optional"
           />
         </div>
@@ -144,7 +144,7 @@ export default function ContactForm() {
           required
           value={formData.message}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
           placeholder="Write your message here..."
         ></textarea>
       </div>
@@ -154,7 +154,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? "Sending..." : "Send Message"}
       </button>

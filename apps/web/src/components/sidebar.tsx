@@ -17,7 +17,7 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
     <div className="fixed inset-0 z-50 flex">
       {/* Backdrop */}
       <button 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm w-full h-full border-0 p-0" 
+        className="fixed inset-0 bg-black/30 backdrop-blur-xs w-full h-full border-0 p-0" 
         onClick={onClose}
         aria-label="Close sidebar"
       />
