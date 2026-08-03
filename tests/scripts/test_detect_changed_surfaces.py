@@ -91,6 +91,29 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 flags = detect_changed.classify([path])
                 self.assertTrue(flags["runtime"])
 
+    def test_changed_files_from_range_includes_deletions(self):
+        """A deletion-only change must still classify its surface.
+
+        The diff filter previously omitted D, so removing files produced an
+        empty file list, classified as "none", and CI skipped every scoped
+        check — a deleted referenced asset or source file would have gone
+        green without the web or chat suites running.
+        """
+        with patch.object(detect_changed, "run_git", return_value="") as run_git:
+            detect_changed.changed_files_from_range(base="main", head="HEAD")
+
+        args = run_git.call_args.args[0]
+        diff_filter = next(a for a in args if a.startswith("--diff-filter="))
+        self.assertIn("D", diff_filter, "deletions must be reported as changes")
+
+    def test_deleted_web_asset_routes_to_web_checks(self):
+        flags = detect_changed.classify(
+            ["apps/web/public/images/1/abc-alt-1.jpg"],
+        )
+        self.assertTrue(flags["web"])
+        self.assertFalse(flags["none"])
+        self.assertIn("quick-ci-web", detect_changed.recommended_targets(flags))
+
     def test_changed_files_from_worktree_parses_porcelain(self):
         porcelain = "\n".join(
             [
