@@ -54,4 +54,27 @@ describe('Shipping Address API', () => {
     expect(response.status).toBe(200)
     expect(updateUser).toHaveBeenCalledWith('user_1', expect.objectContaining({ addressLine1: '123 St', city: 'City' }))
   })
+
+  it('drops password and non-profile fields from the address payload', async () => {
+    // This route took the same unfiltered body as /api/profile, and its own
+    // comment acknowledged nothing validated the fields.
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: 'user_1' } } as any)
+    vi.mocked(updateUser).mockResolvedValue({ id: 'user_1' } as any)
+
+    const request = new Request('http://localhost/api/profile/address', {
+      method: 'PUT',
+      body: JSON.stringify({
+        addressLine1: '123 St',
+        password: 'plaintext-secret',
+        email: 'attacker@example.com',
+      }),
+    })
+
+    await PUT(request)
+
+    const written = vi.mocked(updateUser).mock.calls[0][1]
+    expect(written).not.toHaveProperty('password')
+    expect(written).not.toHaveProperty('email')
+    expect(written).toEqual({ addressLine1: '123 St' })
+  })
 })
