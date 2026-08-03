@@ -1145,3 +1145,13 @@ PR70 COMPLETE</event>
 <status>completed</status>
 <summary>Background command "Rebuild with --no-compile" completed (exit code 0)</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>bte1hye6i</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/fa5784b2-be08-4378-9dc6-21e283daaf56/tasks/bte1hye6i.output</output-file>
+<status>completed</status>
+<summary>Background command "Build both profiles with split compile setting" completed (exit code 0)</summary>
+</task-notification>
