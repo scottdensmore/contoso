@@ -3,5 +3,6 @@ requests
 python-dotenv
 pytest-cov
 
-# Required by fastapi.testclient/starlette.testclient; no test imports it directly.
-httpx
+# Required by fastapi.testclient/starlette.testclient; no test imports it
+# directly. starlette >=1.0 prefers httpx2 and warns when it falls back to httpx.
+httpx2
