@@ -1,0 +1,80 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "89ca1a2242ff",
+  "session_id": "db47ca28-f071-4586-ad2f-266019892058",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-03T18:07:47.14662027Z",
+  "branch": "deps/tailwind-4",
+  "checkpoints_count": 11,
+  "save_step_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "e6d6865eec9f",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 1938,
+    "cache_creation_tokens": 3827784,
+    "cache_read_tokens": 298565257,
+    "output_tokens": 565776,
+    "api_call_count": 1050
+  },
+  "session_metrics": {
+    "turn_count": 108
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 11272,
+      "user_lines_removed": 1661,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "apps/web/package-lock.json": 1029,
+        "apps/web/package.json": 4,
+        "apps/web/postcss.config.js": 1,
+        "apps/web/src/app/contact/page.tsx": 1,
+        "apps/web/src/app/contact/thanks/page.tsx": 1,
+        "apps/web/src/app/globals.css": 21,
+        "apps/web/src/app/layout.tsx": 1,
+        "apps/web/src/app/login/page.tsx": 3,
+        "apps/web/src/app/signup/page.tsx": 4,
+        "apps/web/src/components/avatar-upload.tsx": 1,
+        "apps/web/src/components/block.tsx": 1,
+        "apps/web/src/components/chat.tsx": 1,
+        "apps/web/src/components/contact-form.tsx": 7,
+        "apps/web/src/components/contact-thanks.tsx": 1,
+        "apps/web/src/components/password-change-form.tsx": 4,
+        "apps/web/src/components/shipping-address-form.tsx": 9,
+        "apps/web/src/components/sidebar.tsx": 1,
+        "apps/web/src/components/video.tsx": 3,
+        "package-lock.json": 9939
+      },
+      "user_removed_per_file": {
+        "apps/web/package-lock.json": 1614,
+        "apps/web/package.json": 4,
+        "apps/web/postcss.config.js": 2,
+        "apps/web/src/app/contact/page.tsx": 1,
+        "apps/web/src/app/contact/thanks/page.tsx": 1,
+        "apps/web/src/app/globals.css": 3,
+        "apps/web/src/app/layout.tsx": 1,
+        "apps/web/src/app/login/page.tsx": 3,
+        "apps/web/src/app/signup/page.tsx": 4,
+        "apps/web/src/components/avatar-upload.tsx": 1,
+        "apps/web/src/components/block.tsx": 1,
+        "apps/web/src/components/chat.tsx": 1,
+        "apps/web/src/components/contact-form.tsx": 7,
+        "apps/web/src/components/contact-thanks.tsx": 1,
+        "apps/web/src/components/password-change-form.tsx": 4,
+        "apps/web/src/components/shipping-address-form.tsx": 9,
+        "apps/web/src/components/sidebar.tsx": 1,
+        "apps/web/src/components/video.tsx": 3
+      }
+    }
+  ]
+}
