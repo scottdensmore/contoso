@@ -252,7 +252,7 @@ jobs:
             e2e-metrics-lite-${{ github.ref_name }}-
 
       - name: Build web image (cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -262,7 +262,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=contoso-web
 
       - name: Build chat image (cached, minimal profile)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: services/chat/Dockerfile
@@ -481,7 +481,7 @@ jobs:
             e2e-metrics-full-${{ github.ref_name }}-
 
       - name: Build web image (cached)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
@@ -491,7 +491,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=contoso-web
 
       - name: Build chat image (cached, full profile)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: services/chat/Dockerfile
