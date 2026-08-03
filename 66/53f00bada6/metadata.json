@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "6653f00bada6",
+  "strategy": "manual-commit",
+  "branch": "docs/agent-workflow",
+  "checkpoints_count": 8,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/66/53f00bada6/0/metadata.json",
+      "transcript": "/66/53f00bada6/0/full.jsonl",
+      "compact_transcript": "/66/53f00bada6/0/transcript.jsonl",
+      "content_hash": "/66/53f00bada6/0/content_hash.txt",
+      "prompt": "/66/53f00bada6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2106,
+    "cache_creation_tokens": 3891989,
+    "cache_read_tokens": 351851664,
+    "output_tokens": 610787,
+    "api_call_count": 1140
+  }
+}
