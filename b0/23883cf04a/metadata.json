@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "b023883cf04a",
+  "strategy": "manual-commit",
+  "branch": "test/schema-drift-guard",
+  "checkpoints_count": 4,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/b0/23883cf04a/0/metadata.json",
+      "transcript": "/b0/23883cf04a/0/full.jsonl",
+      "compact_transcript": "/b0/23883cf04a/0/transcript.jsonl",
+      "content_hash": "/b0/23883cf04a/0/content_hash.txt",
+      "prompt": "/b0/23883cf04a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1661,
+    "cache_creation_tokens": 2714543,
+    "cache_read_tokens": 223686537,
+    "output_tokens": 487319,
+    "api_call_count": 899
+  }
+}
