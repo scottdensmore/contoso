@@ -35,7 +35,7 @@ jobs:
           echo "release_title=${release_title}" >> "$GITHUB_OUTPUT"
 
       - name: Create build tag and release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           TAG_NAME: ${{ steps.meta.outputs.tag_name }}
           RELEASE_TITLE: ${{ steps.meta.outputs.release_title }}
