@@ -4,12 +4,21 @@
 Policy:
 - `constraints.txt` must pin packages with exact `==` versions.
 - Every package referenced in requirement manifests must exist in `constraints.txt`.
+- Every pin in `constraints.txt` must be required by some requirement manifest.
 - Requirement manifests must use bare package names only.
 
 Versions live in exactly one place. A package pinned in both a requirement
 manifest and `constraints.txt` gives Dependabot two places to edit; it updates
 one, and `pip install -c` then fails with ResolutionImpossible before any
 check in this repo gets a chance to run.
+
+The pins and the manifests are kept in exact correspondence, in both
+directions. A pin nothing requires is inert: it constrains a version that may
+not be installed at all, while looking like the dependency is managed. That is
+how `httpx` disappeared — it was pinned here but declared in no manifest,
+arriving only as a transitive dependency of `prisma-client-py`. Removing that
+package silently dropped `httpx`, and the failure surfaced later and elsewhere,
+as `starlette` failing at test collection over `httpx2`.
 """
 
 from __future__ import annotations
@@ -81,6 +90,30 @@ def load_constraints(path: Path) -> tuple[dict[str, str], list[str]]:
     return pins, errors
 
 
+def check_unused_constraints(
+    requirement_files: tuple[Path, ...], constraints: dict[str, str]
+) -> list[str]:
+    """Flag pins that no manifest requires.
+
+    Every pin here corresponds to a directly declared package; there are no
+    transitive-only pins to allow for. A pin without a manifest entry means
+    either the manifest entry was dropped and the pin left behind, or the pin
+    was added speculatively — both make the pin inert.
+    """
+    required: set[str] = set()
+    for req_file in requirement_files:
+        for idx, raw in enumerate(req_file.read_text(encoding="utf-8").splitlines(), start=1):
+            parsed = parse_line(raw, req_file, idx)
+            if parsed is not None:
+                required.add(parsed[0])
+
+    return [
+        f"{CONSTRAINTS_FILE}: '{name}' is pinned but required by no manifest; "
+        f"add it to a requirements file or drop the pin"
+        for name in sorted(set(constraints) - required)
+    ]
+
+
 def check_requirements(requirement_files: tuple[Path, ...], constraints: dict[str, str]) -> list[str]:
     errors: list[str] = []
 
@@ -119,6 +152,7 @@ def main() -> int:
 
         constraints, errors = load_constraints(CONSTRAINTS_FILE)
         errors.extend(check_requirements(REQUIREMENT_FILES, constraints))
+        errors.extend(check_unused_constraints(REQUIREMENT_FILES, constraints))
 
         if errors:
             print("Dependency policy check failed:")
