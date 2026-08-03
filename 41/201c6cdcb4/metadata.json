@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "41201c6cdcb4",
+  "strategy": "manual-commit",
+  "branch": "fix/detect-deleted-files",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/41/201c6cdcb4/0/metadata.json",
+      "transcript": "/41/201c6cdcb4/0/full.jsonl",
+      "compact_transcript": "/41/201c6cdcb4/0/transcript.jsonl",
+      "content_hash": "/41/201c6cdcb4/0/content_hash.txt",
+      "prompt": "/41/201c6cdcb4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1809,
+    "cache_creation_tokens": 3243995,
+    "cache_read_tokens": 261679411,
+    "output_tokens": 531736,
+    "api_call_count": 979
+  }
+}
