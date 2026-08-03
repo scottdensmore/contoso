@@ -98,7 +98,11 @@ def matches_any(path: str, patterns: Iterable[str]) -> bool:
 
 
 def changed_files_from_range(base: str, head: str) -> list[str]:
-    raw = run_git(["diff", "--name-only", "--diff-filter=ACMRT", f"{base}...{head}"])
+    # D is included: a deletion changes a surface just as much as an edit.
+    # Without it a deletion-only change classified as "none" and CI skipped
+    # every scoped check, so removing a referenced asset or source file would
+    # have gone green without the web or chat suites ever running.
+    raw = run_git(["diff", "--name-only", "--diff-filter=ACMRTD", f"{base}...{head}"])
     return sorted({line.strip() for line in raw.splitlines() if line.strip()})
 
 
