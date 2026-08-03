@@ -1,21 +1,8 @@
 # Contributing to Contoso Outdoors
 
-Thank you for your interest in contributing to the Contoso Outdoors project! We follow a structured, spec-driven development process to ensure high quality and maintainability.
+Thank you for your interest in contributing to the Contoso Outdoors project!
 
-## Spec-Driven Development (Conductor)
-
-This project uses the **Conductor** framework to manage features and tasks.
-
-1.  **Tracks:** Every major feature or bug fix is a "Track".
-    - Tracks are listed in `conductor/tracks.md`.
-    - Each track has its own folder in `conductor/tracks/<track_id>/` containing:
-        - `spec.md`: Detailed functional and technical requirements.
-        - `plan.md`: Step-by-step implementation plan.
-
-2.  **Workflow:**
-    - **Pick a Track:** Choose an incomplete track from `conductor/tracks.md`.
-    - **Mark In Progress:** Update the status in `conductor/tracks.md` to `[~]`.
-    - **Follow the Plan:** Execute tasks sequentially from the track's `plan.md`.
+Work is tracked in GitHub issues and pull requests.
 
 ## Coding Standards
 
@@ -38,7 +25,7 @@ Before submitting a Pull Request, ensure:
 - [ ] All tests pass (`make test`).
 - [ ] Code coverage is sufficient.
 - [ ] No linting errors (`make lint`).
-- [ ] The code matches the `spec.md` requirements.
+- [ ] The code does what the issue it closes describes.
 
 ## Making Changes
 
@@ -62,7 +49,7 @@ If your change involves the database:
 Refer to:
 
 - `AGENTS.md` for coding agent runbooks and command conventions. It is the single source of truth for agent instructions; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
-- `conductor/` for product goals and track context.
+- `docs/` for architecture, database, deployment, and release runbooks.
 
 ### Quick Troubleshooting
 
