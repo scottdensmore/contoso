@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "e46ee979c962",
+  "strategy": "manual-commit",
+  "branch": "chore/drop-orphaned-product-images",
+  "checkpoints_count": 7,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/e4/6ee979c962/0/metadata.json",
+      "transcript": "/e4/6ee979c962/0/full.jsonl",
+      "compact_transcript": "/e4/6ee979c962/0/transcript.jsonl",
+      "content_hash": "/e4/6ee979c962/0/content_hash.txt",
+      "prompt": "/e4/6ee979c962/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1766,
+    "cache_creation_tokens": 3228430,
+    "cache_read_tokens": 250076354,
+    "output_tokens": 521833,
+    "api_call_count": 956
+  }
+}
