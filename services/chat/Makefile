@@ -91,10 +91,10 @@ deps-check: | $(VENV_PYTHON) ## Validate dependency pinning policy for chat serv
 	$(PYTHON) $(DEPS_CHECK_SCRIPT)
 
 lint: | $(VENV_PYTHON) ## Lint chat service
-	$(RUFF) check src/api tests
+	$(RUFF) check src/api tests scripts
 
 typecheck: | $(VENV_PYTHON) ## Type-check chat service
-	$(MYPY) --config-file mypy.ini src/api
+	$(MYPY) --config-file mypy.ini src/api scripts
 
 test: | $(VENV_PYTHON) ## Run chat unit tests
 	@mkdir -p $(COVERAGE_TMP_DIR)
