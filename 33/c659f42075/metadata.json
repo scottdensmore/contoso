@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "33c659f42075",
+  "strategy": "manual-commit",
+  "branch": "fix/path-matches-sibling-dir",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/33/c659f42075/0/metadata.json",
+      "transcript": "/33/c659f42075/0/full.jsonl",
+      "compact_transcript": "/33/c659f42075/0/transcript.jsonl",
+      "content_hash": "/33/c659f42075/0/content_hash.txt",
+      "prompt": "/33/c659f42075/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2913,
+    "cache_creation_tokens": 6849163,
+    "cache_read_tokens": 624257031,
+    "output_tokens": 879734,
+    "api_call_count": 1576
+  }
+}
