@@ -52,8 +52,14 @@ class PageHeadingTests(unittest.TestCase):
             missing, [], "routes render no heading element at all"
         )
 
-    def test_every_route_has_exactly_one_h1(self):
-        """More than one h1 is as unhelpful as none — it flattens the outline."""
+    def test_every_route_declares_an_h1(self):
+        """Source can only tell you an h1 exists somewhere in the file.
+
+        It cannot tell you how many render at once: a page gated on session
+        status declares one h1 per branch, and exactly one of them renders.
+        `apps/web/e2e/headings.spec.ts` asserts the "exactly one" property
+        against the rendered document, which is the only place it is knowable.
+        """
         wrong = {}
         for page in route_pages():
             name = route_name(page)
@@ -62,10 +68,9 @@ class PageHeadingTests(unittest.TestCase):
                 source = (REPO_ROOT / "apps/web" / HEADING_FROM_COMPONENT[name]).read_text(
                     encoding="utf-8"
                 )
-            count = len(H1.findall(source))
-            if count != 1:
-                wrong[name] = count
-        self.assertEqual(wrong, {}, "each route needs exactly one h1")
+            if not H1.search(source):
+                wrong[name] = 0
+        self.assertEqual(wrong, {}, "each route must declare an h1")
 
     def test_component_supplied_headings_still_exist(self):
         """Stops the allowlist above from silently excusing a real gap.
