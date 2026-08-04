@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Mapping
 from html import escape
 from typing import Any
 
@@ -60,6 +62,64 @@ def response_has_answer(payload: dict[str, Any] | None) -> bool:
         return False
     answer = payload.get("answer") or payload.get("response")
     return isinstance(answer, str) and bool(answer.strip())
+
+
+def report_notice(message: str) -> None:
+    """Surface a caveat where a reader will actually see it.
+
+    A bare print scrolls past in the raw step log, and this job only dumps
+    compose logs when it fails — so on a green run the caveat is invisible,
+    which is the state this check exists to end. The job already writes to
+    $GITHUB_STEP_SUMMARY elsewhere.
+    """
+    print(f"NOTICE: {message}")
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    # A newline in `message` would end the blockquote and render the rest as
+    # body text; the detail is an exception string, so it can contain one.
+    single_line = " ".join(message.split())
+    try:
+        with open(summary_path, "a", encoding="utf-8") as handle:
+            handle.write(f"> [!WARNING]\n> {single_line}\n\n")
+    except OSError as error:  # pragma: no cover - summary is best-effort
+        print(f"(could not write step summary: {error})")
+
+
+def degraded_reason(payload: dict[str, Any] | None) -> tuple[str, str] | None:
+    """Classify a reply that is not evidence chat works, or None if it is.
+
+    Returns (kind, detail). Both of the chat service's failure paths return
+    HTTP 200 with a populated `answer` — `mock` when the chat module could not
+    be imported at all, `fallback` when any exception was raised — so checking
+    for a non-empty answer passes identically whether chat works or is dead.
+    The service labels both, so read the label.
+
+    The two kinds need different treatment, which is the whole reason this
+    returns a kind rather than a bare string. `mock` means an import failed and
+    needs no credentials to detect; `fallback` can mean nothing worse than an
+    unconfigured datastore.
+    """
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("mock"):
+        return ("mock", "chat module could not be imported; served the mock response")
+    if payload.get("fallback"):
+        detail = payload.get("error") or "unspecified error"
+        return ("fallback", f"chat backend raised and served the fallback: {detail}")
+    return None
+
+
+def require_real_answer(env: Mapping[str, str] | None = None) -> bool:
+    """Whether a credential-dependent degradation should fail the run.
+
+    Explicit, because it cannot be inferred: the smoke process never holds
+    chat's configuration. PROJECT_ID and DISCOVERY_ENGINE_DATASTORE_ID reach
+    chat through compose substitution from .env, which the e2e-smoke target
+    does not export — and under LLM_PROVIDER=local chat needs neither.
+    """
+    env = os.environ if env is None else env
+    return env.get("E2E_REQUIRE_REAL_CHAT", "").strip().lower() in {"1", "true", "yes"}
 
 
 def dependencies_db_connected(payload: dict[str, Any] | None) -> bool:
@@ -152,6 +212,30 @@ def check_web_chat_proxy(web_url: str) -> None:
         raise RuntimeError(f"Web chat proxy returned {status}: {raw}")
     if not response_has_answer(response_payload):
         raise RuntimeError(f"Web chat proxy response missing answer/response field: {response_payload}")
+
+    degraded = degraded_reason(response_payload)
+    if degraded is None:
+        return
+    kind, detail = degraded
+
+    if kind == "mock":
+        # REAL_CHAT_AVAILABLE is decided by an import at module load, so this
+        # cannot recover and needs no credentials to detect. It is exactly the
+        # regression an undeclared dependency produces, and it is fatal
+        # everywhere including CI.
+        raise NonRetryableSmokeError(f"Chat served a mock response: {detail}")
+
+    if require_real_answer():
+        raise NonRetryableSmokeError(f"Chat failed to answer: {detail}")
+
+    # Credential-dependent, and this environment has none. Not a failure — but
+    # the run must not read as "chat works", which is what it did when the only
+    # check was a non-empty answer string.
+    report_notice(
+        f"chat did not answer for real — {detail}. This run verified transport "
+        "and status codes only. Set E2E_REQUIRE_REAL_CHAT=1 wherever chat is "
+        "expected to answer to make this a failure."
+    )
 
 
 def check_web_dynamic_page(web_url: str) -> None:

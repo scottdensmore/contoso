@@ -29,7 +29,8 @@ What it does:
 3. verifies chat database dependency health (`/health/dependencies`)
    and fails immediately if `local_provider.enabled=true` with `local_provider.ready=false`
 4. sends a web proxy request to `/api/chat/service`
-5. validates the response contract (`answer` or `response` string)
+5. validates the response contract (`answer` or `response` string) and rejects
+   the chat service's degraded replies (see below)
 6. tears down the stack (unless `KEEP_STACK=1`)
 
 Keep the stack running for manual debugging:
@@ -37,6 +38,29 @@ Keep the stack running for manual debugging:
 ```bash
 make e2e-smoke KEEP_STACK=1
 ```
+
+### Degraded chat replies
+
+Chat answers `200` with a populated `answer` on both of its failure paths, so a
+non-empty answer is not evidence that chat works. The service labels them, and
+the smoke treats the two differently:
+
+- `mock: true` means `contoso_chat` failed to import. Detecting it needs no
+  credentials, so it **always fails** the smoke — this is what catches a broken
+  image or an undeclared dependency.
+- `fallback: true` means chat raised. That is the expected outcome wherever the
+  datastore is unconfigured, including CI, so it passes with a warning in the
+  job summary rather than failing.
+
+Where chat is expected to answer for real, make the second case fail too:
+
+```bash
+make e2e-smoke E2E_REQUIRE_REAL_CHAT=1
+```
+
+Pass it on the command line as above, or export it. Putting it in `.env` has no
+effect: `.env` is read by Docker Compose for the containers, and the smoke
+script runs outside them.
 
 Enable local LLM/vector stack in chat image when needed:
 
