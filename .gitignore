@@ -21,6 +21,11 @@ next-env.d.ts
 
 # Testing / Coverage
 coverage/
+
+# Playwright run output; traces and screenshots are CI artifacts, not source.
+test-results/
+playwright-report/
+.playwright/
 .nyc_output/
 .pytest_cache/
 .coverage

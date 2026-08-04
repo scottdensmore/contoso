@@ -68,6 +68,39 @@ Enable local LLM/vector stack in chat image when needed:
 make e2e-smoke CHAT_INSTALL_LOCAL_STACK=1
 ```
 
+## End-to-end journeys
+
+`scripts/e2e_smoke.py` checks that routes respond. The Playwright journeys in
+`apps/web/e2e/` check that they *work* — a page can return 200 while every
+image on it 404s, or while no seeded account can sign in.
+
+They run against a stack that is already up, so bring one up first:
+
+```bash
+make e2e-smoke KEEP_STACK=1     # leaves db + chat + web running
+make test-e2e                    # then drive the journeys against it
+```
+
+Point them elsewhere with `E2E_BASE_URL`:
+
+```bash
+make test-e2e E2E_BASE_URL=http://127.0.0.1:3300
+```
+
+First run needs the browser:
+
+```bash
+make -C apps/web install-e2e-browsers
+```
+
+In CI they run inside `Integration E2E Smoke`, after the smoke, against the
+stack `KEEP_STACK` leaves behind. Traces and screenshots for a failed journey
+are uploaded as the `e2e-journey-artifacts` artifact.
+
+Retries are deliberately off. A retried failure is a failure that gets
+ignored; if a journey is flaky, that is a finding to chase rather than
+something to absorb.
+
 ## Profile Selection
 
 - `e2e-smoke-lite`: default for PRs and fast contract validation.
