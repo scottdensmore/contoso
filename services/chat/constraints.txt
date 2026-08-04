@@ -13,6 +13,7 @@ opentelemetry-instrumentation-fastapi==0.65b0
 opentelemetry-sdk==1.44.0
 pandas==3.0.5
 prompty==0.1.50
+pydantic==2.13.4
 pytest-cov==7.1.0
 pytest==9.1.1
 python-dotenv==1.2.2

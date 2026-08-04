@@ -10,7 +10,12 @@ requests
 # unpinned-by-default and floated 0.47 -> 1.3 on its own, breaking CI when the
 # new major changed its test-client HTTP dependency. No module imports it
 # directly.
+# pydantic is imported directly by main.py for the request/response models. It
+# arrives transitively via fastapi, but a transitive dependency is not a
+# guarantee: httpx was likewise imported-but-undeclared, came only from
+# prisma-client-py, and vanished when that package was removed.
 fastapi
+pydantic
 starlette
 uvicorn[standard]
 
