@@ -4533,3 +4533,96 @@ Untracked paths, checked only for commit hygiene as you asked: `.claude/settings
 Nothing I could not assess; no generated or binary files in this change.</result>
 <usage><subagent_tokens>41744</subagent_tokens><tool_uses>16</tool_uses><duration_ms>271872</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a7755160e75a9f9a0</task-id>
+<tool-use-id>toolu_01643q2KF6XrZJDPsHX2pjoK</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a7755160e75a9f9a0.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for chat reset fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — the fix is correct and adequately tested for its primary purpose.** One meaningful mutation-testing gap was found (see below): it does not indicate a correctness bug, but it does mean the suite is not proving one part of the fix's stated design. No blocking issues found. `quick-ci-web` (lint, `tsc --noEmit`, `vitest`) is fully green: 31 test files / 91 tests pass — matches the numbers reported to me.
+
+All investigation below was done in an isolated copy of `apps/web` under the scratchpad (`node_modules` symlinked, everything else `rsync`'d). The actual repository was never edited — confirmed by `md5sum` on `chat.tsx` before and after mutation testing.
+
+## Failures
+
+None. `make -C apps/web quick-ci` passes cleanly: `eslint .` clean, `tsc --noEmit` clean, `vitest run` → 31 files / 91 tests pass.
+
+## Flakes
+
+None observed. Not re-run for flake detection since nothing failed.
+
+## Mutation testing results (the three requested mutations)
+
+| Mutation | Result | Detail |
+|---|---|---|
+| Remove `pendingIds.current.clear()` from `reset()` | **Killed** | Both new tests fail: `drops a reply that arrives after the thread was reset` and `still delivers a reply sent after a reset` |
+| Change `settle`'s `if (!pendingIds.current.delete(pendingId)) return;` to `if (!pendingIds.current.has(pendingId)) return;` (drop the deletion, keep only the check) | **Survived — all 8 tests pass** | Real finding, see below |
+| Remove the membership check in the placeholder timer (`if (!pendingIds.current.has(pendingId)) return;` inside `showPlaceholder`) | **Killed** | `drops a reply that arrives after the thread was reset` fails (placeholder renders into the cleared thread) |
+
+**On the surviving mutation (`delete` → `has`):** I traced why no test catches it. Each `pendingId` is unique per send (`Date.now()` + random suffix), and `settle` is only ever invoked once per send (a promise settles once). `clearTimeout(timer)` already prevents that send's own placeholder timer from firing once `settle` runs, independent of `delete` vs `has`. So leaving the id in the set after settling has no effect on any other in-flight send's membership check — there's no cross-contamination possible with unique ids. The observable difference is that `pendingIds.current` would grow by one entry for every message ever sent in a session that never calls `reset()`, since nothing besides `clear()` would ever remove a settled id. That's a real but minor memory-retention concern (unbounded `Set` growth over a long-lived chat panel, which is mounted once in `src/app/layout.tsx` and persists for the app's lifetime), not a functional/correctness bug — no wrong answer or stuck placeholder results from it. The code comment ("delete reports whether this send was still wanted") frames `delete`'s return value as load-bearing, but the actual load-bearing cleanup (removing settled ids so the set doesn't grow) is untested. Worth a one-line test asserting `pendingIds.current.size` returns to 0 after a normal round trip if you want this covered, though I'd call it low priority given the ids never collide.
+
+## Fast-reply path (explicitly requested)
+
+Verified via the pre-existing `keeps the user message and shows no stuck placeholder when the reply is fast` test (unchanged by this diff, still passing) plus reading the code: `settle` calls `clearTimeout(timer)` unconditionally before checking membership, in both the old (`settled` boolean) and new (`Set`) implementations. That means a placeholder can never appear after a reply lands via the normal path — this was already true pre-fix and remains true. The `Set`-membership check in `showPlaceholder` is a defensive second layer (also present as the `settled` boolean before), not the mechanism actually preventing the fast-reply race; its real new job is reset-awareness. No regression, no behavior change on the fast-reply path — confirmed no placeholder can appear after a reply lands.
+
+## Overlapping sends (#114 regression check)
+
+Both tests — `resolves each reply into its own placeholder when two are on screen` and `...when replies arrive in order` — still pass under the fixed component and still exercise real logic: I confirmed (by reading `chatReducer`'s `resolve` case, unchanged by this diff) that id-based matching plus strict-ordering assertions still distinguish match-by-id from match-by-position/last-waiting-turn. Not affected by this change; still meaningful.
+
+## React concerns
+
+- **Stale closures:** none. `pendingIds` is a ref (`useRef&lt;Set&lt;string&gt;&gt;`), so closures created inside `sendMessage`/`showPlaceholder`/`settle` always see the live, mutable `Set` object rather than a captured snapshot — this is exactly the right tool for cross-async-boundary state that shouldn't trigger re-renders.
+- **Refs across re-renders:** `useRef(new Set())` allocates a new `Set` on every render call, but React only keeps the one from the first render; the rest are discarded/GC'd. This is a minor, harmless, common pattern (not flagged by eslint here).
+- **Set surviving unmount:** `Chat` is mounted once at `apps/web/src/app/layout.tsx:34` (root layout), so it does not unmount/remount on client-side navigation in practice — the ref living for the app's lifetime is expected, not a leak in the app-router sense. However, note a **pre-existing, unchanged-by-this-diff** gap: there is no cleanup effect that clears outstanding `setTimeout`s or aborts in-flight requests on unmount (e.g., in tests, or in an edge case like a full app teardown). This isn't introduced or worsened by this fix — I flag it only because it's adjacent, not because it's new.
+
+## Missing coverage
+
+- No test asserts that `settle` actually shrinks `pendingIds.current` (the `delete`-vs-`has` gap above) — low priority given ids can't realistically collide.
+- No test combines **two overlapping sends together with a reset** (e.g., reset while both placeholders are in flight). The implementation trivially generalizes (`clear()` empties the whole set), but this combined scenario isn't exercised directly.
+- No test exercises the reset button through an accessible query — `clickReset()` uses a raw CSS selector because the control has no role/label (tracked as #112 per the code's own comment). Not this fix's problem to solve, but it means keyboard-accessibility of the reset control remains unverified by any test.
+
+## Environment issues
+
+None encountered. Dependencies (`node_modules`, Prisma client) were already present; no install was needed. Ports 5432/3000 were not touched — `e2e-smoke` was skipped per your instruction since this is a web-only change and those ports are held by unrelated containers.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD   # empty: no commits yet, HEAD==main
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+git diff apps/web/src/components/chat.tsx
+git diff apps/web/src/components/chat.test.tsx
+make -C apps/web quick-ci        # lint + tsc --noEmit + vitest run -&gt; 31 files/91 tests pass
+
+# Isolated mutation testing (scratchpad copy, repo untouched):
+rsync -a --exclude node_modules --exclude .next apps/web/ &lt;scratch&gt;/
+ln -s apps/web/node_modules &lt;scratch&gt;/node_modules
+npx vitest run src/components/chat.test.tsx   # baseline: 8/8 pass
+# mutation 1: remove pendingIds.current.clear() from reset -&gt; 2 tests fail
+# mutation 2: settle's delete() -&gt; has() (no removal)      -&gt; 8/8 pass (survives)
+# mutation 3: remove membership check in showPlaceholder    -&gt; 1 test fails
+git show HEAD:apps/web/src/components/chat.tsx &gt; &lt;scratch&gt;/src/components/chat.tsx
+npx vitest run src/components/chat.test.tsx   # pre-fix component: 2 tests fail (confirms claim)
+md5sum apps/web/src/components/chat.tsx &lt;scratch-baseline-copy&gt;   # confirms repo file untouched
+```
+
+## Checks I did not run, and why
+
+- `make e2e-smoke` — explicitly excluded by you (ports 5432/3000 held by unrelated containers on this machine; this is a web-only change anyway).
+- `make ci` / `make quick-ci` (chat side) — out of scope; nothing under `apps/chat` changed.
+- `make docs-check` — no Markdown changed.
+- Real-browser/visual check of the reset icon or chat panel rendering — not requested and outside a non-visual verifier's reach; flagged above only as a pre-existing accessibility gap noted in the test's own comment.
+
+**Files relevant to this verification:**
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.tsx`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.test.tsx`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/layout.tsx` (confirms `Chat` mounts once at app root)</result>
+<usage><subagent_tokens>55073</subagent_tokens><tool_uses>31</tool_uses><duration_ms>403768</duration_ms></usage>
+</task-notification>
