@@ -4922,3 +4922,105 @@ Measured at 390×844 both ways: scrollWidth **476** vs clientWidth **390** (+86p
 - **Cross-browser** — only Chromium was in the Playwright cache; no Firefox or WebKit.</result>
 <usage><subagent_tokens>77630</subagent_tokens><tool_uses>52</tool_uses><duration_ms>833468</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a15defd54dec1fcad</task-id>
+<tool-use-id>toolu_01T5zWH88xGtszMGMibWcAvL</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a15defd54dec1fcad.output</output-file>
+<status>completed</status>
+<summary>Agent "targeted browser check of two fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Verdict: Rendered review completed.** Chromium (Playwright 1.62.1, cached `chromium-1228`) drove a real Next dev server for every number below. Viewports exercised: 390×844, 640×800, 639/660/697/698/746×800, 1440×900.
+
+One environment note that cost time and is worth recording: **Next 16 silently blocks cross-origin dev resources from `127.0.0.1`**, so pages served fine (HTTP 200, correct DOM) but never hydrated — the launcher had no React fiber and clicks did nothing. Driving `http://localhost:3100` instead fixed it. A smoke test asserting DOM text or status would pass against that completely dead page.
+
+---
+
+## 1. Viewport band 639–746px — PASS, no clipping anywhere
+
+Chat open, panel `getBoundingClientRect()`:
+
+| viewport | x | width | right | client width | clips left | clips right | h-scroll |
+|---|---|---|---|---|---|---|---|
+| 639 | **16** | 607 | 623 | 639 | no | no | no |
+| 640 | **64** | 528 | 592 | 640 | no | no | no |
+| 660 | **64** | 548 | 612 | 660 | no | no | no |
+| 697 | **64** | 585 | 649 | 697 | no | no | no |
+| 698 | **64** | 586 | 650 | 698 | no | no | no |
+| 746 | **64** | 634 | 698 | 746 | no | no | no |
+
+Exactly your prediction: `x &gt;= 16` below 640, `x == 64` at and above. The 660px case that previously computed to `left:-16` now sits at `x:64, width:548`. Screenshots: `t1-open-{639,640,660,697,698,746}x800.png` in the scratchpad.
+
+**Caveat I did not measure:** headless Chromium used overlay scrollbars here (`innerWidth == clientWidth` at all six widths), so `100vw` equalled the layout width. On a desktop browser with classic scrollbars `100vw` is ~15px wider than the layout viewport, which would shift the panel left by that amount (x ≈ 49 at 640px). That is still far from clipping, so the fix holds — but the measured 64 is the best case, not the worst.
+
+## 2. Long-token overflow (your finding B) — FIXED
+
+390×844, 73-char unbroken user URL, 95-char unbroken token in a stubbed assistant reply:
+
+| | x | width | right | scrollWidth/clientWidth |
+|---|---|---|---|---|
+| panel | 16 | 358 | 374 | — |
+| log | 16 | 358 | 374 | **358 / 358 (no h-scroll)** |
+| user bubble | 56 | 282 | 338 | 282 / 282 |
+| assistant bubble | 52 | 282 | 334 | 282 / 282 |
+
+User bubble right edge is **36px inside** the panel (was +272px past it). Assistant bubble is 40px inside. The log's horizontal scroll is gone. Both bubbles wrap mid-token — confirmed visually in `t2-longtoken-390x844.png`.
+
+## 3. Regression battery — all prior checks still pass, one new defect
+
+Passing at both 390×844 and 1440×900:
+- **Panel box** — 390×844: `x:16 y:28 w:358 h:748`, fully inside viewport. 1440×900: `x:742 y:12 w:650 h:788`, fully inside.
+- **Focus on open** → `input#chat` (aria-label "Message"). **On close** → `button[aria-label="Open chat"]`. Both viewports.
+- **Reset race re-run** — reset at **+50 / +150 / +300** ms (and +800ms control): **greetings = 1** in every case, total bubbles = 1. The `clearTimeout` in `reset` fixes it. Focus lands on the input after reset. The earlier failing evidence for this exact case is still in the scratchpad (`t2-double-greeting-{50,150,300}.png`) and no longer reproduces.
+- **Escape with nav drawer up** — drawer open, focus on "Open menu", Escape → chat **stays open** (drawer also stays open; that is the sidebar's own behaviour, unrelated to this change).
+- **(a) Click transcript then Escape** — clicking the log moves focus to the panel (`role=dialog`), Escape **closes the chat** and returns focus to the launcher. Works.
+- **(b) Panel not in the tab order** — confirmed. Walking Tab from a deterministic start: chat closed = 24 app stops; chat open = 27, i.e. **exactly +3**, all of them the panel's own controls (Clear conversation → Message → Send message), inserted before the launcher. The panel element itself never receives a Tab stop. Tabbing from the focused panel goes to "Clear conversation"; Shift+Tab leaves to the page. `tabIndex={-1}` behaves as intended.
+
+I cannot say "unchanged from the last pass" from my own record — this session has no memory of the earlier runs, so the absolute counts above are what I can attest to.
+
+---
+
+### Finding 1 (High) — duplicate greeting survives on close-then-reopen inside the 400ms window
+
+`reset` now cancels the pending timer, but `toggleChat`'s **close** path does not. Close and reopen before the timer fires and you get two greetings.
+
+| close at | reopen at | greetings |
+|---|---|---|
+| +50ms | +100ms | **2** |
+| +100ms | +200ms | **2** |
+| +150ms | +300ms | **2** |
+| +200ms | +350ms | **2** |
+| +300ms | +380ms | **2** |
+| +450ms | +600ms | 1 |
+| +100ms | +600ms | 1 |
+
+Evidence: `bug-double-greeting-390x844.png` (two identical "Hi there, how can I be helpful today?" bubbles).
+
+Mechanism, in `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.tsx`: the open branch guards on `state.turns.length === 0`, but a timer scheduled by the first open has not committed its dispatch yet, so the reopen still sees length 0 and schedules a second timer. Both fire. This is the same class of bug the reset fix addressed, one door over — an impatient tap-tap-tap on the launcher is a very ordinary mobile gesture.
+
+Suggested fix: clear `greetingTimer.current` in the close branch of `toggleChat` too, or (more robustly) guard on a `hasGreeted` ref rather than on reducer state the pending timer has not yet written.
+
+### Finding 2 (Medium) — `role="dialog"` without `aria-modal` or focus containment
+
+The panel announces itself as a dialog, but content behind it stays in the tab order: Shift+Tab from the panel lands on a product link underneath, and Tab past "Close chat" wraps into the page. At 390×844 the panel covers 358 of 390px width and 748 of 844px height, so a keyboard or screen-reader user reaches links they cannot see. `role="dialog"` is introduced by this change, so this is a new promise the implementation does not keep. Either add `aria-modal="true"` with a focus trap and inert background, or drop `role="dialog"` in favour of a labelled non-modal region — the widget is genuinely non-modal (the launcher stays visible), so the second is likely the smaller change. Escape does provide an escape hatch, which is why this is Medium and not High.
+
+### Finding 3 (Low, pre-existing, not yours) — home page overflows horizontally at 390px
+
+`document.scrollWidth` 476 vs `clientWidth` 390 — 86px of overflow from the product grid (`TrailLite Daypack`, `TrekStar Hiking Sandals`, `Adventure Dining Table` cards extend past the viewport). Identical with the chat closed and open, and **zero** overflowing elements inside the panel, so this is not caused by this change. Flagging only so it is not misattributed to the chat work.
+
+---
+
+### Checks I did not perform this pass, and why
+
+- **Contrast (WCAG AA)** — not re-measured; you scoped this pass to the three items above and contrast was covered previously. Not verified by me in this session.
+- **Loading and error states** — my stub delayed 300ms so the waiting spinner did render, but I measured after it resolved and did not capture or assess it, and I did not exercise the transport-error path. Prior-pass artefacts (`state-loading.png`, `state-error.png`) exist in the scratchpad but are not mine to attest to.
+- **834×1112 tablet** — not run as a separate viewport; the 640–746 band brackets the tablet-adjacent widths and all measured clean.
+- **Semantics/headings audit** — out of scope for this narrow pass.
+
+### Repository state
+
+Unmodified. `git status --short` matches the pre-review snapshot exactly (same three modified files, same untracked entries), branch still `fix/chat-panel-mobile-a11y`. `next dev` did rewrite `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`; it has been restored from a byte-for-byte backup. The scratch stack (db on 55433, Next on 3100) is torn down along with its volume; the travel-app containers on 5432 were never touched and are still running.</result>
+<usage><subagent_tokens>71846</subagent_tokens><tool_uses>47</tool_uses><duration_ms>852699</duration_ms></usage>
+</task-notification>
