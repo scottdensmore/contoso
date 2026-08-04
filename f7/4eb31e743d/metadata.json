@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "f74eb31e743d",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-undeclared-deps",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "services/chat/constraints.txt",
+    "services/chat/src/api/requirements-core.txt",
+    "services/chat/src/api/tracing.py",
+    "services/chat/tests/unit/test_tracing.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f7/4eb31e743d/0/metadata.json",
+      "transcript": "/f7/4eb31e743d/0/full.jsonl",
+      "compact_transcript": "/f7/4eb31e743d/0/transcript.jsonl",
+      "content_hash": "/f7/4eb31e743d/0/content_hash.txt",
+      "prompt": "/f7/4eb31e743d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2837,
+    "cache_creation_tokens": 6788976,
+    "cache_read_tokens": 618942510,
+    "output_tokens": 853520,
+    "api_call_count": 1535
+  }
+}
