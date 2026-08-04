@@ -24,7 +24,6 @@ as `starlette` failing at test collection over `httpx2`.
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
 REQUIREMENT_FILES = (

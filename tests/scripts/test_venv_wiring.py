@@ -91,5 +91,46 @@ class DocsCheckWiringTests(unittest.TestCase):
         )
 
 
+class ChatLintScopeTests(unittest.TestCase):
+    """Every Python directory in the chat service must be linted and typed.
+
+    `scripts/` sat outside both targets, so `check_dependency_policy.py` — the
+    guard for the service's whole dependency policy — was held to a lower
+    standard than the code it guards, and an unused import survived on main.
+    """
+
+    SKIP = {".venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+
+    def python_dirs(self) -> set[str]:
+        """Derived from disk, so a new directory is covered without editing this."""
+        chat = REPO_ROOT / "services/chat"
+        return {
+            path.relative_to(chat).parts[0]
+            for path in chat.rglob("*.py")
+            if not self.SKIP & set(path.parts)
+        }
+
+    def recipe(self, target: str) -> str:
+        makefile = read("services/chat/Makefile")
+        return makefile.split(f"\n{target}:", 1)[1].split("\n\n", 1)[0]
+
+    def test_every_python_directory_is_discovered(self):
+        """Without this the two tests below pass vacuously on an empty set."""
+        found = self.python_dirs()
+        self.assertIn("scripts", found)
+        self.assertIn("src", found)
+        self.assertGreaterEqual(len(found), 3)
+
+    def test_lint_covers_every_python_directory(self):
+        recipe = self.recipe("lint")
+        for directory in sorted(self.python_dirs()):
+            with self.subTest(directory=directory):
+                self.assertIn(directory, recipe)
+
+    def test_typecheck_covers_scripts(self):
+        """`tests/` is deliberately excluded — mypy runs on shipped code only."""
+        self.assertIn("scripts", self.recipe("typecheck"))
+
+
 if __name__ == "__main__":
     unittest.main()
