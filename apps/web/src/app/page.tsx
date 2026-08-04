@@ -54,11 +54,15 @@ export default async function Home() {
           >
             {category.description}
           </div>
-          <div className="flex flex-row place-content-between gap-4 mt-4">
+          <div
+            className="grid grid-cols-2 gap-4 mt-4
+                       sm:grid-cols-[repeat(3,minmax(0,350px))] sm:justify-between"
+          >
             {category.products.map((product, j) => (
               <a
                 key={j}
                 href={`/products/${product.slug}`}
+                className="w-full max-w-[350px]"
               >
                 <div className="items-center">
                   <Image
@@ -66,9 +70,15 @@ export default async function Home() {
                     alt={product.name}
                     width={350}
                     height={350}
-                    className="rounded-3xl"
+                    // The box is fluid now, so the srcset has to be told about
+                    // it — keyed to the fixed 350px it serves a 384px asset
+                    // into a 175px slot on a phone.
+                    sizes="(min-width: 640px) 350px, 45vw"
+                    // w-full so the image scales into its column: at its
+                    // intrinsic 350px it overflows one instead.
+                    className="rounded-3xl w-full h-auto"
                   />
-                  <div className="text-center mt-2 text-2xl font-semibold">
+                  <div className="text-center mt-2 text-base sm:text-xl md:text-2xl font-semibold break-words">
                     {product.name}
                   </div>
                 </div>
