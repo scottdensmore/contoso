@@ -2,15 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { Chat } from './chat'
 
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(''),
-}))
-
 vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { user: { name: 'Ada' } } }),
 }))
-
-vi.mock('./video', () => ({ __esModule: true, default: () => null }))
 
 // jsdom does not implement scrollTo; the component calls it after each turn.
 beforeEach(() => {
@@ -20,8 +14,6 @@ beforeEach(() => {
 const sendChatMessage = vi.fn()
 vi.mock('@/lib/messaging', () => ({
   sendChatMessage: (...args: unknown[]) => sendChatMessage(...args),
-  sendVisualMessage: vi.fn(),
-  sendGroundedMessage: vi.fn(),
 }))
 
 function openChatAndSend(text: string) {
@@ -48,7 +40,6 @@ describe('Chat placeholder timing', () => {
       status: 'done',
       type: 'assistant',
       avatar: '',
-      image: null,
     })
 
     render(<Chat />)
@@ -74,28 +65,33 @@ describe('Chat placeholder timing', () => {
       }),
     )
 
-    render(<Chat />)
-    openChatAndSend('recommend a tent')
+    // Fake timers so the 400ms delay is advanced deterministically. With real
+    // timers this raced a wall-clock waitFor and flaked under load.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChatAndSend('recommend a tent')
 
-    await waitFor(
-      () => expect(screen.getByText('Let me see what I can find...')).toBeDefined(),
-      { timeout: 1500 },
-    )
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(screen.getByText('Let me see what I can find...')).toBeDefined()
 
-    resolveReply({
-      name: 'Jane Doe',
-      message: 'A slow but complete answer.',
-      status: 'done',
-      type: 'assistant',
-      avatar: '',
-      image: null,
-    })
+      resolveReply({
+        name: 'Jane Doe',
+        message: 'A slow but complete answer.',
+        status: 'done',
+        type: 'assistant',
+        avatar: '',
+      })
 
-    await waitFor(() =>
-      expect(screen.getByText('A slow but complete answer.')).toBeDefined(),
-    )
-    expect(screen.queryByText('Let me see what I can find...')).toBeNull()
-    expect(screen.getByText('recommend a tent')).toBeDefined()
+      await act(async () => {})
+      expect(screen.getByText('A slow but complete answer.')).toBeDefined()
+      expect(screen.queryByText('Let me see what I can find...')).toBeNull()
+      expect(screen.getByText('recommend a tent')).toBeDefined()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('does not let a second send destroy the first answer', async () => {
@@ -116,11 +112,11 @@ describe('Chat placeholder timing', () => {
     // resolve in order; each must land on its own placeholder
     replies[0]({
       name: 'Jane Doe', message: 'ANSWER ONE', status: 'done',
-      type: 'assistant', avatar: '', image: null,
+      type: 'assistant', avatar: '',
     })
     replies[1]({
       name: 'Jane Doe', message: 'ANSWER TWO', status: 'done',
-      type: 'assistant', avatar: '', image: null,
+      type: 'assistant', avatar: '',
     })
 
     await waitFor(() => expect(screen.getByText('ANSWER TWO')).toBeDefined())
@@ -130,8 +126,8 @@ describe('Chat placeholder timing', () => {
   })
 
   it('shows an error instead of spinning forever when the request rejects', async () => {
-    // sendGroundedMessage has no try/catch, so it can reject. settle was
-    // attached only via .then, leaving the placeholder in place indefinitely.
+    // A rejected request must not leave the placeholder in place indefinitely;
+    // settle was originally attached only via .then.
     sendChatMessage.mockRejectedValue(new Error('network down'))
 
     render(<Chat />)
@@ -172,7 +168,7 @@ describe('Chat placeholder timing', () => {
       await act(async () => {
         replies[1]({
           name: 'Jane Doe', message: 'ANSWER TWO', status: 'done',
-          type: 'assistant', avatar: '', image: null,
+          type: 'assistant', avatar: '',
         })
       })
 
@@ -183,7 +179,7 @@ describe('Chat placeholder timing', () => {
       await act(async () => {
         replies[0]({
           name: 'Jane Doe', message: 'ANSWER ONE', status: 'done',
-          type: 'assistant', avatar: '', image: null,
+          type: 'assistant', avatar: '',
         })
       })
 
@@ -240,7 +236,7 @@ describe('Chat placeholder timing', () => {
         await act(async () => {
           replies[index]({
             name: 'Jane Doe', message, status: 'done',
-            type: 'assistant', avatar: '', image: null,
+            type: 'assistant', avatar: '',
           })
         })
       }

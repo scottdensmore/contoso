@@ -39,7 +39,7 @@ make ci
 
 ## Chat integration touchpoints
 
-- Web proxy routes: `src/app/api/chat/service/route.ts`, `src/app/api/chat/visual/route.ts`
+- Web proxy route: `src/app/api/chat/service/route.ts`
 - Web chat client: `src/lib/messaging.ts`
 
 When changing request/response shape, update chat service and tests in `services/chat/` as part of the same change.

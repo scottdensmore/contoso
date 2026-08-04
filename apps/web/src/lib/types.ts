@@ -5,17 +5,9 @@ export interface ChatTurn {
   id?: string;
   name: string;
   avatar: string;
-  image: string | null;
   message: string;
   status: "waiting" | "done";
   type: "user" | "assistant";
-};
-
-export enum ChatType {
-  Grounded,
-  Visual,
-  Video,
-  Standard
 };
 
 export interface Product {
@@ -35,26 +27,4 @@ export interface ProductGroup {
     slug: string;
     description: string;
     products: Product[];
-};
-
-export interface Citation {
-  index: number;
-  productId: number;
-  slug: string;
-  chunk: string;
-  manual: string;
-  replace: string;
-};
-
-export interface GroundedMessage {
-  message: string;
-  citations: Citation[];
-};
-
-// Chat messages forwarded verbatim to the Azure OpenAI extensions endpoint.
-// Declared here rather than imported from @azure/openai: that package was a
-// dependency solely for this type, and the route calls Azure over fetch.
-export interface ChatMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
 };

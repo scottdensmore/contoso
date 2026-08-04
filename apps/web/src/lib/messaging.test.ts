@@ -6,7 +6,6 @@ describe("sendChatMessage", () => {
   const turn: ChatTurn = {
     name: "Guest",
     avatar: "",
-    image: null,
     message: "Recommend a tent",
     status: "done",
     type: "user",

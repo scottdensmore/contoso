@@ -5,19 +5,12 @@ import {
   ChatBubbleLeftRightIcon,
   XMarkIcon,
   PaperAirplaneIcon,
-  CameraIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import Turn from "./turn";
-import { ChatTurn, ChatType } from "@/lib/types";
-import { useSearchParams } from "next/navigation";
+import { ChatTurn } from "@/lib/types";
 import { useSession } from "next-auth/react";
-import Video from "./video";
-import {
-  sendGroundedMessage,
-  sendChatMessage,
-  sendVisualMessage,
-} from "@/lib/messaging";
+import { sendChatMessage } from "@/lib/messaging";
 
 interface ChatAction {
   type: "add" | "clear" | "resolve";
@@ -53,29 +46,11 @@ function chatReducer(state: ChatState, action: ChatAction) {
 export const Chat = () => {
   const { data: session } = useSession();
   const [showChat, setShowChat] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
   const [message, setMessage] = useState("");
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   const [state, dispatch] = useReducer(chatReducer, { turns: [] });
 
-  const searchParams = useSearchParams();
-
-  // Derived from the URL rather than synced into state via an effect. These
-  // were only ever assigned here, so the effect just mirrored searchParams.
-  const typeParams = searchParams.getAll("type");
-  const chatType: ChatType = typeParams.includes("grounded")
-    ? ChatType.Grounded
-    : typeParams.includes("video")
-      ? ChatType.Video
-      : typeParams.includes("visual")
-        ? ChatType.Visual
-        : ChatType.Standard;
-  const showCamera = chatType === ChatType.Video || chatType === ChatType.Visual;
-  const video = chatType === ChatType.Video;
-
   const chatDiv = useRef<HTMLDivElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const scrollChat = () => {
     setTimeout(() => {
@@ -90,67 +65,11 @@ export const Chat = () => {
 
   useEffect(() => {
     scrollChat();
-  }, [state.turns.length, currentImage]);
-
-  const activateFileInput = () => {
-    if (fileInput.current) {
-      fileInput.current.click();
-    }
-  };
-
-  const getImage = () => {
-    if (video) {
-      // ask for camera access
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((_stream) => {
-          // show camera
-          setShowVideo(true);
-        })
-        .catch((err) => {
-          console.error(err);
-          if (
-            err.name == "NotAllowedError" ||
-            err.name == "PermissionDeniedError"
-          ) {
-            alert("Please allow camera access to use this feature.");
-          } else {
-            setShowVideo(true);
-          }
-        });
-    } else {
-      activateFileInput();
-    }
-  };
-
-  const readFile = (file: File): Promise<string | null> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (!e.target) return resolve(null);
-        if (typeof e.target?.result === "string")
-          return resolve(e.target?.result);
-        else return resolve(null);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
+  }, [state.turns.length]);
 
   const reset = () => {
-    setCurrentImage(null);
     setMessage("");
     dispatch({ type: "clear" });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    readFile(file!).then((data) => {
-      if (!data) return;
-      setCurrentImage(data);
-      e.target.value = "";
-    });
   };
 
   const sendMessage = () => {
@@ -164,7 +83,6 @@ export const Chat = () => {
       status: "done",
       type: "user",
       avatar: userAvatar,
-      image: currentImage,
     };
 
     // Each send owns a placeholder identified by id. Positional replacement
@@ -186,7 +104,6 @@ export const Chat = () => {
             status: "waiting",
             type: "assistant",
             avatar: "",
-            image: null,
           },
         });
       }, 400);
@@ -197,9 +114,8 @@ export const Chat = () => {
       dispatch({ type: "resolve", id: pendingId, payload: responseTurn });
     };
 
-    // Only sendChatMessage and sendVisualMessage resolve with an error turn.
-    // sendGroundedMessage can reject, which would otherwise leave the
-    // placeholder spinning with no message and an unhandled rejection.
+    // sendChatMessage resolves with an error turn rather than rejecting, but a
+    // rejection would otherwise leave the placeholder spinning with no message.
     const settleWithError =
       (timer: ReturnType<typeof setTimeout>) => (error: unknown) => {
         console.error("Chat request failed:", error);
@@ -210,7 +126,6 @@ export const Chat = () => {
           status: "done",
           type: "assistant",
           avatar: "",
-          image: null,
         });
       };
 
@@ -219,25 +134,11 @@ export const Chat = () => {
       request.then(settle(timer)).catch(settleWithError(timer));
     };
 
-    if (chatType === ChatType.Grounded) {
-      // using "Add Your Data"
-      if (message === "") return;
-      dispatch({ type: "add", payload: newTurn });
-      send(sendGroundedMessage(newTurn));
-    } else if (chatType === ChatType.Visual || chatType === ChatType.Video) {
-      // visual prompt flow
-      if (message === "" && !currentImage) return;
-      dispatch({ type: "add", payload: newTurn });
-      send(sendVisualMessage(newTurn, customerId));
-    } else {
-      // standard prompt flow
-      if (message === "") return;
-      dispatch({ type: "add", payload: newTurn });
-      send(sendChatMessage(newTurn, customerId));
-    }
+    if (message === "") return;
+    dispatch({ type: "add", payload: newTurn });
+    send(sendChatMessage(newTurn, customerId));
 
     setMessage("");
-    setCurrentImage(null);
   };
 
   const toggleChat = () => {
@@ -255,7 +156,6 @@ export const Chat = () => {
               status: "done",
               type: "assistant",
               avatar: "",
-              image: null,
             },
           });
         }, 400);
@@ -263,20 +163,11 @@ export const Chat = () => {
     }
   };
 
-  const onVideoClick = (dataUrl: string): void => {
-    setCurrentImage(dataUrl);
-    setShowVideo(false);
-  };
-
-  const onVideoClose = (): void => {
-    setShowVideo(false);
-  };
-
   return (
     <>
       <div className="fixed bottom-0 right-0 mr-12 mb-12 z-10 flex flex-col items-end ">
         {showChat && (
-          <div className="mb-3 h-[calc(100vh-7rem)] shadow-md bg-white rounded-lg w-[650px]  flex flex-col">
+          <div className="mb-3 h-[calc(100vh-7rem)] shadow-md bg-white rounded-lg w-[650px] flex flex-col">
             <div className="text-right p-2 flex flex-col">
               <ArrowPathIcon className="w-5 stroke-zinc-500" onClick={reset} />
             </div>
@@ -287,26 +178,10 @@ export const Chat = () => {
             >
               <div className="flex flex-col gap-4">
                 {state.turns.map((turn, i) => (
-                  <Turn key={i} turn={turn} type={chatType} />
+                  <Turn key={i} turn={turn} />
                 ))}
               </div>
             </div>
-            {/* image section */}
-            {currentImage && (
-              <div className="pt-3 pl-3 pr-3">
-                <button
-                  className="w-full h-full p-0 border-0 bg-transparent hover:cursor-pointer"
-                  onClick={() => setCurrentImage(null)}
-                  aria-label="Remove current image"
-                >
-                  <img
-                    src={currentImage}
-                    className="object-contain w-full h-full rounded-xl"
-                    alt="Current upload preview"
-                  />
-                </button>
-              </div>
-            )}
             {/* chat input section */}
             <div className="p-3 flex gap-3">
               <input
@@ -326,23 +201,6 @@ export const Chat = () => {
               >
                 <PaperAirplaneIcon className="w-6 stroke-zinc-500" />
               </button>
-              {showCamera && (
-                <>
-                  <button
-                    className="rounded-md p-2 border-solid border-2 border-zinc-300 hover:cursor-pointer hover:bg-zinc-100"
-                    onClick={getImage}
-                  >
-                    <CameraIcon className="w-6 stroke-zinc-500" />
-                  </button>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    ref={fileInput}
-                    onChange={handleFileChange}
-                  />
-                </>
-              )}
             </div>
           </div>
         )}
@@ -358,9 +216,6 @@ export const Chat = () => {
           )}
         </button>
       </div>
-      {showVideo && (
-        <Video onVideoClick={onVideoClick} onClose={onVideoClose} />
-      )}
     </>
   );
 };

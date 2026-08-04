@@ -14,13 +14,10 @@ type CategoryProductCard = {
 
 export default async function CategoryPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
   const category = await getProductsByCategory(slug);
 
   if (!category) {
@@ -44,11 +41,7 @@ export default async function CategoryPage({
           {category.products.map((product: CategoryProductCard) => (
             <a
               key={product.id}
-              href={`/products/${product.slug}${
-                resolvedSearchParams?.type
-                  ? "?type=" + resolvedSearchParams.type
-                  : ""
-              }`}
+              href={`/products/${product.slug}`}
               className="group"
             >
               <div className="aspect-square w-full overflow-hidden rounded-3xl bg-gray-200">
