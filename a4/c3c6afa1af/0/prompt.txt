@@ -5431,3 +5431,80 @@ The old/new comparison was measured, not inferred: both configurations emit the 
 Accessibility, contrast, heading order, keyboard, focus, loading/empty/error states, and the hero — excluded by your instruction; unchanged by this diff or tracked in #130. `/api/categories` returned 500 as expected and is irrelevant here, since the home page reads `public/categories.json` off disk. Measurements were taken against `next dev` rather than a production build; `sizes`/`srcset` come from the same `next/image` render path in both, but I did not separately confirm against `next build`.</result>
 <usage><subagent_tokens>60059</subagent_tokens><tool_uses>36</tool_uses><duration_ms>631396</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a313de6cb78503adb</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a313de6cb78503adb.output</output-file>
+<status>completed</status>
+<summary>Agent "confirm 640-767 band" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed.** Headless Chromium 149.0.7827.55 (Playwright cache build) against a live `next dev` on port 3211, backed by a freshly migrated and seeded Postgres on 55432 (scratch compose project `contoso-uireview`). Everything torn down; `apps/web/next-env.d.ts` restored to its committed form; working tree clean apart from the pre-existing untracked files.
+
+One note before the answers: while the sweep was running, the fix was committed as `072e1c6 fix(web): stop the home product grid scrolling sideways on a phone`. I verified the served markup carried `text-center mt-2 text-base sm:text-xl md:text-2xl font-semibold break-words` and that `git show HEAD:apps/web/src/app/page.tsx` is byte-identical to what I rendered, so the measurements below are against the committed code, not a stale build.
+
+## 1. Mid-word breaks, 320 → 1600
+
+**Zero.** 1281 widths swept at 1px granularity, every product name on the home page checked at every width, line boxes recovered per character via `Range.getClientRects()` and a break flagged whenever a line ends and the next begins with no whitespace or hyphen at the boundary.
+
+```
+totalWidths: 1281
+widthsWithMidwordBreak: 0
+```
+
+The probe found name divs at all 1281 widths, so this is a real zero and not an empty selector.
+
+`MountainDream Sleeping Bag` at the widths that failed in pass 3 now wraps at the space:
+
+| width | font | line boxes | track |
+|---|---|---|---|
+| 639 | 16px | single line | — |
+| 640 | 20px | `MountainDream ` / `Sleeping Bag` | 194.7px |
+| 644 | 20px | `MountainDream ` / `Sleeping Bag` | 196.0px |
+| 648 | 20px | `MountainDream ` / `Sleeping Bag` | 197.3px |
+| 768 | 24px | `MountainDream ` / `Sleeping Bag` | 237.3px |
+
+I also measured worst-case headroom directly — widest single word per name, rendered in a hidden span at the div's own computed font, against the div's content width, at every width:
+
+- 16px step, tightest at **320**: word 131.64px into 140.00px — **8.36px** spare (this is the global minimum)
+- 20px step, tightest at **640**: word 164.55px into 194.67px — **30.13px** spare
+- 24px step, tightest at **768**: word 197.45px into 237.33px — **39.88px** spare
+
+Your arithmetic was right to within rounding (you predicted 30 and 40). Negative-headroom widths: 0.
+
+Worth flagging as the remaining thin spot, not a defect: 8.36px at 320 is the narrowest margin anywhere in the sweep, and it is on the 2-column phone layout, not the 3-column one. A product name one character longer than `MountainDream` (roughly 14+ characters at 16px/600) would break mid-word at 320. `break-words` means it degrades to a clean mid-word split rather than an overflow, so it is a legibility question rather than a layout one — but if catalogue names can grow, that is where it will show first.
+
+## 2. Font-size steps
+
+Exactly as intended, no off-by-one at either boundary:
+
+```
+16px : 320 – 639   (320 widths)
+20px : 640 – 767   (128 widths)
+24px : 768 – 1600  (833 widths)
+```
+
+## 3. Overflow spot check
+
+`document.documentElement.scrollWidth` vs `clientWidth`, nothing else:
+
+| viewport | scrollWidth | clientWidth | delta |
+|---|---|---|---|
+| 390×844 | 390 | 390 | **0** |
+| 640×900 | 640 | 640 | **0** |
+| 768×1024 | 768 | 768 | **0** |
+| 1440×900 | 1440 | 1440 | **0** |
+
+## Checks not performed
+
+Accessibility, contrast, heading order, `srcset`/`sizes`, image and hero rendering — all excluded by your instruction as unchanged, confirmed in earlier passes, or tracked elsewhere. No screenshots captured this pass; you asked for measurements only, and the line-box and headroom data above is the evidence rather than pixels.
+
+Relevant paths:
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`
+- Sweep script and raw per-width data: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/scratchpad/p4-break.mjs`, `p4-break.json`, `p4-margin.mjs`, `p4-overflow.mjs`
+
+Issue #115 is resolved on the rendered evidence: no mid-word breaks at any width from 320 to 1600, correct type steps, and no horizontal overflow.</result>
+<usage><subagent_tokens>46918</subagent_tokens><tool_uses>31</tool_uses><duration_ms>330991</duration_ms></usage>
+</task-notification>
