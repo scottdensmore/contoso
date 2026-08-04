@@ -14,11 +14,7 @@ async function getData(): Promise<ProductGroup[]> {
   return data;
 }
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | string[] | undefined };
-}) {
+export default async function Home() {
   const categories = await getData();
 
   return (
@@ -62,9 +58,7 @@ export default async function Home({
             {category.products.map((product, j) => (
               <a
                 key={j}
-                href={`/products/${product.slug}${
-                  searchParams?.type ? "?type=" + searchParams.type : ""
-                }`}
+                href={`/products/${product.slug}`}
               >
                 <div className="items-center">
                   <Image

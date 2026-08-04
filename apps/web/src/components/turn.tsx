@@ -7,14 +7,13 @@ import {
 
 import { useRemark } from "react-remark";
 import remarkGemoji from "remark-gemoji";
-import { ChatTurn, ChatType } from "@/lib/types";
+import { ChatTurn } from "@/lib/types";
 
 type Props = {
   turn: ChatTurn;
-  type: ChatType;
 };
 
-export const Turn = ({ turn, type }: Props) => {
+export const Turn = ({ turn }: Props) => {
   const [reactContent, setMarkdownSource] = useRemark({
     //@ts-ignore
     remarkPlugins: [remarkGemoji],
@@ -56,21 +55,10 @@ export const Turn = ({ turn, type }: Props) => {
     } else {
       return (
         <div>
-          {turn.image && (
-            <div className="mb-2 flex items-center">
-              <img
-                src={turn.image}
-                className="w-full h-full rounded-xl self-center"
-                alt="{turn.message}"
-              />
-            </div>
-          )}
           <div
             className={clsx(
               "[&_a]:text-sky-800 [&_ul]:list-disc [&_ul]:list-outside [&_li]:ml-9 p-1 [&_ul]:pt-2 [&_ul]:pb-2",
-              type === ChatType.Grounded
-                ? "[&_a]:align-super [&_a]:text-xs [&_a]:ml-1 "
-                : "[&_a]:font-semibold"
+              "[&_a]:font-semibold"
             )}
           >
             {reactContent || turn.message}
