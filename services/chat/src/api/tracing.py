@@ -2,13 +2,7 @@ import contextlib
 
 from opentelemetry import trace as oteltrace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prompty.tracer import PromptyTracer, Tracer
-
-try:
-    from opentelemetry.exporter.cloud_trace import CloudTraceSpanExporter
-except ImportError:  # pragma: no cover - optional dependency in local/test envs
-    CloudTraceSpanExporter = None
 
 _tracer = "prompty"
 
@@ -42,11 +36,9 @@ def init_tracing(local_tracing: bool = False):
     else:
         Tracer.add("OpenTelemetry", trace_span)
 
+        # No span exporter is attached: nothing in this repo collects traces.
+        # Add one here when there is somewhere to send spans.
         tracer_provider = TracerProvider()
         oteltrace.set_tracer_provider(tracer_provider)
-        if CloudTraceSpanExporter is not None:
-            tracer_provider.add_span_processor(
-                BatchSpanProcessor(CloudTraceSpanExporter())
-            )
 
         return oteltrace.get_tracer(_tracer)
