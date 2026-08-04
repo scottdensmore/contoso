@@ -51,6 +51,35 @@ export const Chat = () => {
   const [state, dispatch] = useReducer(chatReducer, { turns: [] });
 
   const chatDiv = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const greetingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Opening the panel left focus on the launcher, so the next Tab continued
+  // into the page behind it rather than into the conversation.
+  useEffect(() => {
+    if (showChat) inputRef.current?.focus();
+  }, [showChat]);
+
+  // Bound to the document so Escape works wherever focus sits inside the
+  // panel, but scoped to events originating within it. Unscoped, Escape while
+  // the site's nav drawer was open dismissed the chat underneath it and left
+  // the drawer up — closing the layer the user was not interacting with.
+  useEffect(() => {
+    if (!showChat) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      const target = event.target as Node;
+      const inPanel = panelRef.current?.contains(target);
+      const onLauncher = launcherRef.current === target;
+      if (!inPanel && !onLauncher) return;
+      setShowChat(false);
+      launcherRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showChat]);
 
   const scrollChat = () => {
     setTimeout(() => {
@@ -72,17 +101,35 @@ export const Chat = () => {
   // conversation the user cleared.
   const pendingIds = useRef<Set<string>>(new Set());
 
+  const greeting = (): ChatTurn => ({
+    name: "Jane Doe",
+    message: `Hi ${session?.user?.name || "there"}, how can I be helpful today?`,
+    status: "done",
+    type: "assistant",
+    avatar: "",
+  });
+
   const reset = () => {
     setMessage("");
     pendingIds.current.clear();
     dispatch({ type: "clear" });
+    // Cancel the timer toggleChat queued. Resetting within 400ms of opening
+    // otherwise seeds the greeting here and again when that timer fires.
+    if (greetingTimer.current) clearTimeout(greetingTimer.current);
+    // Re-seed rather than leaving the panel blank. The greeting only rendered
+    // on open, so a cleared thread stayed empty for the rest of the session —
+    // a state that was unreachable while the reset control was not a control.
+    dispatch({ type: "add", payload: greeting() });
+    inputRef.current?.focus();
   };
 
   const sendMessage = () => {
-    // Before anything is minted. Registering a pending id for a send that never
-    // happens leaves an entry nothing can remove, so the set stops meaning
-    // "replies this thread is still waiting for".
-    if (message === "") return;
+    // Trimmed: the guard was `message === ""`, so three spaces and Enter fired
+    // a real request and rendered an empty bubble. Before anything is minted —
+    // registering a pending id for a send that never happens leaves an entry
+    // nothing can remove, so the set stops meaning "replies still wanted".
+    const question = message.trim();
+    if (question === "") return;
 
     const userName = session?.user?.name || "Guest";
     const userAvatar = (session?.user as any)?.image || "";
@@ -90,7 +137,7 @@ export const Chat = () => {
 
     const newTurn: ChatTurn = {
       name: userName,
-      message: message,
+      message: question,
       status: "done",
       type: "user",
       avatar: userAvatar,
@@ -161,36 +208,64 @@ export const Chat = () => {
 
   const toggleChat = () => {
     setShowChat(!showChat);
-    if (!showChat) {
-      scrollChat();
-      if (state.turns.length === 0) {
-        setTimeout(() => {
-          const userName = session?.user?.name || "there";
-          dispatch({
-            type: "add",
-            payload: {
-              name: "Jane Doe",
-              message: `Hi ${userName}, how can I be helpful today?`,
-              status: "done",
-              type: "assistant",
-              avatar: "",
-            },
-          });
-        }, 400);
-      }
+
+    if (showChat) {
+      // Closing dropped focus to <body>, so the next Tab restarted at the top
+      // of the document — 24 stops back to this launcher. Moving focus in on
+      // open is only half the contract.
+      launcherRef.current?.focus();
+      // Cancel an unfired greeting. The open branch below guards on
+      // turns.length, but a pending timer has not dispatched yet, so closing
+      // and reopening inside 400ms — an ordinary impatient tap — schedules a
+      // second timer and both fire.
+      if (greetingTimer.current) clearTimeout(greetingTimer.current);
+      return;
+    }
+
+    scrollChat();
+    if (state.turns.length === 0) {
+      greetingTimer.current = setTimeout(() => {
+        dispatch({ type: "add", payload: greeting() });
+      }, 400);
     }
   };
 
   return (
     <>
-      <div className="fixed bottom-0 right-0 mr-12 mb-12 z-10 flex flex-col items-end ">
+      <div className="fixed bottom-0 right-0 mr-4 mb-4 sm:mr-12 sm:mb-12 z-10 flex flex-col items-end">
         {showChat && (
-          <div className="mb-3 h-[calc(100vh-7rem)] shadow-md bg-white rounded-lg w-[650px] flex flex-col">
-            <div className="text-right p-2 flex flex-col">
-              <ArrowPathIcon className="w-5 stroke-zinc-500" onClick={reset} />
+          // Width was a flat w-[650px]. At 390px the panel rendered at
+          // left:-308, clipping message text outside the viewport entirely.
+          // dvh rather than vh so mobile browser chrome does not push the input
+          // below the fold.
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Chat with Jane Doe"
+            tabIndex={-1}
+            className="mb-3 flex flex-col shadow-md bg-white rounded-lg outline-none
+                       w-[min(650px,calc(100vw-2rem))]
+                       sm:w-[min(650px,calc(100vw-7rem))]
+                       h-[calc(100dvh-6rem)] sm:h-[calc(100vh-7rem)]"
+          >
+            <div className="p-2 flex justify-end">
+              <button
+                type="button"
+                onClick={reset}
+                aria-label="Clear conversation"
+                className="p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+              >
+                <ArrowPathIcon className="w-5 stroke-zinc-500" aria-hidden="true" />
+              </button>
             </div>
             {/* chat section */}
             <div
+              // Turns mutate with no announcement otherwise: a screen-reader
+              // user gets no signal that the assistant is working or that an
+              // answer arrived.
+              role="log"
+              aria-live="polite"
+              aria-label="Conversation"
               className="grow p-2 overscroll-contain overflow-auto"
               ref={chatDiv}
             >
@@ -206,23 +281,31 @@ export const Chat = () => {
                 id="chat"
                 name="chat"
                 type="text"
+                ref={inputRef}
+                aria-label="Message"
+                placeholder="Ask about a product..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyUp={(e) => {
                   if (e.code === "Enter") sendMessage();
                 }}
-                className="block p-2 grow rounded-md text-zinc-700 shadow-xs ring-2 ring-inset ring-zinc-300 focus:ring-zinc-300 focus:border-zinc-300"
+                // Resting ring was zinc-300 and the focus ring was the same
+                // colour, so focus was indicated by the browser default alone.
+                className="block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ring-2 ring-inset ring-zinc-300 focus:ring-sky-700 focus:outline-none"
               />
               <button
-                className="rounded-md p-2 border-solid border-2 border-zinc-300 hover:cursor-pointer hover:bg-zinc-100"
+                type="button"
                 onClick={sendMessage}
+                aria-label="Send message"
+                className="rounded-md p-2 border-solid border-2 border-zinc-300 hover:cursor-pointer hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               >
-                <PaperAirplaneIcon className="w-6 stroke-zinc-500" />
+                <PaperAirplaneIcon className="w-6 stroke-zinc-500" aria-hidden="true" />
               </button>
             </div>
           </div>
         )}
         <button
+          ref={launcherRef}
           className="bg-white rounded-full p-2 shadow-lg hover:cursor-pointer"
           onClick={toggleChat}
           aria-label={showChat ? "Close chat" : "Open chat"}
