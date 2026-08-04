@@ -5538,3 +5538,86 @@ Issue #115 is resolved on the rendered evidence: no mid-word breaks at any width
 <status>completed</status>
 <summary>Background command "Wait for PR 137 checks" completed (exit code 0)</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a4ceffffe818084c7</task-id>
+<tool-use-id>toolu_019edkXq7keyB3Yk3s2ZAqYe</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a4ceffffe818084c7.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review for page headings" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Rendered review completed
+
+Both versions were built and served side by side, and every route was rendered in Chromium at **390×844**, **834×1112**, and **1440×900**.
+
+Setup (repository never modified — `git status` is byte-for-byte what it was at start, `next-env.d.ts` untouched):
+- Two isolated copies outside the repo: the working tree (branch) and a pristine `git show HEAD:` copy of the five changed files (main). Verified exactly those five files differ.
+- Scratch Postgres on **5433** (3000/5432 left alone for the travel-app), migrated and seeded.
+- Production builds (`next build` + `next start`) on **3210** (branch) and **3211** (main), driven over `localhost`. Both builds exit 0.
+- Chromium 1228 from the Playwright cache, deviceScaleFactor 1, hinting disabled for deterministic text.
+
+---
+
+## 1. Visual regression: none. Zero deltas, at pixel level.
+
+**Geometry — every measured element, every viewport, identical.** Compared `boundingClientRect`, `font-size`, `font-weight`, `font-family`, `margin-top/bottom`, `padding-top/bottom`, `line-height`, `display`, and `color`. Total differing properties across all elements and viewports: **0**.
+
+| Element | Change | 390×844 | 1440×900 | font-size / weight / mt / mb |
+|---|---|---|---|---|
+| Home hero title | `div`→`h1` | x12 y48 366×264 | x92 y48 1256×120 | 72px / 900 / 0px / 0px |
+| Home category name (Tents) | `div`→`h2` | x12 y400 366×48 | x92 y400 1256×48 | 48px / 600 / 0px / 12px |
+| Product detail title | `div`→`h1` | x12 y72 366×172 | x92 y72 1256×112 | 60px / 400 / 0px / 0px |
+| Category page title | `div`→`h1` | x12 y96 366×112 | x92 y96 1256×112 | 60px / 400 / 0px / 0px |
+| Category product name | `h3`→`h2` | x12 y842 366×32 | x92 y733.33 397.33×32 | 24px / 600 / 0px / 0px |
+| Login title | `h2`→`h1` | x24 y88 342×36 | x528 y88 384×36 | 24px / 700 / 40px / 0px |
+
+Identical numbers on main. Tablet 834×1112 likewise identical. Document width and height matched on all 9 routes at all 3 viewports, so there is no downstream layout shift either.
+
+**Preflight is doing its job, and the numbers prove it.** The product-detail `h1` computes to `font-weight: 400` and `margin: 0px` — a UA-styled `h1` would be 700 with ~0.67em margins. The login `h1`'s 40px top margin comes from `mt-10`, not the UA sheet. Tailwind v4's `@import 'tailwindcss'` preflight resets `h1`-`h6` font-size, weight, and margin to inherit/zero, so the concern that motivated the request does not materialise.
+
+**Pixel evidence.** Full-page screenshots of all 9 routes × 3 viewports on both servers: **27/27 pairs byte-identical by SHA-256**, plus 2/2 for the authenticated `/profile`. Byte-identical PNGs of pages up to 3.0 MB and 7311 px tall is a stronger result than a geometry diff — nothing moved by a subpixel anywhere on any page.
+
+Screenshots (retained): `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/scratchpad/shots/` — named `&lt;route&gt;__&lt;viewport&gt;__&lt;branch|mainref&gt;.png`. Raw measurements: `.../scratchpad/results.json`.
+
+## 2. Heading outlines: correct on every requested route bar one pre-existing gap
+
+Exactly one `h1`, first heading is the `h1`, no skipped levels, on all of `/`, `/products/trailmaster-x4-tent`, `/products/category/tents`, `/login`, `/signup`, `/about`, `/faq`, `/contact`.
+
+- **`/`** — was **zero headings**; now `h1` Contoso Outdoor Company → 7× `h2` (Tents, Backpacks, Hiking Clothing, Hiking Footwear, Camping Tables, Camping Stoves, Sleeping Bags). Reads correctly.
+- **`/products/trailmaster-x4-tent`** — was `h2`-first with 24 headings; now `h1` TrailMaster X4 Tent → `h2` Features/Reviews/FAQ/Return Policy/Cautions/User Guide → `h3` Introduction/Package Contents/Tent Setup → `h4` Step 1-6 → `h3` Takedown → `h4` Step 1-4 → `h3` Care → `h2` Warranty → `h3` Contact Information → `h2` Technical Specs. 25 headings, no skips. The `h2`-`h4` run comes from product content, and it nests cleanly under the new `h1`.
+- **`/products/category/tents`** — was 21× `h3` and nothing above them (document started at `h3`); now `h1` Tents → 21× `h2` product names.
+- **`/login`** / **`/signup`** — single `h1` each.
+- **`/about`** (`h1`→2×`h2`), **`/faq`** (`h1`→`h2`→3×`h3`→`h2`→3×`h3`→`h2`), **`/contact`** (`h1` Get in Touch) — already correct, unchanged. Also checked `/contact/thanks`: `h1` Thank You!
+
+### Finding 1 (low, pre-existing, not introduced here): `/profile` has no heading in its non-authenticated states
+
+`/profile` returns zero headings when signed out. Rendered signed in (I had to create an account — see Finding 2), the outline is correct: `h1` Profile Settings → `h2` General Settings, with the remaining `h2`s in inactive tabs. Identical on branch and main.
+
+The gap is in the two early-return states at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/profile/page.tsx:31-37`:
+
+```tsx
+if (status === "loading" || ...) return &lt;div className="flex justify-center items-center h-screen"&gt;&lt;p&gt;Loading...&lt;/p&gt;&lt;/div&gt;;
+if (status === "unauthenticated") return &lt;div className="flex justify-center items-center h-screen"&gt;&lt;p&gt;Access Denied&lt;/p&gt;&lt;/div&gt;;
+```
+
+"Access Denied" is a bare `&lt;p&gt;` on an otherwise empty page — the exact condition #130 was filed about, in a state the issue did not enumerate. Suggested fix (separate change, not this PR): give the denied state an `h1` ("Access Denied") and a link to `/login`, since it is currently a dead end with no route forward. Worth noting the new `tests/scripts/test_page_headings.py` scans page source for `&lt;h1`, so `profile/page.tsx` passes on the authenticated branch while the denied branch stays uncovered.
+
+### Finding 2 (out of scope, flagging because it blocks manual testing): seeded users cannot sign in
+
+`apps/web/prisma/seed.ts:117` stores `password: 'password'` as plaintext, while `apps/web/src/lib/auth.ts:16` authenticates with `bcryptjs` `compare`. Every seeded account fails login. Unrelated to this branch; I worked around it by signing up a fresh account through the UI. Likely deserves its own issue.
+
+---
+
+## Checks not performed, and why
+
+- **Contrast, focus visibility, keyboard traversal, tap-target size, chat panel, layout overflow** — excluded by your instructions as covered by earlier work or tracked in #129.
+- **Loading and error states** — not applicable to this change beyond `/profile`, which is reported above. The change is a set of element-type swaps with no state logic; the only state-dependent route in the list is `/profile`, and both of its states were rendered.
+- **Alt text and form labelling** — not re-audited; this change touches no images or form controls. The login/signup inputs are visibly labelled in the render, but I did not verify programmatic association since it is outside the changed lines.
+
+## Bottom line
+
+The stated risk did not occur. UA heading styles are fully neutralised by Tailwind v4 preflight, and the evidence is not "looks the same" — it is 29 byte-identical full-page screenshot pairs and zero differing computed properties. The heading outlines are a clear improvement and satisfy #130 for all routes it names. The only outstanding heading gap, `/profile`'s signed-out state, predates this change and is a reasonable follow-up rather than a blocker.</result>
+<usage><subagent_tokens>50779</subagent_tokens><tool_uses>45</tool_uses><duration_ms>755347</duration_ms></usage>
+</task-notification>
