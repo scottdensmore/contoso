@@ -23,7 +23,6 @@
     "test:scripts": "make test-scripts",
     "test:web": "make -C apps/web test",
     "test:chat": "make -C services/chat test",
-    "test:chat:integration": "make -C services/chat test-integration",
     "build:web": "make -C apps/web build",
     "prisma:generate": "make -C apps/web prisma-generate",
     "migrate": "make -C apps/web migrate",

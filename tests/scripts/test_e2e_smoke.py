@@ -91,6 +91,64 @@ class DegradedChatDetectionTests(unittest.TestCase):
         self.assertTrue(e2e_smoke.require_real_answer({"E2E_REQUIRE_REAL_CHAT": "1"}))
 
 
+class ChatContractChecksTests(unittest.TestCase):
+    """Contract checks that need no credentials.
+
+    test_main.py asserts both against an in-process app. These assert them
+    against the running image, so a route that never mounts is a different
+    failure from a handler that misbehaves.
+    """
+
+    def test_root_endpoint_shape_is_checked(self):
+        with patch.object(
+            e2e_smoke,
+            "request_json",
+            return_value=(200, {"message": "Contoso Chat API", "version": "1.0.0", "status": "running"}, ""),
+        ):
+            e2e_smoke.check_chat_root("http://chat")
+
+    def test_root_endpoint_missing_a_key_fails(self):
+        with patch.object(
+            e2e_smoke, "request_json", return_value=(200, {"message": "Contoso Chat API"}, "")
+        ):
+            with self.assertRaises(RuntimeError) as caught:
+                e2e_smoke.check_chat_root("http://chat")
+        self.assertIn("version", str(caught.exception))
+
+    def test_a_request_with_no_question_must_be_rejected(self):
+        with patch.object(e2e_smoke, "request_json", return_value=(422, None, "")):
+            e2e_smoke.check_chat_rejects_invalid_payload("http://chat")
+
+    def test_answering_a_malformed_request_is_a_failure(self):
+        """The regression this catches: validation quietly dropped.
+
+        Every other check in the smoke sends a well-formed body, so nothing
+        there would notice the deployed endpoint answering a request with no
+        question.
+        """
+        with patch.object(
+            e2e_smoke, "request_json", return_value=(200, {"answer": "sure!"}, "")
+        ):
+            with self.assertRaises(e2e_smoke.NonRetryableSmokeError):
+                e2e_smoke.check_chat_rejects_invalid_payload("http://chat")
+
+    def test_validation_failure_is_not_retried(self):
+        """A route's validation cannot start working mid-run."""
+        attempts = 0
+
+        def check():
+            nonlocal attempts
+            attempts += 1
+            with patch.object(
+                e2e_smoke, "request_json", return_value=(200, {"answer": "sure!"}, "")
+            ):
+                e2e_smoke.check_chat_rejects_invalid_payload("http://chat")
+
+        with self.assertRaises(e2e_smoke.NonRetryableSmokeError):
+            e2e_smoke.wait_for("validation", 60, 0.01, check)
+        self.assertEqual(attempts, 1)
+
+
 class DegradedChatProxyBehaviourTests(unittest.TestCase):
     """Covers `check_web_chat_proxy` itself, not just its helpers.
 
