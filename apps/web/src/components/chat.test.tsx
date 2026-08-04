@@ -16,6 +16,15 @@ vi.mock('@/lib/messaging', () => ({
   sendChatMessage: (...args: unknown[]) => sendChatMessage(...args),
 }))
 
+function clickReset() {
+  // The reset control is an unlabelled svg with an onClick, so it cannot be
+  // selected by role or accessible name — which is also why a keyboard user
+  // cannot reach it. Tracked in #112; this selector goes away with that fix.
+  const reset = document.querySelector('.w-5.stroke-zinc-500')
+  if (!reset) throw new Error('reset control not found')
+  fireEvent.click(reset)
+}
+
 function openChatAndSend(text: string) {
   // The launcher is the first button; opening it reveals the input.
   fireEvent.click(screen.getAllByRole('button')[0])
@@ -138,6 +147,147 @@ describe('Chat placeholder timing', () => {
       { timeout: 2000 },
     )
     expect(screen.queryByText('Let me see what I can find...')).toBeNull()
+  })
+
+  it('drops a reply that arrives after the thread was reset', async () => {
+    // Send, reset within the 400ms placeholder delay, then let the reply land.
+    // Nothing told the in-flight request its conversation was gone, so the
+    // answer appended into the cleared thread — an assistant reply to nothing.
+    let resolveReply: (turn: unknown) => void = () => {}
+    sendChatMessage.mockReturnValue(
+      new Promise((resolve) => {
+        resolveReply = resolve
+      }),
+    )
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChatAndSend('recommend a tent')
+
+      // Reset before the placeholder timer fires.
+      clickReset()
+      expect(screen.queryByText('recommend a tent')).toBeNull()
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      // The placeholder must not fire into the cleared thread either.
+      expect(screen.queryByText('Let me see what I can find...')).toBeNull()
+
+      await act(async () => {
+        resolveReply({
+          name: 'Jane Doe', message: 'ORPHANED ANSWER', status: 'done',
+          type: 'assistant', avatar: '',
+        })
+      })
+
+      expect(screen.queryByText('ORPHANED ANSWER')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('abandons every send in flight when reset runs, not just the last', async () => {
+    // reset clears the whole set, so this generalises trivially — but a fix
+    // that tracked a single pending id instead of a set would pass the
+    // one-send test above and drop only one of these.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const replies: Array<(turn: unknown) => void> = []
+      sendChatMessage.mockImplementation(
+        () => new Promise((resolve) => replies.push(resolve)),
+      )
+
+      render(<Chat />)
+      openChatAndSend('FIRST question')
+      const input = screen.getByRole('textbox')
+      fireEvent.change(input, { target: { value: 'SECOND question' } })
+      fireEvent.keyUp(input, { code: 'Enter' })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+      expect(screen.getAllByText('Let me see what I can find...')).toHaveLength(2)
+
+      clickReset()
+      expect(screen.queryByText('Let me see what I can find...')).toBeNull()
+
+      await act(async () => {
+        replies[0]({
+          name: 'Jane Doe', message: 'ANSWER ONE', status: 'done',
+          type: 'assistant', avatar: '',
+        })
+        replies[1]({
+          name: 'Jane Doe', message: 'ANSWER TWO', status: 'done',
+          type: 'assistant', avatar: '',
+        })
+      })
+
+      expect(screen.queryByText('ANSWER ONE')).toBeNull()
+      expect(screen.queryByText('ANSWER TWO')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('sends nothing for an empty message and stays usable', async () => {
+    // Note what this does NOT cover: sendMessage also returns early before
+    // minting a pending id, so an empty Enter leaves no orphan in the pending
+    // set. That ordering is unobservable from outside the component — this
+    // test passes either way — so it is an invariant argued in the source, not
+    // one pinned here.
+    sendChatMessage.mockClear()
+
+    render(<Chat />)
+    fireEvent.click(screen.getAllByRole('button')[0])
+    const input = screen.getByRole('textbox')
+    fireEvent.keyUp(input, { code: 'Enter' })
+
+    expect(sendChatMessage).not.toHaveBeenCalled()
+
+    // And the panel still works afterwards.
+    sendChatMessage.mockResolvedValue({
+      name: 'Jane Doe', message: 'A REAL ANSWER', status: 'done',
+      type: 'assistant', avatar: '',
+    })
+    fireEvent.change(input, { target: { value: 'a real question' } })
+    fireEvent.keyUp(input, { code: 'Enter' })
+
+    await waitFor(() => expect(screen.getByText('A REAL ANSWER')).toBeDefined())
+  })
+
+  it('still delivers a reply sent after a reset', async () => {
+    // The other half: reset must abandon only what was in flight when it ran.
+    // Clearing the pending set without re-registering later sends would make
+    // the panel permanently dead after one reset, which the test above would
+    // not catch.
+    const replies: Array<(turn: unknown) => void> = []
+    sendChatMessage.mockImplementation(
+      () => new Promise((resolve) => replies.push(resolve)),
+    )
+
+    render(<Chat />)
+    openChatAndSend('first question')
+    clickReset()
+
+    const input = screen.getByRole('textbox')
+    fireEvent.change(input, { target: { value: 'second question' } })
+    fireEvent.keyUp(input, { code: 'Enter' })
+
+    // Resolve the abandoned send first, then the live one.
+    replies[0]({
+      name: 'Jane Doe', message: 'STALE ANSWER', status: 'done',
+      type: 'assistant', avatar: '',
+    })
+    replies[1]({
+      name: 'Jane Doe', message: 'LIVE ANSWER', status: 'done',
+      type: 'assistant', avatar: '',
+    })
+
+    await waitFor(() => expect(screen.getByText('LIVE ANSWER')).toBeDefined())
+    expect(screen.queryByText('STALE ANSWER')).toBeNull()
+    expect(screen.getByText('second question')).toBeDefined()
   })
 
   it('resolves each reply into its own placeholder when two are on screen', async () => {
