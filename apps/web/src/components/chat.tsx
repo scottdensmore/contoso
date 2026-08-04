@@ -67,12 +67,23 @@ export const Chat = () => {
     scrollChat();
   }, [state.turns.length]);
 
+  // Ids of sends whose replies this thread still wants. A reset empties it, so
+  // anything already in flight is abandoned rather than landing in a
+  // conversation the user cleared.
+  const pendingIds = useRef<Set<string>>(new Set());
+
   const reset = () => {
     setMessage("");
+    pendingIds.current.clear();
     dispatch({ type: "clear" });
   };
 
   const sendMessage = () => {
+    // Before anything is minted. Registering a pending id for a send that never
+    // happens leaves an entry nothing can remove, so the set stops meaning
+    // "replies this thread is still waiting for".
+    if (message === "") return;
+
     const userName = session?.user?.name || "Guest";
     const userAvatar = (session?.user as any)?.image || "";
     const customerId = (session?.user as any)?.id;
@@ -90,11 +101,13 @@ export const Chat = () => {
     // to the other request — the reply then overwrites a turn it does not own
     // and the other placeholder spins forever.
     const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    let settled = false;
+    pendingIds.current.add(pendingId);
 
     const showPlaceholder = () =>
       setTimeout(() => {
-        if (settled) return;
+        // Membership covers both cases: the reply already settled, or the
+        // thread was reset. Either way this placeholder has no owner.
+        if (!pendingIds.current.has(pendingId)) return;
         dispatch({
           type: "add",
           payload: {
@@ -109,8 +122,14 @@ export const Chat = () => {
       }, 400);
 
     const settle = (timer: ReturnType<typeof setTimeout>) => (responseTurn: ChatTurn) => {
-      settled = true;
       clearTimeout(timer);
+      // Two jobs in one call. The return value is the guard: a reset between
+      // the request and its reply removed the id, so the reply is dropped
+      // rather than appended into the cleared thread as an answer to nothing.
+      // The removal itself is hygiene — ids are unique, so a settled one left
+      // behind changes no behaviour, it just accumulates for the lifetime of
+      // the panel, which is mounted once in the root layout.
+      if (!pendingIds.current.delete(pendingId)) return;
       dispatch({ type: "resolve", id: pendingId, payload: responseTurn });
     };
 
@@ -134,7 +153,6 @@ export const Chat = () => {
       request.then(settle(timer)).catch(settleWithError(timer));
     };
 
-    if (message === "") return;
     dispatch({ type: "add", payload: newTurn });
     send(sendChatMessage(newTurn, customerId));
 
