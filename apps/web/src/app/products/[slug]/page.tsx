@@ -126,9 +126,12 @@ export default async function Page({
         <Block
           key={i}
           outerClassName={clsx(i % 2 == 0 ? "bg-zinc-100" : "bg-inherit")}
+          // Stacked below md. The row never wrapped and the image kept its
+          // intrinsic 550px, so the section overflowed by 202px on every phone
+          // width and the page scrolled sideways.
           innerClassName={clsx(
-            "p-6 flex items-start",
-            i % 2 == 1 ? "flex-row-reverse" : "flex-row"
+            "p-6 flex items-start flex-col lg:items-start",
+            i % 2 == 1 ? "lg:flex-row-reverse" : "lg:flex-row"
           )}
         >
           <Image
@@ -136,13 +139,16 @@ export default async function Page({
             alt={product.name}
             width={550}
             height={550}
-            className="rounded-3xl mr-6"
+            sizes="(min-width: 1024px) 550px, 100vw"
+            className="rounded-3xl w-full h-auto max-w-[550px] lg:mr-6"
           />
           <div
             className={clsx(
-              "text-left mt-2 grow text-lg",
+              // min-w-0: without it a flex child refuses to shrink below its
+              // content, so long words push the row past the viewport.
+              "text-left mt-2 grow min-w-0 text-lg",
               extraclasses,
-              i % 2 == 1 ? "mr-8" : "ml-8"
+              i % 2 == 1 ? "lg:mr-8" : "lg:ml-8"
             )}
             dangerouslySetInnerHTML={{ __html: getSection(i) }}
           />
@@ -150,20 +156,20 @@ export default async function Page({
       ))}
       <Block innerClassName={clsx("p-4 flex items-start")}>
         <div
-          className={clsx("text-left mt-2 grow", extraclasses)}
+          className={clsx("text-left mt-2 grow min-w-0", extraclasses)}
           dangerouslySetInnerHTML={{ __html: getSection(7) }}
         />
       </Block>
       <Block
         outerClassName="bg-zinc-100"
-        innerClassName={clsx("p-6 flex items-start")}
+        innerClassName={clsx("p-6 flex items-start flex-col lg:flex-row")}
       >
         <div
-          className={clsx("text-left mt-2 grow pr-6", extraclasses)}
+          className={clsx("text-left mt-2 grow min-w-0 lg:pr-6", extraclasses)}
           dangerouslySetInnerHTML={{ __html: getSection(6) }}
         />
         <div
-          className={clsx("text-left mt-2 grow pl-6", extraclasses)}
+          className={clsx("text-left mt-2 grow min-w-0 lg:pl-6", extraclasses)}
           dangerouslySetInnerHTML={{ __html: getSection(5) }}
         />
       </Block>
