@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "da36c1253e8e",
+  "strategy": "manual-commit",
+  "branch": "fix/guardrail-job-gating",
+  "checkpoints_count": 5,
+  "files_touched": [
+    ".github/workflows/ci.yml",
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_ci_workflow_wiring.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/da/36c1253e8e/0/metadata.json",
+      "transcript": "/da/36c1253e8e/0/full.jsonl",
+      "compact_transcript": "/da/36c1253e8e/0/transcript.jsonl",
+      "content_hash": "/da/36c1253e8e/0/content_hash.txt",
+      "prompt": "/da/36c1253e8e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2997,
+    "cache_creation_tokens": 6910297,
+    "cache_read_tokens": 633049033,
+    "output_tokens": 913693,
+    "api_call_count": 1621
+  }
+}
