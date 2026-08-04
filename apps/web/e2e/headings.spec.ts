@@ -18,12 +18,16 @@ async function outline(page: Page) {
   )
 }
 
-const ROUTES = ['/', '/login', '/signup', '/about', '/faq', '/contact']
+const ROUTES = ['/', '/login', '/signup', '/about', '/faq', '/contact', '/profile']
 
 test.describe('heading outlines', () => {
   for (const route of ROUTES) {
     test(`${route} has one h1 and skips no level`, async ({ page }) => {
       await page.goto(route)
+      // Wait for the settled page. Routes gated on session status render a
+      // transient loading state with no heading, which is correct — reading
+      // before it resolves measures the wrong thing.
+      await page.locator('h1').first().waitFor({ state: 'attached', timeout: 15_000 })
       const headings = await outline(page)
 
       expect(headings.length, `${route} rendered no headings at all`).toBeGreaterThan(0)

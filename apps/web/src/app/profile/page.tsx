@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
 import PasswordChangeForm from "@/components/password-change-form";
@@ -29,11 +30,41 @@ export default function ProfilePage() {
   }, [status]);
 
   if (status === "loading" || (status === "authenticated" && isLoadingProfile)) {
-    return <div className="flex justify-center items-center h-screen"><p>Loading...</p></div>;
+    // role=status so the wait is announced rather than being a silent blank
+    // screen for anyone not watching the pixels.
+    return (
+      <div
+        role="status"
+        className="flex justify-center items-center h-screen"
+      >
+        <p>Loading your profile...</p>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
-    return <div className="flex justify-center items-center h-screen"><p>Access Denied</p></div>;
+    // Was a bare "Access Denied" paragraph on an otherwise empty page: no
+    // heading for heading navigation to land on, and no route forward, so a
+    // signed-out visitor had to work out where to go on their own.
+    return (
+      <>
+        <Header />
+        <main className="flex flex-col items-center justify-center gap-4 px-4 py-24 text-center">
+          <h1 className="text-4xl font-semibold text-zinc-800">
+            Sign in to view your profile
+          </h1>
+          <p className="max-w-prose text-lg text-zinc-600">
+            Your profile is only visible while you are signed in.
+          </p>
+          <Link
+            href="/login"
+            className="rounded-md bg-zinc-800 px-6 py-2 text-lg text-zinc-100 hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+          >
+            Sign in to continue
+          </Link>
+        </main>
+      </>
+    );
   }
 
   const handleAvatarUpload = async (url: string) => {

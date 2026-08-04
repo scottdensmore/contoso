@@ -68,7 +68,7 @@ async function overflowAt(page: Page, width: number): Promise<Offender[]> {
   }, width)
 }
 
-const ROUTES = ['/', '/login', '/signup', '/about']
+const ROUTES = ['/', '/login', '/signup', '/about', '/profile']
 
 test.describe('no horizontal overflow', () => {
   for (const route of ROUTES) {

@@ -50,6 +50,39 @@ test.describe('authentication', () => {
 
   test('the profile route is not reachable while signed out', async ({ page }) => {
     await page.goto('/profile')
-    await expect(page.getByText(/access denied/i)).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    await expect(page.getByTitle('Profile Settings')).toHaveCount(0)
+  })
+
+  test('the signed-out profile offers a route back to signing in', async ({ page }) => {
+    // It rendered a bare "Access Denied" paragraph on an otherwise empty page:
+    // nothing for heading navigation to land on, and no way forward, so the
+    // page was a dead end. The source guard in tests/scripts cannot see this —
+    // it greps the file for `<h1`, which the authenticated branch satisfies.
+    await page.goto('/profile')
+
+    const heading = page.getByRole('heading', { level: 1 })
+    await expect(heading).toBeVisible()
+
+    // The link has to work, not merely exist.
+    await page.getByRole('link', { name: 'Sign in to continue' }).click()
+    await expect(page).toHaveURL(/\/login/)
+    await expect(page.getByLabel('Email address')).toBeVisible()
+  })
+
+  test('signing in from the profile dead end lands on the profile', async ({ page }) => {
+    // The whole point of the route forward: it should complete the journey the
+    // visitor was already trying to make.
+    await page.goto('/profile')
+    await page.getByRole('link', { name: 'Sign in to continue' }).click()
+
+    await page.getByLabel('Email address').fill(SEEDED_EMAIL)
+    await page.getByLabel('Password').fill(SEEDED_PASSWORD)
+    await page.getByRole('button', { name: /sign in/i }).click()
+
+    await expect(page.getByTitle('Profile Settings')).toBeVisible({ timeout: 15_000 })
+    await page.getByTitle('Profile Settings').click()
+    await expect(page).toHaveURL(/\/profile/)
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 })

@@ -26,10 +26,15 @@ describe('Profile Page', () => {
     expect(screen.getByText(/loading/i)).toBeDefined()
   })
 
-  it('shows access denied if unauthenticated', async () => {
+  it('offers a heading and a route forward if unauthenticated', async () => {
+    // Was a bare "Access Denied" paragraph: no heading for heading navigation
+    // to land on, and no way to reach the sign-in the visitor needs.
     vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
     render(<ProfilePage />)
-    expect(screen.getByText(/access denied/i)).toBeDefined()
+
+    expect(screen.getByRole('heading', { level: 1 })).toBeDefined()
+    const link = screen.getByRole('link', { name: 'Sign in to continue' })
+    expect(link.getAttribute('href')).toBe('/login')
   })
 
   it('renders tabs if authenticated', async () => {
