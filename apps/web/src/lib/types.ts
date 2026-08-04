@@ -1,4 +1,8 @@
 export interface ChatTurn {
+  // Set on turns that will be replaced in place. Positional replacement breaks
+  // as soon as two sends overlap, because "the last turn" may belong to the
+  // other request.
+  id?: string;
   name: string;
   avatar: string;
   image: string | null;
