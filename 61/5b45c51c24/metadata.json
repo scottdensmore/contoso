@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "615b45c51c24",
+  "strategy": "manual-commit",
+  "branch": "fix/seed-password-hash",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "Dockerfile"
+  ],
+  "sessions": [
+    {
+      "metadata": "/61/5b45c51c24/0/metadata.json",
+      "transcript": "/61/5b45c51c24/0/full.jsonl",
+      "compact_transcript": "/61/5b45c51c24/0/transcript.jsonl",
+      "content_hash": "/61/5b45c51c24/0/content_hash.txt",
+      "prompt": "/61/5b45c51c24/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3693,
+    "cache_creation_tokens": 7298993,
+    "cache_read_tokens": 795009446,
+    "output_tokens": 1145717,
+    "api_call_count": 1995
+  }
+}
