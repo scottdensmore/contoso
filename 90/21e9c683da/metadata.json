@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "9021e9c683da",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-placeholder-race",
+  "checkpoints_count": 12,
+  "files_touched": [
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/lib/types.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/90/21e9c683da/0/metadata.json",
+      "transcript": "/90/21e9c683da/0/full.jsonl",
+      "compact_transcript": "/90/21e9c683da/0/transcript.jsonl",
+      "content_hash": "/90/21e9c683da/0/content_hash.txt",
+      "prompt": "/90/21e9c683da/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2587,
+    "cache_creation_tokens": 6643032,
+    "cache_read_tokens": 551968381,
+    "output_tokens": 785906,
+    "api_call_count": 1400
+  }
+}
