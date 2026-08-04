@@ -75,12 +75,35 @@ class VenvWiringTests(unittest.TestCase):
             with self.subTest(workflow=workflow.name):
                 self.assertNotIn("prisma-client-py generate", content)
 
-    def test_chat_test_runner_uses_venv_interpreter(self):
-        content = read("services/chat/run_tests.sh")
-        self.assertIn('PY="${REPO_ROOT}/.venv/bin/python"', content)
-        self.assertNotRegex(content, re.compile(r"^\s*pip install ", re.M))
-        self.assertNotRegex(content, re.compile(r"^\s*pytest ", re.M))
-        self.assertNotRegex(content, re.compile(r"^\s*python -m ", re.M))
+    def test_chat_recipes_never_invoke_bare_tools(self):
+        """A bare `pip`, `pytest` or `python` resolves outside the virtualenv.
+
+        The Makefile is the only entry point to the chat suite, so this is the
+        surface that has to hold the property.
+        """
+        content = read("services/chat/Makefile")
+        for pattern in (r"^\t.*(?<![-\w$(])pip install ", r"^\t\s*pytest ", r"^\t\s*python "):
+            with self.subTest(pattern=pattern):
+                self.assertNotRegex(content, re.compile(pattern, re.M))
+
+    def test_chat_installs_are_constrained(self):
+        """Every pip install in the chat Makefile carries the constraints file.
+
+        Versions live in exactly one place; an install without -c silently
+        resolves something else.
+        """
+        content = read("services/chat/Makefile")
+        installs = [
+            line for line in content.splitlines()
+            if re.search(r"(\$\(PIP\)|pip) install\b", line)
+            and "--upgrade pip" not in line
+        ]
+        self.assertGreaterEqual(
+            len(installs), 4, "expected the four profile installs to be found"
+        )
+        for line in installs:
+            with self.subTest(line=line.strip()):
+                self.assertIn("CONSTRAINTS_FILE", line)
 
     def test_venv_is_git_ignored(self):
         self.assertIn(".venv/", read(".gitignore"))
