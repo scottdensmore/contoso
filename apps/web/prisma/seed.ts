@@ -1,11 +1,17 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcryptjs';
 import * as fs from 'fs';
 import * as path from 'path';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
 });
+
+// The demo password every seeded customer shares. It must be stored hashed:
+// lib/auth.ts authenticates with bcrypt compare, which returns false for any
+// input when the stored value is not a hash — including the correct password.
+export const DEFAULT_SEED_PASSWORD = 'password';
 
 async function main() {
   console.log('Start seeding...');
@@ -91,6 +97,9 @@ async function main() {
   const customersPath = path.join(process.cwd(), 'public', 'customers.json');
   if (fs.existsSync(customersPath)) {
     const customersData = JSON.parse(fs.readFileSync(customersPath, 'utf-8'));
+    // Hashed once, outside the loop: bcrypt is deliberately slow, and every
+    // seeded customer shares the same demo password.
+    const seededPassword = await hash(DEFAULT_SEED_PASSWORD, 10);
     for (const customer of customersData) {
       const addressParts = customer.address ? customer.address.split(',').map((s: string) => s.trim()) : [];
       const addressLine1 = addressParts[0] || '';
@@ -114,7 +123,7 @@ async function main() {
         create: {
           id: customer.id,
           email: customer.email,
-          password: 'password', // Default password
+          password: seededPassword,
           firstName: customer.firstName,
           lastName: customer.lastName,
           age: customer.age,
