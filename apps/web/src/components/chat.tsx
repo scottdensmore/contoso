@@ -20,8 +20,9 @@ import {
 } from "@/lib/messaging";
 
 interface ChatAction {
-  type: "add" | "clear" | "replace";
+  type: "add" | "clear" | "resolve";
   payload?: ChatTurn;
+  id?: string;
 }
 
 interface ChatState {
@@ -34,10 +35,16 @@ function chatReducer(state: ChatState, action: ChatAction) {
       return { turns: [...state.turns, action.payload!] };
     case "clear":
       return { turns: [] };
-    case "replace":
-      return {
-        turns: [...state.turns.slice(0, -1), action.payload!],
-      };
+    case "resolve": {
+      // Replace the placeholder this reply owns. If it is not present — the
+      // thread was reset, or it never appeared because the reply was fast —
+      // append instead, so no other turn is overwritten.
+      const index = state.turns.findIndex((turn) => turn.id === action.id);
+      if (index === -1) return { turns: [...state.turns, action.payload!] };
+      const turns = [...state.turns];
+      turns[index] = action.payload!;
+      return { turns };
+    }
     default:
       throw new Error();
   }
@@ -160,44 +167,74 @@ export const Chat = () => {
       image: currentImage,
     };
 
+    // Each send owns a placeholder identified by id. Positional replacement
+    // breaks as soon as two sends overlap, because "the last turn" may belong
+    // to the other request — the reply then overwrites a turn it does not own
+    // and the other placeholder spins forever.
+    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let settled = false;
+
+    const showPlaceholder = () =>
+      setTimeout(() => {
+        if (settled) return;
+        dispatch({
+          type: "add",
+          payload: {
+            id: pendingId,
+            name: "Jane Doe",
+            message: "Let me see what I can find...",
+            status: "waiting",
+            type: "assistant",
+            avatar: "",
+            image: null,
+          },
+        });
+      }, 400);
+
+    const settle = (timer: ReturnType<typeof setTimeout>) => (responseTurn: ChatTurn) => {
+      settled = true;
+      clearTimeout(timer);
+      dispatch({ type: "resolve", id: pendingId, payload: responseTurn });
+    };
+
+    // Only sendChatMessage and sendVisualMessage resolve with an error turn.
+    // sendGroundedMessage can reject, which would otherwise leave the
+    // placeholder spinning with no message and an unhandled rejection.
+    const settleWithError =
+      (timer: ReturnType<typeof setTimeout>) => (error: unknown) => {
+        console.error("Chat request failed:", error);
+        settle(timer)({
+          id: pendingId,
+          name: "Jane Doe",
+          message: "Sorry, something went wrong. Please try again.",
+          status: "done",
+          type: "assistant",
+          avatar: "",
+          image: null,
+        });
+      };
+
+    const send = (request: Promise<ChatTurn>) => {
+      const timer = showPlaceholder();
+      request.then(settle(timer)).catch(settleWithError(timer));
+    };
+
     if (chatType === ChatType.Grounded) {
       // using "Add Your Data"
       if (message === "") return;
       dispatch({ type: "add", payload: newTurn });
-      sendGroundedMessage(newTurn).then((responseTurn) => {
-        dispatch({ type: "replace", payload: responseTurn });
-      });
+      send(sendGroundedMessage(newTurn));
     } else if (chatType === ChatType.Visual || chatType === ChatType.Video) {
       // visual prompt flow
       if (message === "" && !currentImage) return;
       dispatch({ type: "add", payload: newTurn });
-
-      sendVisualMessage(newTurn, customerId).then((responseTurn) => {
-        dispatch({ type: "replace", payload: responseTurn });
-      });
+      send(sendVisualMessage(newTurn, customerId));
     } else {
       // standard prompt flow
       if (message === "") return;
       dispatch({ type: "add", payload: newTurn });
-
-      sendChatMessage(newTurn, customerId).then((responseTurn) => {
-        dispatch({ type: "replace", payload: responseTurn });
-      });
+      send(sendChatMessage(newTurn, customerId));
     }
-
-    setTimeout(() => {
-      dispatch({
-        type: "add",
-        payload: {
-          name: "Jane Doe",
-          message: "Let me see what I can find...",
-          status: "waiting",
-          type: "assistant",
-          avatar: "",
-          image: null,
-        },
-      });
-    }, 400);
 
     setMessage("");
     setCurrentImage(null);
