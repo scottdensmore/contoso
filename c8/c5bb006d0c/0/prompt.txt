@@ -5363,3 +5363,71 @@ Raw data: `sweep2.json` (1281-width sweep), `before-real.json` / `after-real.jso
 **Repository untouched.** `git status` shows only your `apps/web/src/app/page.tsx`; `next dev` did rewrite `apps/web/next-env.d.ts` and I restored it (md5 `2a74d390…` matches the pre-run snapshot). Ports 3210/3211 used and released; the travel-app on 3000/5432 was never touched.</result>
 <usage><subagent_tokens>87233</subagent_tokens><tool_uses>50</tool_uses><duration_ms>1057452</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ae6d46c0e5b5cbf72</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/ae6d46c0e5b5cbf72.output</output-file>
+<status>completed</status>
+<summary>Agent "final check of home grid" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: rendered review completed
+
+Chromium 149 headless via CDP against `next dev` (Turbopack) on `http://localhost:3210`. Ports 3000/5432 and the travel-app containers were left untouched. `apps/web/next-env.d.ts` was clobbered by the dev server and has been restored; `git status` now shows only your own `apps/web/src/app/page.tsx` modification.
+
+---
+
+## 1. Mid-word breaking — not zero. 9 widths still break.
+
+Sweep of every integer width 320→1600 (1281 widths), line boxes recovered per character with `Range.getClientRects()`, a break counted as mid-word when a line ends and the next begins with no whitespace or hyphen at the boundary.
+
+**Widths with a mid-word break: 640, 641, 642, 643, 644, 645, 646, 647, 648.**
+
+| | |
+|---|---|
+| Name | `MountainDream Sleeping Bag` |
+| Rendering | `MountainDrea` / `m Sleeping Bag` |
+| Font size | 24px (the `sm:text-2xl` step) |
+| Line-1 box | **173.9px** |
+| Track width | 194.7px at 640 → 197.3px at 648 |
+| First clean width | **649** (track 197.7px, word 197.5px) |
+
+Screenshot evidence: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/scratchpad/p3-640-sleepingbags.png` shows the split rendered.
+
+The 320–434 band you were targeting **is fixed** — `text-base` puts the word at ~132px against a ~140px track, and no name breaks mid-word anywhere in 320–639. The residual band is the opposite failure: at exactly 640 the `sm:` breakpoint fires two things at once — the grid goes to three columns (track drops to its narrowest 194.7px) *and* the type goes to its largest (24px). That is the worst track-to-type pairing in the entire 320–1600 range, and it is 2.8px short.
+
+**24px confirmed in use from 640 up:** font size is exactly `16px` for widths 320–639 (320 widths) and exactly `24px` for widths 640–1600 (961 widths). Original typography is preserved above the breakpoint — that is precisely what reintroduces the break at the breakpoint itself.
+
+Suggested fix: stagger the type bump so 24px does not land on the narrowest three-column track. `text-base sm:text-xl md:text-2xl` puts the word at ~165px across 640–767 (tracks 194.7→237px, clears) and restores 24px from 768 where the track is ≥237px. `text-base md:text-2xl` also works if you would rather not add a step.
+
+## 2. srcset — the change is correct at DPR 2 and no worse anywhere
+
+Measured `currentSrc` on real page loads at each device-metrics combination:
+
+| Viewport | DPR | Layout box | Device px needed | Old `50vw` | New | Over-fetch now |
+|---|---|---|---|---|---|---|
+| 390×844 | **2** | 175 CSS | 350 | `w=640` (1.83×) | **`w=384`** | **1.10×** |
+| 390×844 | 1 | 175 CSS | 175 | `w=384` | `w=384` | 2.19× (unchanged) |
+| 1440×900 | **2** | 350 CSS | 700 | `w=1920` (2.74×) | **`w=750`** | **1.07×** |
+| 1440×900 | 1 | 350 CSS | 350 | `w=750` (2.14×) | `w=384` | 1.10× |
+
+The old/new comparison was measured, not inferred: both configurations emit the identical srcset (Next's floor works out to 384 either way), so I loaded the same srcset with each `sizes` string at each DPR and read the browser's actual selection.
+
+**390 DPR 2 is now appropriate.** 384 is both the smallest candidate that covers the 350 device-px requirement and the smallest candidate Next emits at all. Nothing better exists in the srcset.
+
+**The DPR 1 / 390 case (2.19×) is unchanged, not regressed,** and it is not fixable from `sizes`. Next filters its candidate list to `allSizes.filter(s =&gt; s &gt;= deviceSizes[0] * smallestVw)` — with `45vw` that is 640 × 0.45 = 288, so 384 is the smallest `w` in the srcset. `50vw` gave 320, same floor. Lowering it would require `images.imageSizes` / `deviceSizes` config, which is out of scope for this issue.
+
+**All 20 images return 2xx.** 20/20 HTTP 200 for the `w=384` set selected at 390 DPR 2, and 20/20 for the `w=750` set at 1440 DPR 2. In-page, all 20 had `complete === true` and non-zero `naturalWidth` in all four viewport/DPR combinations. Transfer sizes: 42–118 KB per image at `w=384`, 158–446 KB at `w=750`.
+
+## Spot checks (as requested, not re-verified in depth)
+
+- 390×844: `scrollWidth - clientWidth = 0`, no overflow. `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/scratchpad/p3-390-sleepingbags.png`
+- 1440×900: `scrollWidth - clientWidth = 0`; row spans x=92 to x=1348 (width 1256); first image x=92, aligned with the heading; image box 350 CSS px. `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/db47ca28-f071-4586-ad2f-266019892058/scratchpad/p3-1440-sleepingbags.png`
+
+## Checks not performed
+
+Accessibility, contrast, heading order, keyboard, focus, loading/empty/error states, and the hero — excluded by your instruction; unchanged by this diff or tracked in #130. `/api/categories` returned 500 as expected and is irrelevant here, since the home page reads `public/categories.json` off disk. Measurements were taken against `next dev` rather than a production build; `sizes`/`srcset` come from the same `next/image` render path in both, but I did not separately confirm against `next build`.</result>
+<usage><subagent_tokens>60059</subagent_tokens><tool_uses>36</tool_uses><duration_ms>631396</duration_ms></usage>
+</task-notification>
