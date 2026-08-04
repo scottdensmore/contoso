@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "81c8ede27d95",
+  "strategy": "manual-commit",
+  "branch": "fix/smoke-rejects-degraded-chat",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "scripts/e2e_smoke.py",
+    "tests/scripts/test_e2e_smoke.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/81/c8ede27d95/0/metadata.json",
+      "transcript": "/81/c8ede27d95/0/full.jsonl",
+      "compact_transcript": "/81/c8ede27d95/0/transcript.jsonl",
+      "content_hash": "/81/c8ede27d95/0/content_hash.txt",
+      "prompt": "/81/c8ede27d95/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3086,
+    "cache_creation_tokens": 6969376,
+    "cache_read_tokens": 645377310,
+    "output_tokens": 949670,
+    "api_call_count": 1669
+  }
+}
