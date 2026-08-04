@@ -122,7 +122,10 @@ jobs:
   script-tests:
     name: Script Guardrail Tests
     needs: changes
-    if: ${{ github.event_name != 'push' && needs.changes.outputs.runtime == 'true' }}
+    # This suite asserts on files across every surface, so any surface gate lets
+    # a guarded file change while the guard sits out. `none` is the only flag
+    # that is not a surface.
+    if: ${{ github.event_name != 'push' && needs.changes.outputs.none != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

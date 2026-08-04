@@ -188,6 +188,12 @@ def recommended_targets(flags: dict[str, bool]) -> list[str]:
             ]
         )
     else:
+        # Mirrors the script-tests gate in ci.yml. The guardrail suite asserts
+        # on files across every surface, so it runs for any change rather than
+        # for one surface. Without this the local pre-push loop skips the guard
+        # for exactly the chat-only changes CI now runs it for.
+        if not flags["none"]:
+            ordered.append("test-scripts")
         if flags["web"]:
             ordered.append("quick-ci-web")
         if flags["chat"]:
