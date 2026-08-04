@@ -111,9 +111,9 @@ export default async function Page({
     <>
       <Header />
       <Block innerClassName="pt-6 pb-6">
-        <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
+        <h1 className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {product.name}
-        </div>
+        </h1>
         <div
           className="first-line:uppercase first-line:tracking-widest
                   first-letter:text-8xl first-letter:font-bold first-letter:text-slate-900

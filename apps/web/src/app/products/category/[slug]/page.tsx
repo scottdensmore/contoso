@@ -28,9 +28,9 @@ export default async function CategoryPage({
     <>
       <Header />
       <Block innerClassName="pt-12 pb-6">
-        <div className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
+        <h1 className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
           {category.name}
-        </div>
+        </h1>
         <div className="text-xl text-gray-600">
           {category.description}
         </div>
@@ -68,9 +68,9 @@ export default async function CategoryPage({
                 )}
               </div>
               <div className="mt-4 text-center">
-                <h3 className="text-2xl font-semibold text-gray-900">
+                <h2 className="text-2xl font-semibold text-gray-900">
                   {product.name}
-                </h3>
+                </h2>
                 <p className="mt-1 text-lg font-medium text-gray-500">
                   ${product.price.toFixed(2)}
                 </p>

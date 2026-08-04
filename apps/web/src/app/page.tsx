@@ -24,9 +24,9 @@ export default async function Home() {
         outerClassName="bg-blend-multiply bg-center bg-hero-image h-80 bg-neutral-600"
         innerClassName=""
       >
-        <div className="text-zinc-100 pt-12 text-7xl font-black subpixel-antialiased">
+        <h1 className="text-zinc-100 pt-12 text-7xl font-black subpixel-antialiased">
           Contoso Outdoor Company
-        </div>
+        </h1>
         <div className="text-zinc-100 mt-4 text-2xl">
           Embrace Adventure with Contoso Outdoors - Your Ultimate Partner in
           Exploring the Unseen!
@@ -44,9 +44,9 @@ export default async function Home() {
           innerClassName="p-8"
           outerClassName={clsx(i % 2 == 1 ? "bg-zinc-100" : "bg-inherit")}
         >
-          <div className="text-5xl mb-3 font-semibold text-zinc-800">
+          <h2 className="text-5xl mb-3 font-semibold text-zinc-800">
             {category.name}
-          </div>
+          </h2>
           <div
             className="text-zinc-500 text-2xl first-line:uppercase first-line:tracking-widest
                   first-letter:text-6xl first-letter:font-bold first-letter:text-zinc-500
