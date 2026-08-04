@@ -4171,3 +4171,112 @@ Seam checked and clear: the web proxy returns `Response.json(data)` verbatim (`r
 Untracked agent-tooling paths (`.claude/settings.json`, `.codex/`, `.cursor/`, `.entire/`, `.github/hooks/`, `package-lock.json`) are unstaged and will not enter a commit of the two changed files. None are gitignored, so `git add -A` would sweep them in — stage the two files by name. Not assessed: `apps/web/.next/` build artifacts.</result>
 <usage><subagent_tokens>40512</subagent_tokens><tool_uses>30</tool_uses><duration_ms>261738</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a9d380ca7666d1b61</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a9d380ca7666d1b61.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for degraded chat detection" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+The change is verified and does not break the real CI job. All checks pass: 109/109 unit tests green in a bare (no-dependency) venv, no non-stdlib imports, `make test-scripts` green, and a real docker-compose run of chat+web+db reproduces CI's exact behavior (NOTICE + pass, exit 0). One important caveat: **the diff changed substantially partway through my verification** (65/89 added lines → 82/131 added lines, files still being edited live). Everything below reflects the file content as of my last check (confirmed stable across two consecutive `git diff --stat` reads, last mtimes `00:23:16`/`00:23:49`). The design described in my task brief (`chat_can_answer`/`PLACEHOLDER_PROJECT_IDS`) is **no longer in the code** — it was replaced with a simpler `require_real_answer()` that reads only `E2E_REQUIRE_REAL_CHAT`, plus a new rule that a `mock` reply always fails fast. See "Design change" below.
+
+## Failures
+None.
+
+## Flakes
+None observed. Single clean run of the real container smoke and of the unit suite; nothing needed a re-run.
+
+## Design change since the task brief was written (important)
+
+The version I first read matched the brief: `chat_can_answer(env)` inferred readiness from `PROJECT_ID`/`DISCOVERY_ENGINE_DATASTORE_ID` in `os.environ`, with `PLACEHOLDER_PROJECT_IDS`. **I independently found this signal was structurally broken** before noticing the file had already been rewritten to fix it: `make -n e2e-smoke` shows the smoke script is invoked as `.venv/bin/python scripts/e2e_smoke.py ...` with no `PROJECT_ID`/`DISCOVERY_ENGINE_DATASTORE_ID` passthrough, and the Makefile never sources `.env` into its own process — those vars reach the `chat` *container* only through Compose's own `.env` substitution (`docker-compose.yml:53,58`). So in a normal local run, `os.environ` in the smoke script would never see them regardless of what `.env` says, making the "configured" branch permanently dead outside CI. Separately, that inference also never accounted for `LLM_PROVIDER=local` (Ollama path), which needs neither var (`services/chat/src/api/contoso_chat/search_service.py:87-97`).
+
+The current version has already replaced this with:
+- `require_real_answer(env)` — **explicit-only**, reads `E2E_REQUIRE_REAL_CHAT` and nothing else. Its own docstring cites the exact dead-env-var reason I found independently.
+- `degraded_reason()` now returns `("mock"|"fallback", detail)` instead of a bare reason string.
+- `check_web_chat_proxy` now treats the two kinds differently: `mock` (chat module failed to import) is **always fatal**, raised as `NonRetryableSmokeError` regardless of credentials, because it needs no credentials to detect and is exactly the "undeclared dependency" regression the issue's own example describes. `fallback` is fatal only when `E2E_REQUIRE_REAL_CHAT` is set; otherwise it goes through a new `report_notice()` that both prints and appends a `&gt; [!WARNING]` block to `$GITHUB_STEP_SUMMARY` when present, so the caveat survives on a green run instead of scrolling past in the raw log.
+
+Since `chat_can_answer`/`PLACEHOLDER_PROJECT_IDS` no longer exist, the specific question "does the placeholder list/env-var choice match what chat requires, and should REGION be included" is moot — there's nothing left to check there. `grep -rn "chat_can_answer\|PLACEHOLDER_PROJECT_IDS"` across the repo returns nothing, confirming no stale references.
+
+## Behaviour matrix (verified against current code, not the brief's)
+
+| Reply | `E2E_REQUIRE_REAL_CHAT` | Result |
+|---|---|---|
+| `mock: true` | unset or set | `NonRetryableSmokeError`, immediate (no retry) |
+| `fallback: true` | unset (default) | `report_notice(...)`, passes |
+| `fallback: true` | `1`/`true`/`yes` | `NonRetryableSmokeError`, immediate |
+| real answer (no `mock`/`fallback`) | unset or set | passes |
+
+I confirmed this by direct unit-test reading and by mutation (see below), and confirmed the `fallback`/`no override` row against a real running container.
+
+One behavioral improvement over the brief's stated matrix worth flagging explicitly: the `mock` and `E2E_REQUIRE_REAL_CHAT=1` failure paths now raise `NonRetryableSmokeError`, which `wait_for()` re-raises immediately instead of retrying — so these fail fast rather than burning the full `--timeout` (240s default, 300s/600s in CI) before reporting. The old design (raise a plain `RuntimeError`) would have retried for the whole timeout window on every poll, since `chat_can_answer()`/the underlying misconfiguration doesn't change between polls.
+
+## Real CI job — confirmed not broken
+
+- `PYTHONPATH`-clean import check: `.venv/bin/python -m unittest discover ...` and a bare venv (created outside the repo) both pass, 109/109, in 0.2s. `ast`-parsed import list for both changed files is 100% stdlib (`argparse, collections, html, json, os, time, typing, urllib` / `importlib, os, pathlib, tempfile, unittest`).
+- `scripts/detect_changed_surfaces.py` classifies both `scripts/e2e_smoke.py` and `tests/scripts/**` as `RUNTIME_PATTERNS`, so `runtime=true`, which is exactly the condition (`needs.changes.outputs.runtime == 'true'`) that gates both `integration-e2e` (lite) and would gate `integration-e2e-full-profile` (schedule/dispatch only) — i.e., the real "Integration E2E Smoke" job does run for this change.
+- I stood up the actual stack (see Environment section) with `PROJECT_ID=local`, `DISCOVERY_ENGINE_DATASTORE_ID=` (empty), `LLM_PROVIDER=gcp` — the exact values both real CI jobs produce, since neither job sets `PROJECT_ID`/`DISCOVERY_ENGINE_DATASTORE_ID`/`LLM_PROVIDER` and there is no `.env` in the CI checkout (`.env` is gitignored). Ran the **unmodified** `scripts/e2e_smoke.py` against it:
+```
+[PASS] chat health
+[PASS] chat dependency health (db)
+NOTICE: chat did not answer for real — chat backend raised and served the fallback: PROJECT_ID, REGION, and DISCOVERY_ENGINE_DATASTORE_ID must be set. This run verified transport and status codes only. Set E2E_REQUIRE_REAL_CHAT=1 where credentials exist to make this a failure.
+[PASS] web -&gt; chat proxy call
+[PASS] web dynamic [slug] page
+E2E smoke passed.
+EXIT CODE: 0
+```
+This confirms the CI-critical row of the matrix against a real container, not just a mocked `request_json`.
+
+## Whether the new tests are meaningful or vacuous — mutation results
+
+Ran mutation testing against a scratch copy of the repo (never modified the actual repo files), using the bare venv.
+
+**Pure functions are well covered.** Inverting `require_real_answer`'s membership test, or its logic, is caught by `test_require_real_answer_is_explicit_only`.
+
+**The integration wiring inside `check_web_chat_proxy` is also now covered** — this is the one gap I found and then watched get closed mid-session. On an earlier revision of this branch (65/89-line diff), the only tests calling `check_web_chat_proxy` used a clean `{"answer": "ok"}` payload, so the entire raise-vs-notice decision was untested by anything that actually exercises `check_web_chat_proxy`. I confirmed this concretely: inverting the `chat_can_answer()` condition, and separately deleting the entire "raise when configured but degraded" branch, both passed all 16 tests that existed at that point. The current revision adds `DegradedChatProxyBehaviourTests`, whose own docstring states this exact rationale ("asserting only on the pure helpers would leave it untested"). Against the current code I re-ran the same class of mutations:
+- Inverting the `require_real_answer()` branch in `check_web_chat_proxy` → 2 errors + 1 failure.
+- Deleting the entire "mock is always fatal" branch → 2 failures.
+- Deleting the `GITHUB_STEP_SUMMARY` write in `report_notice` → 1 failure (`test_notice_reaches_the_step_summary`).
+
+All three are now caught. I did not find a mutation of the changed logic that survives the current suite.
+
+## Missing coverage
+- No CI job (as configured, zero `secrets.*` usage, confirmed via `grep -c "secrets\." .github/workflows/ci.yml` → `0`) ever sets `E2E_REQUIRE_REAL_CHAT=1` or has real GCP credentials, so the "raise because a real answer was required" path and the "genuinely working, non-degraded chat reply" path are exercised only by unit tests with a mocked `request_json`, never end-to-end against a running container. This is consistent with the issue's own acknowledged trade-off (no secrets in CI), not a defect in this change, but it's a real gap if anyone assumes the E2E job proves a working chat backend — it currently proves only transport/status codes plus the "import didn't explode" signal.
+- The `mock` (import-failure) path is likewise only unit-tested with a mocked `request_json`; I could not reproduce it against a real container without deliberately breaking the image's dependency install, which would have meant modifying the repo/build — out of scope here. The unit + mutation coverage on this path is solid, so I did not treat this as blocking.
+- `report_notice`'s message text ends with "Set E2E_REQUIRE_REAL_CHAT=1 where credentials exist" — in an `LLM_PROVIDER=local` dev setup, the relevant blocker is usually a missing/unready Ollama, not "credentials." Not a functional defect (the existing `check_chat_dependencies` / `local_provider_ready` check already fails fast and non-retryably before this code ever runs in that scenario), just a minor wording mismatch for that audience.
+
+## Environment issues
+- Host ports **5432** and **3000** are held by an unrelated `travel-app` project (`travel-app-db-1`, and a `next-server` dev process). Per prior memory, worked around with a scratch `docker-compose` override (`db→55433`, `web→3100`, `chat→8010`, `LLM_PROVIDER: gcp`) outside the repo, ran the real smoke against it, then tore the stack down (`docker compose down --volumes --remove-orphans`). Verified afterward that only the unrelated `travel-app-*` containers remain — nothing belonging to the user's other project was touched or stopped.
+- `.env` in this repo sets `LLM_PROVIDER=local`, and Ollama is not installed here, so the override forced `LLM_PROVIDER=gcp` to match what CI actually runs with (CI sets no `LLM_PROVIDER`, and compose's default is `gcp`) — this is not a code defect, just a local-only constraint, consistent with the persisted memory note.
+
+## Commands run
+```
+git status --short
+git diff --stat
+git diff scripts/e2e_smoke.py
+git diff tests/scripts/test_e2e_smoke.py
+gh issue view 121
+python3 -m venv &lt;scratch&gt;/bare-venv
+&lt;scratch&gt;/bare-venv/bin/python -m unittest discover -s tests/scripts -p "test_*.py" -v   # 109 tests, OK
+make test-scripts                                                                        # 109 tests, OK
+make -n e2e-smoke
+docker compose -f docker-compose.yml -f &lt;scratch&gt;/e2e-port-override.yml config
+CHAT_INSTALL_LOCAL_STACK=0 docker compose -f docker-compose.yml -f &lt;scratch&gt;/e2e-port-override.yml up -d --build --force-recreate db chat web
+.venv/bin/python scripts/e2e_smoke.py --web-url http://127.0.0.1:3100 --chat-url http://127.0.0.1:8010 --timeout 120 --interval 2   # PASS, exit 0
+docker compose -f docker-compose.yml -f &lt;scratch&gt;/e2e-port-override.yml down --volumes --remove-orphans
+# mutation testing on scratch copies of scripts/e2e_smoke.py + tests/scripts/test_e2e_smoke.py (repo untouched)
+```
+
+## Not run, and why
+- `make e2e-smoke-full` / the "Full Chat Profile" job (`INSTALL_LOCAL_STACK=1`) was not built locally — it's schedule/dispatch-only in CI and reasoning from the workflow file (no `LLM_PROVIDER` set there either) shows it takes the same `gcp`-fallback / NOTICE path as the lite profile I did run; I did not spend the extra ~10 min image build to confirm empirically.
+- Did not attempt to reproduce the `mock` (import-failure) path against a real container, since doing so would require deliberately breaking the chat image's dependency install — effectively a repository/build modification, out of scope for a read-only verification. Covered instead by unit + mutation tests.
+- `make e2e-smoke` via the Makefile target itself (rather than invoking `scripts/e2e_smoke.py` directly) was not run, because it hard-codes ports 3000/8000 which collide locally; ran the equivalent script invocation directly against the overridden ports instead, per the documented workaround.
+- No web-only or chat-only suites (`quick-ci-web`, `quick-ci-chat`) were run — out of the stated scope (`scripts/e2e_smoke.py` and `tests/scripts/test_e2e_smoke.py` only), and `detect_changed_surfaces.py`'s own recommended targets for a `runtime`-classified change (`toolchain-doctor`, `env-contract-check`, `test-scripts`, `quick-ci-web`, `quick-ci-chat`) were not fully executed beyond `test-scripts`, since this change touches neither web nor chat source.
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/e2e_smoke.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_e2e_smoke.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/main.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/contoso_chat/chat_request.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/contoso_chat/search_service.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/Makefile`, `/home/scottdensmore/Developer/scottdensmore/contoso/docker-compose.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/.github/workflows/ci.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/detect_changed_surfaces.py`.</result>
+<usage><subagent_tokens>114038</subagent_tokens><tool_uses>75</tool_uses><duration_ms>898390</duration_ms></usage>
+</task-notification>
