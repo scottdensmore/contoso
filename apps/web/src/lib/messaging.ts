@@ -160,7 +160,10 @@ export const sendChatMessage = async (
     console.error("Error sending chat message:", error);
     return {
       name: "Jane Doe",
-      message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : String(error)}`,
+      // Logged above for operators. Surfacing "HTTP error! status: 500" to a
+      // shopper tells them nothing and exposes transport internals. Matches the
+      // string the component uses when a request rejects.
+      message: "Sorry, something went wrong. Please try again.",
       status: "done",
       type: "assistant",
       avatar: "",

@@ -75,4 +75,35 @@ describe("sendChatMessage", () => {
 
     expect(result.message).toContain("- [TrailMaster X4 Tent](/products/trailmaster-x4-tent)");
   });
+
+  it("does not leak transport detail into the user-facing error", async () => {
+    // The failure is logged for operators. "HTTP error! status: 500" tells a
+    // shopper nothing and exposes internals; the component's own error path
+    // already used a generic string, so the two diverged.
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("upstream exploded", { status: 500 }),
+    );
+
+    const result = await sendChatMessage(turn);
+
+    expect(result.message).not.toMatch(/\b500\b/);
+    expect(result.message).not.toMatch(/HTTP error/i);
+    expect(result.message).toBe("Sorry, something went wrong. Please try again.");
+    expect(result.status).toBe("done");
+    expect(result.type).toBe("assistant");
+
+    // The detail still has to reach the logs.
+    expect(consoleError).toHaveBeenCalled();
+  });
+
+  it("returns the same generic message when the network itself fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
+
+    const result = await sendChatMessage(turn);
+
+    expect(result.message).not.toMatch(/ECONNREFUSED/);
+    expect(result.message).toBe("Sorry, something went wrong. Please try again.");
+  });
 });
