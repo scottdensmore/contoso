@@ -45,13 +45,27 @@ export default async function CategoryPage({
               className="group"
             >
               <div className="aspect-square w-full overflow-hidden rounded-3xl bg-gray-200">
-                <Image
-                  src={product.image || "/images/placeholder.png"}
-                  alt={product.name}
-                  width={350}
-                  height={350}
-                  className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
-                />
+                {product.image ? (
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    width={350}
+                    height={350}
+                    sizes="(min-width: 1024px) 350px, (min-width: 640px) 45vw, 90vw"
+                    className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
+                  />
+                ) : (
+                  // An empty state rather than a placeholder image: it costs no
+                  // request, and it makes the missing data visible instead of
+                  // papering over it.
+                  <div
+                    role="img"
+                    aria-label={`No image available for ${product.name}`}
+                    className="flex h-full w-full items-center justify-center text-sm text-gray-500"
+                  >
+                    No image available
+                  </div>
+                )}
               </div>
               <div className="mt-4 text-center">
                 <h3 className="text-2xl font-semibold text-gray-900">
