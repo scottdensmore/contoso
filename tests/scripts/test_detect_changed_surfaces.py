@@ -142,7 +142,42 @@ class DetectChangedSurfacesTests(unittest.TestCase):
             "unknown": False,
             "none": False,
         }
-        self.assertEqual(detect_changed.recommended_targets(flags), ["docs-check"])
+        self.assertEqual(
+            detect_changed.recommended_targets(flags), ["test-scripts", "docs-check"]
+        )
+
+    def test_recommended_targets_includes_script_tests_for_any_change(self):
+        """The local mirror of the script-tests CI gate.
+
+        The guardrail suite asserts on files across every surface, so a
+        surface-scoped local run must still include it — otherwise the
+        pre-push loop skips the guard that CI runs.
+        """
+        for surface in ("web", "chat", "docs"):
+            with self.subTest(surface=surface):
+                flags = {
+                    "runtime": False,
+                    "web": surface == "web",
+                    "chat": surface == "chat",
+                    "docs": surface == "docs",
+                    "unknown": False,
+                    "none": False,
+                }
+                self.assertIn(
+                    "test-scripts", detect_changed.recommended_targets(flags)
+                )
+
+    def test_recommended_targets_is_empty_when_nothing_changed(self):
+        """`none` must not pick up test-scripts from the clause above."""
+        flags = {
+            "runtime": False,
+            "web": False,
+            "chat": False,
+            "docs": False,
+            "unknown": False,
+            "none": True,
+        }
+        self.assertEqual(detect_changed.recommended_targets(flags), [])
 
     def test_agent_doc_paths_route_to_docs_check(self):
         for path in (
