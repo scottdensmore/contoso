@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "f4768a05f992",
+  "strategy": "manual-commit",
+  "branch": "feat/rendered-journey-checks",
+  "checkpoints_count": 2,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/f4/768a05f992/0/metadata.json",
+      "transcript": "/f4/768a05f992/0/full.jsonl",
+      "compact_transcript": "/f4/768a05f992/0/transcript.jsonl",
+      "content_hash": "/f4/768a05f992/0/content_hash.txt",
+      "prompt": "/f4/768a05f992/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3887,
+    "cache_creation_tokens": 7381389,
+    "cache_read_tokens": 864676045,
+    "output_tokens": 1209178,
+    "api_call_count": 2100
+  }
+}
