@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "1dc387554299",
+  "strategy": "manual-commit",
+  "branch": "fix/profile-signed-out",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/web/src/app/profile/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1d/c387554299/0/metadata.json",
+      "transcript": "/1d/c387554299/0/full.jsonl",
+      "compact_transcript": "/1d/c387554299/0/transcript.jsonl",
+      "content_hash": "/1d/c387554299/0/content_hash.txt",
+      "prompt": "/1d/c387554299/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3936,
+    "cache_creation_tokens": 8094069,
+    "cache_read_tokens": 882641985,
+    "output_tokens": 1225292,
+    "api_call_count": 2126
+  }
+}
