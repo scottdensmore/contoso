@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "0e720d5bd2e5",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-reset-during-flight",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0e/720d5bd2e5/0/metadata.json",
+      "transcript": "/0e/720d5bd2e5/0/full.jsonl",
+      "compact_transcript": "/0e/720d5bd2e5/0/transcript.jsonl",
+      "content_hash": "/0e/720d5bd2e5/0/content_hash.txt",
+      "prompt": "/0e/720d5bd2e5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3257,
+    "cache_creation_tokens": 7057898,
+    "cache_read_tokens": 675506421,
+    "output_tokens": 998323,
+    "api_call_count": 1761
+  }
+}
