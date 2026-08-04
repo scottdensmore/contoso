@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "9792c5149fc4",
+  "strategy": "manual-commit",
+  "branch": "chore/remove-azure-chat-modes",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".env.example",
+    "apps/web/AGENTS.md",
+    "apps/web/src/app/api/chat/grounded/route.ts",
+    "apps/web/src/app/api/chat/visual/route.ts",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx",
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/turn.tsx",
+    "apps/web/src/components/video.tsx",
+    "apps/web/src/lib/messaging.test.ts",
+    "apps/web/src/lib/messaging.ts",
+    "apps/web/src/lib/types.ts",
+    "tests/scripts/test_chat_surface.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/97/92c5149fc4/0/metadata.json",
+      "transcript": "/97/92c5149fc4/0/full.jsonl",
+      "compact_transcript": "/97/92c5149fc4/0/transcript.jsonl",
+      "content_hash": "/97/92c5149fc4/0/content_hash.txt",
+      "prompt": "/97/92c5149fc4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2687,
+    "cache_creation_tokens": 6698940,
+    "cache_read_tokens": 603677056,
+    "output_tokens": 817748,
+    "api_call_count": 1454
+  }
+}
