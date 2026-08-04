@@ -38,6 +38,7 @@
     "release:dry-run": "make release-dry-run",
     "ci": "make ci",
     "ci:web": "make -C apps/web ci",
-    "ci:chat": "make -C services/chat ci"
+    "ci:chat": "make -C services/chat ci",
+    "test:e2e": "make test-e2e"
   }
 }

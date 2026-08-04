@@ -294,6 +294,46 @@ jobs:
           end_epoch="$(date +%s)"
           echo "duration_seconds=$((end_epoch-start_epoch))" >> "$GITHUB_OUTPUT"
 
+      # The smoke leaves the stack up (KEEP_STACK), so the journeys run against
+      # it rather than standing up a second one. This job otherwise sets up
+      # Python only, hence the Node steps here.
+      - name: Set up Node.js
+        if: always() && steps.run_smoke.outcome == 'success'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Cache Playwright browsers
+        if: always() && steps.run_smoke.outcome == 'success'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('apps/web/package-lock.json') }}
+
+      - name: Install web dependencies and browser
+        if: always() && steps.run_smoke.outcome == 'success'
+        working-directory: apps/web
+        run: |
+          npm ci --workspaces=false --include=dev --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Run end-to-end journeys
+        if: always() && steps.run_smoke.outcome == 'success'
+        env:
+          E2E_BASE_URL: http://127.0.0.1:3000
+        run: make test-e2e
+
+      - name: Upload journey failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: e2e-journey-artifacts
+          path: apps/web/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Capture dependency health snapshot
         id: dependencies_health_lite
         if: always()

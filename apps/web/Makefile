@@ -33,6 +33,12 @@ test: ## Run web tests
 	$(MAKE) sync-env
 	$(NPM) run test
 
+test-e2e: ## Run Playwright journeys against a running stack (see E2E_BASE_URL)
+	$(NPM) run test:e2e
+
+install-e2e-browsers: ## Install the browser Playwright drives
+	$(NPM) exec -- playwright install --with-deps chromium
+
 build: ## Build web app
 	$(MAKE) sync-env
 	$(MAKE) prisma-generate

@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Playwright specs match vitest's default glob. Left in, vitest picks them
+    // up and fails on `@playwright/test` imports it cannot run.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**', 'e2e/**'],
   },
   resolve: {
     alias: {
