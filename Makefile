@@ -221,8 +221,9 @@ release-dry-run: | $(VENV_PYTHON) ## Validate release prerequisites without publ
 docs-check: | $(VENV_PYTHON) ## Validate docs links and agent doc pointers
 	$(PYTHON) scripts/verify_docs.py
 	$(MAKE) agent-docs-check
-	# AGENTS.md is a docs path, so a change to it never reaches test-scripts.
-	# This guard reads AGENTS.md, so it has to run here too.
+	# Deliberately redundant: test-scripts runs for every change and covers this
+	# too. Repeated here so docs-check is worth running on its own, which is how
+	# it is reached from `make ci` and from the docs job.
 	$(PYTHON) -m unittest discover -s tests/scripts -p "test_agent_definitions.py"
 
 agent-docs-check: | $(VENV_PYTHON) ## Verify CLAUDE.md/GEMINI.md/copilot-instructions.md stay pointers to AGENTS.md (set FIX=1 to restore)
