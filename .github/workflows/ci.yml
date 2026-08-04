@@ -322,7 +322,9 @@ jobs:
       - name: Run end-to-end journeys
         if: always() && steps.run_smoke.outcome == 'success'
         env:
-          E2E_BASE_URL: http://127.0.0.1:3000
+          # Must match NEXTAUTH_URL in docker-compose.yml, or the session
+          # cookie is set for a different origin than the journeys browse.
+          E2E_BASE_URL: http://localhost:3000
         run: make test-e2e
 
       - name: Upload journey failure artifacts

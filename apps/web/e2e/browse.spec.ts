@@ -56,9 +56,33 @@ test.describe('browsing', () => {
     })
 
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
 
     const images = page.locator('img')
+    await expect(images.first()).toBeVisible()
+
+    // next/image lazy-loads below the fold, so scroll the page to make the rest
+    // actually request. Without this the check only ever sees the hero.
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
+        window.scrollTo(0, y)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    })
+
+    // Deliberately not asserting every img is `complete`: a lazy image that
+    // never entered the viewport never loads, which is correct behaviour, so
+    // that assertion can never pass on a long page. What matters is that
+    // nothing the page *did* request came back an error.
+    await expect
+      .poll(
+        async () =>
+          images.evaluateAll((nodes) =>
+            nodes.filter((node) => (node as HTMLImageElement).complete).length,
+          ),
+        { timeout: 20_000, message: 'no images finished loading' },
+      )
+      .toBeGreaterThan(0)
+
     expect(await images.count()).toBeGreaterThan(0)
     expect(failed, 'image requests returned an error status').toEqual([])
   })
