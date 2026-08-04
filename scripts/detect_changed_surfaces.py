@@ -61,6 +61,15 @@ WEB_PATTERNS = (
 CHAT_PATTERNS = (
     "services/chat/**",
     "apps/web/prisma/**",
+    # A sibling of prisma/, not a child, so the pattern above never covered it
+    # on purpose — it matched only through the missing separator in
+    # path_matches. Dockerfile.migrate below COPYs this exact file, so editing
+    # it changes the migration image and must run the chat suite.
+    #
+    # Any future prisma.* sibling needs its own entry for the same reason:
+    # apps/web/** still matches it, so `unknown` stays False and the runtime
+    # fallback will not cover the omission.
+    "apps/web/prisma.config.ts",
     "docker-compose.yml",
     "Dockerfile.migrate",
 )
@@ -96,7 +105,12 @@ def run_git(args: list[str]) -> str:
 
 def path_matches(pattern: str, path: str) -> bool:
     if pattern.endswith("/**"):
-        return path.startswith(pattern[:-3])
+        # Keep the trailing separator. Dropping it matches any sibling whose
+        # name merely starts with the directory's, so "docs-archive/x.md" hits
+        # "docs/**". That is not the harmless direction: a spurious match keeps
+        # `unknown` False, which suppresses the fallback that would otherwise
+        # force the full runtime suite, and CI silently narrows to one job.
+        return path.startswith(pattern[:-2])
     return Path(path).match(pattern)
 
 

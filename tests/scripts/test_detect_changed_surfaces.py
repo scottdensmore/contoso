@@ -27,6 +27,87 @@ class DetectChangedSurfacesTests(unittest.TestCase):
             detect_changed.path_matches("apps/web/**", "apps/web/src/app/page.tsx"),
         )
 
+    def test_directory_glob_does_not_match_a_sibling_with_the_same_prefix(self):
+        """`dir/**` must require a separator, not just a string prefix.
+
+        Without one, any neighbour whose name starts with the pattern's
+        directory matches it.
+        """
+        for pattern, sibling in (
+            ("apps/web/**", "apps/web-e2e/spec.ts"),
+            ("docs/**", "docs-archive/notes.md"),
+            ("services/chat/**", "services/chat-legacy/old.py"),
+            (".claude/agents/**", ".claude/agents-extra/foo.md"),
+        ):
+            with self.subTest(pattern=pattern, path=sibling):
+                self.assertFalse(detect_changed.path_matches(pattern, sibling))
+
+    def test_directory_glob_anchors_at_the_start_of_the_path(self):
+        """`startswith`, not "contains".
+
+        Every sibling case above puts the pattern's directory at position 0, so
+        a substring check is indistinguishable from a prefix check under them —
+        a mutation to `pattern[:-2] in path` passes all of them. These paths
+        embed the directory deeper, where the two disagree.
+        """
+        for pattern, path in (
+            ("docs/**", "vendor/docs/notes.md"),
+            ("apps/web/**", "backup/apps/web/page.tsx"),
+            ("services/chat/**", "archive/services/chat/main.py"),
+        ):
+            with self.subTest(pattern=pattern, path=path):
+                self.assertFalse(detect_changed.path_matches(pattern, path))
+
+    def test_prisma_config_stays_in_the_chat_surface(self):
+        """It is a sibling of `apps/web/prisma/`, not a child.
+
+        Before the separator fix it reached the chat surface only through the
+        bug. `Dockerfile.migrate` COPYs this file, so losing that coverage would
+        let a migration-image change ship without the chat suite ever running —
+        and `apps/web/**` still matches it, so `unknown` stays False and the
+        runtime fallback does not cover the loss.
+        """
+        flags = detect_changed.classify(["apps/web/prisma.config.ts"])
+        self.assertTrue(flags["web"])
+        self.assertTrue(flags["chat"])
+        self.assertIn("quick-ci-chat", detect_changed.recommended_targets(flags))
+
+    def test_directory_glob_still_matches_real_children(self):
+        """The other half of the guard above.
+
+        A fix that required the separator but broke genuine children would
+        route everything to `unknown`, which passes the negative test alone.
+        """
+        for pattern, child in (
+            ("apps/web/**", "apps/web/src/app/page.tsx"),
+            ("docs/**", "docs/ENV_CONTRACT.md"),
+            ("services/chat/**", "services/chat/src/api/main.py"),
+            (".claude/agents/**", ".claude/agents/verifier.md"),
+        ):
+            with self.subTest(pattern=pattern, path=child):
+                self.assertTrue(detect_changed.path_matches(pattern, child))
+
+    def test_sibling_directory_does_not_narrow_ci_to_a_single_job(self):
+        """The consequence the separator bug actually had.
+
+        A spurious match keeps `unknown` False, and `unknown` is what forces
+        the full runtime suite. So over-matching does not fail safe — it
+        suppresses the fallback and silently narrows CI to one job. Asserting
+        on `path_matches` alone would not have shown that.
+        """
+        for sibling in (
+            "docs-archive/notes.md",
+            "apps/web-e2e/spec.ts",
+            "services/chat-legacy/old.py",
+        ):
+            with self.subTest(path=sibling):
+                flags = detect_changed.classify([sibling])
+                self.assertTrue(flags["unknown"])
+                self.assertTrue(flags["runtime"])
+                self.assertIn(
+                    "test-scripts", detect_changed.recommended_targets(flags)
+                )
+
     def test_unknown_paths_force_runtime(self):
         flags = detect_changed.classify(["some/new/area/file.txt"])
         self.assertTrue(flags["unknown"])
