@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "9a8282adf915",
+  "strategy": "manual-commit",
+  "branch": "chore/remove-orphan-test-runner",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "services/chat/run_tests.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9a/8282adf915/0/metadata.json",
+      "transcript": "/9a/8282adf915/0/full.jsonl",
+      "compact_transcript": "/9a/8282adf915/0/transcript.jsonl",
+      "content_hash": "/9a/8282adf915/0/content_hash.txt",
+      "prompt": "/9a/8282adf915/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3542,
+    "cache_creation_tokens": 7237250,
+    "cache_read_tokens": 747146403,
+    "output_tokens": 1104852,
+    "api_call_count": 1914
+  }
+}
