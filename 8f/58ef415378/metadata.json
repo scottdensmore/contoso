@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "8f58ef415378",
+  "strategy": "manual-commit",
+  "branch": "fix/page-headings",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/web/src/app/login/page.tsx",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/app/products/[slug]/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx",
+    "apps/web/src/app/signup/page.tsx",
+    "tests/scripts/test_page_headings.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8f/58ef415378/0/metadata.json",
+      "transcript": "/8f/58ef415378/0/full.jsonl",
+      "compact_transcript": "/8f/58ef415378/0/transcript.jsonl",
+      "content_hash": "/8f/58ef415378/0/content_hash.txt",
+      "prompt": "/8f/58ef415378/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3613,
+    "cache_creation_tokens": 7270160,
+    "cache_read_tokens": 768937342,
+    "output_tokens": 1123939,
+    "api_call_count": 1952
+  }
+}
