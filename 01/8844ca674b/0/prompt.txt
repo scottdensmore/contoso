@@ -4361,3 +4361,90 @@ Untracked paths (`.claude/settings.json`, `.codex/`, `.cursor/`, `.entire/`, `.g
 Not assessed: nothing binary or generated in this change.</result>
 <usage><subagent_tokens>47157</subagent_tokens><tool_uses>29</tool_uses><duration_ms>236521</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a5dcc6f52068714b1</task-id>
+<tool-use-id>toolu_013G3RepHrUQekLpoRqggRgq</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a5dcc6f52068714b1.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for integration consolidation" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repository state is untouched (matches the pre-existing snapshot). Final report below.
+
+## Verdict
+
+**Verified — the change is safe to land, with one small non-blocking loose end.** All checks pass, the one assertion I was asked to stress-test (`check_chat_rejects_invalid_payload`) does get a real 422 from a genuinely running chat container, and I found no dangling references to the deleted paths. I do disagree with one framing in the justification (see test 4 below) and found an orphaned fixture in `conftest.py` that the deletion left behind.
+
+## The eight deleted tests, one by one
+
+Source read from `git show HEAD:services/chat/tests/integration/test_chat.py` (still present in git history under `HEAD`, i.e. before this uncommitted deletion).
+
+1. **`test_health_endpoint`** — Covered. Duplicated by pre-existing `check_chat_health` in `scripts/e2e_smoke.py` and pre-existing `services/chat/tests/unit/test_main.py::test_health_endpoint`. Agree.
+2. **`test_dependencies_health_endpoint`** — Covered. Duplicated by pre-existing `check_chat_dependencies` and three pre-existing dependency tests in `test_main.py`. Agree.
+3. **`test_root_endpoint`** — Covered, ported to the new `check_chat_root`. I confirmed against a real running container that root returns `{"message","version","status","real_chat"}` and the new check's key list matches. Agree, and now verified live.
+4. **`test_create_response_basic`** — I partially disagree with "superseded." `check_web_chat_proxy` (plus the #121 degraded-reply rejection) does exercise a real create-response call end-to-end, and does it more rigorously than the old test in one sense (it detects mock/fallback replies, which the old test explicitly could not — its comment literally said "Check for either real response format or mock response format"). But I found something the author didn't flag: the old test's "real chat response format" branch asserted `data["customer_id"] == "1"`, and production `get_response()` in `services/chat/src/api/contoso_chat/chat_request.py` returns only `{"question","answer","context"}` — it never includes `customer_id`. So that assertion would have raised a `KeyError` against a genuinely working real backend; it only ever passed against the mock/fallback shape. This reinforces the deletion decision (the test was already vacuous for the case it claimed to cover) but it means the "superseded" framing slightly overstates what was actually being verified before. Also worth noting structurally: no check in `e2e_smoke.py` hits chat's `/api/create_response` directly with a valid payload — the happy path is only exercised indirectly through the web proxy. Low risk given `test_main.py` hits it directly with mocks, but it's a real (minor) shape difference from the old suite.
+5. **`test_create_response_with_customer`** (customer_id echo, id="5") — Genuinely dropped as an end-to-end/live check. Underlying behavior is covered at the unit level (`test_create_response_mock_mode`, `test_create_response_real_mode` which asserts `mock_get_response.assert_called_once_with("1", ...)`, `test_create_response_error_handling`), all pre-existing and unaffected by this PR. Given point 4 above — production doesn't echo `customer_id` in the real-chat path at all — an e2e check asserting that echo would be testing the mock/fallback shape, not real behavior, so I agree dropping it lost little. Acceptable.
+6. **`test_create_response_with_chat_history`** — Same reasoning as #5. The old test never verified `chat_history` actually influenced the answer, just that a response came back; unit tests cover passthrough (`test_create_response_default_values`, the `assert_called_once_with(..., "[]")` in `test_create_response_real_mode`). Acceptable to drop.
+7. **`test_create_response_invalid_payload`** — Ported to `check_chat_rejects_invalid_payload`. **Verified against a real running chat container** (see below): POSTing `{"customer_id": "1", "chat_history": "[]"}` (no `question`) returns HTTP 422 with FastAPI's standard `{"detail":[{"type":"missing","loc":["body","question"],...}]}` body. This is because `ChatRequest.question: str` has no default, so pydantic validation runs before the handler and rejects the request unconditionally — independent of `REAL_CHAT_AVAILABLE`. Confirmed correct. Not blocking.
+8. **`test_response_time`** — Genuinely dropped, deliberately, with no replacement. `wait_for()`'s overall timeout (`args.timeout`, 240s default / 300s in CI) bounds total polling time across retries until a check *first* passes — it is not a per-request latency ceiling and is far looser (300s vs. the old 30s single-call bound) and structurally different (retry loop, not one call). I agree with the author's reasoning that a hard 30s ceiling is brittle against real LLM latency variance, but want to be explicit: there is now no assertion anywhere in the suite that would catch a single chat call regressing to, say, 25 seconds. That is a real, acknowledged gap, not a false claim.
+
+## Live-container verification (the part most likely to block a real CI run)
+
+Per your instructions I did not modify the repo or your `.env`, and did not touch your existing containers (`travel-app-db-1` on 5432, `next-server` on 3000 were left running). I built a scratch compose override outside the repo (`db→55433`, `chat→58000`, `web→53100`) and started only `db` + `chat` with `LLM_PROVIDER=gcp` (shell-env override, not touching `.env`), since `.env`'s `LLM_PROVIDER=local` would otherwise require Ollama, which isn't installed here.
+
+Against the real container:
+- `GET /` → `200 {"message":"Contoso Chat API","version":"1.0.0","status":"running","real_chat":true}` — matches `check_chat_root`'s expected keys exactly.
+- `POST /api/create_response` with `{"customer_id":"1","chat_history":"[]"}` (no `question`) → **422**, `{"detail":[{"type":"missing","loc":["body","question"],...}]}`. Matches `check_chat_rejects_invalid_payload`'s expectation exactly — **not a blocking finding**.
+- `POST /api/create_response` with a valid payload → 200, `fallback: true` (expected, since no real GCP/Discovery Engine credentials are configured in this scratch environment) — consistent with `degraded_reason()`'s handling in `check_web_chat_proxy`.
+- I also imported `scripts/e2e_smoke.py` directly and called `check_chat_root(...)` and `check_chat_rejects_invalid_payload(...)` against the live container — both passed.
+- Torn down cleanly afterward (`docker compose down -v`); confirmed no `contoso_verify-*` containers, networks, or volumes remain, and your `travel-app-*` containers are untouched.
+
+## Dangling references
+
+None to the deleted paths. Checked exhaustively: `grep -r "tests/integration"`, `"test-chat-integration"`, `"test-integration"`, `"test:chat:integration"` across the whole repo (excluding `node_modules`/`.git`) — zero hits anywhere (Makefiles, `package.json`, `.github/workflows/`, docs, scripts). The root `Makefile`'s `.PHONY` line, `test:`/`ci:`/`quick-ci:` targets, `services/chat/Makefile`, `package.json`, `run_tests.sh`, and both `README.md`/`AGENTS.md` were all updated consistently.
+
+**One near-miss I found, not covered by the "no dangling reference" check because it doesn't literally reference the deleted path:** `services/chat/tests/conftest.py` (not touched by this diff) still defines a `service_url` fixture whose docstring says "Get the service URL for integration tests" and reads `SERVICE_URL` — this fixture's only reason for existing was the now-deleted suite. I confirmed via grep that no remaining test in `services/chat/tests/unit/` references `service_url`, `sample_chat_request`, `sample_chat_response`, or `mock_env_vars` fixtures either. This is dead code, not a functional risk (unused pytest fixtures don't fail anything), but it's a loose end directly caused by this deletion that should probably be cleaned up in the same PR rather than left as clutter.
+
+## Checks run and results
+
+- `&lt;bare-venv&gt;/bin/python -m unittest discover -s tests/scripts -p "test_*.py"` in a fresh `python3 -m venv` outside the repo (no repo dependencies installed): **114 tests, OK** — matches your measured count.
+- `make test-scripts` (repo `.venv`): **114 tests, OK** (same suite, sanity cross-check).
+- `make docs-check`: **passed** (`verify_docs.py`, `agent-docs-check`, and the `test_agent_definitions.py` guard all green) — run because `services/chat/README.md` and `services/chat/AGENTS.md` changed.
+- `make quick-ci-chat`: **passed** (`check-python`, `deps-check`, `ruff`, `mypy`, `pytest tests/unit/` — 60 tests, all green, including the `test_main.py` tests that duplicate the deleted suite's assertions with mocks).
+- Live-container smoke of the two new `e2e_smoke.py` checks: **passed** (details above).
+
+## Flakes
+
+None encountered. Nothing needed a re-run.
+
+## Missing coverage
+
+- **Per-request response-time ceiling** (deleted `test_response_time`, item 8 above): no replacement anywhere. Deliberate per the author, and I think reasonably so, but flagging explicitly since it's a real drop in coverage, not a false one.
+- **Direct happy-path check against chat's own `/api/create_response`** in `e2e_smoke.py`: the endpoint's success path is only exercised indirectly via `check_web_chat_proxy` → web's proxy → chat. A break isolated to the web proxy layer and a break isolated to chat's own endpoint would look identical from this check's failure alone (mitigated by chat's own unit tests hitting the endpoint directly with mocks, and by `check_chat_health`/`check_chat_dependencies` narrowing which layer is likely at fault).
+- Multi-customer / multi-turn-history *behavioral* differences (i.e., does a different `customer_id` or a populated `chat_history` actually change anything) were never asserted by the old suite either — nothing to lose there.
+
+## Environment issues
+
+- Host ports 5432 and 3000 are held by your unrelated `travel-app-db-1` and `next-server` containers, as your memory note anticipated. Worked around with a scratch compose override (`db→55433`, `chat→58000`, `web→53100`) outside the repo, and did not touch your containers.
+- `.env` sets `LLM_PROVIDER=local` with no Ollama installed; worked around by overriding `LLM_PROVIDER=gcp` via shell environment for the scratch stack only, matching CI's fallback behavior (CI has no `.env`, so compose defaults to `gcp`). Did not edit your `.env`.
+- Docker build/startup for the scratch `chat`+`db` stack succeeded without incident (cached layers, no rebuild surprises).
+
+## What I did not run, and why
+
+- **`make e2e-smoke` / `make ci` end-to-end (full stack including `web`)**: not run. This change touches no runtime source (`services/chat/src/**`, `apps/web/src/**` are unchanged), no Dockerfile, and no `docker-compose.yml`, so it falls outside the "runtime code, Dockerfiles, or compose" trigger in `AGENTS.md` for mandatory `e2e-smoke`. I instead did a targeted live-container test of exactly the two new assertions (`check_chat_root`, `check_chat_rejects_invalid_payload`) against a real chat container, which was the specific, named risk in the task. I did not additionally bring up the `web` container to run the full smoke script top-to-bottom; if you want that extra margin of confidence I can run it, but it wasn't required by the repo's own trigger rule and would add real build time for a change that doesn't touch runtime code.
+- **`make -C apps/web quick-ci`**: not run — no web files changed in this diff.
+- **`make ci`**: not run in full (its components — `quick-ci`, `test-scripts`, `docs-check` — were run individually as above; `build` was not separately re-run since it doesn't touch anything this diff changed).
+
+## Relevant file paths
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/e2e_smoke.py` (new `check_chat_root`, `check_chat_rejects_invalid_payload`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_e2e_smoke.py` (new `ChatContractChecksTests`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/main.py` (`ChatRequest`, `/`, `/api/create_response`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/contoso_chat/chat_request.py` (`get_response` — does not echo `customer_id`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/tests/unit/test_main.py` (pre-existing unit duplication of health/root/422/customer_id-echo assertions)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/tests/conftest.py` (orphaned `service_url` and related fixtures left behind by the deletion)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/Makefile`, `/home/scottdensmore/Developer/scottdensmore/contoso/package.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/Makefile`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/run_tests.sh`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/README.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/AGENTS.md` (wrapper/doc removals, all clean)</result>
+<usage><subagent_tokens>74833</subagent_tokens><tool_uses>56</tool_uses><duration_ms>474408</duration_ms></usage>
+</task-notification>
