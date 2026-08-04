@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "11fcba7d9848",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-panel-mobile-a11y",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/turn.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/11/fcba7d9848/0/metadata.json",
+      "transcript": "/11/fcba7d9848/0/full.jsonl",
+      "compact_transcript": "/11/fcba7d9848/0/transcript.jsonl",
+      "content_hash": "/11/fcba7d9848/0/content_hash.txt",
+      "prompt": "/11/fcba7d9848/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3391,
+    "cache_creation_tokens": 7142058,
+    "cache_read_tokens": 705433692,
+    "output_tokens": 1050798,
+    "api_call_count": 1833
+  }
+}
