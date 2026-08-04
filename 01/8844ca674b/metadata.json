@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "018844ca674b",
+  "strategy": "manual-commit",
+  "branch": "fix/consolidate-integration-checks",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "AGENTS.md",
+    "Makefile",
+    "package.json",
+    "scripts/e2e_smoke.py",
+    "services/chat/AGENTS.md",
+    "services/chat/Makefile",
+    "services/chat/README.md",
+    "services/chat/run_tests.sh",
+    "services/chat/tests/integration/test_chat.py",
+    "services/chat/tests/requirements-test.txt",
+    "tests/scripts/test_e2e_smoke.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/01/8844ca674b/0/metadata.json",
+      "transcript": "/01/8844ca674b/0/full.jsonl",
+      "compact_transcript": "/01/8844ca674b/0/transcript.jsonl",
+      "content_hash": "/01/8844ca674b/0/content_hash.txt",
+      "prompt": "/01/8844ca674b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3198,
+    "cache_creation_tokens": 7018987,
+    "cache_read_tokens": 664093315,
+    "output_tokens": 978726,
+    "api_call_count": 1729
+  }
+}

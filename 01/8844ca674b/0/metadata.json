@@ -1,0 +1,96 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "018844ca674b",
+  "session_id": "db47ca28-f071-4586-ad2f-266019892058",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-04T08:10:38.690712816Z",
+  "branch": "fix/consolidate-integration-checks",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    "AGENTS.md",
+    "Makefile",
+    "package.json",
+    "scripts/e2e_smoke.py",
+    "services/chat/AGENTS.md",
+    "services/chat/Makefile",
+    "services/chat/README.md",
+    "services/chat/run_tests.sh",
+    "services/chat/tests/integration/test_chat.py",
+    "services/chat/tests/requirements-test.txt",
+    "tests/scripts/test_e2e_smoke.py"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "e72e973bc5bc",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 3198,
+    "cache_creation_tokens": 7018987,
+    "cache_read_tokens": 664093315,
+    "output_tokens": 978726,
+    "api_call_count": 1729
+  },
+  "session_metrics": {
+    "turn_count": 200
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-04T08:10:34.053381637Z",
+    "agent_lines": 99,
+    "agent_removed": 178,
+    "human_added": 2,
+    "human_modified": 12,
+    "human_removed": 0,
+    "total_committed": 113,
+    "total_lines_changed": 330,
+    "agent_percentage": 83.93939393939394,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 111,
+      "agent_lines_removed": 178,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 10179,
+      "user_lines_removed": 0,
+      "agent_lines_added": 111,
+      "agent_lines_removed": 178,
+      "user_added_per_file": {
+        ".claude/settings.json": 84,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 52,
+        ".cursor/hooks.json": 40,
+        ".github/hooks/entire.json": 61,
+        "package-lock.json": 9939
+      }
+    }
+  ]
+}
