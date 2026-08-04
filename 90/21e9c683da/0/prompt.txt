@@ -3096,3 +3096,7 @@ Not assessed: the other untracked entries (`.claude/settings.json`, `.codex/`, `
 ---
 
 We should get rid of all the conductor things since that is old and not needed anymore
+
+---
+
+ok lets commit and merge.
