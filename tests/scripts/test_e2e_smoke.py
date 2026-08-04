@@ -1,4 +1,6 @@
+import contextlib
 import importlib.util
+import io
 import os
 import tempfile
 import unittest
@@ -97,8 +99,12 @@ class DegradedChatProxyBehaviourTests(unittest.TestCase):
     """
 
     def _run(self, payload, env):
+        # Swallow the NOTICE. Without this it lands in the Script Guardrail
+        # Tests log, a job that never runs chat, reading as though chat were
+        # degraded there.
         with patch.object(e2e_smoke, "request_json", return_value=(200, payload, "")), \
-             patch.dict(os.environ, env, clear=True):
+             patch.dict(os.environ, env, clear=True), \
+             contextlib.redirect_stdout(io.StringIO()):
             e2e_smoke.check_web_chat_proxy("http://web")
 
     def test_mock_reply_fails_even_without_credentials(self):
