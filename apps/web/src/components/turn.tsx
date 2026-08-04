@@ -28,12 +28,13 @@ export const Turn = ({ turn }: Props) => {
   const getContent = (turn: ChatTurn) => {
     if (turn.status === "waiting") {
       return (
-        <div className="ml-2 flex flex-row">
+        <div className="ml-2 flex flex-row" role="status">
           <svg
-            className="animate-spin -ml-1 mr-2 h-5 w-5 text-zinc-600"
+            className="animate-spin motion-reduce:animate-none -ml-1 mr-2 h-5 w-5 text-zinc-600"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <circle
               className="opacity-25"
@@ -57,7 +58,7 @@ export const Turn = ({ turn }: Props) => {
         <div>
           <div
             className={clsx(
-              "[&_a]:text-sky-800 [&_ul]:list-disc [&_ul]:list-outside [&_li]:ml-9 p-1 [&_ul]:pt-2 [&_ul]:pb-2",
+              "[&_a]:text-sky-800 [&_ul]:list-disc [&_ul]:list-outside [&_li]:ml-5 sm:[&_li]:ml-9 p-1 [&_ul]:pt-2 [&_ul]:pb-2",
               "[&_a]:font-semibold"
             )}
           >
@@ -68,10 +69,12 @@ export const Turn = ({ turn }: Props) => {
     }
   };
 
+  // Gutters were a flat 96px. Inside a 358px panel at 390px that left a 218px
+  // content column — 39% fixed gutter — wrapping product names onto two lines.
   if (turn.type === "user") {
     return (
-      <div className="ml-24 flex gap-1">
-        <div className="grow bg-sky-700 text-zinc-100 p-2 rounded-md">
+      <div className="ml-8 sm:ml-24 flex gap-1">
+        <div className="grow min-w-0 break-words bg-sky-700 text-zinc-100 p-2 rounded-md">
           {getContent(turn)}
         </div>
         <div>
@@ -81,8 +84,8 @@ export const Turn = ({ turn }: Props) => {
     );
   } else {
     return (
-      <div className="flex flex-row-reverse gap-1 mr-24">
-        <div className="grow bg-zinc-200 text-zinc-600 p-2 rounded-md">
+      <div className="flex flex-row-reverse gap-1 mr-8 sm:mr-24">
+        <div className="grow min-w-0 break-words bg-zinc-200 text-zinc-600 p-2 rounded-md">
           {getContent(turn)}
         </div>
         <div>

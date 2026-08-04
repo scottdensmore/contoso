@@ -17,12 +17,11 @@ vi.mock('@/lib/messaging', () => ({
 }))
 
 function clickReset() {
-  // The reset control is an unlabelled svg with an onClick, so it cannot be
-  // selected by role or accessible name — which is also why a keyboard user
-  // cannot reach it. Tracked in #112; this selector goes away with that fix.
-  const reset = document.querySelector('.w-5.stroke-zinc-500')
-  if (!reset) throw new Error('reset control not found')
-  fireEvent.click(reset)
+  fireEvent.click(screen.getByRole('button', { name: 'Clear conversation' }))
+}
+
+function openChat() {
+  fireEvent.click(screen.getByRole('button', { name: 'Open chat' }))
 }
 
 function openChatAndSend(text: string) {
@@ -32,6 +31,237 @@ function openChatAndSend(text: string) {
   fireEvent.change(input, { target: { value: text } })
   fireEvent.keyUp(input, { code: 'Enter' })
 }
+
+describe('Chat accessibility', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('exposes every control by an accessible name', () => {
+    // Rendered review found the reset control was a bare svg with an onClick —
+    // no role, no name, unreachable by keyboard — and the send button and
+    // input had no names at all.
+    render(<Chat />)
+    openChat()
+
+    expect(screen.getByRole('button', { name: 'Clear conversation' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Send message' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Close chat' })).toBeDefined()
+    expect(screen.getByRole('textbox', { name: 'Message' })).toBeDefined()
+  })
+
+  it('announces conversation updates to assistive technology', () => {
+    // A probe at three viewports found zero aria-live/role=log/status/alert
+    // anywhere on the page, so turns mutated silently.
+    render(<Chat />)
+    openChat()
+
+    const log = screen.getByRole('log', { name: 'Conversation' })
+    expect(log.getAttribute('aria-live')).toBe('polite')
+  })
+
+  it('marks the waiting turn as a status and hides the decorative spinner', async () => {
+    let resolveReply: (turn: unknown) => void = () => {}
+    sendChatMessage.mockReturnValue(new Promise((resolve) => { resolveReply = resolve }))
+
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChatAndSend('recommend a tent')
+      await act(async () => { vi.advanceTimersByTime(500) })
+
+      const status = screen.getByRole('status')
+      expect(status.textContent).toContain('Let me see what I can find')
+      expect(status.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+
+      await act(async () => {
+        resolveReply({
+          name: 'Jane Doe', message: 'done', status: 'done',
+          type: 'assistant', avatar: '',
+        })
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('moves focus into the panel when it opens', () => {
+    // The launcher is the last tabbable element on the home page; opening the
+    // panel moved focus nowhere, so the next Tab went into the page behind it.
+    render(<Chat />)
+    openChat()
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Message' }))
+  })
+
+  it('closes on Escape', () => {
+    render(<Chat />)
+    openChat()
+    expect(screen.getByRole('dialog', { name: 'Chat with Jane Doe' })).toBeDefined()
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('ignores Escape that did not originate inside the panel', () => {
+    // Rendered review: with the site nav drawer open over the chat, Escape
+    // closed the chat underneath and left the drawer up — dismissing the layer
+    // the user was not interacting with.
+    render(<Chat />)
+    openChat()
+    expect(screen.getByRole('dialog')).toBeDefined()
+
+    fireEvent.keyDown(document.body, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).not.toBeNull()
+
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('returns focus to the launcher when closed', () => {
+    // Closing dropped focus to <body>, so the next Tab restarted at the top of
+    // the document — 24 stops back to the launcher.
+    render(<Chat />)
+    openChat()
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Message' }), { key: 'Escape' })
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open chat' }))
+  })
+
+  it('re-seeds the greeting when the conversation is cleared', async () => {
+    // Reset left the panel completely blank, and the greeting only rendered on
+    // open — so a cleared thread stayed empty for the rest of the session.
+    // That state was unreachable while the reset control was not a control.
+    sendChatMessage.mockResolvedValue({
+      name: 'Jane Doe', message: 'an answer', status: 'done',
+      type: 'assistant', avatar: '',
+    })
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChatAndSend('recommend a tent')
+
+      // Drain the 400ms greeting timer that toggleChat queued. Without this it
+      // is still pending at reset and fires afterwards, re-seeding the greeting
+      // by accident — which would make this test pass against the old reset.
+      await act(async () => {
+        vi.advanceTimersByTime(1000)
+      })
+      await waitFor(() => expect(screen.getByText('an answer')).toBeDefined())
+
+      clickReset()
+      // Turn bodies render through react-remark, which updates on an effect.
+      await act(async () => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      expect(screen.getByText(/how can I be helpful today/i)).toBeDefined()
+      expect(screen.queryByText('recommend a tent')).toBeNull()
+      expect(screen.queryByText('an answer')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('returns focus to the launcher when closed by the button, not just Escape', () => {
+    // The Escape path and the button path are separate lines. A test that only
+    // closes with Escape leaves the button path unguarded — and Safari does not
+    // focus buttons on click, so focus would fall to <body> there.
+    render(<Chat />)
+    openChat()
+    fireEvent.click(screen.getByRole('button', { name: 'Close chat' }))
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open chat' }))
+  })
+
+  it('keeps the panel focusable so a click inside it does not break Escape', () => {
+    // In a browser, clicking a non-focusable part of the panel blurs to <body>,
+    // and the Escape guard — keyed on "target inside the panel" — then ignores
+    // the key. tabIndex={-1} makes the panel the nearest focusable ancestor, so
+    // the target stays inside.
+    //
+    // jsdom does not implement that focus-on-mousedown behaviour, so the
+    // consequence cannot be reproduced here; this pins the mechanism only. The
+    // behaviour itself was measured in the rendered app.
+    render(<Chat />)
+    openChat()
+    expect(screen.getByRole('dialog').getAttribute('tabindex')).toBe('-1')
+  })
+
+  it('closes on Escape raised from within the panel', () => {
+    render(<Chat />)
+    openChat()
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('does not double-seed the greeting when reset races the open timer', () => {
+    // toggleChat queues a 400ms greeting timer. reset also seeds one, so a
+    // reset inside that window rendered the greeting twice — reproduced in the
+    // browser at +50, +150 and +300ms.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChat()
+      act(() => {
+        vi.advanceTimersByTime(150)
+      })
+      clickReset()
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      expect(screen.getAllByText(/how can I be helpful today/i)).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('does not double-seed the greeting when reopened inside the open timer', () => {
+    // Found in the browser at every delay tried between +50 and +380ms. The
+    // open branch guards on turns.length, but the pending timer has not
+    // dispatched yet, so a reopen still sees an empty thread and schedules a
+    // second timer. Tap-tap-tap on the launcher is an ordinary mobile gesture.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      render(<Chat />)
+      openChat()
+      act(() => {
+        vi.advanceTimersByTime(150)
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Close chat' }))
+      act(() => {
+        vi.advanceTimersByTime(50)
+      })
+      openChat()
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      expect(screen.getAllByText(/how can I be helpful today/i)).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('ignores a whitespace-only message', () => {
+    // The guard was `message === ""` with no trim, so three spaces and Enter
+    // fired a real request and rendered an empty blue bubble.
+    render(<Chat />)
+    openChatAndSend('   ')
+    expect(sendChatMessage).not.toHaveBeenCalled()
+  })
+
+  it('sends the trimmed text, not the padded input', () => {
+    sendChatMessage.mockResolvedValue({
+      name: 'Jane Doe', message: 'ok', status: 'done', type: 'assistant', avatar: '',
+    })
+    render(<Chat />)
+    openChatAndSend('  recommend a tent  ')
+
+    expect(sendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'recommend a tent' }),
+      undefined,
+    )
+  })
+})
 
 describe('Chat placeholder timing', () => {
   beforeEach(() => {
