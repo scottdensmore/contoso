@@ -3252,3 +3252,48 @@ docker compose -f docker-compose.yml -f &lt;scratch-override&gt;.yml down --volu
 **Relevant files:** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/types.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/turn.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/messaging.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/.env.example`</result>
 <usage><subagent_tokens>71809</subagent_tokens><tool_uses>74</tool_uses><duration_ms>585215</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a4dbd3007f435193f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4818f834-b64b-4c6f-9ea3-50b1f4cd3e84/tasks/a4dbd3007f435193f.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review for mode removal" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Finding
+
+**1. Unrelated behaviour change bundled into the removal — `apps/web/src/lib/messaging.ts:158-162`** (confidence 80)
+
+The surviving `sendChatMessage` catch block was rewritten from
+
+```ts
+message: `Sorry, I encountered an error: ${error instanceof Error ? error.message : String(error)}`,
+```
+
+to a fixed `"Sorry, something went wrong. Please try again."`. Nothing about removing the visual/video/grounded modes requires this. It is a user-visible behaviour change in the one code path that survived, it is the only chat error text a shopper can actually reach today (chat service down, non-2xx from `/api/chat/service`, malformed JSON), and no test covers it — `apps/web/src/lib/messaging.test.ts` exercises only the success path, and the `chat.test.tsx` error test asserts the component's own `settleWithError` string, which happens to be identical, so it would pass either way. The same commit also rewrites the "slow reply" test in `apps/web/src/components/chat.test.tsx:65-105` from `waitFor` to fake timers, which is a flake fix, also unrelated to the removal.
+
+Concrete consequence: a reviewer reading `chore(web): remove azure chat modes` sees a diff that also silently changes what every shopper sees when the chat backend fails, and the new string is protected by no assertion, so a later refactor can drop it without any test noticing.
+
+Root `AGENTS.md` step 9 states plainly: "do not combine unrelated work."
+
+Suggested fix: drop the message rewrite and the fake-timer conversion from this commit and land them separately (the message change with a `sendChatMessage` error-path test asserting the generic text and that the detail is not leaked); or, if they stay, say so in the commit body and add that test.
+
+## Answers to your two specific questions
+
+**Anything else now dead:** I found no unreferenced code left behind. `ChatType`, `Citation`, `GroundedMessage`, `ChatMessage`, `ChatTurn.image`, `sendVisualMessage`, `sendGroundedMessage`, `video.tsx`, and the six env vars have zero remaining references anywhere in the repo (source, tests, docs, `infrastructure/`, `.github/`, `Makefile`, `scripts/`, `docker-compose.yml`, `config/env_contract.json`). `Product.manual` survives legitimately — `apps/web/src/app/products/[slug]/page.tsx:60` still uses it. `Turn` has exactly one consumer, so dropping its `type` prop is complete. One item scored below the reporting bar but answers your question directly: the `&lt;Suspense fallback={null}&gt;` wrapping `&lt;Chat /&gt;` at `apps/web/src/app/layout.tsx:35-37` existed because `Chat` called `useSearchParams`, which Next requires a boundary for. It is now inert scaffolding. Harmless, no stale comment attached to it.
+
+**Behaviour subtly changed rather than absent:** only the error-message rewrite above. Everything else is clean subtraction. On the home page the removed `searchParams?.type` was already dead at runtime under Next 15 (the prop is a Promise there, so `?.type` was always `undefined`); the category page awaited it properly, so its `?type=` propagation was live and is now correctly gone along with the modes that read it. `turn.tsx` keeps the non-grounded `[&amp;_a]:font-semibold` branch, matching what shoppers saw. `chat.tsx` dropping `currentImage` from the scroll effect deps is safe now that no image state exists.
+
+## What I reviewed
+
+- `git diff main..HEAD` — one commit, `0e2e89f`, pre-existing and unrelated to this work
+- Full unstaged diff, 13 files: `.env.example`, `apps/web/AGENTS.md`, deletions of `apps/web/src/app/api/chat/grounded/route.ts`, `apps/web/src/app/api/chat/visual/route.ts`, `apps/web/src/components/video.tsx`, and edits to `apps/web/src/app/page.tsx`, `apps/web/src/app/products/category/[slug]/page.tsx`, `apps/web/src/components/chat.tsx`, `apps/web/src/components/chat.test.tsx`, `apps/web/src/components/turn.tsx`, `apps/web/src/lib/messaging.ts`, `apps/web/src/lib/messaging.test.ts`, `apps/web/src/lib/types.ts`
+- Nothing staged
+- Untracked: read `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_chat_surface.py` in full — the three guards are real (route layout, env vars, symbol scan) and the fourth asserts the guards can see their inputs, which stops a moved directory making them vacuous. `.claude/`, `.codex/`, `.cursor/`, `.entire/`, `.github/hooks/`, and root `package-lock.json` were already untracked before this branch and are not part of this change.
+- Ran read-only: `pytest tests/scripts` (84 passed), `npx vitest run` in `apps/web` (87 passed, 31 files), `npx tsc --noEmit` (clean), `make env-contract-check`, `make docs-check` — all matching your stated counts.
+
+Not assessed: the rendered UI (no browser exercised here; I relied on your prior rendered review) and `apps/web/public/products.json`, which the change does not touch.</result>
+<usage><subagent_tokens>57195</subagent_tokens><tool_uses>25</tool_uses><duration_ms>239918</duration_ms></usage>
+</task-notification>
