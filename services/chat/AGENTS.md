@@ -9,7 +9,8 @@ for the policy.
 - API app: `services/chat/src/api/main.py`
 - Chat logic: `services/chat/src/api/contoso_chat/`
 - Evaluators: `services/chat/src/api/evaluators/`
-- Tests: `services/chat/tests/unit/`, `services/chat/tests/integration/`
+- Tests: `services/chat/tests/unit/`
+- Integration coverage: `scripts/e2e_smoke.py`, run by `make e2e-smoke` against a real stack
 
 ## Toolchain baseline
 
@@ -65,10 +66,10 @@ make quick-ci
 make ci
 ```
 
-Integration tests (service must already be running):
+Integration checks run against a real stack from the repository root:
 
 ```bash
-SERVICE_URL=http://localhost:8000 make test-chat-integration
+make e2e-smoke
 ```
 
 ## Environment

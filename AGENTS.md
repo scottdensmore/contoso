@@ -147,7 +147,8 @@ review that claims viewports it never rendered is worse than none.
 - `apps/web/Makefile`: web-owned dev/test/build command surface.
 - `apps/web/AGENTS.md`: web-scoped agent runbook.
 - `services/chat/src/api/`: chat service API and chat logic.
-- `services/chat/tests/`: chat unit and integration tests.
+- `services/chat/tests/`: chat unit tests. Integration coverage lives in
+  `scripts/e2e_smoke.py`, which runs against a real stack.
 - `services/chat/Makefile`: chat-owned dev/test command surface.
 - `services/chat/AGENTS.md`: chat-scoped agent runbook.
 - `apps/web/prisma/`: shared data model and migrations.

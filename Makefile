@@ -39,7 +39,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-scripts test-web test-chat test-chat-integration build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-scripts test-web test-chat build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -159,9 +159,6 @@ test-web: ## Run web tests
 
 test-chat: ## Run chat unit tests
 	$(CHAT_MAKE) test
-
-test-chat-integration: ## Run chat integration tests (requires SERVICE_URL)
-	$(CHAT_MAKE) test-integration
 
 build: ## Build web app
 	$(WEB_MAKE) build

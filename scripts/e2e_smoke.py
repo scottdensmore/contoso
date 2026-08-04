@@ -197,6 +197,41 @@ def check_chat_dependencies(chat_url: str) -> None:
         )
 
 
+def check_chat_root(chat_url: str) -> None:
+    """The service identity endpoint.
+
+    test_main.py asserts the payload more strictly, but against an in-process
+    app. This asserts the route is reachable on the running image, which is a
+    different failure — a bad COPY or entrypoint passes there and fails here.
+    """
+    status, payload, raw = request_json("GET", f"{chat_url}/")
+    if status != 200:
+        raise RuntimeError(f"Chat root returned {status}: {raw}")
+    missing = [
+        key for key in ("message", "version", "status") if key not in (payload or {})
+    ]
+    if missing:
+        raise RuntimeError(f"Chat root response missing {missing}: {payload}")
+
+
+def check_chat_rejects_invalid_payload(chat_url: str) -> None:
+    """A request with no question must be rejected, not answered.
+
+    test_main.py covers the same payload against an in-process app; this covers
+    it through the deployed stack, where a proxy or middleware could answer
+    before validation ever runs.
+    """
+    status, _, raw = request_json(
+        "POST",
+        f"{chat_url}/api/create_response",
+        payload={"customer_id": "1", "chat_history": "[]"},
+    )
+    if status != 422:
+        raise NonRetryableSmokeError(
+            f"Chat accepted a request with no question: expected 422, got {status}: {raw}"
+        )
+
+
 def check_web_chat_proxy(web_url: str) -> None:
     payload = {
         "question": "E2E smoke check: recommend a tent.",
@@ -285,6 +320,18 @@ def main() -> int:
         timeout_seconds=args.timeout,
         interval_seconds=args.interval,
         check=lambda: check_chat_dependencies(args.chat_url),
+    )
+    wait_for(
+        label="chat root endpoint",
+        timeout_seconds=args.timeout,
+        interval_seconds=args.interval,
+        check=lambda: check_chat_root(args.chat_url),
+    )
+    wait_for(
+        label="chat rejects a request with no question",
+        timeout_seconds=args.timeout,
+        interval_seconds=args.interval,
+        check=lambda: check_chat_rejects_invalid_payload(args.chat_url),
     )
     wait_for(
         label="web -> chat proxy call",

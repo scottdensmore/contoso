@@ -97,11 +97,9 @@ From repository root:
 
 ```bash
 make test-chat
-SERVICE_URL=http://localhost:8000 make test-chat-integration
 npm run quick-ci:chat
 npm run ci:chat
 make -C services/chat test
-make -C services/chat test-integration
 make -C services/chat check-python
 make -C services/chat deps-check
 make -C services/chat lint

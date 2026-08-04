@@ -62,21 +62,8 @@ else
     exit 1
 fi
 
-# Run integration tests if SERVICE_URL is provided
-if [ -n "$SERVICE_URL" ]; then
-    log_info "Running integration tests against $SERVICE_URL..."
-    "${PY}" -m pytest tests/integration/ -v
-
-    if [ $? -eq 0 ]; then
-        log_success "Integration tests passed!"
-    else
-        log_error "Integration tests failed!"
-        exit 1
-    fi
-else
-    log_info "Skipping integration tests (no SERVICE_URL provided)"
-    log_info "To run integration tests: SERVICE_URL=https://your-service-url.com ./run_tests.sh"
-fi
+# Integration coverage lives in scripts/e2e_smoke.py, which runs against a
+# real stack in CI. Run it with `make e2e-smoke` from the repository root.
 
 # Validate code structure
 log_info "Validating code structure..."

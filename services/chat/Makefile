@@ -30,7 +30,7 @@ export PIP_DISABLE_PIP_VERSION_CHECK := 1
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv check-python setup setup-core setup-full local-provider-check diagnose-chat-local dev deps-check lint typecheck test test-integration quick-ci ci
+.PHONY: help venv check-python setup setup-core setup-full local-provider-check diagnose-chat-local dev deps-check lint typecheck test quick-ci ci
 
 help: ## Show available chat-service tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nChat service tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -100,9 +100,6 @@ test: | $(VENV_PYTHON) ## Run chat unit tests
 	@mkdir -p $(COVERAGE_TMP_DIR)
 	@tmp_cov="$$(mktemp "$(COVERAGE_TMP_DIR)/.coverage.XXXXXX")"; \
 	COVERAGE_FILE="$$tmp_cov" $(PYTEST) tests/unit/ --cov=src/api --cov-report=term-missing -v
-
-test-integration: | $(VENV_PYTHON) ## Run chat integration tests (requires SERVICE_URL)
-	$(PYTEST) tests/integration/ -v
 
 quick-ci: ## Fast chat checks
 	$(MAKE) check-python
