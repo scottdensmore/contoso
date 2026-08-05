@@ -65,4 +65,6 @@ If nothing scores 80 or above, say the change is approved and say what you exami
 
 Otherwise, for each finding: the file and line, what is wrong, the concrete scenario in which it produces a wrong result, the suggested fix, and the confidence score. Order by severity.
 
+Say of each whether it is a **defect** — the change is wrong, or would be once someone relied on it — or a **refinement**, worth applying but not worth another review round. The caller uses that to decide whether to come back, so a review that omits it leaves them with no way to stop. When a re-review returns only refinements, say so in as many words.
+
 Close with what you reviewed — the diff ranges and any untracked files — and anything you could not assess, such as generated files or binary assets.

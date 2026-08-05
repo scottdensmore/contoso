@@ -64,6 +64,33 @@ Follow these steps in order for every change.
    - Run focused tests while iterating.
    - Refactor only while the relevant tests remain green.
 
+   **A guard added for behavior that already works has no red phase**, so the
+   confirm-it-fails bullet never reaches it. Write down which mistake each
+   assertion catches, and which ones nothing catches, then demonstrate it:
+   break an input on purpose and watch that assertion fail on it. Coverage
+   argued rather than demonstrated is the defect the guard was added to
+   prevent, one level up.
+
+   Point the guard at a fixture tree; do not damage the real one. These modules
+   compute their paths at import, so rebind **every path constant the assertion
+   dereferences** — found by reading the module, not guessed from its name.
+   That is more than the obvious one and is different per guard:
+   `test_image_encoding.py` reaches everything through `IMAGES_DIR`;
+   `test_image_references.py` also needs `PUBLIC_DIR`, which its `relative_to`
+   depends on, and `REPO_ROOT`, which it walks for references;
+   `test_page_headings.py` reads `REPO_ROOT` directly for the
+   component-supplied headings, so rebinding `APP_DIR` alone leaves that
+   assertion on the checkout. Rebinding a root that other constants were
+   derived from at import changes nothing they read.
+
+   Then confirm the run opened the fixture at all: a failure naming a path
+   inside it, or a vacuity guard reporting a count that matches what the
+   fixture holds. The count is the evidence, not the firing — a vacuity guard
+   fires on nothing found, which is equally what a mistyped fixture path
+   produces, and the assertions being demonstrated pass on the empty loop
+   either way. A green run that never opened the fixture looks exactly like a
+   guard that works.
+
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
    preserving work that belongs to the user. A real problem found here is filed
@@ -78,10 +105,20 @@ Follow these steps in order for every change.
    journey in the rendered application at representative phone, tablet, and
    desktop viewports; inspect interaction, loading, empty, error, focus,
    keyboard, contrast, and responsive states as applicable; and capture
-   screenshots or equivalent visual evidence. For changes with no UI impact,
-   explicitly record that rendered UI review is not applicable. If a finding
-   is not applicable, record the concrete reason rather than silently ignoring
-   it.
+   screenshots or equivalent visual evidence.
+
+   A viewport is a width in CSS pixels, which says nothing about how many
+   device pixels fill it. Where the change affects what the browser requests —
+   anything carrying a `srcset` — exercise it at **2x as well as 1x**. A 2x
+   screen asks for twice the CSS width, and the optimiser never upscales past
+   the source, so a source that satisfies 1x can fall short at 2x while every
+   1x measurement stays clean. The 600px re-encode first tried in #152 came out
+   at −0.9 to −2.2 dB PSNR at 1x and −4.4 to −6.6 dB at 2x: a difference at 1x
+   small enough to accept, and one at 2x that was plainly visible.
+
+   For changes with no UI impact, explicitly record that rendered UI review is
+   not applicable. If a finding is not applicable, record the concrete reason
+   rather than silently ignoring it.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to run
    the builds, static checks, tests, and journey coverage appropriate for the
@@ -97,6 +134,13 @@ Follow these steps in order for every change.
    before committing. If review findings cause changes, rerun the appropriate
    tests and the `verifier`, then obtain a fresh `code-review` approval for the
    changed state.
+
+   That loop has no natural end, so ask for one: **have the reviewer say which
+   findings are defects and which are refinements.** The loop ends on a round
+   returning no defects, however many refinements come with it. Apply those,
+   rerun the focused tests and the `verifier`, and record what was applied — a
+   refinement-only change does not earn a fresh review round, here or at
+   step 10.
 
 9. **Commit after approval.** Commit only after verification and code review
    are complete. Use Conventional Commits:
@@ -114,6 +158,9 @@ Follow these steps in order for every change.
       pre-commit review.
     - A changed state includes code, tests, documentation, generated files,
       conflict resolution, or any other staged, unstaged, or untracked content.
+    - Except refinements the reviewer classified as such and step 8 cleared:
+      applying those does not re-arm this, or the loop step 8 just ended
+      reopens here.
     - Do not repeat code review when the already-reviewed diff and worktree
       remain unchanged.
     - Push and create the pull request only after local verification and any
