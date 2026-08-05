@@ -99,6 +99,12 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Agent Tooling
+# The hook wiring is shared; the per-developer overrides beside it are not.
+# Nothing in the repo enforced that split — it held only for whoever happened
+# to carry the rule in a global gitignore.
+.claude/settings.local.json
+
 # IDE and Editor Files
 .vscode/
 .idea/
