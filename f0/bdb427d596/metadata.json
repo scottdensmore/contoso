@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "f0bdb427d596",
+  "strategy": "manual-commit",
+  "branch": "perf/constrain-image-device-sizes",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "Dockerfile",
+    "apps/web/next.config.js",
+    "apps/web/next.config.test.ts",
+    "tests/scripts/test_image_encoding.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f0/bdb427d596/0/metadata.json",
+      "transcript": "/f0/bdb427d596/0/full.jsonl",
+      "compact_transcript": "/f0/bdb427d596/0/transcript.jsonl",
+      "content_hash": "/f0/bdb427d596/0/content_hash.txt",
+      "prompt": "/f0/bdb427d596/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 628,
+    "cache_creation_tokens": 733852,
+    "cache_read_tokens": 81465003,
+    "output_tokens": 264396,
+    "api_call_count": 334
+  }
+}

@@ -1,0 +1,384 @@
+Update the workflow so whenever you find something that is not associated with the current work, open an issue so we can come back to it later.
+
+---
+
+<task-notification>
+<task-id>a273992080aae6d7b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a273992080aae6d7b.output</output-file>
+<status>completed</status>
+<summary>Agent "Review AGENTS.md workflow addition" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I verified the claims against the agent definitions, the guard test, and the actual provenance recorded in this repo's issues. The change is well grounded overall — but two things in it are not supported.
+
+## Findings
+
+### 1. `AGENTS.md:69-71` — the step 5 pointer contradicts both step 5 and the section it points to (confidence 85)
+
+```
+   preserving work that belongs to the user. Anything removed here that is a
+   real problem gets an issue rather than a deletion — see *Unrelated findings
+   become issues* below, which applies from here through step 8.
+```
+
+Two separate defects in one sentence.
+
+**a. "which applies from here through step 8" contradicts line 134** of the very section it points at, which says the rule "happens at every step above" — i.e. all eleven. An agent following the runbook literally reads step 5 as the authoritative scope and concludes a finding surfacing at step 4 or step 10 is out of scope for issue filing. The repository's own history contradicts the narrow scope: #133 was "found while auditing image references for #66" and #119 "found while working #104" — both during implementation, before step 5. Nothing about the practice is bounded to steps 5-8.
+
+**b. "gets an issue rather than a deletion" inverts step 5's own instruction.** Step 5 says "Remove accidental or unrelated changes." The natural reading of "an issue rather than a deletion" is *do not remove it, file an issue instead*, which leaves the unrelated change in the reviewed diff — precisely the "Silently widening the change" failure mode the new section warns against seventy lines later. The intent is presumably "record it as an issue *before* removing it", which is the opposite instruction.
+
+Suggested fix: drop the scope clause entirely (the section already states its own scope) and make the conjunction explicit, e.g. "A real problem found here is filed as an issue before the change is removed — see *Unrelated findings become issues* below."
+
+### 2. `AGENTS.md:164-166` — asserts a sub-agent incapability that no definition establishes (confidence 85)
+
+```
+The sub-agents cannot do this themselves. They are read-only by design and
+cannot ask a question mid-run, so every finding they report that falls outside
+the current change needs the main agent to file it.
+```
+
+Three problems, and this is the overstatement you asked me to hunt for:
+
+- **The stated reason does not support the conclusion.** Being read-only with respect to the repository and being unable to ask questions have no bearing on whether an agent can file a GitHub issue. Filing an issue is not a repository modification.
+- **The "cannot" is not true.** All three definitions grant `Bash` (`/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md`, `ui-review.md`, `verifier.md`), and `gh` is available. None of the three prompts forbids `gh issue create` — `code-review` forbids "no edits, no `git add`, no commits, no branch changes"; `verifier` forbids the same plus `npm install`; neither list covers issue creation. There is nothing preventing a sub-agent from doing this.
+- **"read-only by design" is looser than the truth,** and looser than the sentence five lines below it. `verifier` explicitly "may run `make` targets that create `.venv` or `node_modules`"; `ui-review` explicitly "may start and stop the local stack" and runs `docker compose up -d --build`. Line 172 already states this correctly as "cannot modify the repository they assess."
+
+This is the exact shape of issue #100 — an unenforced prose claim about the sub-agents in `AGENTS.md`. `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py` was written to guard those claims, but it scopes its name check to the text after the `### Sub-agents this workflow depends on` heading, so this new paragraph sits outside it. The tool-list assertions still hold globally, but the "cannot file an issue" claim is guarded by nothing and is false.
+
+Suggested fix: state it as a rule rather than a capability, and drop the duplicated attributes. Something like "Sub-agents report findings; they do not file issues. Every finding they report that falls outside the current change needs the main agent to file it." That also removes the redundancy with lines 171-172, which say the unattended/no-modify part already and say it more accurately.
+
+## Direct answers
+
+**1. The carve-out is justified, and the section would contradict the runbook without it.** Step 7 already requires "Fix or explicitly resolve every actionable finding before starting code review", and step 6 "Address every actionable finding before running the `verifier`". An unqualified "always file, never fix" would collide with those head-on. Your carve-out is narrower than what steps 6-8 already demand, so it constrains rather than expands. The default it sets is also what this repo actually does: #151 "Pre-existing and unreferenced, so filing rather than folding in", #150 "filing rather than widening that PR", #112 "All pre-existing; filed separately rather than folded into that fix", #126 "filing it rather than expanding that PR", #130 "it did not belong in that fix". The one genuinely new obligation is "state the reason in the commit message", which firms up step 9's softer "describe why in the body when useful" — a small expansion, not a policy shift. It did not clear my reporting bar.
+
+**2. Half accurate, half not.** The steps 6-8 claim is well supported — I checked provenance on 24 issues: #151 (`code-review`), #150 and #149 (`ui-review`), #139, #115, #113, #112 (rendered review), #121 (while verifying), #123 (during review), #126 (reviewing and verifying agents), #100 (`verifier`). That is a clear majority. The read-only/cannot-ask claim is where it breaks down — see finding 2. Your three examples on line 133 are also real: stale script is #151, pre-existing overflow is #149, a check that does not check what it claims is #121.
+
+**3. Overstated in one place:** finding 2. One other thing I looked hard at and am not reporting: "This happens at every step above" (line 134) is literally false for steps 2, 9 and 11, but as rhetoric preceding "and most often during steps 6 to 8" it reads as intended, and it is the phrasing the step 5 pointer contradicts rather than the other way round. The rest — "an issue costs little", "a separate pull request is cheap" — is opinion, correctly framed as such.
+
+**4. Placement and heading are right.** `###` under `## Development workflow` matches the sibling `### Sub-agents this workflow depends on`, and a supporting subsection after step 11 rather than inside the numbered list follows the established pattern. It also sits *before* the sub-agents heading, which keeps it outside the region `test_agent_definitions.py` parses. Voice is more essayistic than the numbered steps, but the neighbouring section has the same register ("a review that claims viewports it never rendered is worse than none"), so it fits. One inconsistency: line 135 writes "`ui-review`, `verifier` and `code-review`" without the serial comma, the only place in the file that does — lines 44, 45, 54, 58, 68, 76, 80, 87 and 170 all use it.
+
+**5. Contradictions and duplication** are both covered above: the step 5 scope clause versus line 134, and lines 164-166 restating lines 171-172 five lines later.
+
+## What I reviewed
+
+`git diff` on `docs/unrelated-findings-become-issues` — `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` only, +41/-1, unstaged. `git diff --cached` and `git diff main...HEAD` are both empty; `git status --short` shows no untracked files. For context I read all of `AGENTS.md`, the three definitions in `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/check_agent_docs.py`, issue #148 and #100, and the bodies of 24 further issues to test the steps 6-8 frequency claim.
+
+No pointer file changed, so the pointer-only rule is not implicated. I did not re-run `make docs-check`, `make agent-docs-check` or `make test-scripts`, taking your report that all three pass; I confirmed by inspection why the name-set assertion in `test_agent_definitions.py` is unaffected by this edit.</result>
+<usage><subagent_tokens>39949</subagent_tokens><tool_uses>15</tool_uses><duration_ms>281339</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a442df55b0186a78d</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a442df55b0186a78d.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review AGENTS.md fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Approved.** Nothing scores 80 or above. Both prior findings are resolved, not relocated.
+
+## Answers
+
+**1. Are both findings actually resolved?**
+
+Yes, both.
+
+*Finding 1 (step 5 pointer).* `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:69-71` now reads "A real problem found here is filed as an issue before the change is removed — see *Unrelated findings become issues* below." The scope claim is gone, so it no longer contradicts the section's own scope statement, and it no longer inverts step 5: removal still happens, the issue is what precedes it. The section opener at line 133-136 is now hedged ("can happen at any step, and most often happens during steps 6 to 8"), which is consistent both with the pointer sitting at step 5 and with the repo's history — #133 and #119 came out of implementation, while #149, #150 (`ui-review`) and #151 (`code-review`) came out of steps 6-8, matching the "most often" claim rather than contradicting it.
+
+*Finding 2 (sub-agent paragraph).* Lines 164-165 now state a division of labour rather than a capability. Nothing in it is falsifiable against `.claude/agents/*.md`: the "read-only by design" and "cannot ask a question mid-run" clauses that were doing work they could not support are gone, and the accurate capability statement remains where it was, at line 170. The paragraph no longer needs a guard, which resolves the #100 shape rather than reintroducing it.
+
+**2. Any remaining untrue or unenforced claim about this repo or its agents?**
+
+None at reporting confidence. Every factual assertion in lines 130-165 either describes the doc's own rule or is verifiable: the three agent names match `.claude/agents/`; "read more of the repository than the change touches" is true of all three prompts; "Link the issue from the pull request" conflicts with nothing in `CONTRIBUTING.md` and there is no PR template to contradict.
+
+Two things I checked and scored below threshold, since you asked for the hard pass:
+
+- Lines 164-165 presume out-of-scope findings reach the main agent, while `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md` tells that agent to score "a pre-existing issue the change did not introduce" at 0, not to report "issues on lines the change did not touch", and to discard the rest silently. The sentence is conditional ("Every finding they report that…"), so it asserts nothing false, and #151 shows the practical case — a pre-existing problem the change makes worse — does get reported under "correctness at the seams". The tension lives in `code-review.md`'s rubric and predates this diff. ~50.
+- The new section names all three agents in backticks at line 135, outside the region `agent_names_claimed_by_docs()` parses (it splits at `### Sub-agents this workflow depends on`). A rename would leave line 135 stale with `test_agent_definitions.py` green. Same shape as #100 but the claim is only a name, not a capability, and the guarded section would fail first on the same rename. ~40.
+
+**3. Does the pointer agree with step 5 and with the section?**
+
+Yes. Against step 5: "before the change is removed" preserves the removal instruction instead of overriding it, and applies only to the case where the removed change embodies a real problem — it does not tell you to file an issue for every accidental edit. Against the section: the section's "File an issue at the moment of finding, before deciding what to do about it" (line 138) is the general rule; the pointer is its step 5 instance, with the same ordering. The italic title matches the heading text at line 130 exactly, so the cross-reference resolves by search.
+
+**4. Anything else to block on?**
+
+No. `git diff --check` is clean, the diff is 40 additions in one file with no incidental reflow, line lengths are within the range the file already uses, and the em-dash and serial-comma usage matches surrounding prose. The carve-out paragraph at lines 158-162 is unchanged and still narrower than what steps 6-8 demand.
+
+## Scope reviewed
+
+- `git diff main...HEAD` — empty; the branch carries no commits, all work is unstaged.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` only, the two hunks at lines 67-71 and 130-165.
+- `git diff --cached` — empty. `git status --porcelain -uall` — no untracked files.
+- Context read: `.claude/agents/code-review.md`, `ui-review.md`, `verifier.md`; `tests/scripts/test_agent_definitions.py` (parsing boundaries); `scripts/verify_docs.py`; `CONTRIBUTING.md`; issues #148, #149, #150, #151 for provenance of recent findings.
+
+Not assessed: I took your report that `make docs-check`, `make agent-docs-check`, and `make test-scripts` (141) pass rather than re-running them.</result>
+<usage><subagent_tokens>39369</subagent_tokens><tool_uses>16</tool_uses><duration_ms>199617</duration_ms></usage>
+</task-notification>
+
+---
+
+lets delete it
+
+---
+
+<task-notification>
+<task-id>a52ff99df2b5c8e78</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a52ff99df2b5c8e78.output</output-file>
+<status>completed</status>
+<summary>Agent "Review script deletion" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approved
+
+The staged deletion of `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/normalize-product-galleries.mjs` is the only change on the branch (no commits ahead of `main`, no unstaged edits, no untracked files). Nothing scored at or above 80. Details on each of your four questions, verified independently.
+
+### 1. Genuinely unreferenced — confirmed
+
+Beyond the name grep, I checked the routes that a name grep misses:
+
+- **Make targets**: root `Makefile`, `apps/web/Makefile`, `services/chat/Makefile` name six scripts explicitly (`check_toolchain.py`, `agent_doctor.py`, `check_env_contract.py`, `detect_changed_surfaces.py`, `release_dry_run.py`, `e2e_smoke.py`, plus `verify_docs.py`/`check_agent_docs.py` inline). None reference this file, and no target globs `scripts/`.
+- **package.json**: root has 30 scripts, all delegating to `make`; `apps/web/package.json` has 7. No `node scripts/...` invocation anywhere.
+- **CI**: `.github/workflows/*.yml` reference only `scripts/detect_changed_surfaces.py` and `scripts/ci_smoke_metrics.py`.
+- **Hooks**: `.husky/pre-commit` runs `lint-staged` (globs `*.{js,jsx,ts,tsx}` only, not `.mjs`), `.husky/pre-push` runs `npm run quick-ci`. `.github/hooks/entire.json` is all `entire hooks ...`, no repo paths.
+- **Dynamic/glob pickup**: the only directory iteration in tooling is `scripts/verify_docs.py:39` over `docs/`, and `tests/scripts/**` in `detect_changed_surfaces.py`. No `glob`/`readdir`/`rglob` over `scripts/`.
+- **Docker**: neither `Dockerfile` nor `Dockerfile.migrate` copies `scripts/`; only `infrastructure/scripts/docker-entrypoint.sh`.
+- **Different name**: repo-wide grep for `normalize` (excluding `.git`, `node_modules`, `.next`, `.venv`) returns only unrelated symbols — `normalizeProductHref` in `apps/web/src/lib/messaging.ts`, `normalize_link` in `verify_docs.py`/`check_agent_docs.py`/`agent_doctor.py`, and `normalize` in `services/chat/src/api/db.py`. Grep for `gallery`/`galleries` across `.py/.yml/.md/.json/.mjs`: zero hits anywhere in the repo.
+- **Agent definitions**: `.claude/agents/verifier.md` references only `detect_changed_surfaces.py`.
+
+### 2. The #151 claim about deleted output — true, with a corrected figure
+
+Commit `9299c1c` "chore(web): delete unreferenced -alt-N product image variants (#88)" deleted **449 files**, all matching `-alt-`, and it is the **only** commit in all of history that deletes `-alt-` paths. Zero `-alt-` files remain tracked (`git ls-files | grep -c -- -alt-` → 0), and `apps/web/public/products.json` contains zero `-alt-` references.
+
+One correction for the issue record: summing the `Bin N -&gt; 0 bytes` entries in `9299c1c` gives **137,198,157 bytes = 130.8 MiB (137.2 MB decimal)**. The "132 MB" figure is close but matches neither unit exactly. Immaterial to the decision; worth fixing if the number is quoted in the PR body.
+
+Also note #88 deleted images only — it did not touch `products.json`, which is consistent with the variants having already been dereferenced.
+
+### 3. Nothing breaks — verified by running, not by reading
+
+- `.venv/bin/python scripts/verify_docs.py` → "Documentation validation passed." No markdown link anywhere points into `scripts/` except `infrastructure/scripts/*` and `scripts/e2e_smoke.py`, so link validation was never exposed to this file.
+- `.venv/bin/python -m pytest tests/scripts -q` → **141 passed, 111 subtests passed**.
+- `.venv/bin/python scripts/release_dry_run.py --tag v9.9.9` → passed. Its `REQUIRED_FILES` tuple (`scripts/release_dry_run.py:13-21`) lists seven paths, all under `.github/` or `docs/RELEASE.md`. It never checks `scripts/`.
+- `scripts/detect_changed_surfaces.py`: the deleted path matches no entry in `RUNTIME_PATTERNS`, so it classifies as `unknown`, which the `if unknown: runtime = True` fallback promotes to the full runtime set. Running it on the worktree confirms: `toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat`. Deletions are included by design (`--diff-filter=ACMRTD`), so the branch will not route around any check.
+
+### 4. Deletion versus updating — the evidence supports deletion more strongly than #151 states
+
+The premise in your brief is correct (`jpeg({ quality: 88 })` output would fail `tests/scripts/test_image_encoding.py`), but there is a second, larger reason the script is unsalvageable rather than merely stale: it is **destructive against the current catalogue**.
+
+Its `run()` keeps `product.images[0]` and regenerates positions 1..N as filtered derivatives of the primary. Today `apps/web/public/products.json` holds 210 products with 3-6 **distinct** WebP images each (histogram: 4 images ×180, 5 ×18, 3 ×10, 6 ×2), e.g. product 1's five images are five different UUIDs. Running the script would overwrite those references with fabricated `-alt-N.jpg` crops of the first photo, orphaning roughly 600 real assets — failing `test_image_encoding` (non-WebP), `test_image_references` (orphans), and silently degrading every product gallery to five tints of one photo. "Update it to read `config/catalogue_images.json`" would fix the encoding and leave the destructive behaviour intact. Deletion is the right call, and nothing I found is still reachable or still needed.
+
+### 5. Unrelated findings
+
+I found nothing worth filing under the *Unrelated findings become issues* section. For the record, the two things I checked and dismissed: `config/catalogue_images.json` and `scripts/*.mjs` are absent from `RUNTIME_PATTERNS` in `scripts/detect_changed_surfaces.py`, but both fall through to `unknown → runtime`, which is the safe direction, so there is no defect to file.
+
+### Scope reviewed
+
+- `git diff main...HEAD` — empty (branch has no commits ahead of `main`)
+- `git diff --cached` — the single deletion, 133 lines; I read the full file content from `HEAD` since a deletion diff carries no surviving code
+- `git diff` — empty; `git status --short -uall` — no untracked files
+- Context read: root `AGENTS.md`, `Makefile`, both `package.json`s, `.husky/*`, `.github/workflows/*`, `.github/hooks/entire.json`, `Dockerfile`, `Dockerfile.migrate`, `.dockerignore`, `scripts/verify_docs.py`, `scripts/release_dry_run.py`, `scripts/detect_changed_surfaces.py`, `config/catalogue_images.json`, `tests/scripts/test_image_encoding.py`, `tests/scripts/test_image_references.py`, `.claude/agents/`
+
+Not assessed: the binary contents of the 449 images deleted in `9299c1c` (I verified filenames and byte counts from `git show --stat`, not pixel data), and `apps/web/package-lock.json`, which is generated. Rendered UI review is not applicable, as you noted — no UI surface is touched.</result>
+<usage><subagent_tokens>38390</subagent_tokens><tool_uses>30</tool_uses><duration_ms>199827</duration_ms></usage>
+</task-notification>
+
+---
+
+Nope lets go with your recommendation
+
+---
+
+<task-notification>
+<task-id>a3320a93131bd8f8b</task-id>
+<tool-use-id>toolu_01VS8EUXuDiRNtRiSwXF9RqU</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a3320a93131bd8f8b.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of deviceSizes change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Rendered review completed — with one blocker found before the browser even opened
+
+Chromium was available (`~/.cache/ms-playwright/chromium-1234`, Chrome for Testing 151), so this is a genuine rendered review, not a source review.
+
+**Viewports exercised:** phone 390×844 @DPR2, tablet 834×1112 @DPR2, desktop 1440×900 @DPR1, and desktop 1440×900 @DPR2 (added because your risk is concentrated at DPR 2).
+**Pages:** `/`, `/about`, `/products/category/tents`, `/products/trailmaster-x4-tent`, `/contact`.
+**Evidence:** 20 full-page screenshots in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/4368fb93-c8cc-4d91-99ab-3d6d4964d7d7/scratchpad/shots/` (`&lt;page&gt;__&lt;viewport&gt;.png`, plus `report.json`), and 26 A/B pairs in `.../scratchpad/ab/`.
+
+**How I ran it:** Docker build failed (finding 1), so I ran `db` from a compose override outside the repo on host port 55432 (project `contoso-uireview`), migrated and seeded, and served a local `next build`/`next start` on 3100. `travel-app` on 5432/3000 was never touched; both were verified still held after teardown. Stack and volumes torn down; `git status` shows only your two branch files.
+
+---
+
+## 1. BLOCKER — this change breaks the Docker image build
+
+`docker compose build web` fails outright:
+
+```
+Error: Cannot find module '../../config/catalogue_images.json'
+Require stack:
+- /app/apps/web/next.config.js
+```
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile` builder stage (lines 27–37) copies individual files from `apps/web/` only. Nothing copies repo-root `config/`, so the new `require` at the top of `next.config.js` cannot resolve. This is not environmental — it will fail the `docker/build-push-action` steps and both e2e-smoke jobs in `.github/workflows/ci.yml`.
+
+Fix: add to the builder stage, before line 42, e.g. `COPY config/catalogue_images.json /app/config/catalogue_images.json`. `.dockerignore` does not exclude `config/`, so this works as-is. Builder stage only — the runner does not need it: the standalone output inlines the resolved value (`deviceSizes":[640,750,828,1080]` in `.next/standalone/apps/web/server.js`), and `grep -c catalogue_images` on that file returns 0.
+
+This is exactly the blind spot in your brief. Every DOM/HTTP assertion passes; the thing that fails is the build that produces the deployed artefact.
+
+## 2. Your three questions, answered empirically
+
+**Q3 — is the redundancy actually gone? Yes, and the premise is confirmed exactly.** I ran the branch (3100) against a baseline server using `main`'s config (3200), same source assets:
+
+```
+mission.png   w=1080  branch 200 135936B md5 d4ef7a54   main 200 135936B md5 d4ef7a54
+              w=1200  branch 400      44B              main 200 135936B md5 d4ef7a54
+              w=1920  branch 400      44B              main 200 135936B md5 d4ef7a54
+              w=2048  branch 400      44B              main 200 135936B md5 d4ef7a54
+              w=3840  branch 400      44B              main 200 135936B md5 d4ef7a54
+```
+
+Identical md5 at all five widths on `main` — the six-identical-responses claim is precisely right. The 400 body is `"w" parameter (width) of 1920 is not allowed`. Every srcset in the app now tops out at `1080w`, and `w=1080` returns the full 1024×1024 source (verified by decoding the response header). The widest asset anywhere in `public/images` is 1024 (`contact-bg.jpg`).
+
+**Q2 — is anything softer? No. Zero differing pixels.** Full-page canvas diffs, branch vs `main`-config baseline:
+
+| Page | phone/DPR2 | tablet/DPR2 | desktop/DPR1 | desktop/DPR2 |
+|---|---|---|---|---|
+| `/about` | 0 / 2,789,280 | 0 / 4,083,264 | 0 / 1,762,560 | 0 / 7,050,240 |
+| `/products/trailmaster-x4-tent` | 0 / 18,798,000 | 0 / 29,390,160 | 0 / 8,481,600 | 0 / 33,598,080 |
+| `/` | 0 / 11,405,160 | 0 / 16,503,192 | 0 / 7,254,720 | 0 / 29,018,880 |
+
+Max channel delta 0 everywhere. The category page could not be diffed: my relocated baseline tree fails its dynamic route on `pg` module resolution (`Cannot find package 'pg-40a93352e705c44f'`) — a harness artefact of the symlinked `node_modules`, not a product fault. The branch serves it at 200 with all 126 images. Its cards use the same assets and same ladder as `/`, which diffed clean.
+
+**Q1 — does every surface request an adequate width?** Delivered = `min(requested_w, 1024)`:
+
+| Surface | CSS box | DPR | needed | requested | delivered | |
+|---|---|---|---|---|---|---|
+| home | 175 | 2 | 350 | 384 | 384 | 1.10× |
+| home | 350 | 2 | 700 | 750 | 750 | 1.07× |
+| category | 393 | 2 | 786 | 828 | 828 | 1.05× |
+| category | 397 | 2 | 794 | 828 | 828 | 1.04× |
+| product detail | 366 | 2 | 732 | 828 | 828 | 1.13× |
+| product detail | 550 | 2 | 1100 | 1080 | **1024** | 0.93× |
+| about | 604 | 2 | 1208 | 1080 | **1024** | 0.85× |
+
+The two shortfalls are the 1024px source ceiling, not the ladder — `main` requested 1200 and 1920 respectively and received the identical 1024px bytes. Not regressions.
+
+**Q4 — rendered pass:** no console errors, no `pageerror`, no ≥400 responses, CLS 0.0000, and `scrollWidth === clientWidth` on every page at every viewport. Server log clean (0 error lines).
+
+---
+
+## 3. Minor — the new test's rationale holds for only one of the three allowlisted images
+
+`test_full_bleed_images_fit_the_srcset_ceiling` says a wide full-bleed asset "would be served capped". True for `about/mission.png`. Not true for the other two, which never reach the optimiser:
+
+- `hero.png` — a Tailwind background-image utility (`tailwind.config.ts:13`, `'hero-image': "url('/images/hero.png')"`)
+- `contact-bg.jpg` — inline `style={{ backgroundImage: ... }}` in `apps/web/src/app/contact/page.tsx:9` and `contact/thanks/page.tsx:9`
+
+`deviceSizes` cannot cap a CSS background. The test passes and is cheap insurance, but the docstring over-claims. Worth narrowing the wording, or noting that those two are served raw and unoptimised (814 KiB PNG, 443 KiB JPEG) — a far larger byte problem than the one this change fixes, and a candidate follow-up issue.
+
+## 4. Opportunity — `/about` over-fetches ~75 KiB, on the page this change is about
+
+`mission.png` has no `sizes`, so Next emits `sizes="100vw"` and desktop/DPR1 pulls `w=1080` (132 KiB) for a 604px box. `w=640` is 57 KiB. Adding `sizes="(min-width: 1024px) 604px, 100vw"` at `apps/web/src/app/about/page.tsx:30` saves ~75 KiB with no visual change at DPR1 and no loss at DPR2 (which is source-capped either way). Pre-existing, but squarely in this change's lane. That image is also `loading="lazy"` while being the likely LCP element.
+
+## 5. Note — the config comment omits the largest real box
+
+The comment enumerates the 350/400/550 boxes, but `/about`'s fill image renders at 604px — the widest of the four, the only one with no `sizes`, and the one furthest from being covered (0.85× at DPR2). The 550px detail image is also 0.93× rather than covered. Both are honest consequences of a 1024px source and unchanged from `main`; the comment's "cover the real boxes" just reads more confidently than the measurements support.
+
+## 6. Behaviour change worth one moment's thought
+
+Removed widths now return HTTP 400 rather than an image. No in-repo consumer hardcodes them (grepped `tests/`, `docs/`, `apps/web/src`, `scripts/` for 1920/2048/3840 — only the new test's prose matched). If any HTML is CDN-cached across the deploy, previously-emitted `w=1920` srcset URLs will 400 until it expires; browsers fall back to `src`, so degradation is graceful.
+
+---
+
+## Checks not performed, and why
+
+- **Interaction, focus visibility, keyboard traversal, contrast, semantics/heading order** — not separately audited. The diff changes one build-config value and one Python test; it touches no markup, styles, or classes. The 0-differing-pixel result against `main` across nine page/viewport combinations is direct evidence that rendered output is byte-identical, so none of these can have changed. If you want a standalone a11y audit of these pages, that is a separate piece of work from this diff.
+- **Loading / empty / error states** — not exercised as journeys; this change has no state branches. I did hit one 500 incidentally, traced to my baseline harness rather than the product.
+- **Tap-target sizing** — covered implicitly by the pixel-identity result; not measured independently.
+- **Category page A/B** — attempted, blocked by the harness limitation described above. Stated rather than glossed.
+
+**Recommendation:** fix finding 1 before the verifier — CI will fail on it regardless. Findings 3–6 are judgement calls; 4 is the one I would actually take.</result>
+<usage><subagent_tokens>73436</subagent_tokens><tool_uses>58</tool_uses><duration_ms>1121813</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ac7db0ac8752b0b51</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ac7db0ac8752b0b51.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify deviceSizes change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The Docker build fix is correct and independently confirmed at the container-runtime level, not just at the config-inlining level. No other build path is affected. The `raster_dimensions()` JPEG byte order is correct, confirmed against a synthetic non-square fixture since the repo has no real one. All checks I ran are green.
+
+## What I independently confirmed (not just re-trusting the user's run)
+
+**1. Docker build — both stages, from a clean context**
+- `docker build --target builder -t contoso-web:verify-builder .` — succeeded.
+- `docker build -t contoso-web:verify-full .` (all stages, including `runner`) — succeeded. The user had only verified `--target builder`; the `runner` stage doesn't touch `next.config.js` or `config/` at all (it copies `.next/standalone`, `.next/static`, and `.prisma` from `builder`), so nothing there was at risk, but I built it end-to-end anyway.
+- Inspected the runner image directly: `/app/config` does not exist, and no file anywhere in the image matches `*catalogue_images*` — the builder-only `COPY` does not leak into the runtime layer.
+- Found the resolved config baked into `server.js`: `"images":{"deviceSizes":[640,750,828,1080],...}` — exactly the derived ladder, confirmed by grep inside the container rather than by trusting the build log.
+- Went one step further than static inspection: brought the full stack up via `docker compose` (with a scratch override for the port/`LLM_PROVIDER` collisions — see below) and hit the running image optimiser directly:
+  - `w=640/750/828/1080` → `200 OK`, distinct `Content-Length` per width.
+  - `w=1200/1920/3840` → `400 Bad Request`, body `"w" parameter (width) of 1200 is not allowed` — this is the actual observable fix (previously these would have been `200` with byte-identical responses to `w=1080`).
+
+**2. Other build paths reaching outside `apps/web/`**
+- `Dockerfile.migrate` — does not reference `next.config.js` or any image config; only copies `package*.json`, `prisma/`, runs `prisma generate`. Unaffected.
+- `docker-compose.yml` — the `web` service builds with `build: .` (repo root context, root `Dockerfile`), so `config/` is already inside the build context for every compose-driven build, including both CI e2e-smoke jobs (`ci.yml` lines ~260 and ~531, `context: .`, `file: Dockerfile`, lite and full profiles) and local `docker compose up`.
+- `.dockerignore` does not exclude `config/` — checked explicitly, since that's the other way this could have silently broken.
+- `release.yml` and `release-main-build.yml` — neither builds a Docker image at all (checked both workflow files); `release-dry-run` invokes `quick-ci`, not Docker. Unaffected.
+- `services/chat/Dockerfile` — unrelated app, no reference to web's `next.config.js`.
+- Conclusion: the only build path this change touches is the root `Dockerfile`'s `builder` stage, and it is now fixed and covered by every consumer of that Dockerfile (local build, both CI e2e-smoke profiles, local compose).
+
+**3. `raster_dimensions()` JPEG/PNG order — formed my own view rather than accepting the claim**
+- PNG order: confirmed against a real, already-non-square repo asset, `apps/web/public/images/hero.png` (1024×450) — `raster_dimensions()` returns `(1024, 450)`, matching `ffprobe`. This wasn't a square fixture, so it's real evidence, not a vacuous check.
+- JPEG order: every real JPEG in the repo (`contact-bg.jpg` 1024×1024, `people/sarahlee.jpg` 220×220) is square, so nothing in the repo's own fixtures could catch a width/height swap in the SOF branch — the user's stated concern is legitimate. I generated a genuinely non-square (301×517, both dimensions &gt;255 so the 2-byte field decode is exercised) baseline JPEG with `ffmpeg` and confirmed `raster_dimensions()` returns `(301, 517)`, matching `ffprobe`'s ground truth exactly. WebP and PNG synthetic fixtures at the same dimensions also matched.
+- Gap: I could not produce a genuine progressive (SOF2) JPEG in this environment — no `cjpeg`/`jpegtran`/Pillow/ImageMagick available, and `ffmpeg`'s `mjpeg` encoder only emits baseline (SOF0) regardless of options (verified by walking the marker stream). The frame-header byte layout is identical between SOF0 and SOF2 (only the entropy-coded scan data differs), so this is low residual risk, but it is not something I could confirm directly, and neither can the current test suite — flagging per "form your own view" rather than rounding up.
+
+**4. Standard checks, run fresh**
+- `make test-scripts` → 142 passed, 1.6s. Matches the reported count.
+- `make -C apps/web quick-ci` → lint clean, typecheck clean, 111 tests / 32 files passed. Matches the reported count.
+- `make e2e-smoke` could not run as-is (see Environment issues), so I ran its equivalent manually: brought up `db`/`chat`/`web` via `docker compose` with a scratch override (ports remapped, `LLM_PROVIDER=gcp`) and ran `scripts/e2e_smoke.py` directly against the remapped URLs. All checks passed: chat health, chat dependency health, chat root endpoint, request-validation rejection, web→chat proxy call, and the web dynamic `[slug]` page. The chat backend fell back to its non-real-answer path (`PROJECT_ID, REGION, and DISCOVERY_ENGINE_DATASTORE_ID must be set`) — expected and unrelated to this change (this environment has no real GCP/Discovery Engine credentials); the smoke script treats this as non-fatal by design.
+
+## Failures
+
+None.
+
+## Flakes
+
+None encountered. No check needed a re-run to distinguish signal from noise.
+
+## Missing coverage
+
+- **`deviceSizes` derivation arithmetic in `apps/web/next.config.js` has no unit test.** The filter/find logic (`DEFAULT_DEVICE_SIZES.filter(...)` + `.find(...) ?? sourceWidth`) is only exercised indirectly, by running a full `next build`/Docker build and inspecting the output — which is what both the user and I did — not by any fast, isolated test. Untested edge cases in that logic: `maxDimension` exactly equal to a rung (e.g. 1080) — works today but unverified by assertion; `maxDimension` above the largest default rung (3840) — falls back to `sourceWidth` itself via `??`, entirely unexercised. If `config/catalogue_images.json`'s `maxDimension` is ever changed, nothing but a full build would catch a regression in this arithmetic.
+- **JPEG SOF byte order has no committed non-square fixture.** As above — the repo's only JPEGs are square, so a future regression in the width/height order specifically would pass silently. My verification used a synthetic fixture in scratch space, not something the suite can re-run.
+- **Progressive JPEG (SOF2) is untested anywhere available to me.** Low risk given the shared frame-header layout, but neither the repo's fixtures nor my environment could exercise it.
+
+## Environment issues
+
+- **Port collisions on 5432 and 3000**, as flagged: `travel-app-db-1` holds 5432, and a `travel-app` `next-server` process holds 3000 (confirmed via `/proc/&lt;pid&gt;/environ` — `PWD=.../travel-app`). Left untouched. `make e2e-smoke` cannot run unmodified on this host for this reason (hard-codes `--web-url http://127.0.0.1:3000`), consistent with your standing memory note.
+- **Two more local port collisions beyond the known ones**: ports 3100 and 3200 were also already bound by leftover `next-server` processes whose `PWD` points inside this repo's `apps/web` and a `scratchpad/baseline` directory — these look like orphaned dev servers from an earlier `ui-review`/verification pass in this same task chain, not `travel-app`. I did not kill them (no explicit mandate to do so, and they're host processes, not containers); I picked unused ports (4321/4322/54329) instead and ran the smoke stack there.
+- **`.env` sets `LLM_PROVIDER=local`** and Ollama is not installed, confirmed by reading `.env` directly. Worked around per your memory note by overriding to `gcp` in a scratch compose file (not editing `.env`), matching what CI does by omission.
+- I created a scratch `docker-compose.override.yml` at `/tmp/claude-1000/.../scratchpad/docker-compose.override.yml` (ports + `LLM_PROVIDER: gcp`, using `!override` YAML tags since plain `ports:` lists append rather than replace) purely to drive the manual smoke run; it is outside the repo and was not committed anywhere.
+- All Docker images/containers I created during verification (`contoso-web:verify-builder`, `contoso-web:verify-full`, `contoso-verify-web:latest`, `contoso-verify-chat:latest`, and the `contoso-verify` compose project) were torn down and removed afterward. Pre-existing images from earlier sessions (`contoso-uireview-web`, `contoso-pw-web`, `contoso-race-*`, etc., all dated before today) were left alone — not mine to clean up.
+
+## Checks not run, and why
+
+- `.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets` produced no output because all three changed files are uncommitted (working tree only) — `main...HEAD` is empty. I compensated by reading `git status --short` / `git diff` directly and choosing scope manually (web + Dockerfile + scripts), per the instruction that the detector only sees committed work.
+- `make docs-check` — not run; no Markdown changed in this diff.
+- `make ci` (cross-surface) — not run as a whole; its constituent pieces (web quick-ci, test-scripts, e2e-smoke-equivalent) were run individually and are the ones actually implicated by this change's scope. `services/chat` is untouched by this diff, so I did not separately re-run `quick-ci-chat` beyond what `e2e-smoke` already exercised via the running `chat` container.
+- No code was modified, staged, or committed by me at any point.
+
+## Relevant files
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/docker-compose.yml`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/.github/workflows/ci.yml`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile.migrate` (checked, unaffected)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/public/images/hero.png` (used as real non-square PNG evidence)</result>
+<usage><subagent_tokens>75303</subagent_tokens><tool_uses>83</tool_uses><duration_ms>719585</duration_ms></usage>
+</task-notification>
