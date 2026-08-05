@@ -31,6 +31,34 @@ export default function AboutPage() {
                 src="/images/about/mission.png"
                 alt="Our Mission"
                 fill
+                // A `fill` image has no width prop, so without `sizes` Next
+                // assumes 100vw and the browser fetches for the whole viewport
+                // — w=1080 for a 604px box, and w=1080 for a 381px one.
+                //
+                // The box is one column of a two-column grid inside the
+                // container: half of it, less half the 48px gap and half the
+                // 24px padding, so `50vw - 36px`. The container stops growing
+                // at the xl breakpoint, which fixes the column at 604px. Below
+                // md the grid is one column and the box is the container.
+                // The spaces inside the parens are load-bearing. Next finds the
+                // viewport percentages with /(^|\s)(1?\d?\d)vw/ to trim the
+                // srcset to the rungs a percentage of the viewport can reach;
+                // `calc(50vw` puts a paren before the `vw`, nothing matches,
+                // and it emits all eleven rungs instead of five. Selection is
+                // unaffected either way — this is 780 bytes of dead candidates
+                // per response, listed twice because `priority` preloads them.
+                sizes="(min-width: 1280px) 604px, (min-width: 768px) calc( 50vw - 36px ), calc( 100vw - 24px )"
+                // Largest-contentful-paint reports this image at every width
+                // above 390. It was lazy, so the request that decides LCP was
+                // the one deferred longest: on a throttled desktop load this
+                // buys 300-500ms of LCP for 70-140ms of FCP, because the
+                // preload goes ahead of the stylesheet.
+                //
+                // At 390 that trade is a small loss — the LCP element there is
+                // a paragraph, so the FCP cost buys nothing. Kept anyway:
+                // next/image has no way to make this conditional on width, and
+                // the widths that gain outnumber the one that pays.
+                priority
                 className="object-cover"
              />
           </div>
