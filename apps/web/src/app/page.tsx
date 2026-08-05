@@ -21,7 +21,16 @@ export default async function Home() {
     <>
       <Header />
       <Block
-        outerClassName="bg-blend-multiply bg-center bg-hero-image h-80 bg-neutral-600"
+        // min-h-80, not h-80: the band keeps its full-bleed proportions on a
+        // desktop while growing with its own text on narrower screens. At a
+        // fixed height the copy wrapped past the bottom edge and painted over
+        // the first category, at every width from 360 to 769.
+        //
+        // bg-cover bg-no-repeat because the default is `auto` and `repeat`,
+        // so the 1024x450 image tiled: already visible as a vertical seam past
+        // 1024px wide, and a horizontal one as soon as the band grows taller
+        // than 450px, which min-h-80 lets it do.
+        outerClassName="bg-blend-multiply bg-center bg-cover bg-no-repeat bg-hero-image min-h-80 pb-8 bg-neutral-600"
         innerClassName=""
       >
         <h1 className="text-zinc-100 pt-12 text-7xl font-black subpixel-antialiased">
