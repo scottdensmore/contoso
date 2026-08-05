@@ -1,0 +1,121 @@
+Update the workflow so whenever you find something that is not associated with the current work, open an issue so we can come back to it later.
+
+---
+
+<task-notification>
+<task-id>a273992080aae6d7b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a273992080aae6d7b.output</output-file>
+<status>completed</status>
+<summary>Agent "Review AGENTS.md workflow addition" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I verified the claims against the agent definitions, the guard test, and the actual provenance recorded in this repo's issues. The change is well grounded overall — but two things in it are not supported.
+
+## Findings
+
+### 1. `AGENTS.md:69-71` — the step 5 pointer contradicts both step 5 and the section it points to (confidence 85)
+
+```
+   preserving work that belongs to the user. Anything removed here that is a
+   real problem gets an issue rather than a deletion — see *Unrelated findings
+   become issues* below, which applies from here through step 8.
+```
+
+Two separate defects in one sentence.
+
+**a. "which applies from here through step 8" contradicts line 134** of the very section it points at, which says the rule "happens at every step above" — i.e. all eleven. An agent following the runbook literally reads step 5 as the authoritative scope and concludes a finding surfacing at step 4 or step 10 is out of scope for issue filing. The repository's own history contradicts the narrow scope: #133 was "found while auditing image references for #66" and #119 "found while working #104" — both during implementation, before step 5. Nothing about the practice is bounded to steps 5-8.
+
+**b. "gets an issue rather than a deletion" inverts step 5's own instruction.** Step 5 says "Remove accidental or unrelated changes." The natural reading of "an issue rather than a deletion" is *do not remove it, file an issue instead*, which leaves the unrelated change in the reviewed diff — precisely the "Silently widening the change" failure mode the new section warns against seventy lines later. The intent is presumably "record it as an issue *before* removing it", which is the opposite instruction.
+
+Suggested fix: drop the scope clause entirely (the section already states its own scope) and make the conjunction explicit, e.g. "A real problem found here is filed as an issue before the change is removed — see *Unrelated findings become issues* below."
+
+### 2. `AGENTS.md:164-166` — asserts a sub-agent incapability that no definition establishes (confidence 85)
+
+```
+The sub-agents cannot do this themselves. They are read-only by design and
+cannot ask a question mid-run, so every finding they report that falls outside
+the current change needs the main agent to file it.
+```
+
+Three problems, and this is the overstatement you asked me to hunt for:
+
+- **The stated reason does not support the conclusion.** Being read-only with respect to the repository and being unable to ask questions have no bearing on whether an agent can file a GitHub issue. Filing an issue is not a repository modification.
+- **The "cannot" is not true.** All three definitions grant `Bash` (`/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md`, `ui-review.md`, `verifier.md`), and `gh` is available. None of the three prompts forbids `gh issue create` — `code-review` forbids "no edits, no `git add`, no commits, no branch changes"; `verifier` forbids the same plus `npm install`; neither list covers issue creation. There is nothing preventing a sub-agent from doing this.
+- **"read-only by design" is looser than the truth,** and looser than the sentence five lines below it. `verifier` explicitly "may run `make` targets that create `.venv` or `node_modules`"; `ui-review` explicitly "may start and stop the local stack" and runs `docker compose up -d --build`. Line 172 already states this correctly as "cannot modify the repository they assess."
+
+This is the exact shape of issue #100 — an unenforced prose claim about the sub-agents in `AGENTS.md`. `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py` was written to guard those claims, but it scopes its name check to the text after the `### Sub-agents this workflow depends on` heading, so this new paragraph sits outside it. The tool-list assertions still hold globally, but the "cannot file an issue" claim is guarded by nothing and is false.
+
+Suggested fix: state it as a rule rather than a capability, and drop the duplicated attributes. Something like "Sub-agents report findings; they do not file issues. Every finding they report that falls outside the current change needs the main agent to file it." That also removes the redundancy with lines 171-172, which say the unattended/no-modify part already and say it more accurately.
+
+## Direct answers
+
+**1. The carve-out is justified, and the section would contradict the runbook without it.** Step 7 already requires "Fix or explicitly resolve every actionable finding before starting code review", and step 6 "Address every actionable finding before running the `verifier`". An unqualified "always file, never fix" would collide with those head-on. Your carve-out is narrower than what steps 6-8 already demand, so it constrains rather than expands. The default it sets is also what this repo actually does: #151 "Pre-existing and unreferenced, so filing rather than folding in", #150 "filing rather than widening that PR", #112 "All pre-existing; filed separately rather than folded into that fix", #126 "filing it rather than expanding that PR", #130 "it did not belong in that fix". The one genuinely new obligation is "state the reason in the commit message", which firms up step 9's softer "describe why in the body when useful" — a small expansion, not a policy shift. It did not clear my reporting bar.
+
+**2. Half accurate, half not.** The steps 6-8 claim is well supported — I checked provenance on 24 issues: #151 (`code-review`), #150 and #149 (`ui-review`), #139, #115, #113, #112 (rendered review), #121 (while verifying), #123 (during review), #126 (reviewing and verifying agents), #100 (`verifier`). That is a clear majority. The read-only/cannot-ask claim is where it breaks down — see finding 2. Your three examples on line 133 are also real: stale script is #151, pre-existing overflow is #149, a check that does not check what it claims is #121.
+
+**3. Overstated in one place:** finding 2. One other thing I looked hard at and am not reporting: "This happens at every step above" (line 134) is literally false for steps 2, 9 and 11, but as rhetoric preceding "and most often during steps 6 to 8" it reads as intended, and it is the phrasing the step 5 pointer contradicts rather than the other way round. The rest — "an issue costs little", "a separate pull request is cheap" — is opinion, correctly framed as such.
+
+**4. Placement and heading are right.** `###` under `## Development workflow` matches the sibling `### Sub-agents this workflow depends on`, and a supporting subsection after step 11 rather than inside the numbered list follows the established pattern. It also sits *before* the sub-agents heading, which keeps it outside the region `test_agent_definitions.py` parses. Voice is more essayistic than the numbered steps, but the neighbouring section has the same register ("a review that claims viewports it never rendered is worse than none"), so it fits. One inconsistency: line 135 writes "`ui-review`, `verifier` and `code-review`" without the serial comma, the only place in the file that does — lines 44, 45, 54, 58, 68, 76, 80, 87 and 170 all use it.
+
+**5. Contradictions and duplication** are both covered above: the step 5 scope clause versus line 134, and lines 164-166 restating lines 171-172 five lines later.
+
+## What I reviewed
+
+`git diff` on `docs/unrelated-findings-become-issues` — `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` only, +41/-1, unstaged. `git diff --cached` and `git diff main...HEAD` are both empty; `git status --short` shows no untracked files. For context I read all of `AGENTS.md`, the three definitions in `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/check_agent_docs.py`, issue #148 and #100, and the bodies of 24 further issues to test the steps 6-8 frequency claim.
+
+No pointer file changed, so the pointer-only rule is not implicated. I did not re-run `make docs-check`, `make agent-docs-check` or `make test-scripts`, taking your report that all three pass; I confirmed by inspection why the name-set assertion in `test_agent_definitions.py` is unaffected by this edit.</result>
+<usage><subagent_tokens>39949</subagent_tokens><tool_uses>15</tool_uses><duration_ms>281339</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a442df55b0186a78d</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a442df55b0186a78d.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review AGENTS.md fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Approved.** Nothing scores 80 or above. Both prior findings are resolved, not relocated.
+
+## Answers
+
+**1. Are both findings actually resolved?**
+
+Yes, both.
+
+*Finding 1 (step 5 pointer).* `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:69-71` now reads "A real problem found here is filed as an issue before the change is removed — see *Unrelated findings become issues* below." The scope claim is gone, so it no longer contradicts the section's own scope statement, and it no longer inverts step 5: removal still happens, the issue is what precedes it. The section opener at line 133-136 is now hedged ("can happen at any step, and most often happens during steps 6 to 8"), which is consistent both with the pointer sitting at step 5 and with the repo's history — #133 and #119 came out of implementation, while #149, #150 (`ui-review`) and #151 (`code-review`) came out of steps 6-8, matching the "most often" claim rather than contradicting it.
+
+*Finding 2 (sub-agent paragraph).* Lines 164-165 now state a division of labour rather than a capability. Nothing in it is falsifiable against `.claude/agents/*.md`: the "read-only by design" and "cannot ask a question mid-run" clauses that were doing work they could not support are gone, and the accurate capability statement remains where it was, at line 170. The paragraph no longer needs a guard, which resolves the #100 shape rather than reintroducing it.
+
+**2. Any remaining untrue or unenforced claim about this repo or its agents?**
+
+None at reporting confidence. Every factual assertion in lines 130-165 either describes the doc's own rule or is verifiable: the three agent names match `.claude/agents/`; "read more of the repository than the change touches" is true of all three prompts; "Link the issue from the pull request" conflicts with nothing in `CONTRIBUTING.md` and there is no PR template to contradict.
+
+Two things I checked and scored below threshold, since you asked for the hard pass:
+
+- Lines 164-165 presume out-of-scope findings reach the main agent, while `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md` tells that agent to score "a pre-existing issue the change did not introduce" at 0, not to report "issues on lines the change did not touch", and to discard the rest silently. The sentence is conditional ("Every finding they report that…"), so it asserts nothing false, and #151 shows the practical case — a pre-existing problem the change makes worse — does get reported under "correctness at the seams". The tension lives in `code-review.md`'s rubric and predates this diff. ~50.
+- The new section names all three agents in backticks at line 135, outside the region `agent_names_claimed_by_docs()` parses (it splits at `### Sub-agents this workflow depends on`). A rename would leave line 135 stale with `test_agent_definitions.py` green. Same shape as #100 but the claim is only a name, not a capability, and the guarded section would fail first on the same rename. ~40.
+
+**3. Does the pointer agree with step 5 and with the section?**
+
+Yes. Against step 5: "before the change is removed" preserves the removal instruction instead of overriding it, and applies only to the case where the removed change embodies a real problem — it does not tell you to file an issue for every accidental edit. Against the section: the section's "File an issue at the moment of finding, before deciding what to do about it" (line 138) is the general rule; the pointer is its step 5 instance, with the same ordering. The italic title matches the heading text at line 130 exactly, so the cross-reference resolves by search.
+
+**4. Anything else to block on?**
+
+No. `git diff --check` is clean, the diff is 40 additions in one file with no incidental reflow, line lengths are within the range the file already uses, and the em-dash and serial-comma usage matches surrounding prose. The carve-out paragraph at lines 158-162 is unchanged and still narrower than what steps 6-8 demand.
+
+## Scope reviewed
+
+- `git diff main...HEAD` — empty; the branch carries no commits, all work is unstaged.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` only, the two hunks at lines 67-71 and 130-165.
+- `git diff --cached` — empty. `git status --porcelain -uall` — no untracked files.
+- Context read: `.claude/agents/code-review.md`, `ui-review.md`, `verifier.md`; `tests/scripts/test_agent_definitions.py` (parsing boundaries); `scripts/verify_docs.py`; `CONTRIBUTING.md`; issues #148, #149, #150, #151 for provenance of recent findings.
+
+Not assessed: I took your report that `make docs-check`, `make agent-docs-check`, and `make test-scripts` (141) pass rather than re-running them.</result>
+<usage><subagent_tokens>39369</subagent_tokens><tool_uses>16</tool_uses><duration_ms>199617</duration_ms></usage>
+</task-notification>
+
+---
+
+lets delete it

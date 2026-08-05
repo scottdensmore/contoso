@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "91ea14ef7e64",
+  "strategy": "manual-commit",
+  "branch": "chore/drop-normalize-product-galleries",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "scripts/normalize-product-galleries.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/91/ea14ef7e64/0/metadata.json",
+      "transcript": "/91/ea14ef7e64/0/full.jsonl",
+      "compact_transcript": "/91/ea14ef7e64/0/transcript.jsonl",
+      "content_hash": "/91/ea14ef7e64/0/content_hash.txt",
+      "prompt": "/91/ea14ef7e64/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 549,
+    "cache_creation_tokens": 681517,
+    "cache_read_tokens": 64293746,
+    "output_tokens": 231634,
+    "api_call_count": 292
+  }
+}
