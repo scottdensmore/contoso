@@ -1054,3 +1054,72 @@ This does not make the current change wrong — today the first `h2` on `/` is g
 Not assessable here: rendered pixels and the `bg-cover` upscale, which need a browser — I relied on your `ui-review` and `verifier` reports for those, and on the verifier's DOM-mutation reproduction for the guard's red phase.</result>
 <usage><subagent_tokens>48326</subagent_tokens><tool_uses>21</tool_uses><duration_ms>289254</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a2bb3fcc8b54e2ddc</task-id>
+<tool-use-id>toolu_01LmxubPNbXbprYvb1a7M12u</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a2bb3fcc8b54e2ddc.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after test refinement" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Verified — the refinement did not weaken or break the test. It closes the gap it claims to close.
+
+### Scope chosen
+This is a step-8 refinement rerun. The only diff since my prior clean pass is inside `apps/web/e2e/layout.spec.ts` (the "no vertical collision" test's guard). `apps/web/src/app/page.tsx` is byte-identical to what I verified before — its diff still reads as the same `min-h-80`/`bg-cover bg-no-repeat` fix with the same commentary. Per step 8, a refinement-only change gets "the focused tests and the verifier," not a full re-sweep, so I ran:
+
+1. `apps/web/e2e/layout.spec.ts` (all 8 tests) against a real containerized stack — twice, on two separately-built stacks, to rule out flake.
+2. An independent DOM-mutation reproduction of the exact defect the refinement guards against (not trusting your numbers).
+3. Lint + typecheck on the touched file.
+
+I did not re-run `quick-ci-web`, `test-scripts`, or the horizontal-overflow/chat-panel tests in this file, since none of that surface changed and you already reported them green on the current state. I did not re-run `e2e-smoke`/the chat container, since the vertical-collision test never depends on `chat` (confirmed in `docker-compose.yml`: `web`'s only `depends_on` is `db`).
+
+### 1. Ran against a real stack
+Built and ran `db` + `web` via `docker compose` (mapped to `55433`/`3100` per the port-collision constraint with `travel-app`), confirmed the running container actually served the uncommitted `page.tsx` fix (`curl` showed `min-h-80 pb-8 bg-neutral-600` in the served HTML), then ran the full spec twice:
+
+```
+8 passed (30.0s)   # first stack
+✓ 1  ... vertical collision ...  (4.1s)   # second, fresh stack, targeted rerun
+```
+
+No flake — both runs green, and the second was a from-scratch container to rule out state carried over from the first.
+
+### 2. Independently reproduced that the count assertion fires
+I did not take your 5→2 number on faith. I wrote three separate injections against the live container:
+
+- Decoy `&lt;h2&gt;` as the very first child of `&lt;body&gt;`: `seen` dropped to **0** (assertion would fire, `0 &lt; 5`).
+- Decoy `&lt;h2&gt;` appended after the header search failed to match (repo has no `&lt;header&gt;` tag — I confirmed this from the served markup, `&lt;div class="max-w-... h-12 flex ..."&gt;`, not `&lt;header&gt;`): this attempt landed at the end of body and, correctly, changed nothing — a useful negative control showing the guard isn't just always tripping.
+- Decoy `&lt;h2&gt;` inserted between the hero's `&lt;h1&gt;` and its subhead — the closest analogue to "an h2 introduced anywhere above the categories": `seen` dropped from 5 to **3**, with a genuine collision reported (`"Contoso Outdoor Company" ends 13px into the heading`).
+
+All three confirm the mechanism: `document.querySelector('h2')` silently retargets, the walk collapses, and `seen &lt; 5` is what catches it before the empty-`collisions` object can be misread as "no problem." My number (3) differs from yours (2) only because of where I placed the decoy — the direction and mechanism match.
+
+I cleaned up all three scratch spec files from the repo afterward (`git status` confirms only the two intended files remain modified).
+
+### 3. Is 5 the right floor?
+I read `header.tsx` and the current `page.tsx` render tree. The count is: 2 header links (`Sign In`, `Sign Up`) + 3 hero text blocks (`h1`, subhead, body) = 5. I checked the specific ways this could legitimately vary and found none that apply to this test:
+
+- **Hamburger menu button**: contributes 0 text nodes — it's an `aria-hidden` SVG icon with an `aria-label` attribute, not visible text, so it doesn't affect the walker regardless of viewport.
+- **No responsive hide/show classes** on the Sign In/Sign Up links in `header.tsx` (`grep` for `hidden`/breakpoint-prefixed hidden classes found nothing) — they render identically at all 15 widths in `WIDTHS`, including the narrowest (360px).
+- **Auth state**: the test always hits a fresh, unauthenticated `/`. If it were authenticated, the header actually shows *more* text nodes (name + email + "Sign Out" ≥ 3, vs. 2 signed-out), so authentication could only raise the floor, never lower it below 5.
+- **Hydration race**: `Header` is a client component, but `useSession()`'s default/loading state falls into the same `else` branch that renders Sign In/Sign Up, and Next.js SSRs that markup before hydration — so the links are present from first paint, not something the 120ms settle-timeout could miss.
+- **Locale**: no i18n framework in this codebase (`grep` for `next-intl`/`useTranslations` found nothing) — strings are hard-coded English, so no locale variant reduces text-node count.
+
+The one way `seen` legitimately drops below 5 is a real content change (e.g., removing "Sign Up," or a category list that renders zero `&lt;h2&gt;`), which is exactly the kind of change that should force someone to look at this test again — not brittleness, just correctly-scoped coupling. I did not find a viewport, locale, or auth path in the current codebase that would trip the floor without an actual introduced bug or an actual header edit.
+
+### 4. Anything else the change touched
+Nothing beyond the described guard. `git diff --stat` confirms only `layout.spec.ts` (+72/-0, net addition of the guard, no line removed from elsewhere) and the pre-existing `page.tsx` fix. Lint (`npx eslint e2e/layout.spec.ts`) and typecheck (`npx tsc --noEmit`) are both clean on the current state. `next-env.d.ts` is untouched — I ran Playwright against a built container, not `next dev`, so nothing regenerated it.
+
+### Environment notes
+- `travel-app-db-1` (5432) and its `mailpit` sibling were running throughout and were never touched; I used compose overrides mapping `db`→55433, `web`→3100, exactly as recorded in the local-e2e-env-constraints memory.
+- `LLM_PROVIDER=gcp` was set explicitly on the override (no `.env` present in this shell, so it would have defaulted to `gcp` regardless) — `chat` wasn't even started, since this test doesn't need it.
+- Both docker stacks were torn down (`down --volumes --remove-orphans`) after use; `docker ps -a` confirms no `contoso-*` containers remain.
+
+### What I did not run and why
+- `make -C apps/web quick-ci`, `make test-scripts`, the horizontal-overflow tests, and the chat-panel test in this same file — unchanged surface, already reported green by you on the current state, and step 8 scopes the rerun to the refinement's focused tests.
+- `make e2e-smoke` (full dockerized smoke including `chat`) — this refinement is confined to a web-only DOM-measurement test with no chat dependency; running the chat container would exercise nothing this change touches.
+- `ui-review` — not invoked; this task asked specifically for verifier-level confirmation of the refinement, not a fresh visual review round (step 8 says a refinement-only change doesn't earn one).
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/layout.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/docker-compose.yml`.</result>
+<usage><subagent_tokens>51343</subagent_tokens><tool_uses>45</tool_uses><duration_ms>393095</duration_ms></usage>
+</task-notification>
