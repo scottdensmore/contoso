@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "03b6daa7da3b",
+  "strategy": "manual-commit",
+  "branch": "chore/drop-unreferenced-images",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/e2e/browse.spec.ts",
+    "tests/scripts/test_image_references.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/03/b6daa7da3b/0/metadata.json",
+      "transcript": "/03/b6daa7da3b/0/full.jsonl",
+      "compact_transcript": "/03/b6daa7da3b/0/transcript.jsonl",
+      "content_hash": "/03/b6daa7da3b/0/content_hash.txt",
+      "prompt": "/03/b6daa7da3b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4039,
+    "cache_creation_tokens": 8183474,
+    "cache_read_tokens": 894553938,
+    "output_tokens": 1263202,
+    "api_call_count": 2182
+  }
+}
