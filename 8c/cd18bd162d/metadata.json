@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "8ccd18bd162d",
+  "strategy": "manual-commit",
+  "branch": "perf/about-mission-image-sizing",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "apps/web/e2e/image-delivery.spec.ts",
+    "apps/web/src/app/about/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8c/cd18bd162d/0/metadata.json",
+      "transcript": "/8c/cd18bd162d/0/full.jsonl",
+      "compact_transcript": "/8c/cd18bd162d/0/transcript.jsonl",
+      "content_hash": "/8c/cd18bd162d/0/content_hash.txt",
+      "prompt": "/8c/cd18bd162d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 959,
+    "cache_creation_tokens": 1515680,
+    "cache_read_tokens": 178879930,
+    "output_tokens": 401435,
+    "api_call_count": 511
+  }
+}
