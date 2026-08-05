@@ -5711,3 +5711,7 @@ ok lets do 140
 ---
 
 whare in those directories... are they referenced anywhere?
+
+---
+
+Ok lets get rid of all the unreferenced files
