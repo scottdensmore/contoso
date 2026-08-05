@@ -85,6 +85,38 @@ def webp_dimensions(data: bytes) -> tuple[int, int]:
     raise ValueError(f"unrecognised WebP chunk: {chunk!r}")
 
 
+def raster_dimensions(data: bytes) -> tuple[int, int]:
+    """Canvas size from a PNG, JPEG or WebP header.
+
+    Only as much of each format as the allowlist needs: PNG carries width and
+    height at a fixed offset in the IHDR chunk, and JPEG in whichever SOF marker
+    the encoder used, which has to be walked to.
+    """
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return (
+            int.from_bytes(data[16:20], "big"),
+            int.from_bytes(data[20:24], "big"),
+        )
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return webp_dimensions(data)
+    if data[:2] == b"\xff\xd8":
+        offset = 2
+        while offset + 9 < len(data):
+            if data[offset] != 0xFF:
+                raise ValueError("JPEG segment out of sync")
+            marker = data[offset + 1]
+            length = int.from_bytes(data[offset + 2 : offset + 4], "big")
+            # SOF0-SOF15, excluding the non-frame markers that share the range.
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                return (
+                    int.from_bytes(data[offset + 7 : offset + 9], "big"),
+                    int.from_bytes(data[offset + 5 : offset + 7], "big"),
+                )
+            offset += 2 + length
+        raise ValueError("no JPEG frame header found")
+    raise ValueError("unrecognised image format")
+
+
 def catalogue_images() -> list[Path]:
     """Every image under public/images that is not an allowlisted background."""
     return sorted(
@@ -131,6 +163,38 @@ class CatalogueEncodingTests(unittest.TestCase):
             [],
             "catalogue images must be WebP; run "
             "`node scripts/reencode-catalogue-images.mjs`",
+        )
+
+    def test_full_bleed_images_fit_the_srcset_ceiling(self):
+        """The allowlist is exempt from the encoding, not from the delivery.
+
+        `apps/web/next.config.js` derives its `deviceSizes` ceiling from
+        `maxDimension`, because the optimiser never upscales and every srcset
+        candidate above the largest source returns identical bytes. Of the three
+        allowlisted images only `about/mission.png` goes through the optimiser,
+        so only it can be capped that way -- `hero.png` and `contact-bg.jpg` are
+        CSS background-image URLs, which `deviceSizes` cannot reach at all.
+        The allowlist is checked whole regardless: it is three files, the cost
+        is nothing, and the alternative is a second list to keep in step with
+        how each asset happens to be referenced today.
+
+        Dimensions come from the WebP parser above only for WebP; the allowlist
+        is PNG and JPEG, so this reads their headers directly. Both formats put
+        the size in a fixed place near the front of the file.
+        """
+        undersupplied = {}
+        for name in sorted(FULL_BLEED):
+            path = IMAGES_DIR / name
+            if not path.is_file():
+                continue  # covered by test_full_bleed_allowlist_is_not_stale
+            width, height = raster_dimensions(path.read_bytes())
+            if max(width, height) > MAX_DIMENSION:
+                undersupplied[name] = f"{width}x{height}"
+        self.assertEqual(
+            undersupplied,
+            {},
+            f"full-bleed images wider than the {MAX_DIMENSION}px srcset ceiling "
+            "derived in apps/web/next.config.js; they would be served capped",
         )
 
     def test_catalogue_images_are_at_display_resolution(self):
