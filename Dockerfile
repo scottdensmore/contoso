@@ -29,6 +29,10 @@ COPY apps/web/package*.json ./
 COPY apps/web/src ./src
 COPY apps/web/public ./public
 COPY apps/web/next.config.js ./
+# next.config.js derives its image srcset ceiling from this, so the build needs
+# it even though it sits outside apps/web. Builder stage only: the standalone
+# output inlines the resolved value, so the runner never reads the file.
+COPY config/catalogue_images.json /app/config/catalogue_images.json
 COPY apps/web/tsconfig.json ./
 COPY apps/web/tailwind.config.ts ./
 COPY apps/web/postcss.config.js ./
