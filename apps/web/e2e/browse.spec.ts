@@ -47,10 +47,22 @@ test.describe('browsing', () => {
     // The gap that let /images/placeholder.png survive: pages returned 200
     // while the assets they referenced 404'd. Status codes are collected from
     // the network rather than inferred from the DOM.
+    //
+    // Both shapes have to be watched. Product images never reach the browser as
+    // a file path -- `next/image` requests them as
+    // `/_next/image?url=%2Fimages%2F...webp&w=640&q=75`, where the extension is
+    // followed by `&` and an extension-anchored pattern never matches. Only the
+    // CSS backgrounds are fetched by path, so matching on extension alone
+    // watched the three assets this catalogue change does not touch and none of
+    // the 852 it does.
+    const IMAGE_REQUEST = /\/_next\/image\?|\.(png|jpe?g|webp|gif|svg)(\?|$)/i
     const failed: string[] = []
+    let optimised = 0
     page.on('response', (response) => {
       const url = response.url()
-      if (/\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(url) && response.status() >= 400) {
+      if (!IMAGE_REQUEST.test(url)) return
+      if (url.includes('/_next/image?')) optimised += 1
+      if (response.status() >= 400) {
         failed.push(`${response.status()} ${url}`)
       }
     })
@@ -84,6 +96,13 @@ test.describe('browsing', () => {
       .toBeGreaterThan(0)
 
     expect(await images.count()).toBeGreaterThan(0)
+
+    // Without this, `failed` staying empty proves nothing: it is equally what a
+    // pattern that matches no request at all produces.
+    expect(
+      optimised,
+      'no /_next/image requests were observed, so the check below is vacuous',
+    ).toBeGreaterThan(0)
     expect(failed, 'image requests returned an error status').toEqual([])
   })
 })
