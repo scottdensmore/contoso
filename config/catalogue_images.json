@@ -1,0 +1,14 @@
+{
+  "_comment": "Encoding contract for apps/web/public/images, shared by scripts/reencode-catalogue-images.mjs and tests/scripts/test_image_encoding.py so the converter and the guard cannot drift apart. See #96. maxDimension 1024 is the originals' own size: the point of this conversion is the encoding, not the resolution, and downscaling below 1024 starves the product detail page on 2x screens, which ask for 1100 device pixels.",
+  "_weights": "Two ceilings that catch different mistakes. This is the only place the measurements are written down; the guard points here rather than restating them. Shipped, the 852 average 184 KiB with the largest at 446 KiB. maxBytes (640 KiB) fails if any single image exceeds it, which is what a lossless re-encode does immediately -- measured on a 78-image sample, lossless averages 858 KiB and puts 68% of files over the ceiling. maxMeanBytes (256 KiB) exists for the mistake that stays under it everywhere: a quality bump. Same sample, mean by setting -- q90 187 KiB (shipped), q92 214, q93 232, q94 250, q95 270, q98 336, and none of those put a single file over 640 KiB. So the mean ceiling bites from about q95 upward, at roughly 39% headroom over what is shipped.",
+  "_notCaught": "A bump to about q94 or below (mean 250 KiB) passes both, as does a partial regression affecting a minority of the catalogue -- see the docstring on test_catalogue_mean_weight_is_within_the_ceiling. These guards catch a conversion run at the wrong setting, not a hand-edited subset.",
+  "quality": 90,
+  "maxDimension": 1024,
+  "maxBytes": 655360,
+  "maxMeanBytes": 262144,
+  "fullBleed": [
+    "hero.png",
+    "contact-bg.jpg",
+    "about/mission.png"
+  ]
+}
