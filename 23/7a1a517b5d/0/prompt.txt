@@ -1,0 +1,498 @@
+Continue the autonomous maintenance loop on contoso. Read issue #148 first —
+it's the working agreement and carries the context from the last session.
+
+Start with #96 (re-encode product images to WebP). Read #96 and #66 first;
+#66 has the reference audit and a correction about what deleting files does
+and doesn't save.
+
+Go ahead with q82/600px, but show me a before/after at the rendered sizes
+(350×350 home, 550×550 detail) before it merges.
+
+---
+
+<task-notification>
+<task-id>bt6kygygm</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/bt6kygygm.output</output-file>
+<status>completed</status>
+<summary>Background command "Measure delivered-pixel comparison" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b5rdw1rvm</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/b5rdw1rvm.output</output-file>
+<status>completed</status>
+<summary>Background command "Measure three candidate settings" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b86oqmrhc</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/b86oqmrhc.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for candidates and show results" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b95wj2oyg</task-id>
+<tool-use-id>toolu_014VWDKSk2QrmRshx6QQuU1h</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/b95wj2oyg.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for candidates measurement" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b0ysngory</task-id>
+<tool-use-id>toolu_01MucfXpAu2VV6wFi7o9JXy9</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/b0ysngory.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for candidates results" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Lets go with your recommendation
+
+---
+
+<task-notification>
+<task-id>b1ig3qbju</task-id>
+<tool-use-id>toolu_01HKa9Ljrojg8JQoUzP1qpDU</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/b1ig3qbju.output</output-file>
+<status>completed</status>
+<summary>Background command "Regenerate measurements and tiles for the shipped setting" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a2d3f25f77bd60238</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a2d3f25f77bd60238.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review WebP re-encode branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Finding
+
+### 1. The documented rationale for `maxBytes` is measurably false, and the ceiling does not catch the mistake it claims to catch — confidence 85
+
+**Files:** `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json` line 2 (`_comment`), `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py` lines 40-42.
+
+Both files justify `maxBytes = 655360` (640 KiB) as the value that sits above the observed maximum and below a lossless re-encode:
+
+- config: *"the cheapest lossless re-encode of the same photographs is 749 KiB, so 640 KiB sits between the two and catches that mistake"*
+- test: *"A lossless WebP of one of these photographs lands near 500 KiB and fails here"*
+
+The test comment is self-contradictory on its face — 500 KiB is below a 640 KiB ceiling, so it passes. And the config's 749 KiB floor is wrong. I re-encoded 30 randomly sampled catalogue JPEGs from `HEAD` losslessly with the same sharp version the converter uses:
+
+```
+n 30  min 304 KiB  median 671 KiB  max 1331 KiB
+would PASS the 640 KiB ceiling: 14 / 30
+```
+
+(Spot-check of one: `apps/web/public/images/products/backpacks/44/lifestyle.jpg` → 547,426 bytes = 535 KiB lossless, comfortably under the ceiling.)
+
+**Scenario in which this produces a wrong result:** someone re-runs the conversion with `webp({lossless: true})` or hand-encodes replacements losslessly. Roughly half the catalogue lands under 640 KiB, `test_catalogue_images_are_within_the_weight_ceiling` passes for those files, and the guard reports the change as compliant while the catalogue has quietly grown several times over. That is precisely the regression `#96` exists to prevent, and the comment tells the next reader the guard covers it.
+
+**Suggested fix (pick one):**
+- Lower `maxBytes` to something actually between the observed maximum (446 KiB) and the cheapest lossless (~304 KiB observed — so no value both clears the max and catches every lossless file). Since no single per-file ceiling separates the two populations, the honest options are:
+- Keep 640 KiB, delete the "catches a lossless re-encode" claim from both comments, and describe it as what it is: a per-file outlier trap.
+- Or add the assertion that actually does catch it — a total-weight or mean-weight ceiling for the 852 (current total 153.2 MiB; a lossless corpus would be ~800 MiB and fail immediately).
+
+Either way, the two comments need to agree with each other and with a measured number, which is the whole stated point of putting the value in `config/catalogue_images.json`.
+
+## Answers to your four questions
+
+**1. WebP header parser — correct.** The bit arithmetic checks out against the container spec for all three layouts: `VP8 ` reads the 14-bit width/height after the `9d 01 2a` keyframe sync code (masking off the 2-bit scale field), `VP8L` reads 14+14 bits minus-one from the 4 bytes after the `0x2F` signature, `VP8X` reads the two 24-bit minus-one canvas fields at payload offsets 4 and 7 (correctly skipping the 1 flag byte + 3 reserved). Verified empirically: it agrees with `file(1)` on all 852 catalogue images (0 mismatches), and on sharp-generated `VP8L` (lossless), `VP8X` (alpha) and wide-aspect samples. The only misread I could construct is a truncated file, where the VP8L/VP8X branches raise `IndexError` rather than `ValueError` and so escape the `except ValueError` reporting path in `test_catalogue_images_are_at_display_resolution` — it still fails, just with a traceback instead of a clean list. Not worth changing.
+
+**2. Resume logic — sound for every interruption point I could construct.** Killed before `writeFile`: source present, reconverted. Killed between `writeFile` and `rm`: source present, reconverted idempotently. Killed after `rm` but before the JSON rewrite: source gone, `.webp` present, treated as done — correct. Killed between two of the three JSON writes: the already-rewritten files carry no source-suffixed refs so they contribute nothing, and the remaining file's refs resolve through the missing-source/present-webp branch. The one state that misbehaves is a catalogue referencing both `x.png` and `x.webp` as distinct assets: the collision guard only compares source refs against each other, so the `.png` conversion would overwrite the live `.webp` and both refs would then alias one image. It cannot arise from this catalogue (all 852 refs are now `.webp` with UUID/role basenames), which is why I am not raising it as a finding.
+
+**3. Textual JSON rewrite — clean.** I reproduced the substitution from `HEAD` and it is byte-identical to the working-tree files for all three (`rewrite-exact: True`), all three still parse as JSON, and the diff contains no changed line without an image extension. No external URLs exist in the data files (`grep -c http` → 0), so the `/images/...` pattern could not have truncated an absolute URL. Cross-checked both directions afterwards: 852 refs, 852 `.webp` on disk, zero refs missing on disk, and the only non-webp files remaining are the three allowlisted full-bleed assets. Also confirmed no transparency was lost — all 104 original PNGs are colour type 2 (truecolour, no alpha), which matches all 852 outputs being plain `VP8` chunks.
+
+**4. E2E vacuity — the new guard closes the hole.** `seen.optimised` can only be incremented by a real `/_next/image?` response, and the home page is the surface that serves catalogue images (it reads `public/categories.json` directly), so the counter tracks exactly the assets this change touches. The `expect(value, message)` two-arg form is supported by `@playwright/test` ^1.62 and already used on the line below. `seen.direct` is counted but never asserted, so the three CSS-background assets are still only covered by the status check, not by a presence check — a deliberate asymmetry given `hero.png` et al. are out of scope here.
+
+## What I reviewed
+
+- `git diff` for the 5 modified tracked files: `apps/web/e2e/browse.spec.ts`, `apps/web/src/app/products/category/[slug]/page.tsx`, and `apps/web/public/{products,categories,brands}.json`.
+- The 3 untracked source files read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/reencode-catalogue-images.mjs`, `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`.
+- Seams: `apps/web/prisma/seed.ts` + `infrastructure/scripts/docker-entrypoint.sh` (seed runs unconditionally on every start and upserts `image: product.images[0]`, so existing databases pick up the new paths — no stale-`.png` deployment gap); `services/chat/src/api/db.py` (reads `p.image` from the DB, no independent copy); `Dockerfile` line 30 / `.dockerignore` (public/ copied whole, no extension filters); `next.config.js` (default optimiser, no `images` config); `tailwind.config.ts` and the about/contact pages (the three full-bleed refs the allowlist names); `scripts/detect_changed_surfaces.py` (both new paths classify as `unknown` → runtime fallback → `test-scripts` runs, same as the existing `scripts/normalize-product-galleries.mjs`).
+- The `sizes` change: `Block` is `max-w-screen-xl` with `pl-3 pr-3` and the grid adds `p-8` + `xl:gap-x-8`, giving `(1280 - 24 - 64) / 3 = 397.3px` — the comment's figure is right, and the sibling grid on `apps/web/src/app/page.tsx` is capped at `max-w-[350px]`, so leaving its `350px` unchanged is correct rather than an oversight.
+- Re-ran `.venv/bin/python -m pytest tests/scripts -q` against the current worktree: 140 passed, 111 subtests passed.
+
+Not assessed: the 852 `.webp` binaries individually beyond header, dimension, weight and the format/alpha checks above — I did not compare them visually against the originals (`ui-review` covered that).
+
+One mechanical note, not a finding: the 852 new images are untracked. `git commit -a` would ship the 852 deletions and the rewritten JSON without the replacements. The commit needs an explicit `git add` of `apps/web/public/images`.</result>
+<usage><subagent_tokens>83730</subagent_tokens><tool_uses>66</tool_uses><duration_ms>779615</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a69411445407f718d</task-id>
+<tool-use-id>toolu_01TxLQFH6uDm8Fwo8fnifXEy</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a69411445407f718d.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after review changes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed the known port collision (untouched, as instructed).
+
+## Verdict
+
+**Verified.** All three review-response changes hold up under independent checking. No regressions found. I did not run the full Docker/Playwright e2e cycle — reasoned below why a cheaper check was sufficient for this particular change — so that one item is a scoped, deliberate gap rather than a pass I'm rounding up.
+
+### 1. `config/catalogue_images.json` / mean-weight guard — sound and discriminating
+
+I did not trust the fixture claim; I built my own synthetic corpora (`/tmp/.../scratchpad/verify_mean_check.py`) and ran the actual `CatalogueEncodingTests` methods against them via a monkeypatched `IMAGES_DIR`:
+
+- A corpus shaped like the real one (mean ~231 KiB, max 446 KiB) → both checks pass.
+- A fully lossless-range corpus (299–1795 KiB) → both checks correctly fail.
+- **Independently measured the real corpus on disk** (not the report's numbers, my own `stat` pass): 852 files, mean **188,545.8 bytes = 184.13 KiB**, max **457,114 bytes = 446.4 KiB**. This exactly matches what's written into both `config/catalogue_images.json` and the test file's comments, and sits well under the new `maxMeanBytes` (320 KiB, 42% margin) and `maxBytes` (640 KiB) ceilings.
+- Ran `tests/scripts/test_image_encoding.py` directly against the live repo tree: 8/8 pass, including the new `test_catalogue_mean_weight_is_within_the_ceiling` and the renamed `test_no_catalogue_image_exceeds_the_outlier_ceiling`.
+
+**One real gap I found and verified, not present in the review's own reasoning**: a *partial* regression can beat both guards simultaneously. I built a scenario where 15% of the real corpus was replaced with sizes in the 299–640 KiB band (lossless-range, but still under the 640 KiB per-file ceiling) — both checks passed. Analytically, the mean check only trips once roughly ≥21% of the catalogue shifts to a ~831 KiB lossless mean; below that fraction, files that land between ~300–640 KiB slip the per-file ceiling individually and don't move the mean enough. This isn't a defect in the numbers as written (they're honestly measured and internally consistent) — it's a structural limit of a corpus-mean check, worth naming as scope: it catches "the whole catalogue got re-encoded wrong," not "one category did." I did not verify the 831 KiB / 299–1795 KiB lossless-corpus premise itself against real images — no `cwebp`, ImageMagick, or Pillow was available in this environment to reproduce a lossless re-encode from the original PNGs, so that specific empirical claim rests on the author's numbers, not mine.
+
+### 2. `apps/web/e2e/browse.spec.ts` rename — confirmed non-behavioral
+
+- `npx tsc --noEmit` in `apps/web`: clean.
+- `npx eslint e2e/browse.spec.ts`: clean.
+- `grep` for `seen`/`direct` in the file: zero remaining references (rename is complete, nothing dangling).
+- `grep -rn optimised apps/web/e2e apps/web/playwright.config.ts`: only the 3 expected occurrences (declare, increment, assert) in this one self-contained file.
+- `npx playwright test e2e/browse.spec.ts --list`: parses correctly, all 3 tests still enumerate.
+
+I chose **not** to re-run the full Docker + Playwright cycle for this specific change. Reasoning: this is a pure identifier rename with a variable that was previously unused (`direct`) removed — no control flow, condition, or assertion target changed. It typechecks, lints, and lists cleanly, and the previous verifier already exercised this exact spec's logic (structurally unchanged) against a real Docker stack, confirming 20 real `/_next/image?...webp` 200 responses. Spinning up the stack again would re-prove page-rendering and image-encoding behavior that didn't change in this diff, at real time cost, for a rename that static tooling already fully covers. If the caller wants that certainty anyway, I did not run it — say so explicitly rather than rounding to "verified via Docker."
+
+### 3. Catalogue on disk — intact, independently confirmed
+
+- `find apps/web/public/images -iname '*.webp' | wc -l` → **852**.
+- Total bytes → **160,641,026 = 153.199 MiB**.
+- Mean → **184.13 KiB** (matches "184 KiB" claim).
+- `find apps/web/public/images -type f | wc -l` → **855** = 852 webp + 3 allowlisted originals, so no stray leftover files of any other extension.
+- `hero.png` (833,371 bytes), `contact-bg.jpg` (453,223 bytes), `about/mission.png` (1,899,907 bytes) all present; `git status --short` on each shows no output — i.e. byte-for-byte unchanged from the committed version, not just present.
+- `git status --short` on `apps/web/public/images` shows exactly 852 `D` (old png/jpg) and 852 `??` (new webp) — a clean 1:1 replacement with no orphaned old files and no unexplained extra new ones.
+
+I could not check against a persisted manifest of "recorded sizes" — no such file exists in the repo (only the author's own notes from an earlier run), so my confirmation is the direct disk measurement above, not a diff against a checksum file.
+
+### 4. Anything else broken
+
+- `make test-scripts`: 141/141 pass (unchanged count from before this round, as expected — the test rename+addition are 1-for-2, and I directly confirmed 8 tests specifically in `test_image_encoding.py`, up from what was previously a smaller set).
+- `make quick-ci` in `apps/web`: lint clean, `tsc --noEmit` clean, vitest 111/111 across 32 files.
+- `scripts/reencode-catalogue-images.mjs` still reads only `quality` and `maxDimension` from the shared config (not `maxBytes`/`maxMeanBytes`, which are guard-only) — no drift introduced between converter and guard by this change.
+- No Markdown changed (`git status --short | grep '\.md$'` → empty), so `make docs-check` isn't in scope and wasn't run.
+- `.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets` printed nothing — because this branch has **zero commits** distinct from `main` (`git log --oneline` on the branch shows the same tip, `c14c22b`, as `main`). Everything under review is uncommitted working-tree state (`git status --short` shows ~1712 entries: `??` for the two new/moved config+test files, `??`/`D` pairs for the 852 image swaps, `M` for `browse.spec.ts`/`brands.json`/`categories.json`). This is a real limitation of the detector for this branch's current state, not a sign of "no changes" — I flagged it and inspected `git status --short` manually per the standing instructions, and picked `make -C apps/web quick-ci` + `make test-scripts` based on that manual read, matching what the routing table would recommend for this file set anyway.
+
+### Commands run (for reproduction)
+
+```
+git status --short
+git branch --show-current
+git log --oneline -5
+git diff main...HEAD --stat -- config/catalogue_images.json tests/scripts/test_image_encoding.py apps/web/e2e/browse.spec.ts
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+python3 &lt;ad hoc: independent count/mean/max over apps/web/public/images&gt;
+python3 /tmp/.../scratchpad/verify_mean_check.py   # synthetic-corpus scenarios A/B/D/E
+.venv/bin/python -m pytest tests/scripts/test_image_encoding.py -v
+make test-scripts
+npx tsc --noEmit   (apps/web)
+npx eslint e2e/browse.spec.ts
+npx playwright test e2e/browse.spec.ts --list
+make quick-ci   (apps/web: lint, typecheck, vitest)
+find apps/web/public/images -iname '*.webp' | wc -l
+find apps/web/public/images -iname '*.webp' -exec du -b {} + | awk '{sum+=$1} END {print sum}'
+find apps/web/public/images -type f | wc -l
+git status --short -- apps/web/public/images
+ss -tlnp | grep -E ':5432|:3000'
+```
+
+### What I did not run, and why
+
+- **Full Docker + Playwright cycle (`make e2e-smoke`)**: not run in this pass. The image-rendering behavior it exercises was already verified live in the prior session; this round's e2e change is a static, mechanically-confirmed-inert rename. If you want the belt-and-suspenders confirmation anyway, it hasn't happened yet in this session.
+- **Reproducing the lossless re-encode measurement** (831 KiB mean, 299–1795 KiB range): not possible in this environment — no `cwebp`, ImageMagick, or Pillow installed, and I won't install packages per the no-modification constraint. I validated the guard's logic and thresholds against that claim synthetically, but the empirical claim itself is unverified by me.
+- **`make docs-check`**: not run — no Markdown changed in this diff.
+- **`make ci` / cross-surface**: not run — nothing in this round touches schema or chat surfaces, so it would be broader than the change warrants.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/browse.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/reencode-catalogue-images.mjs`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/public/images/`.</result>
+<usage><subagent_tokens>68397</subagent_tokens><tool_uses>32</tool_uses><duration_ms>358245</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32a3b06c8034178a</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a32a3b06c8034178a.output</output-file>
+<status>completed</status>
+<summary>Agent "Final code review before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Findings
+
+### 1. `tests/scripts/test_image_encoding.py:174-177` — the docstring's coverage number is measurably wrong, and wrong in the direction that overstates coverage (confidence 90)
+
+```
+        *partial* regression. Files between the outlier ceiling and roughly
+        300 KiB clear the per-file check individually, and it takes about a
+        fifth of the catalogue landing there before the mean moves enough to
+        trip.
+```
+
+"About a fifth" is not attainable under any in-band scenario. With the measured baseline (852 files, mean 188,546 bytes) and `maxMeanBytes = 327680`, the fraction `f` of the catalogue that has to be replaced by files weighing `X` is `f = (327680 - 188546) / (X - 188546)`:
+
+- `X` = 640 KiB, the absolute top of the band and the best case for the check: `f = 29.8%`
+- `X` = 457.8 KiB, the measured mean of lossless re-encodes that actually clear the 640 KiB per-file check (22 of my 79-file sample): `f = 49.6%`
+
+For the mean to trip at 20%, the replacement files would have to average 863 KiB — above the per-file ceiling, where the other test is already firing. So no partial regression in the band is caught at a fifth; the realistic figure is about half.
+
+The consequence is concrete: a reader trusts this docstring and concludes that one category re-encoded losslessly by hand (roughly a fifth to a third of 852 files) is caught. It is not — a 40% partial lossless regression, ~340 files, passes both checks silently. Suggested fix: say "about half the catalogue" and note that even in the best case, files sitting exactly at the 640 KiB ceiling, it takes 30%.
+
+### 2. `tests/scripts/test_image_encoding.py:169` — "the smaller half" contradicts the config and the measurement (confidence 80)
+
+The docstring says a per-file ceiling "clears the smaller half of a lossless corpus", while `config/catalogue_images.json:3` says the same ceiling "lets a third of a lossless corpus through". I measured 27.8% of lossless re-encodes at or below 640 KiB (13.9% at or below 446 KiB). The config is right, the test is not, and these two strings exist specifically so the guard and the contract cannot drift. Suggested fix: make it "a third", matching `_weights`.
+
+## What I verified rather than took on trust
+
+The lossless premise, which the verifier could not reach, does hold. `apps/web/node_modules/sharp` (0.35, libvips 8.x) is loadable, so I restored a fresh random 79-file sample of the deleted originals from `HEAD` into scratch and ran both pipelines at `resize(1024, fit: inside, withoutEnlargement)`:
+
+- lossless: mean 879.9 KiB, min 177.1, median 812.1, max 1758.9 — against your stated mean 831, range 299-1795. Mean and upper bound corroborated on an independent sample. My minimum came in below your 299 KiB, which only strengthens the argument for the mean ceiling, so I am not raising it.
+- q90: mean 189.4 KiB, max 446.0 KiB — reproduces the shipped corpus, so the on-disk files were made by the pipeline the config describes.
+
+Everything else in the numbers agrees. On-disk catalogue independently measured at 852 files / 153.199 MiB / 184.13 KiB mean / 446.4 KiB max / all `.webp`; `maxBytes` 655360 = 640 KiB and `maxMeanBytes` 327680 = 320 KiB, both as described.
+
+I also checked the seams this change touches:
+
+- `apps/web/public/{products,categories,brands}.json` differ from `HEAD` by nothing except the image extension (verified by normalising `.webp` and `.png|.jpg` to a common token and comparing the full texts).
+- All 852 references resolve to a file on disk; the only three on-disk orphans are exactly the allowlisted full-bleed assets.
+- `apps/web/prisma/seed.ts` reads `public/*.json` and `upsert`s `image` in the `update` branch, so an already-seeded database picks up the new paths rather than keeping dead `.png` rows.
+- `Dockerfile:30` copies `apps/web/public` wholesale, `.dockerignore` does not exclude `webp`, and the new files are not gitignored.
+- `apps/web/next.config.js` does not disable image optimisation and `apps/web/src/app/page.tsx:68` renders through `next/image`, so the new `optimised &gt; 0` assertion in `apps/web/e2e/browse.spec.ts:102-105` is satisfiable rather than a new failure. The regex and the removal of the unread `direct` counter look correct; the vacuity guard is placed before the `failed` assertion it protects.
+- The `sizes` comment in `apps/web/src/app/products/category/[slug]/page.tsx:53-55` checks out arithmetically: (1280 container − 24px `pl-3 pr-3` − 2 × 32px `xl:gap-x-8`) / 3 = 397.3px.
+- `.venv/bin/python -m pytest tests/scripts` — 141 passed, 111 subtests passed.
+
+Not assessed: I did not run the Docker/Playwright cycle, so the e2e rename is verified statically only; and I did not inspect the 852 WebP payloads beyond size and the RIFF header the guard itself parses over all of them.</result>
+<usage><subagent_tokens>59926</subagent_tokens><tool_uses>54</tool_uses><duration_ms>596093</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a052c67d75191022c</task-id>
+<tool-use-id>toolu_01UvuHMB4LxPPTPW968c6fHP</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a052c67d75191022c.output</output-file>
+<status>completed</status>
+<summary>Agent "Review corrected guard documentation" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Answers
+
+**1. Are the rewritten numbers correct, and do the two files agree?**
+
+The arithmetic is correct. I recomputed from the on-disk corpus rather than trusting the stated inputs:
+
+- 852 catalogue images, mean 188,545.81 B (184.13 KiB), largest 457,114 B (446.4 KiB), smallest 19.4 KiB. Matches `_weights`' "the 852: mean 184 KiB, largest 446 KiB" and the docstring's "a mean of 184 KiB past a 320 KiB ceiling".
+- f = (327680 − mean)/(X − mean): **29.81%** at X = 640 KiB, **49.65%** at X = 457.8 KiB, and f = 20% requires X = 863.5 KiB. So "30% in the best case", "roughly half at ~458 KiB", and "a fifth would need 863 KiB" are all right, and 863 KiB &gt; the 640 KiB per-file ceiling, so the "already caught by the test above" claim holds — a set averaging 863 KiB must contain at least one file over 640 KiB.
+- I re-ran a third independent lossless sample of my own (120 originals pulled from `HEAD`, sharp, `resize(1024, inside, withoutEnlargement)`, `webp({lossless:true})`): min 213.1 KiB, max 1931.7 KiB, mean 904.1 KiB, 25.0% under the 640 KiB ceiling, and those under it average 473.5 KiB. That independently corroborates "roughly a third" (25–28% across samples) and "roughly half at ~458 KiB" (46.9% at my 473.5 KiB figure — still roughly half).
+
+The two files agree on everything except one measured quantity, below.
+
+**2. Remaining overstatement.** None that I can find. The one direction the prose is loose — "every per-file number that clears the largest legitimate image also clears about a third of a lossless corpus" is only true at the 640 KiB ceiling actually chosen (at exactly 446 KiB only 9.2% pass) — errs toward making the per-file guard sound weaker than it is, which is the safe direction for a caveat and is worded identically in both files.
+
+**3. Rest of the working tree.** Clean. Details after the finding.
+
+---
+
+## Finding
+
+### `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:44-47` — the module comment's lossless range contradicts the config you just widened. Confidence: 80
+
+The comment above `MAX_BYTES` still says:
+
+```
+# some quality nobody measured. Losslessly, these photographs range from 299 KiB
+# to 1795 KiB -- so every per-file ceiling that clears the observed 446 KiB
+```
+
+while `config/catalogue_images.json:3` now says the same population ranges "from under 180 KiB to about 1800 KiB across two independent samples". Those cannot both be true, and the config's own `_comment` frames these two files as the pair that "cannot drift apart".
+
+My 120-image sample puts the minimum at 213.1 KiB and the maximum at 1931.7 KiB — below 299 and above 1795 on both ends, consistent with the config's wider bounds and not with the test's. The mean disagrees too: the comment's "831 KiB lossless" against the config's "around 850 KiB" (my sample: 904 KiB).
+
+Concrete cost: a reader reconciling the guard with its config finds two different measured floors for the same quantity, and the 299 KiB figure makes the lossless population look further separated from the shipped 184 KiB mean than it is — which is the exact class of overstatement the last two rounds removed.
+
+Suggested fix (prose only, no executable change): bring line 45 in line with the config — e.g. "range from under 180 KiB to about 1800 KiB across independent samples" — and reconcile "831 KiB lossless" on line 47 with the config's "around 850 KiB", or drop the sample-specific bounds from one of the two files and point at the other, the way the config already points at the docstring for the partial-regression limit.
+
+---
+
+## What I reviewed
+
+`git diff main...HEAD` is empty; the entire change is uncommitted. I reviewed:
+
+- **Untracked**: `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/reencode-catalogue-images.mjs`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`, plus 852 untracked `.webp` files.
+- **Unstaged**: `apps/web/public/{products,categories,brands}.json`, `apps/web/e2e/browse.spec.ts`, `apps/web/src/app/products/category/[slug]/page.tsx`, and 852 deleted originals. Nothing staged.
+
+Seams I checked and found sound:
+
+- **Dangling references**: all 852 + 102 + 102 refs in the three data files resolve to files on disk, all `.webp`. The only raster references left anywhere outside JSON are exactly the three allowlisted full-bleed assets (`hero.png` via `tailwind.config.ts`, `contact-bg.jpg`, `about/mission.png`). Deleted originals: 852, new webp: 852, none gitignored.
+- **Container runtime**: `Dockerfile:30` copies `apps/web/public` wholesale, no per-file image paths.
+- **DB seam**: the category page reads `image` from Prisma, but `apps/web/prisma/seed.ts` sets `image: product.images[0]` in both the `create` and `update` branches of the upsert, and `infrastructure/scripts/docker-entrypoint.sh` runs `prisma db seed` on start, so an existing database is rewritten rather than left pointing at deleted PNGs.
+- **e2e change**: handler is registered before the first `goto`; the alternation `/\/_next\/image\?|\.(png|jpe?g|webp|gif|svg)(\?|$)/i` parses as intended; `next.config.js` does not set `images.unoptimized`, so `/_next/image` requests do occur and the new vacuity guard is meaningful rather than a permanent failure. That assertion is the kind that would have failed against the old implementation — it is a real test.
+- **Header parser**: VP8/VP8L/VP8X offsets are correct against the RIFF layout; it reads real files in the suite.
+- **Conventions**: flags are `--dry-run`/`--max-dimension` (hyphens), Python ran from `.venv`, no pointer-file changes.
+- **CI routing**: neither `config/catalogue_images.json` nor `scripts/reencode-catalogue-images.mjs` matches any pattern in `scripts/detect_changed_surfaces.py`, so both classify as `unknown` and force the full runtime suite. That is the safe direction, so no under-running.
+
+I re-ran `make test-scripts` myself: 141 tests, OK, including all eight new `test_image_encoding` cases. I agree that re-running the full verifier was unnecessary — the delta since the last verified state is comment text in one Python docstring and one JSON string, neither of which is executable, and the suite that reads both passes.
+
+Not assessed: the 852 binary `.webp` payloads beyond size, dimensions and container format — I did not do a visual quality comparison against the originals at q90.</result>
+<usage><subagent_tokens>51898</subagent_tokens><tool_uses>39</tool_uses><duration_ms>699260</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad12c34ed5442068f</task-id>
+<tool-use-id>toolu_01Kxcv46CNTuLTyBntSfTtx8</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ad12c34ed5442068f.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review of guard docs" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Not approved. The numbers now reconcile — every figure I could measure checks out — but the *argument* those numbers support is wrong, in both files, and it is wrong in a way the measurements themselves disprove. Same category as the last three rounds, one level up: the prose no longer misquotes a measurement, it misinterprets one.
+
+---
+
+### Finding 1 — the documented rationale for `maxMeanBytes` is contradicted by the per-file test's own semantics (confidence 90)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:169-175` and `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json:3`
+
+&gt; "The per-file ceiling above cannot see a wholesale re-encode. Every per-file number that clears the largest legitimate image also clears a substantial share of a lossless corpus ... so a conversion run at the wrong setting would pass file by file while the catalogue grew several times over."
+
+`test_no_catalogue_image_exceeds_the_outlier_ceiling` asserts `heavy == {}`. It fails if *one* file exceeds 640 KiB. So the relevant quantity is not the share of a lossless corpus that stays under the ceiling — it is the share that goes over. I re-encoded the HEAD originals losslessly at 1024px in two independent draws:
+
+- n=160 evenly spread: mean 890.0 KiB, **75.6% over 640 KiB**
+- n=120 offset draw: mean 841.2 KiB, **69.2% over 640 KiB**
+
+A wholesale lossless re-encode does not "pass file by file". It fails the per-file test with roughly 600 entries in `heavy`, before the mean test is reached. The lossless scenario — the one both files use to justify the second ceiling — is precisely the scenario the *first* ceiling already catches.
+
+The mean check is still worth having; its actual justification is a wrong-but-lossy setting, which I measured on the same corpus:
+
+- `--quality 98`, n=60: mean **325 KiB** (over the 320 KiB ceiling), max 581 KiB, **zero** files over 640
+
+That is the case where the per-file check is silent and only the mean fires. Concrete cost of leaving the prose as-is: a maintainer tuning these ceilings reads the stated reason, checks it as I did, finds it unsupported, and has no way to tell which ceiling is load-bearing — while the setting that genuinely needs the mean (a quality bump near the top of the scale) is written down nowhere.
+
+Suggested fix: replace the lossless framing with the near-lossless one. Something like "a re-encode at q98 lands every file under the 640 KiB ceiling and still triples the mean; lossless is caught by the per-file ceiling, a quality bump is not." The same sentence in `_weights` ("only the mean separates the two populations") needs the same correction — lossless and correct are separated cleanly by *either* ceiling.
+
+Related, in the same `_weights` sentence: "Neither catches a partial regression" is contradicted by the docstring it defers to two clauses later, which correctly says the mean catches one at roughly half the catalogue.
+
+### Finding 2 — "about a quarter" is attached to the wrong threshold (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json:3`
+
+&gt; "so any per-file ceiling that clears the legitimate 446 KiB maximum also lets about a quarter of a lossless corpus through"
+
+`any` is a universal claim, and the tightest ceiling that clears 446 KiB is 446 KiB. At that threshold my two draws give **6.9%** and **9.2%**, not a quarter. The ~25% figure is a property of the 640 KiB ceiling that was actually chosen, not of every ceiling above 446. The density between 446 and 640 is where most of the difference lives (sample B: 9.2% at 446, 15.0% at 480, 23.3% at 560, 30.8% at 640).
+
+Suggested fix: attribute the fraction to the chosen ceiling — "the 640 KiB ceiling this config sets lets 25-30% of a lossless corpus through file by file" — rather than to any ceiling clearing the legitimate maximum.
+
+### Finding 3 — the "measurements only in the config" split is not held; "roughly half" is a sampled figure (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:179-181`
+
+&gt; "moving a mean of 184 KiB past a 320 KiB ceiling takes roughly half the catalogue at the weight such files actually average"
+
+Your audit listed four figures (184, 320/640, 30%, 863) and all four do derive from the config or the live corpus. "Roughly half" does not. It is `f &gt; (320 - 184.1) / (W - 184.1)`, where `W` is the mean weight of the lossless files that sit *under* the 640 KiB ceiling — a sampled measurement (473.5 KiB in your draw, 491.0 KiB in mine) that appears nowhere in `_weights`. The arithmetic is right (47% with your figure, 44% with mine, both "roughly half"), so this is not a wrong number; it is a sampled number that survived, silently, in derived form. It contradicts the file's own new claim at lines 51-54 that the measurements live in `_weights` "and deliberately only there", and it is unmaintainable in exactly the way that claim exists to prevent: if a future sample moves `W`, nothing marks "roughly half" as needing revisiting.
+
+Suggested fix: either add the sub-ceiling mean to `_weights` alongside the fraction, or drop the sentence and keep only the 30% best case, which does derive from published numbers.
+
+---
+
+## Answers to your four questions
+
+**1. Any figure still disagreeing?** No numeric disagreement between the two files, and everything measurable checks out. Verified against the live tree: 852 catalogue images, mean 184.1 KiB, largest 446.4 KiB — matches `_weights` exactly. Verified against HEAD originals: 855 files totalling 530.8 MiB ("half a gigabyte"), 102 PNGs in the 2.8-3.4 MB band ("102 ... at ~3 MB each"), full-bleed trio 3.19 MB = 0.57% of the originals ("3.1 MB", "0.6%"). Render sizes 350px and 550px confirmed in the page components, and 2 x 550 = 1100 supports `maxDimension` 1024. Derived figures recompute: 29.8% -&gt; "30% in the best case", 863.6 KiB -&gt; "863 KiB", both correct.
+
+One caveat rather than a finding: my two draws put the sub-640 share at 24.4% and 30.8%, straddling the stated "25-28%". I cannot see your three samples, so I cannot call the range wrong, but as a claim about the corpus it is tighter than sampling supports. If you touch the sentence for Finding 2 anyway, "25-30%" is the safer span.
+
+**2. Is the split held?** No — see Finding 3. One sampled measurement remains, embedded as the derived "roughly half". Everything else in the file traces to the config or to disk.
+
+**3. Is the docstring's coverage account accurate?** The *negative* half is accurate and well-drawn: a partial regression needs ~half the catalogue at realistic weights, ~30% at the ceiling, and a fifth would need 863 KiB replacements that the per-file test already catches. That reasoning holds. The *positive* half — what the mean check is for — is the part Finding 1 says is wrong. So: accurate about what it misses, inaccurate about what it catches.
+
+**4. Block on?** Findings 1 and 2. Finding 3 is a maintenance hazard rather than a falsehood; reasonable to fold into the same edit.
+
+---
+
+## Scope reviewed
+
+- `git diff main...HEAD`: empty — branch is at `main` (`c14c22b`); all work is uncommitted.
+- `git diff`: `apps/web/e2e/browse.spec.ts`, `apps/web/public/{brands,categories,products}.json`, `apps/web/src/app/products/category/[slug]/page.tsx`, plus 855 image binaries (deletions and WebP additions).
+- `git diff --cached`: empty.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/reencode-catalogue-images.mjs`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`.
+
+Per your note, executable code is unchanged from the state I verified previously, and I re-read rather than re-audited it. I could not assess the image binaries individually beyond their sizes and headers; the WebP outputs were checked in aggregate (count, mean, max, dimensions via the same RIFF parse the guard uses), not compared visually against the originals.</result>
+<usage><subagent_tokens>40726</subagent_tokens><tool_uses>20</tool_uses><duration_ms>516820</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab4ae9db61ffeb128</task-id>
+<tool-use-id>toolu_011Vkrm99DebiuXkPuGDEKQL</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ab4ae9db61ffeb128.output</output-file>
+<status>completed</status>
+<summary>Agent "Review corrected guard rationale" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I verified the numbers independently rather than taking the measurements on faith.
+
+## Answers
+
+**1. Does the rationale match what the guards actually do? Yes — verified, not just read.**
+
+I re-extracted a 71-image sample from HEAD (62 jpg / 9 png, same 12th-file stride across the whole corpus) and re-encoded it through the same pipeline the script uses (`resize(1024,1024,{fit:"inside",withoutEnlargement:true})`, sharp webp):
+
+```
+q90       mean 179 KiB   max 417 KiB   over-640: 0/71   mean-check pass
+q92       mean 205 KiB   max 466 KiB   over-640: 0/71   pass
+q94       mean 240 KiB   max 526 KiB   over-640: 0/71   pass
+q95       mean 261 KiB   max 544 KiB   over-640: 0/71   FAIL
+q96       mean 279 KiB   max 597 KiB   over-640: 0/71   FAIL
+q98       mean 324 KiB   max 660 KiB   over-640: 1/71   FAIL
+lossless  mean 828 KiB   max 1807 KiB  over-640: 47/71  FAIL
+```
+
+This reproduces your sample within a few percent and confirms every load-bearing claim in `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`: lossless is caught by the per-file ceiling (66% of files over, so `heavy == {}` fails immediately), the mean ceiling bites from q95, and q94 passes both. Also verified on the shipped corpus: 852 images, mean 184.13 KiB, largest 446.4 KiB, all 1024x1024, all WebP, zero over 640 KiB — so "the 852 average 184 KiB with the largest at 446 KiB", "roughly 39% headroom" (262144/188546 = 1.390), and "maxDimension 1024 is the originals' own size" are all exactly right. The docstring's history is right too: HEAD carries 855 files / 530.8 MiB, with 104 PNGs averaging 2.98 MiB.
+
+The division of labour now stated in both files is the one the guards actually implement.
+
+**2. Is 256 KiB the right ceiling? Yes, and growth is not the risk.**
+
+The check is on the mean, which is scale-invariant — adding q90-encoded products at the current profile moves it not at all. To breach 256 KiB, additions must satisfy `N × (M − 256 KiB) &gt; 852 × 72 KiB`. Even at the current *heaviest single file* (446 KiB) that needs 323 new images; at anything near the current mean it is unreachable. The plausible false-failure is a future batch of structurally heavier imagery (panoramas, larger canvases), not volume — and that batch would have to average over 328 KiB across ~850 files. 39% headroom is the right trade: tight enough to bite at q95, loose enough that normal catalogue growth cannot reach it. The failure message names the likely cause, so a false positive is self-diagnosing.
+
+**3. Yes — one sampled figure survived, in derived form.**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`, two places:
+
+- line 48-49: `...where no individual file looks wrong and the corpus grows by half.`
+- line 173-174 (docstring): `...leaves every file well under that ceiling while the corpus grows by half.`
+
+"Grows by half" is 184 → 276 KiB, i.e. roughly a q96 re-encode — a quantity derived from the sample, sitting three lines above the comment that says measurements live in `_weights` "and deliberately only there. Restating them here is how this file and the config ended up quoting different figures for the same quantity." The file states the rule and then breaks it, and it is also slightly off the boundary it describes (the ceiling bites at q95, not at +50%). The fix is to drop the magnitude: "...where no individual file looks wrong and the corpus grows anyway." Confidence 85 that it is real; severity is low — it is a comment, and it is refinement, not a defect.
+
+While there: the docstring's partial-regression bullet says "One category replaced by hand stays invisible to both checks" (line 185). True only for a *lossy* hand-edit — a category hand-replaced with lossless WebP averages 828 KiB and the per-file ceiling catches it, and PNG fails `test_catalogue_images_are_webp`. Same class of overstatement as round 3, one word to fix ("a lossy hand-edit"). Confidence 80, severity low.
+
+**4. Nothing I would block a commit on.**
+
+Everything else I checked came back clean, so I will say plainly what you asked me to: this round found refinement, not defect. Record the two comment edits above and ship.
+
+What I checked at the seams, since that is where this repo breaks:
+
+- All 852 references across `products.json` / `categories.json` / `brands.json` resolve to a file on disk; zero non-WebP refs remain; 852 PNG deletions match 852 WebP additions exactly. No `.png`/`.jpg` catalogue path survives anywhere in the repo.
+- The DB seam: `getProductsByCategory` reads `Product.image` from Prisma, not the JSON. `apps/web/prisma/seed.ts` upserts `image: product.images[0]` in both `create` and `update`, and `infrastructure/scripts/docker-entrypoint.sh` runs `prisma db seed` on every boot, so deployed containers self-heal to the new paths. A stale local dev DB will 404 until re-seeded, which is expected behaviour of this seed design, not a defect in the change.
+- The `sizes` comment in `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx` line 54-56 is arithmetically correct: `Block` is `max-w-(--breakpoint-xl)` (1280) with `pl-3 pr-3` winning over `p-8` in Tailwind's utility order, so 1256 usable, minus 2×32 `xl:gap-x-8`, over 3 columns = 397.33px. At 350 the browser selects the 384w candidate and upscales; at 400 it selects 640w. The trade (sharper, one srcset step heavier at DPR 1) is a judgement call, not an error.
+- `scripts/reencode-catalogue-images.mjs`: collision detection, interrupted-run recovery, arg validation, and idempotence all hold; `sharp` resolves from the root workspace so `node scripts/...` works from the repo root. No data file references the three full-bleed assets, so the "deliberately leaves out" claim is not load-bearing on luck.
+- `make test-scripts` discovery picks the new file up; `test_image_encoding` + `test_image_references` pass (12 tests) against the working tree.
+
+Not assessed: perceptual quality of the 852 re-encoded WebP files. I confirmed format, dimensions and weight programmatically, but whether q90 introduces visible artefacts on this product photography is a visual judgement I did not make. Also out of scope as pre-existing: `scripts/normalize-product-galleries.mjs` still emits `.jpg` gallery variants into `public/images` and would now fail the new WebP guard if anyone ran it — it predates this branch and nothing references it.</result>
+<usage><subagent_tokens>59187</subagent_tokens><tool_uses>42</tool_uses><duration_ms>670733</duration_ms></usage>
+</task-notification>
