@@ -51,7 +51,10 @@ export default async function CategoryPage({
                     alt={product.name}
                     width={350}
                     height={350}
-                    sizes="(min-width: 1024px) 350px, (min-width: 640px) 45vw, 90vw"
+                    // 400px, not the 350 the width prop names: the three-column
+                    // grid gives each card a 397px box at 1440, so 350 asks for
+                    // an asset that then has to be upscaled to fill it.
+                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 45vw, 90vw"
                     className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
                   />
                 ) : (
