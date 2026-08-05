@@ -49,6 +49,8 @@ Host ports 5432 and 3000 may already be taken by unrelated projects. If so, use 
 
 Viewports to exercise when you can render: phone **390×844**, tablet **834×1112**, desktop **1440×900**.
 
+A viewport is a width in CSS pixels and says nothing about the pixels behind it. When the change affects what the browser *requests* rather than how it lays out — anything carrying a `srcset`, or a source whose dimensions changed — exercise **2× as well as 1×**. Density is a property of the browser context (`deviceScaleFactor: 2`), not of `browser_resize`, so it needs a second pass rather than another width. Where you cannot set it, compare the `w=` values the page asks the optimiser for against the CSS box each image occupies, and say that is what you did.
+
 ## What to inspect
 
 For the changed journey, as applicable:
@@ -59,6 +61,7 @@ For the changed journey, as applicable:
 - **Keyboard** — can the journey be completed without a mouse? Is anything reachable but unusable, or unreachable?
 - **Contrast** — does text meet WCAG AA (4.5:1 body, 3:1 large)?
 - **Responsiveness** — overflow, truncation, tap-target size, layout collapse
+- **Density** — when the change affects what the browser requests, does 2× hold up as well as 1×?
 - **Semantics** — headings in order, labelled form controls, meaningful alternative text, ARIA only where a native element will not do
 
 Capture screenshots at each viewport when rendering; they are the evidence for this step.
