@@ -1316,3 +1316,73 @@ make test-scripts             # 142/142 — clean
 Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/next/dist/shared/lib/image-config.js` (source of the Next default I checked against), `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`.</result>
 <usage><subagent_tokens>96667</subagent_tokens><tool_uses>71</tool_uses><duration_ms>1083047</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ae439474608e0b30e</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ae439474608e0b30e.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review about image sizing" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `perf/about-mission-image-sizing`
+
+`git diff main...HEAD` is empty — `main` and `HEAD` are the same commit (`97e3cd3`), so the whole change is uncommitted. I reviewed the unstaged modification and the untracked spec.
+
+### Findings
+
+**1. `calc()` in `sizes` silently disables Next's srcset ladder filter — 11 rungs emitted where 5 would do**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx:43`
+
+`next/image` scans `sizes` for viewport percentages with `/(^|\s)(1?\d?\d)vw/g` (`apps/web/node_modules/next/dist/shared/lib/get-img-props.js:54`). The `vw` token must be at the start of the string or preceded by whitespace. In `calc(50vw - 36px)` it is preceded by `(`, so nothing matches, `percentSizes` is empty, and `getWidths` falls through to `return { widths: allSizes }` — the unfiltered ladder, `deviceSizes` plus `imageSizes`.
+
+Rendered against the installed Next 16.2.12 and this repo's `next.config.js`:
+
+```
+calc(50vw - 36px) …  → 32 48 64 96 128 256 384 640 750 828 1080   (718 bytes of srcSet)
+50vw …               →                    384 640 750 828 1080   (330 bytes)
+```
+
+The six rungs from 32 to 256 are unreachable for this image: the smallest box the layout can produce is 296 CSS px (a 320px viewport), which selects 384 even at 1x. Because `priority` also emits a preload with `imagesrcset`, the dead candidates ship twice — roughly 780 wasted bytes per `/about` response. This is also the first `sizes` in the repo to use `calc()`; the three existing ones (`page.tsx:85`, `products/[slug]/page.tsx:142`, `products/category/[slug]/page.tsx:57`) all use bare `vw` and get the filtered ladder.
+
+No correctness impact — the browser still selects by descriptor, so the delivered width is unchanged and the new spec passes either way. Fix, if you want it: a space inside the parens, `calc( 50vw - 36px )` and `calc( 100vw - 24px )`, which is valid CSS and makes the regex match (verified: yields `['50','100']`).
+
+**Refinement.** Confidence 80.
+
+Nothing else scored at or above 80.
+
+### Your five questions
+
+**1. The srcset parse — sound.** Next percent-encodes the `url` param via `encodeURIComponent`, which escapes `,` to `%2C`, so `split(',')` cannot be fooled by a URL. Every degradation path yields a *shorter* list, not a wrong one: `x` descriptors fail `\s(\d+)w$` and are filtered; a trailing comma yields `NaN`; an empty `srcset` yields `[]`, caught by the per-iteration `ladder.length &gt; 0`. Even the pathological data-URL case degrades correctly — the fragment after the base64 comma still ends in ` 384w`. The `x`-descriptor branch is unreachable here anyway: with `fill` and no `sizes`, `getWidths` still returns `kind: 'w'`.
+
+**2. `box * density` — correct for this layout, including the `Math.round`.** With integer viewports the box is always `n` or `n.5` (`vw/2 - 36`), so `Math.round` only ever rounds `n.5` up to `n+1`. `find(rung &gt;= n.5)` and `find(rung &gt;= n+1)` can only differ if an integer rung sits in `[n.5, n+1)`, which is empty; at 2x they could only differ on an odd rung, and every rung is even. So rounding never changes the answer. The ceiling case is handled correctly too: at 1440@2x the need is 1208, the ladder tops out at 1080 (derived from `maxDimension: 1024`), and `?? ladder[ladder.length - 1]` matches what the browser does. Fractional DPR is untested but also unexercised — `DENSITIES` is `[1, 2]`.
+
+Worth knowing: the model is *not* how the browser selects (the browser uses the `sizes`-computed length, not the measured box). That is the point — the test asserts the two agree — but it means the 2x rows at 1024/1280/1440 saturate at the 1080 ceiling and carry no discriminating power. Your 15-case red phase is consistent with that: parsing the ladder from the *served* srcset means the red-phase ladder is `[640,750,828,1080]` with no 384 rung, which is exactly why 390@1x does not fail and the count is 15 rather than 16.
+
+**3. The `sizes` value — correct at every boundary.** `Block` is `max-w-(--breakpoint-xl)` (1280) with `pl-3 pr-3` (24) under border-box, and `gap-12` is 48, so the column is `(min(vw,1280) - 24 - 48)/2`. At 1280 that is exactly 604, matching the first clause; at 1279 `50vw - 36` gives 603.5, matching the second — continuous across the boundary. At 768 both branches give 348, and below md the single column is `vw - 24`. The scrollbar caveat is real but harmless: Chrome evaluates media queries and `vw` against the same viewport, so the `vw` clauses over-state by half a scrollbar (~7.5px), which never crosses a rung for these boxes. Playwright launches Chromium with `--hide-scrollbars`, so the suite will not see it either way.
+
+**4. The waits are sound; `test.slow()` is the right lever.** `currentSrc` is populated at candidate-selection time, and `goto` defaults to `waitUntil: 'load'`, so the stylesheet has applied and `getBoundingClientRect()` is measuring settled layout. `sizes` resolves from media queries and viewport units only, so it cannot be read before the page's own CSS lands. `test.slow()` in the body is supported and triples the 30s config timeout to 90s for 26 cold loads; an explicit `test.setTimeout` would hard-code a number that stops tracking the config. The `finally { context.close() }` correctly compensates for `browser`-fixture contexts not being auto-closed.
+
+**5. Unrelated — two candidates for issues** (both pre-existing, neither touched by this diff, so not review findings):
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/[slug]/page.tsx:142` — `sizes="(min-width: 1024px) 550px, 100vw"`, but the image carries `max-w-[550px]` inside a `Block` whose horizontal padding resolves to 12px. Below 1024 the box is `min(vw - 24, 550)`, capped at 550 from vw≈574 upward, while `sizes` claims the full viewport. At vw=768/1x that requests w=828 for a 550px box; at vw=1023/1x it requests w=1080. Two rungs of overfetch across the whole tablet band.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:57` — the `(min-width: 1024px) 400px` clause was tuned for 1440 (397px box), but at 1024 the three-column box is 317px and at 1152 it is 360px. Across vw ∈ [1024, 1224) at 1x that requests w=640 where w=384 covers the box.
+
+The new spec's approach generalises to both; it currently covers `/about` only.
+
+### What I reviewed
+
+- `git diff main...HEAD` — empty, `main == HEAD == 97e3cd3`.
+- Unstaged: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx` (+21).
+- Staged: none.
+- Untracked: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts`, read in full.
+- Context: root `AGENTS.md`, `apps/web/AGENTS.md`, `apps/web/src/components/block.tsx`, `next.config.js` and `next.config.test.ts`, `playwright.config.ts`, the four existing e2e specs, `config/catalogue_images.json`, `tests/scripts/test_image_encoding.py`, `apps/web/src/app/about/page.test.tsx`, `docs/INTEGRATION.md`, and the three other `sizes` call sites.
+- Ran `npx vitest run src/app/about/page.test.tsx` (passes, no React warning from `priority` reaching the mocked `&lt;img&gt;`) and two Node harnesses against the installed `next@16.2.12` to render the actual srcset.
+
+Could not assess: the Playwright suite itself — no web stack is up on this machine (port 3000 answers 404 from something else; only `db` and `mailpit` containers are running), so the 26-load timing budget under `test.slow()` and the LCP observer's 500ms settle window are reasoned about rather than measured. `verifier` reports them green twice against a real stack.
+
+There are no defects. The single finding is a refinement, so by step 8 this round ends the review loop.</result>
+<usage><subagent_tokens>68024</subagent_tokens><tool_uses>29</tool_uses><duration_ms>515453</duration_ms></usage>
+</task-notification>
