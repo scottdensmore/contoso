@@ -382,3 +382,68 @@ None encountered. No check needed a re-run to distinguish signal from noise.
 - `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/public/images/hero.png` (used as real non-square PNG evidence)</result>
 <usage><subagent_tokens>75303</subagent_tokens><tool_uses>83</tool_uses><duration_ms>719585</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>afc17366d0276e736</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/afc17366d0276e736.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review deviceSizes change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approved
+
+Nothing scored 80 or above. The change is coherent, the seams line up, and I could verify each of the five things you asked about.
+
+## Answers to your questions
+
+**1. The JPEG marker walk — correct for the inputs it will see; no loop, no silent misread.**
+
+I exercised `raster_dimensions` directly against the three allowlisted files and synthetic cases (`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:102-116`):
+
+- `contact-bg.jpg` carries an EXIF APP1 segment and parses to `(1024, 1024)`, matching `file`. APPn and DRI segments are skipped correctly by length, so an embedded EXIF thumbnail is never walked into.
+- Restart markers cannot be reached: RSTn only appears in entropy-coded data after SOS, and every SOF (including progressive `0xC2`) precedes SOS. Verified SOF0 and SOF2 both return `(width, height)` in that order, consistent with the PNG and WebP branches.
+- No infinite loop is reachable. `length` is an unsigned 16-bit read, so `offset += 2 + length` advances by at least 2 on every iteration regardless of how corrupt the file is.
+- `0xFF` fill bytes before a marker do misparse, but they raise `ValueError("JPEG segment out of sync")` rather than returning a wrong number — I injected them and confirmed. That is the safe failure direction.
+
+Two sub-80 observations I am not raising as findings: `while offset + 9 &lt; len(data)` should be `&lt;=` to read a SOF that ends exactly at EOF (impossible in a real JPEG, since SOS and scan data always follow), and unlike `test_catalogue_images_are_at_display_resolution` the new test does not wrap the parse in `try/except ValueError`, so an unreadable file errors the test instead of being reported alongside other offenders. With three files that is fine.
+
+**2. The derivation — every boundary you named is sound.**
+
+- `maxDimension` exactly on a rung (e.g. 1080): `filter(w &lt; 1080)` gives `[640, 750, 828]`, `find(w &gt;= 1080)` gives `1080`. No duplicate, because the filter is strict `&lt;` and the find is `&gt;=`. This is the case a `&lt;=`/`&gt;` mix would have broken.
+- Above every rung (e.g. 4000): `find` returns `undefined`, the `?? sourceWidth` appends `4000`, ladder stays sorted and unique.
+- Below the first rung (e.g. 500): `[640]`. A single-element ladder is valid for Next.
+- Current value 1024 yields `[640, 750, 828, 1080]`, which I confirmed against the already-built `.next/standalone/apps/web/server.js`: `deviceSizes":[640,750,828,1080]`.
+
+One bound the vitest file does not assert: Next rejects `deviceSizes` entries above 10000, so a `maxDimension` past that would fail at `next build` rather than in the fast test. Not worth guarding — it fails loudly and no source is close.
+
+**3. Vitest picks it up, and CI runs the same command.**
+
+`vitest.config.ts` only excludes `node_modules`, `dist`, `.next`, and `e2e/**`, so the default `**/*.test.ts` glob catches the package-root file. I ran it in isolation: 4 passed. CI invokes `npm run test` → `vitest run` with no extra include/exclude, so behaviour matches local. `require` resolves through vite-node's `createRequire`, and `require('../../config/catalogue_images.json')` inside `next.config.js` resolves module-relative, not cwd-relative, so it works from any working directory.
+
+Two things worth knowing, neither blocking:
+
+- The `eslint-disable-next-line @typescript-eslint/no-require-imports` at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.test.ts:13` is unused. `npx eslint next.config.test.ts` reports `Unused eslint-disable directive`. It is a warning, not an error, so `npm run lint` still exits 0 — but the directive can be deleted.
+- `apps/web/tsconfig.json` includes only `src/**`, `prisma/**`, and `.next/types/**`, so this file is not covered by `make typecheck`. Its `const deviceSizes: number[] = ...` annotation is never checked by `tsc`; vitest strips types without checking them. Low risk for a 45-line test, but the type annotations there are decorative rather than enforced.
+
+**4. The Dockerfile change is right, and builder-stage-only is correct.**
+
+I verified the claim in your comment rather than taking it: `.next/standalone/apps/web/server.js` contains the resolved `deviceSizes` inline, `find .next/standalone -name catalogue_images.json` returns nothing, and no `next.config.js` is copied into the standalone tree. The runner genuinely never reads the file. The copy target `/app/config/catalogue_images.json` matches what `../../config/...` resolves to from `/app/apps/web/next.config.js`.
+
+`.dockerignore` does not exclude `config/`, so the file is in the build context. Every web image build uses context `.` with the root `Dockerfile` — `.github/workflows/ci.yml:260` and `:531`, `docker-compose.yml` (`build: .`), and `infrastructure/scripts/setup_project.sh:80`. No build path copies `apps/web/` in isolation, so there is no second place needing this.
+
+**5. One candidate for its own issue (pre-existing, not introduced here).**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx:30-35` renders `mission.png` with `fill` and no `sizes` prop, inside a `md:grid-cols-2` column that tops out around 604px. With no `sizes`, Next defaults to `100vw`, so a desktop browser fetches the top candidate — 1080 after this change, 3840 before — for a box that never exceeds ~604 CSS px. Adding `sizes="(min-width: 768px) 50vw, 100vw"` would move it to the 640 candidate. Same class of waste as #150 and adjacent to it, but it is a source file this change does not touch, so it belongs in a separate issue rather than in this diff. The 1.9 MB source makes it the largest single asset still served through the optimiser.
+
+## What I reviewed
+
+- `git diff` (the only non-empty range; `main...HEAD`, `--cached` both empty, branch is even with `main`): `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py`.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.test.ts`.
+- Surrounding context: `config/catalogue_images.json`, `apps/web/vitest.config.ts`, `apps/web/tsconfig.json`, `apps/web/eslint.config.mjs`, `apps/web/Makefile`, `apps/web/package.json`, `.dockerignore`, `docker-compose.yml`, `.github/workflows/ci.yml`, all four `next/image` call sites, `apps/web/e2e/browse.spec.ts`, and both `AGENTS.md` files covering these paths.
+- Ran: the new vitest file (4 passed), `.venv/bin/python -m pytest tests/scripts/test_image_encoding.py` (9 passed), eslint on both config files, and a scratch harness exercising `raster_dimensions` against the real assets plus synthetic JPEG edge cases.
+- Confirmed all 852 product image paths in `products.json` are local under `/images`, and the only raster outside `public/images` is `public/people/sarahlee.jpg` at 220x220 — nothing in the app is served through the optimiser above the 1024 source ceiling, so the new cap cannot downscale anything.
+- Not assessed: the `.next` build output is a local artifact from your verifier run rather than something I rebuilt, so my standalone-inlining evidence reflects that build; and I did not re-run the Docker build or the e2e smoke.</result>
+<usage><subagent_tokens>60512</subagent_tokens><tool_uses>30</tool_uses><duration_ms>344113</duration_ms></usage>
+</task-notification>
