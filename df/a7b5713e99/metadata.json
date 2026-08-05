@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "dfa7b5713e99",
+  "strategy": "manual-commit",
+  "branch": "fix/hero-band-grows-with-its-content",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "apps/web/e2e/layout.spec.ts",
+    "apps/web/src/app/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/df/a7b5713e99/0/metadata.json",
+      "transcript": "/df/a7b5713e99/0/full.jsonl",
+      "compact_transcript": "/df/a7b5713e99/0/transcript.jsonl",
+      "content_hash": "/df/a7b5713e99/0/content_hash.txt",
+      "prompt": "/df/a7b5713e99/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 825,
+    "cache_creation_tokens": 866202,
+    "cache_read_tokens": 134423894,
+    "output_tokens": 346034,
+    "api_call_count": 439
+  }
+}
