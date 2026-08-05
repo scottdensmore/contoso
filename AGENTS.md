@@ -66,7 +66,9 @@ Follow these steps in order for every change.
 
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
-   preserving work that belongs to the user.
+   preserving work that belongs to the user. A real problem found here is filed
+   as an issue before the change is removed — see *Unrelated findings become
+   issues* below.
 
 6. **Run `ui-review` before verification.** After the main agent completes an
    implementation pass, invoke the `ui-review` sub-agent. The `ui-review`
@@ -124,6 +126,43 @@ Follow these steps in order for every change.
     a failing or pending required check. Self-merges are allowed when these
     conditions are met. Use squash merge for short-lived development branches
     to keep `main` linear, then delete the merged branch.
+
+### Unrelated findings become issues
+
+Work turns up problems that are not the problem being worked on. A stale script,
+a pre-existing overflow, a check that does not check what it claims. This can
+happen at any step, and most often happens during steps 6 to 8, because
+`ui-review`, `verifier`, and `code-review` read more of the repository than the
+change touches.
+
+**File an issue at the moment of finding, before deciding what to do about it.**
+The finding is cheapest to write down while the context that produced it is
+still loaded, and an issue costs little if it later turns out to be nothing.
+
+Two failure modes this exists to prevent, and they pull in opposite directions:
+
+- **Silently widening the change.** Fixing it here inflates a reviewed diff with
+  work nobody scoped, and buries an independent decision inside an unrelated
+  pull request.
+- **Silently dropping it.** Mentioning it only in a review comment or a chat
+  reply means it is gone as soon as that context is. Nobody rediscovers it until
+  it breaks something.
+
+Filing an issue is what makes "not now" different from "never".
+
+Write enough that it can be acted on without rediscovering it: what is wrong,
+where, how it was found, and why it was not fixed at the time. Include the
+measurement if there was one. Link the issue from the pull request that surfaced
+it, so the reviewer can see the finding was handled rather than missed.
+
+Fix it in the current change only when leaving it would make that change wrong
+or unverifiable — a pre-existing problem the change makes materially worse, or a
+check that has to work for this change to be trustworthy. That is a judgement
+call, so state the reason in the commit message. When in doubt, file and leave
+it: a separate pull request is cheap, and an unscoped one is not.
+
+Sub-agents report findings; they do not file issues. Every finding they report
+that falls outside the current change needs the main agent to file it.
 
 ### Sub-agents this workflow depends on
 
