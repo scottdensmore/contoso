@@ -126,3 +126,10 @@ docs/workshop/site
 !infrastructure/terraform/*.tf
 !infrastructure/terraform/*.tfvars
 !apps/web/next-env.d.ts
+
+# The root package.json declares apps/web as a workspace, so npm run from
+# anywhere in the tree resolves up to here and writes a root lockfile. Nothing
+# reads it: every install, cache key and Dependabot entry names
+# apps/web/package-lock.json. Anchored so that one, which the exception above
+# deliberately keeps, stays tracked.
+/package-lock.json
