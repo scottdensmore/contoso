@@ -17,6 +17,7 @@ const WIDTHS = [
   360, 375, 390, 414, // phones
   639, 640, 641, // sm boundary
   767, 768, 769, // md boundary
+  834, // iPad Air portrait, in the 254px gap between the md and lg boundaries
   1023, 1024, // lg boundary
   1280, 1440,
 ]
@@ -101,6 +102,77 @@ test.describe('no horizontal overflow', () => {
       if (offenders.length > 0) broken[width] = offenders
     }
     expect(broken, 'widths where content spills past the viewport').toEqual({})
+  })
+})
+
+test.describe('no vertical collision', () => {
+  test('the home hero never paints over the first category heading', async ({ page }) => {
+    // The horizontal sweep above cannot see this one. The hero band is a fixed
+    // height, so when its text wraps to more lines than that height allows it
+    // escapes downwards and paints across the section below — no element is
+    // wider than the viewport at any point, and the document never scrolls
+    // sideways, so every assertion in this file stayed green while the phone
+    // layout was visibly broken.
+    //
+    // Asserted against the first `h2` rather than against the band's own
+    // height: what matters is that the two do not collide, and stating it that
+    // way survives whatever shape the fix takes.
+    await page.goto('/')
+
+    // The header's two buttons plus the hero's heading, subhead and body. A
+    // walk that stops early inspects fewer and reports no collisions, which is
+    // indistinguishable from a clean page: the anchor below is whichever `h2`
+    // comes first, so an `h2` introduced anywhere above the categories would
+    // silently retarget it and leave the hero unmeasured.
+    const TEXT_BLOCKS_BEFORE_THE_FIRST_CATEGORY = 5
+
+    const collisions: Record<number, string[]> = {}
+    const inspected: Record<number, number> = {}
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.waitForTimeout(120)
+
+      const result = await page.evaluate(() => {
+        const heading = document.querySelector('h2')
+        if (!heading) return { offenders: ['no h2 on the page to collide with'], seen: 0 }
+        const headingTop = heading.getBoundingClientRect().top
+
+        // Everything above the first category heading in document order: the
+        // header and the hero. Text rects rather than element boxes, for the
+        // reason the horizontal check gives — a box can measure clean while
+        // the text inside it paints past the edge.
+        const found: string[] = []
+        let seen = 0
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+        while ((node = walker.nextNode())) {
+          if (!node.textContent?.trim()) continue
+          if (!(heading.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_PRECEDING)) {
+            break
+          }
+          seen += 1
+          const range = document.createRange()
+          range.selectNodeContents(node)
+          for (const rect of Array.from(range.getClientRects())) {
+            if (rect.height > 0 && rect.bottom > headingTop + 1) {
+              found.push(`"${node.textContent.trim().slice(0, 40)}" ends ${Math.round(rect.bottom - headingTop)}px into the heading`)
+            }
+          }
+        }
+        return { offenders: found, seen }
+      })
+
+      if (result.offenders.length > 0) collisions[width] = result.offenders
+      if (result.seen < TEXT_BLOCKS_BEFORE_THE_FIRST_CATEGORY) inspected[width] = result.seen
+    }
+
+    // Before the collision assertion, because an empty `collisions` is equally
+    // what a walk that inspected nothing produces.
+    expect(
+      inspected,
+      `widths where fewer than ${TEXT_BLOCKS_BEFORE_THE_FIRST_CATEGORY} text blocks were measured, so the check below is weaker than it looks`,
+    ).toEqual({})
+    expect(collisions, 'widths where the hero paints over the section below').toEqual({})
   })
 })
 
