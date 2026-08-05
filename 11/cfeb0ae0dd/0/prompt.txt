@@ -681,3 +681,60 @@ Finding 1 is a defect. It is a documentation defect, not a code one, and it is c
 Could not assess: nothing. No generated or binary content in this diff.</result>
 <usage><subagent_tokens>39582</subagent_tokens><tool_uses>17</tool_uses><duration_ms>228743</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a942c44f906388bb5</task-id>
+<tool-use-id>toolu_01NRy9ErNjKmBtqoaRQPogMK</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a942c44f906388bb5.output</output-file>
+<status>completed</status>
+<summary>Agent "Review step 4 mechanism fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**This re-review returns only refinements — no defects.** The step 4 defect from the last round is resolved.
+
+## Answers
+
+**1. Is the defect resolved, and is the operation safe across all four tree-reading guards?**
+
+Yes. "Rebind every path constant the assertion dereferences, found by reading the module" is the correct generalisation, and it holds for the fourth guard the paragraph does not name. I ran it: rebinding `AGENTS_DIR` and `AGENTS_MD` on `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py` against a four-file fixture detaches the module completely — 7 run, the one failure is the deliberate break (`ui-review has Write`), and nothing reads the checkout. Those are exactly the two path constants its assertions dereference (`AGENTS_DIR` at 91, 120, 137, 165, 178; `AGENTS_MD` at 47, 78), so the rule as stated finds them and the old constant-list rule would have missed `AGENTS_MD`.
+
+One wording caveat, below the reporting bar but it bears on your question: in three of the four modules the constants are dereferenced by helpers (`route_pages`, `images_on_disk`, `referenced_images`), not by the assertion body. A literal reading of "the assertion dereferences" scoped to the test method would find only `REPO_ROOT` in `test_page_headings.py` and nothing at all in `test_image_references.py`. The worked examples immediately disambiguate it, which is why I am not filing it.
+
+**2. Are the line-number and dereference claims accurate?**
+
+All of them, verified against the sources. `test_page_headings.py`: `APP_DIR` at 32 and 36, `REPO_ROOT` at 68 and 83. `test_image_references.py`: `PUBLIC_DIR` at 66 and 106, `IMAGES_DIR` at 67, `REPO_ROOT` at 76 and 88. `test_image_encoding.py`'s assertions do reach everything through `IMAGES_DIR` (124, 127, 152, 157, 187, 211, 214, 224); its only `REPO_ROOT` use is the import-time `CONFIG` read at line 30, which is a value and not a path the assertions dereference — so "reaches everything through `IMAGES_DIR`" is right. The step 6 figures are also right: PR #152's body says "A first pass at q82/600 ... **−0.9 to −2.2 dB PSNR at 1×, −4.4 to −6.6 dB at 2×**", verbatim.
+
+**3. Is the "confirm the run opened the fixture" paragraph a real check?**
+
+Half of it is. See the finding.
+
+**4. Anything else.** No. `make docs-check` equivalents and the 142-test suite pass here too.
+
+## Finding
+
+### `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:86-88` — a vacuity guard firing does not show the fixture was opened — **refinement**, confidence 80
+
+The paragraph accepts two evidence forms: "a vacuity guard firing, or a failure naming a fixture path". The second is sound. The first is satisfied by the exact failure the paragraph exists to exclude, because a vacuity guard fires on an empty result set whether that set came from a small fixture or from a path that does not exist.
+
+Demonstrated, rebinding `REPO_ROOT` and `APP_DIR` on `test_page_headings.py` to a mistyped fixture root:
+
+```
+test_routes_are_found            FAIL: 0 not greater than or equal to 8
+test_every_route_has_a_heading   ok      &lt;- vacuously, the glob returned nothing
+test_every_route_declares_an_h1  ok      &lt;- vacuously
+```
+
+The vacuity guard fired, so an agent following the sentence literally records the fixture as confirmed, while the two assertions it was demonstrating passed on an empty loop. With the correct fixture the same guard reports `2 not greater than or equal to 8`. The distinguishing signal is the count, not the firing — and it is not what the sentence tells you to look at. Note also that on `test_page_headings.py` the sound evidence form never appears in a clean fixture run: no failure message there names a fixture path, so the ambiguous form is the only one on offer unless the deliberate break is also in view.
+
+Suggested fix: make the count load-bearing, e.g. "a vacuity guard failing on a non-zero count that matches what the fixture contains, or a failure naming a fixture path". Refinement rather than defect because the second evidence form is correct, the surrounding step-4 text already requires a break-it-and-watch-it-fail demonstration that produces naming evidence, and the repair is one clause with no re-derivation behind it.
+
+## Reviewed
+
+- `git diff` (all three files are unstaged; `git diff main...HEAD` and `git diff --cached` are empty, `git status --short` shows no untracked files): `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/ui-review.md`
+- Read in full for context: the four tree-reading guards under `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/` (`test_image_encoding.py`, `test_image_references.py`, `test_page_headings.py`, `test_agent_definitions.py`), `/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/verify_docs.py`
+- Ran, without touching the repository: the 142-test script suite (OK), `verify_docs.py` and `check_agent_docs.py` (both pass), and two fixture harnesses written under the scratchpad that import the guard modules by path and rebind their constants
+- Checked the couplings this change could break: `test_agent_definitions.py` reads step numbers and the sub-agent section out of `AGENTS.md`, and the added prose sits outside both the `### Sub-agents` split and the `^\d+\. \*\*…\*\*` step regex, so neither moves. The `#152` PSNR figures were checked against the PR body via `gh`, not taken on trust.
+- Not assessed: nothing. No generated or binary files in this change.</result>
+<usage><subagent_tokens>57619</subagent_tokens><tool_uses>25</tool_uses><duration_ms>326446</duration_ms></usage>
+</task-notification>
