@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "d51220542242",
+  "strategy": "manual-commit",
+  "branch": "chore/drop-dead-root-assets",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".gitignore",
+    "images/contosoweb.png",
+    "images/grounded.png",
+    "images/promptflow.png"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d5/1220542242/0/metadata.json",
+      "transcript": "/d5/1220542242/0/full.jsonl",
+      "compact_transcript": "/d5/1220542242/0/transcript.jsonl",
+      "content_hash": "/d5/1220542242/0/content_hash.txt",
+      "prompt": "/d5/1220542242/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3975,
+    "cache_creation_tokens": 8135772,
+    "cache_read_tokens": 891857731,
+    "output_tokens": 1238184,
+    "api_call_count": 2147
+  }
+}
