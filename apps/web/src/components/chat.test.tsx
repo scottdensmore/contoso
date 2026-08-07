@@ -9,6 +9,25 @@ vi.mock('next-auth/react', () => ({
 // jsdom does not implement scrollTo; the component calls it after each turn.
 beforeEach(() => {
   Element.prototype.scrollTo = vi.fn()
+
+  // Desktop by default, which is the width every test below this line was
+  // written against — the panel as a corner card, non-modal, launcher present.
+  //
+  // Without this they inherit the stub in `src/test/setup.ts`, which reports
+  // "no match" for everything; for a `min-width` query that means compact, so
+  // the whole pre-existing suite would silently move to the modal sheet variant
+  // and desktop would be exercised by nothing. `Chat modality` overrides this
+  // per test.
+  window.matchMedia = ((query: string) => ({
+    matches: true,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })) as unknown as typeof window.matchMedia
 })
 
 const sendChatMessage = vi.fn()
@@ -639,5 +658,226 @@ describe('Chat placeholder timing', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+/**
+ * Modality below `sm` only.
+ *
+ * The e2e spec is where the fix is really proven, because obscuring is a
+ * question about painted pixels and jsdom paints nothing. What is worth
+ * asserting here is the part that is pure state: which of the four modal
+ * behaviours are attached, on which side of the breakpoint, and whether they
+ * come off again.
+ */
+describe('Chat modality', () => {
+  // The component inerts its own *siblings*, so the fixture has to put one
+  // there. This mirrors the root layout, where <main> and <Chat> sit together
+  // inside one flex container.
+  //
+  // Getting this wrong is silent in the useful direction: with `behind`
+  // somewhere else in the tree it simply never receives `inert`, and the test
+  // fails saying so rather than passing on a structure the app does not have.
+  function renderInLayout() {
+    const parent = document.createElement('div')
+    document.body.appendChild(parent)
+    render(<Chat />, { container: parent })
+    // After `render`, not before: React takes ownership of the container and
+    // clears it, so a sibling added first is gone by the time the panel exists.
+    // Still before the panel opens, though — the effect reads the sibling list
+    // once, when the panel becomes modal.
+    const behind = document.createElement('main')
+    behind.innerHTML = '<a href="/products">a product</a>'
+    parent.appendChild(behind)
+    return { parent, behind, cleanup: () => parent.remove() }
+  }
+
+  // A controllable `matchMedia`, replacing the always-false one in setup.ts.
+  // The component asks for `(min-width: 640px)` and treats a non-match as
+  // compact, so `matches` is the inverse of the thing being described.
+  //
+  // One object per mount, with a live getter: the component captures the
+  // MediaQueryList once and re-reads `matches` when a change fires, so a
+  // harness that swapped in a fresh object would leave it reading the old one
+  // forever — and would report that as the component ignoring resizes.
+  function useViewport(compact: boolean) {
+    const state = { compact }
+    const listeners = new Set<() => void>()
+    window.matchMedia = ((query: string) => ({
+      get matches() {
+        return !state.compact
+      },
+      media: query,
+      onchange: null,
+      addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia
+    return {
+      resizeTo(nowCompact: boolean) {
+        state.compact = nowCompact
+        act(() => {
+          listeners.forEach((listener) => listener())
+        })
+      },
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('claims containment and inerts the page below sm', () => {
+    useViewport(true)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
+    expect(behind).toHaveAttribute('inert')
+    // Never the widget itself — that would take the panel down with the page.
+    expect(screen.getByRole('dialog').parentElement).not.toHaveAttribute('inert')
+
+    cleanup()
+  })
+
+  it('claims nothing at sm and up', () => {
+    useViewport(false)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+
+    // `role="dialog"` stays: it carries the accessible name and the grouping
+    // boundary. Only the containment claim is width-dependent.
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-modal')
+    expect(behind).not.toHaveAttribute('inert')
+
+    cleanup()
+  })
+
+  it('releases the page when the panel closes', () => {
+    useViewport(true)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+    expect(behind).toHaveAttribute('inert')
+
+    // `inert` outliving the panel is the failure that leaves a page nothing can
+    // click and nothing on screen to explain why.
+    fireEvent.click(screen.getByRole('button', { name: 'Close chat' }))
+    expect(behind).not.toHaveAttribute('inert')
+
+    cleanup()
+  })
+
+  it('restores body scrolling when the panel closes', () => {
+    useViewport(true)
+    const { cleanup } = renderInLayout()
+
+    openChat()
+    expect(document.body.style.overflow).toBe('hidden')
+    fireEvent.click(screen.getByRole('button', { name: 'Close chat' }))
+    expect(document.body.style.overflow).toBe('')
+
+    cleanup()
+  })
+
+  it('releases the page when Escape closes the sheet', () => {
+    // The cleanups key off `isModal`, not off which control did the closing —
+    // but nothing demonstrated that, and every other release test clicks the
+    // button. A trigger-specific leak would leave the page unusable with no
+    // dialog on screen to blame.
+    useViewport(true)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+    expect(behind).toHaveAttribute('inert')
+
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(behind).not.toHaveAttribute('inert')
+    expect(document.body.style.overflow).toBe('')
+
+    cleanup()
+  })
+
+  it('wraps focus at both ends of the sheet', () => {
+    // The backward branch of the trap had no assertion pointed at it: the e2e
+    // spec only ever presses Tab forward, and 50 forward presses wrap the
+    // forward direction incidentally while never touching Shift+Tab.
+    //
+    // jsdom moves focus for neither, so this asserts the handler's own
+    // `focus()` calls rather than real tab navigation. That is the whole of
+    // what the handler contributes.
+    useViewport(true)
+    const { cleanup } = renderInLayout()
+    openChat()
+
+    const first = screen.getByRole('button', { name: 'Clear conversation' })
+    const last = screen.getByRole('button', { name: 'Send message' })
+
+    first.focus()
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(last)
+
+    fireEvent.keyDown(document, { key: 'Tab' })
+    expect(document.activeElement).toBe(first)
+
+    cleanup()
+  })
+
+  it('does not trap focus at sm and up', () => {
+    // The same keystroke that wraps on the sheet must do nothing on the card,
+    // or the site navigation is unreachable at desktop width — the outcome
+    // #112's reviewers rejected and the reason this is width-scoped at all.
+    useViewport(false)
+    const { cleanup } = renderInLayout()
+    openChat()
+
+    const first = screen.getByRole('button', { name: 'Clear conversation' })
+    first.focus()
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(first)
+
+    cleanup()
+  })
+
+  it('keeps focus inside the panel across a resize', () => {
+    // Widening unmounts the sheet's header close button. Focus sitting on it
+    // would otherwise land on <body>, and the next Tab restarts at the top of
+    // the document — 24 stops back, the same failure open and close already
+    // guard against.
+    const viewport = useViewport(true)
+    const { cleanup } = renderInLayout()
+    openChat()
+
+    screen.getByRole('button', { name: 'Close chat' }).focus()
+    viewport.resizeTo(false)
+
+    expect(document.activeElement).not.toBe(document.body)
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true)
+
+    cleanup()
+  })
+
+  it('follows a resize across the breakpoint while open', () => {
+    const viewport = useViewport(false)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+    expect(behind).not.toHaveAttribute('inert')
+
+    // Narrowing with the panel already open. Modality is not only a decision
+    // made at first paint — rotating a phone crosses this line.
+    viewport.resizeTo(true)
+    expect(behind).toHaveAttribute('inert')
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
+
+    // And back, because a trap left behind at desktop width is the regression
+    // that would make this whole change worse than not doing it.
+    viewport.resizeTo(false)
+    expect(behind).not.toHaveAttribute('inert')
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-modal')
+
+    cleanup()
   })
 })

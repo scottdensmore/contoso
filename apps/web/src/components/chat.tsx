@@ -54,13 +54,150 @@ export const Chat = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const greetingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Below `sm` the panel is a full-screen sheet, so it really does contain the
+  // user and says so. At `sm` and up it occupies a corner, the rest of the page
+  // is usable, and trapping focus would take the site navigation away.
+  //
+  // `false` until mounted, so the server and the first client render agree.
+  // Only the semantics depend on this; the sheet itself is `max-sm:` CSS and is
+  // right from first paint whether or not this has run.
+  const [isCompact, setIsCompact] = useState(false);
+
+  // The exact complement of Tailwind's `sm:`, expressed as its own query rather
+  // than a `max-width` with an epsilon, so a fractional viewport cannot land
+  // between the two and satisfy neither. `tailwind.config.ts` sets no `screens`
+  // override, so 640px is Tailwind's default and these two must move together.
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 640px)");
+    const sync = () => setIsCompact(!query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  const isModal = showChat && isCompact;
+
+  // The other three parts of being modal. All of them keyed on `isModal`, so a
+  // resize past the breakpoint with the panel open moves it between the two
+  // contracts rather than stranding it half-way — `aria-modal` without a trap
+  // tells assistive technology something false, and a trap without `inert`
+  // leaves the covered controls clickable.
+
+  // Everything beside the widget, found through the DOM rather than by tag: the
+  // widget's siblings are whatever the root layout puts next to it, and naming
+  // `main` here would silently stop covering the page the day that changes.
+  useEffect(() => {
+    if (!isModal) return;
+    const parent = widgetRef.current?.parentElement;
+    if (!parent) return;
+    const behind = Array.from(parent.children).filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && child !== widgetRef.current
+    );
+    behind.forEach((element) => element.setAttribute("inert", ""));
+    return () => behind.forEach((element) => element.removeAttribute("inert"));
+  }, [isModal]);
+
+  // `inert` blocks pointer and focus but not scrolling, so without this the
+  // page slides around behind a sheet that covers all of it.
+  useEffect(() => {
+    if (!isModal) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isModal]);
+
+  // The trap covers the widget, not the panel: the launcher sits outside the
+  // dialog and is the close control, so a trap scoped to `panelRef` would make
+  // the one thing that dismisses the sheet the one thing Tab cannot reach.
+  //
+  // What this is for is narrower than it looks. `inert` above is what keeps
+  // focus off the obscured page — those elements leave the tab order entirely —
+  // so containment is not this block's job and the e2e spec's "nothing escaped
+  // the widget" assertion stays green without it. Measured, not assumed.
+  //
+  // What is covered: both wrap branches, by `wraps focus at both ends of the
+  // sheet` in chat.test.tsx, and their absence at desktop by `does not trap
+  // focus at sm and up`. Delete this effect and those go red.
+  //
+  // What is not covered by anything: the recovery branch below, for focus that
+  // is already outside the widget — removing that alone leaves the whole suite
+  // green. Nor is the case it exists for, Tab from the last control stepping
+  // into the browser's own chrome rather than back to the top of the sheet,
+  // which Playwright cannot see because it never leaves the page. Nor is
+  // degradation where `inert` is unsupported, which is the only reason
+  // containment does not rest on a single API.
+  useEffect(() => {
+    if (!isModal) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const widget = widgetRef.current;
+      if (!widget) return;
+      const focusable = Array.from(
+        widget.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      // Focus already outside the widget — a click on inert content cannot put
+      // it there, but the address bar can — so the next Tab returns rather than
+      // continuing through the page.
+      if (!widget.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isModal]);
 
   // Opening the panel left focus on the launcher, so the next Tab continued
   // into the page behind it rather than into the conversation.
   useEffect(() => {
     if (showChat) inputRef.current?.focus();
   }, [showChat]);
+
+  // Focus return, after the close rather than during it. Below `sm` the
+  // launcher is unmounted while the sheet is open, so a `focus()` inside the
+  // close handler runs against an element that is not in the document yet and
+  // silently drops focus to <body> — which is the bug moving focus in on open
+  // was added to fix, in the other direction. One mechanism rather than two, so
+  // both the Escape path and the button path go through here.
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !showChat) launcherRef.current?.focus();
+    wasOpen.current = showChat;
+  }, [showChat]);
+
+  // Crossing the breakpoint unmounts whichever close control belonged to the
+  // side being left — the sheet's header button on the way up, the launcher on
+  // the way down. With focus parked on it, focus falls to <body> and the next
+  // Tab restarts at the top of the document, which is the failure this
+  // component has already fixed on open and on close, arriving by a third
+  // route. Declared after the two effects above so it sees where they left
+  // focus rather than racing them.
+  useEffect(() => {
+    if (!showChat) return;
+    if (widgetRef.current?.contains(document.activeElement)) return;
+    panelRef.current?.focus();
+  }, [isCompact, showChat]);
 
   // Bound to the document so Escape works wherever focus sits inside the
   // panel, but scoped to events originating within it. Unscoped, Escape while
@@ -75,7 +212,6 @@ export const Chat = () => {
       const onLauncher = launcherRef.current === target;
       if (!inPanel && !onLauncher) return;
       setShowChat(false);
-      launcherRef.current?.focus();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -212,8 +348,9 @@ export const Chat = () => {
     if (showChat) {
       // Closing dropped focus to <body>, so the next Tab restarted at the top
       // of the document — 24 stops back to this launcher. Moving focus in on
-      // open is only half the contract.
-      launcherRef.current?.focus();
+      // open is only half the contract. Returned by the effect above, which
+      // runs after the launcher is back in the document.
+      //
       // Cancel an unfired greeting. The open branch below guards on
       // turns.length, but a pending timer has not dispatched yet, so closing
       // and reopening inside 400ms — an ordinary impatient tap — schedules a
@@ -232,31 +369,80 @@ export const Chat = () => {
 
   return (
     <>
-      <div className="fixed bottom-0 right-0 mr-4 mb-4 sm:mr-12 sm:mb-12 z-10 flex flex-col items-end">
+      <div
+        ref={widgetRef}
+        className="fixed bottom-0 right-0 mr-4 mb-4 sm:mr-12 sm:mb-12 z-10 flex flex-col items-end"
+      >
         {showChat && (
+          // Two shapes, not one shape with overrides. Below `sm` a sheet, at
+          // `sm` and up a card, and the two sets of classes do not intersect —
+          // a base `rounded-lg` that `max-sm:rounded-none` has to win against
+          // depends on which variant Tailwind emits later, which is not
+          // something this file should be betting on.
+          //
           // Width was a flat w-[650px]. At 390px the panel rendered at
           // left:-308, clipping message text outside the viewport entirely.
           // dvh rather than vh so mobile browser chrome does not push the input
-          // below the fold.
+          // below the fold, and `top`/`height` rather than `inset-0` so the two
+          // do not over-constrain each other.
           <div
             ref={panelRef}
             role="dialog"
             aria-label="Chat with Jane Doe"
+            // Only where it is true. `role="dialog"` is not a claim of
+            // containment; this is.
+            aria-modal={isCompact ? true : undefined}
             tabIndex={-1}
-            className="mb-3 flex flex-col shadow-md bg-white rounded-lg outline-none
-                       w-[min(650px,calc(100vw-2rem))]
+            className="flex flex-col bg-white outline-none
+                       max-sm:fixed max-sm:inset-x-0 max-sm:top-0
+                       max-sm:h-[100dvh] max-sm:w-full
+                       sm:mb-3 sm:shadow-md sm:rounded-lg
                        sm:w-[min(650px,calc(100vw-7rem))]
-                       h-[calc(100dvh-6rem)] sm:h-[calc(100vh-7rem)]"
+                       sm:h-[calc(100vh-7rem)]"
           >
-            <div className="p-2 flex justify-end">
+            <div className="p-2 flex items-center gap-1 max-sm:border-b max-sm:border-zinc-200">
+              {/*
+                A sheet has to introduce itself. A corner card can borrow
+                identity from the page around it; this one has covered that
+                page, and without a title the whole surface carried no heading
+                at all while the document behind it had eight.
+              */}
+              {isCompact && (
+                <h2 className="pl-2 grow text-base font-semibold text-zinc-900">
+                  Chat with Jane Doe
+                </h2>
+              )}
               <button
                 type="button"
                 onClick={reset}
                 aria-label="Clear conversation"
-                className="p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                className="ml-auto p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               >
                 <ArrowPathIcon className="w-5 stroke-zinc-500" aria-hidden="true" />
               </button>
+              {/*
+                Dismissal belongs in the header on a sheet, and rendered on
+                `isCompact` rather than hidden with `sm:hidden` so that exactly
+                one control is named "Close chat" at any width — two would be
+                ambiguous to a screen reader and unaddressable by name in tests,
+                and a CSS-hidden one is still present in jsdom, where no
+                stylesheet runs.
+
+                It also un-crowds the bottom right. The launcher used to float
+                over the sheet 20px below the send button: two icon-only
+                controls of near-identical size in one column, where a mis-tap
+                discards the message being composed.
+              */}
+              {isCompact && (
+                <button
+                  type="button"
+                  onClick={toggleChat}
+                  aria-label="Close chat"
+                  className="p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                >
+                  <XMarkIcon className="w-5 stroke-zinc-500" aria-hidden="true" />
+                </button>
+              )}
             </div>
             {/* chat section */}
             <div
@@ -304,18 +490,33 @@ export const Chat = () => {
             </div>
           </div>
         )}
-        <button
-          ref={launcherRef}
-          className="bg-white rounded-full p-2 shadow-lg hover:cursor-pointer"
-          onClick={toggleChat}
-          aria-label={showChat ? "Close chat" : "Open chat"}
-        >
-          {showChat ? (
-            <XMarkIcon className="w-6" />
-          ) : (
-            <ChatBubbleLeftRightIcon className="w-6" />
-          )}
-        </button>
+        {/*
+          Not rendered while the sheet is open, because the sheet's own header
+          is the way out there. Left in place it would be a second control named
+          "Close chat", and it would be behind the sheet in any case: the panel
+          is positioned below `sm` and this button is not, so it loses the paint
+          order regardless of where it sits in the source.
+
+          Only the state changes with width, not the element, so the launcher at
+          `sm` and up is exactly what it was.
+        */}
+        {!(isCompact && showChat) && (
+          <button
+            ref={launcherRef}
+            // Every other control in the widget styles its focus ring; this one
+            // was left on the browser default, and the focus trap makes it a
+            // stop that keyboard users land on every cycle.
+            className="bg-white rounded-full p-2 shadow-lg hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+            onClick={toggleChat}
+            aria-label={showChat ? "Close chat" : "Open chat"}
+          >
+            {showChat ? (
+              <XMarkIcon className="w-6" />
+            ) : (
+              <ChatBubbleLeftRightIcon className="w-6" />
+            )}
+          </button>
+        )}
       </div>
     </>
   );
