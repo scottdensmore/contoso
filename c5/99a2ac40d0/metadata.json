@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "c599a2ac40d0",
+  "strategy": "manual-commit",
+  "branch": "perf/size-home-grid-images",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/web/e2e/image-delivery.spec.ts",
+    "apps/web/src/app/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c5/99a2ac40d0/0/metadata.json",
+      "transcript": "/c5/99a2ac40d0/0/full.jsonl",
+      "compact_transcript": "/c5/99a2ac40d0/0/transcript.jsonl",
+      "content_hash": "/c5/99a2ac40d0/0/content_hash.txt",
+      "prompt": "/c5/99a2ac40d0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1225,
+    "cache_creation_tokens": 2342154,
+    "cache_read_tokens": 285107867,
+    "output_tokens": 513827,
+    "api_call_count": 653
+  }
+}
