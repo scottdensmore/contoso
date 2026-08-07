@@ -148,6 +148,19 @@ export default async function Page({
             // percentage with /(^|\s)(1?\d?\d)vw/ to trim the srcset, and
             // `calc(100vw` hides it behind a paren.
             sizes="(min-width: 574px) 550px, calc( 100vw - 24px )"
+            // The first gallery image is what largest-contentful-paint reports
+            // from 834px up, worth 616ms there. At 390 the description fills
+            // the viewport and this image starts exactly at the fold, so the
+            // preload is entirely off-screen and buys nothing -- about 20ms of
+            // FCP for no return, which `next/image` gives no way to avoid at
+            // one width only.
+            //
+            // Only the first. The rest of the gallery is well below the fold on
+            // every viewport, and eager requests there would compete with this
+            // one on equal terms: react-dom preloads any image that is not
+            // `loading="lazy"`, and next/image sets no fetchpriority to break
+            // the tie.
+            priority={i === 0}
             className="rounded-3xl w-full h-auto max-w-[550px] lg:mr-6"
           />
           <div
