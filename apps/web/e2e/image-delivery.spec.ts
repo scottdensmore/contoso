@@ -21,9 +21,19 @@ import { test, expect, type Page } from '@playwright/test'
  * common desktop windows; those land on a box just above the 384 rung, which is
  * where a too-loose assertion hides. 640, 1024 and 1280 are grid breakpoints,
  * and 1224 is where a category card crosses 384 on its own.
+ *
+ * 1015 and 1016 are where a home card crosses 320, so a `sizes` that overstates
+ * it by under a pixel still tips those two into the next rung at 2x — a real
+ * defect that survived a first fix because nothing sat between 1024 and 1152.
+ * 1017
+ * is the width after it, where the card is 320.328 and genuinely does need the
+ * larger rung: it fails if the box is rounded before being scaled by density,
+ * which is the other way to get this wrong. 1105 and 1106 sit either side of
+ * the home grid's 350px cap engaging.
  */
 const WIDTHS = [
-  390, 412, 414, 430, 574, 640, 768, 834, 841, 860, 900, 1024, 1152, 1224, 1280, 1440,
+  390, 412, 414, 430, 574, 640, 768, 834, 841, 860, 900, 1015, 1016, 1017, 1024, 1105, 1106,
+  1152, 1224, 1280, 1440,
 ]
 
 /** Densities to exercise. Most traffic is not 1x, and 1x cannot see this. */
@@ -44,6 +54,7 @@ const DENSITIES = [1, 2]
  */
 const SURFACES = [
   { name: 'about mission', resolve: async () => '/about' },
+  { name: 'home grid', resolve: async () => '/' },
   {
     name: 'product detail',
     resolve: async (page: Page) => {
@@ -93,7 +104,11 @@ async function deliveryOf(page: Page): Promise<Delivery> {
     if (!image) throw new Error('no optimised image on the page')
     const candidates = (image.srcset || '').split(',').filter((part) => part.trim())
     return {
-      box: Math.round(image.getBoundingClientRect().width),
+      // Unrounded. A grid column is routinely fractional — 320.328px at one
+      // width here — and rounding it down before multiplying by the density
+      // understates the need by up to half a device pixel, which is enough to
+      // expect the rung below the one the browser correctly chose.
+      box: image.getBoundingClientRect().width,
       requested: Number((image.currentSrc || '').match(/[?&]w=(\d+)/)?.[1]) || null,
       offered: candidates.length,
       ladder: candidates
@@ -120,13 +135,19 @@ const expectedRung = (ladder: number[], box: number, density: number): number =>
 test.describe('image delivery', () => {
   for (const surface of SURFACES) {
     test(`the ${surface.name} image is sized to its box`, async ({ browser }, testInfo) => {
-      // Thirty-two cold page loads, one per width and density, each making the
-      // optimiser resize for a combination it has not cached. Locally the
-      // slowest surface takes 48s; `test.slow()` would allow 90s, and CI runs
-      // this inside the container on a shared vCPU where those resizes are the
-      // bottleneck — near enough to the limit to time out under load rather
-      // than fail for a reason worth reading.
-      test.setTimeout(180_000)
+      // One cold browser context per width and density, so 42 page loads a
+      // surface. The cost is the loads, not the resizing: the optimiser caches
+      // to disk across the whole run, so the home grid's 20 images resolve to
+      // about 50 distinct resizes against some 600 requests. What differs
+      // between surfaces is how many subresources each load waits on — 15 on
+      // the home grid against 1 on the about page — which is why home takes
+      // ~80s locally where about takes ~38.
+      //
+      // The e2e job took 8.4 minutes with one surface and 9.7 with three,
+      // against a 35-minute job budget, so the job has room and this cap is the
+      // only real exposure. 240s is three times the slowest local surface, on a
+      // shared CI vCPU.
+      test.setTimeout(240_000)
 
       const overfetched: Record<string, string> = {}
 
@@ -175,7 +196,9 @@ test.describe('image delivery', () => {
 
             const expected = expectedRung(ladder, box, density)
             if (requested !== expected) {
-              overfetched[at] = `${box}px box at ${density}x asked for w=${requested}, expected w=${expected}`
+              overfetched[at] =
+                `${box.toFixed(2)}px box at ${density}x needs ${Math.ceil(box * density)}, ` +
+                `asked for w=${requested}, expected w=${expected}`
             }
           } finally {
             // A context from the `browser` fixture is not closed for us, and an
