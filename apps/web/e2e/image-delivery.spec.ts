@@ -52,6 +52,38 @@ const DENSITIES = [1, 2]
  * because nothing on the home page links to a category: it lists products
  * directly. `browse.spec.ts` carries a fallback for the same reason.
  */
+/**
+ * Where each surface's LCP element is an image, and how many images it could be.
+ *
+ * Per surface and measured, because it is not uniform: on `/about` and the
+ * product detail page the LCP element at 390 is a paragraph, and on the home
+ * grid it is the hero heading at every width. Asserting eagerness where the
+ * image is not the LCP element asserts something that is neither true nor
+ * useful.
+ *
+ * `among` is why the category grid appears twice. At 1440 three cards share the
+ * first row, and which one LCP reports is not derivable from the markup —
+ * measured, they are 397.328, 397.328 and 397.344px, so the third is largest,
+ * and the second wins anyway. Pinning this at 390 alone was not enough: there
+ * only one card is above the fold, so reverting the fix to prioritise just that
+ * card left this test green while costing 1184ms at desktop.
+ */
+const LCP_SURFACES: Record<
+  string,
+  { prioritised: number; at: { viewport: number; among: number }[] }
+> = {
+  'about mission': { prioritised: 1, at: [{ viewport: 1440, among: 1 }] },
+  'home grid': { prioritised: 0, at: [] },
+  'product detail': { prioritised: 1, at: [{ viewport: 1440, among: 1 }] },
+  'category grid': {
+    prioritised: 3,
+    at: [
+      { viewport: 390, among: 1 },
+      { viewport: 1440, among: 3 },
+    ],
+  },
+}
+
 const SURFACES = [
   { name: 'about mission', resolve: async () => '/about' },
   { name: 'home grid', resolve: async () => '/' },
@@ -82,7 +114,6 @@ type Delivery = {
   /** Candidates in the srcset, before parsing. The parse is checked against it. */
   offered: number
   ladder: number[]
-  loading: string
 }
 
 /**
@@ -115,7 +146,6 @@ async function deliveryOf(page: Page): Promise<Delivery> {
         .map((candidate) => Number(candidate.trim().match(/\s(\d+)w$/)?.[1]))
         .filter((width) => Number.isFinite(width) && width > 0)
         .sort((a, b) => a - b),
-      loading: image.loading,
     }
   })
 }
@@ -215,35 +245,135 @@ test.describe('image delivery', () => {
     })
   }
 
-  test('the about page mission image is not lazy, because it is the LCP element', async ({ page }) => {
-    // Measured rather than assumed: at every width but the narrowest, this
-    // image is what largest-contentful-paint reports. Lazy-loading the LCP
-    // element defers the request until layout says it is near the viewport,
-    // which is exactly the request that should start first.
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/about')
-    // See the note above: the session poll keeps the network busy, and the
-    // signal wanted is that the image has painted.
-    await page.waitForFunction(
-      () => document.querySelector<HTMLImageElement>('img[alt="Our Mission"]')?.complete === true,
-    )
-
-    const isLcp = await page.evaluate(
-      () =>
-        new Promise<boolean>((resolve) => {
-          let element: Element | null = null
-          new PerformanceObserver((list) => {
-            const entries = list.getEntries()
-            element = (entries[entries.length - 1] as unknown as { element: Element }).element
-          }).observe({ type: 'largest-contentful-paint', buffered: true })
-          setTimeout(
-            () => resolve(element === document.querySelector('img[alt="Our Mission"]')),
-            500,
-          )
-        }),
-    )
-
-    expect(isLcp, 'this test is about the LCP element; it is no longer the LCP element').toBe(true)
-    expect((await deliveryOf(page)).loading).not.toBe('lazy')
+  // Not `LCP_SURFACES[name] ?? {...}`: a renamed surface would fall through to
+  // an empty list and silently stop generating its tests, and a shorter list is
+  // not something anyone reads.
+  //
+  // The two directions fail differently, and only one of them is this test. A
+  // key here with no surface is what it catches and names. A surface with no
+  // key destructures `undefined` at collection time, so the file fails to load
+  // and this test never runs to say so -- still red, just less legibly.
+  test('every surface has an LCP entry', () => {
+    expect(Object.keys(LCP_SURFACES).sort()).toEqual(SURFACES.map((s) => s.name).sort())
   })
+
+  for (const surface of SURFACES) {
+    const { prioritised, at } = LCP_SURFACES[surface.name]
+    for (const { viewport, among } of at) {
+      test(`the ${surface.name} LCP image is not lazy at ${viewport}px`, async ({ page }) => {
+        // Lazy-loading the LCP element defers its request until layout says it
+        // is near the viewport, which is exactly the request that should start
+        // first.
+        //
+        // Asserted in two parts, because either alone can pass while the page
+        // is wrong. That LCP still lands on one of the images this page
+        // prioritises — if a layout change moves it to a heading, or to a
+        // fourth card, the assertion below would be measuring the wrong
+        // element and should fail rather than quietly hold. And that every one
+        // of those images is eager, since which of them LCP reports is not
+        // predictable from the markup.
+        await page.setViewportSize({ width: viewport, height: 844 })
+        await page.goto((await surface.resolve(page))!)
+        await page.waitForFunction(() =>
+          [...document.querySelectorAll('img')].some(
+            (image) => image.currentSrc.includes('/_next/image') && image.complete
+          )
+        )
+
+        const result = await page.evaluate(
+          () =>
+            new Promise<{
+              lcpIndex: number
+              eager: number[]
+              candidates: number
+              preloads: number
+            }>((resolve) => {
+              let element: Element | null = null
+              new PerformanceObserver((list) => {
+                const entries = list.getEntries()
+                element = (entries[entries.length - 1] as unknown as { element: Element }).element
+              }).observe({ type: 'largest-contentful-paint', buffered: true })
+              setTimeout(() => {
+                const optimised = [...document.querySelectorAll('img')].filter((image) =>
+                  image.currentSrc.includes('/_next/image')
+                )
+                resolve({
+                  lcpIndex: optimised.indexOf(element as HTMLImageElement),
+                  eager: optimised.flatMap((i, n) => (i.loading === 'lazy' ? [] : [n])),
+                  candidates: optimised.length,
+                  // Scoped to the optimiser, like `optimised` above. react-dom
+                  // preloads any non-lazy `<img>`, including plain ones no
+                  // `next/image` ever touched -- `components/header.tsx`
+                  // already renders one for a signed-in avatar. Counting every
+                  // image preload on the page would fail all four of these
+                  // tests the day a shared component grows an `<img>`, for a
+                  // reason that has nothing to do with LCP prioritisation.
+                  preloads: [
+                    ...document.querySelectorAll<HTMLLinkElement>(
+                      'link[rel="preload"][as="image"]'
+                    ),
+                  ].filter((link) =>
+                    `${link.getAttribute('imagesrcset') ?? ''}${link.href}`.includes(
+                      '/_next/image'
+                    )
+                  ).length,
+                })
+              }, 700)
+            })
+        )
+
+        // Without this the two assertions below do not compose: `lcpIndex <
+        // among` and "the first `prioritised` are eager" only imply the LCP
+        // image was eager while `among` is inside `prioritised`. A table entry
+        // that widened `among` past it would pass with a lazy LCP element,
+        // which is the one thing this file exists to catch.
+        expect(
+          prioritised,
+          `${surface.name} prioritises ${prioritised} images but LCP is allowed to land within ${among}`,
+        ).toBeGreaterThanOrEqual(among)
+        expect(
+          result.candidates,
+          `fewer than ${among} optimised images on the page, so this asserts less than it reads`,
+        ).toBeGreaterThanOrEqual(among)
+
+        // The preload is what the measured gain actually comes from, so assert
+        // it rather than inferring it from `img.loading`.
+        //
+        // What it does not catch, because it is worth knowing what is not
+        // being tested: swapping `priority` for `loading="eager"`. That reads
+        // like it would ship no preloads -- `get-img-props` sets
+        // `meta.preload = preload || priority`, and nothing reassigns it --
+        // but react-dom 19.2's server renderer preloads every `<img>` in its
+        // own right unless it is `loading="lazy"`, has no string src/srcSet,
+        // is `fetchPriority="low"`, or sits inside a `<picture>`/`<noscript>`.
+        // So the swap emits the same three preloads and this assertion passes,
+        // correctly: on this stack the two spellings are equivalent. Measured
+        // both ways -- eager 3, all-lazy 0.
+        //
+        // Which leaves this close to implied by the eager assertion below. It
+        // earns its place by pinning that equivalence: if react-dom stops
+        // preloading eager images, or something adds `fetchPriority="low"`,
+        // the eager count stays right and this is what fails.
+        expect(
+          result.preloads,
+          `${surface.name} emitted ${result.preloads} image preloads, not ${prioritised}`,
+        ).toBe(prioritised)
+
+        // Which images are eager, exactly — not "at least these". Asserting
+        // only that the first few are eager passes just as happily when every
+        // image on the page is, and prioritising everything prioritises
+        // nothing: the preloads then compete with each other for the same pipe.
+        expect(
+          result.eager,
+          `the eager images at ${viewport}px are not exactly the first ${prioritised}`,
+        ).toEqual([...Array(prioritised).keys()])
+
+        expect(
+          result.lcpIndex,
+          `at ${viewport}px LCP landed on optimised image ${result.lcpIndex}, outside the first ${among} this page prioritises, so the assertion above is protecting the wrong ones`,
+        ).toBeLessThan(among)
+        expect(result.lcpIndex, `LCP did not land on an optimised image at all`).toBeGreaterThanOrEqual(0)
+      })
+    }
+  }
 })
