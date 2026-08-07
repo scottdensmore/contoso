@@ -6,7 +6,7 @@ export default function ContactPage() {
       {/* Background Image with Overlay */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700"
-        style={{ backgroundImage: "url('/images/contact-bg.jpg')" }}
+        style={{ backgroundImage: "url('/images/contact-bg.webp')" }}
       >
         <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]" />
       </div>

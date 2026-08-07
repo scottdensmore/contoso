@@ -7,12 +7,13 @@
  * `--max-dimension` on the long edge and rewrites the data files that point at
  * them.
  *
- * Scope is whatever the catalogue data references, which deliberately leaves out
- * `hero.png` and `contact-bg.jpg` (full-bleed CSS backgrounds) and
- * `about/mission.png` (a `fill` image in a full-width band). All three render
- * far wider than a product thumbnail, and together they are 3 MB.
- * `tests/scripts/test_image_encoding.py` carries the same split and fails if
- * anything else grows back.
+ * Scope is whatever the catalogue data references, so it does not reach images
+ * referenced only from source -- the two CSS backgrounds and the about page's
+ * `fill` image. #158 converted the backgrounds by hand and they are now held to
+ * this contract by `tests/scripts/test_image_encoding.py`; a third asset stays
+ * exempt there, for reasons that file records. Anything new added under
+ * `public/images` is governed by that guard whether or not this script can see
+ * it, which is the part that matters: it fails rather than silently skipping.
  *
  * Idempotent: references already pointing at an existing WebP are left alone,
  * so a re-run after new images land converts only the new ones.
