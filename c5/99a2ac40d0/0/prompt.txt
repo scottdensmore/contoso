@@ -2133,3 +2133,84 @@ Read for context: `apps/web/src/components/block.tsx` and `header.tsx` (to deriv
 Could not assess: the CI wall-clock figures (8.4 and 9.7 minutes) and the "15 optimiser requests a load" measurement — both are observations from runs I cannot reproduce here. I confirmed the home page carries 20 product images in total, so 15 is consistent with lazy-loading trimming the tail, but the exact figure is width-dependent.</result>
 <usage><subagent_tokens>68747</subagent_tokens><tool_uses>29</tool_uses><duration_ms>582492</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ad4c78be49cd58264</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ad4c78be49cd58264.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after refinements" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repo state is exactly as it was — only the two working-tree files remain modified (unchanged by me), no commits, no staged files, no other artifacts left in the repo (`.next/` and `.next/cache/images` are build output, not repo content).
+
+## Verdict: Verified. Refinement-only diff confirmed correct; 30/30 against a real seeded stack; the cost-model comment checks out; 1017 carries the coverage it claims.
+
+**Scope chosen:** The diff since my last pass is confined to `apps/web/e2e/image-delivery.spec.ts` (comments, timeout value/message, one `Math.round` removed, three widths added to the sweep). `apps/web/src/app/page.tsx` is byte-identical to what I verified before (confirmed directly: `diff &lt;(git show 428c345:.../page.tsx) apps/web/src/app/page.tsx` → identical), so I did not re-review it. Given the change is test-only, I scoped to: (1) independent verification of the specific numeric/architectural claims in the new comments, (2) a full run of the e2e suite against a real seeded stack (not just the one spec file, since that's what was explicitly asked and it's cheap relative to standing the stack up), (3) lint/typecheck/unit tests as a cheap blanket check. I did not run `make e2e-smoke` (dockerized web+chat+db) — this change touches no runtime code, Dockerfile, or compose config, and the chat service is irrelevant to image delivery; a locally-built production server against the seeded Postgres db is the right-sized check.
+
+### 1. Cost-model claim — checked independently, not taken from code-review
+
+Confirmed from Next's own source (`node_modules/next/dist/server/image-optimizer.js`): the image optimizer's cache is disk-based at `&lt;distDir&gt;/cache/images`, keyed by `hash(CACHE_VERSION, href, width, quality, mimeType)` — a server-side cache tied to the running Next process, entirely independent of Playwright's browser-context lifecycle. A "cold context" only means no *client*-side browser cache; it does nothing to the server's resize cache.
+
+I verified this empirically rather than just architecturally: cleared `.next/cache/images`, built and started a production server against the seeded DB, and ran an instrumented probe reproducing the home-grid test's exact 42-load sweep (21 widths × 2 densities). Result:
+- 594 total `/_next/image` requests (comment says "roughly 630" — close)
+- 51 distinct `(href, w, q)` keys requested; 47 new cache directories actually written to disk (comment says "at most 60 distinct resizes" — consistent, comment is an upper bound)
+- Cache-hit rate ≈ 91% (comment says "roughly 90%")
+
+So the rewritten comment's claim is correct: the cost is the cold browser contexts and their subresource round trips, not resize work, and the old "resizes for a combination it has not cached" framing that code-review flagged was indeed wrong.
+
+### 2. Full suite reran against a real seeded stack
+
+Built and started the actual app (`next build` / `next start`) against Postgres seeded with 210 products / 26 brands / 7 categories / 12 users (verified row counts via `psql`, not trusted blindly). Ran all 30 Playwright tests with `E2E_BASE_URL` pointed at that server:
+
+```
+30 passed (4.8m)
+```
+
+Per-test timings for the changed suite are consistent with the new comment: home grid 1.4m (~84s, comment says "~80s locally"), about mission 41.1s (comment says "~38s"), product detail 50.2s, category grid 1.1m — all comfortably under the new 240s cap. Server log showed no errors during the run beyond a pre-existing benign "workspace root inferred" warning.
+
+### 3. 1017 confirmed to carry the coverage it claims
+
+Directly measured the rendered box at width 1017, density 2x: exact box = `320.328px`. `320.328 × 2 = 640.656`, which exceeds the 640 rung, so the browser correctly requests `w=750` — and the test (using the unrounded box) expects `w=750` too: pass, for the right reason. I then simulated the old rounded-box logic: `Math.round(320.328) = 320`, and `320 × 2 = 640` exactly, which would make the test expect `w=640` — a false "overfetch" flag against a browser that behaved correctly. This is exactly the "fails if the box is rounded before being scaled by density" case the comment describes, confirmed by direct measurement rather than by reading the comment and trusting it.
+
+I also spot-checked the other new width claims: 1015/1016 sit at box=319.656/320.000 (the 320-crossing point, at 1x only — no defect risk there, they're deliberately in the sweep but pass the same at both roundings), and 1105/1106 sit at box=349.656/350.000, straddling the 350px cap exactly as claimed. And `21 widths × 2 densities = 42`, confirmed against the actual array (not "40").
+
+### Failures
+None.
+
+### Flakes
+None observed. Single run only (not re-run) since nothing failed; no environmental symptoms (no `P1001`, no port collisions, no npm exit-handler noise) appeared in this run.
+
+### Missing coverage
+None new. This is a test-only refinement (comments, timeout value, one `Math.round` removal, three added sweep widths) plus zero behavior change in `page.tsx`, which I confirmed unmodified since my prior pass. The change itself is closing a coverage gap (1017 for the rounding-order defect) rather than opening one.
+
+### Environment issues
+- Host ports 5432 and 3000 were occupied by the unrelated `travel-app` project, as flagged in memory; I did not touch those containers/processes. I reused the existing `contoso-sizes-db-1` Postgres container on host port 55444 (already seeded, already mine) rather than starting a new one.
+- I ran the web app as a bare `next start` on port 3100 (not through Docker), since this change touches no Dockerfile/compose config and doing so let me instrument the optimizer's disk cache directly for the cost-model check. I stopped that server (PID 2461414) at the end. I left several other pre-existing `next-server` processes (ports 3200/3400/3500) alone since they predate this session and aren't mine to clean up.
+- `.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD` returned nothing usable: `main` and `HEAD` are the same commit on this branch (`5da3f1e`) — all the real work here lives as uncommitted working-tree changes, consistent with this being a checkpoint/session-driven workflow rather than a committed PR branch yet. I made the scope call manually instead.
+
+### Commands run
+```
+git status --short
+git diff --stat main...HEAD
+git diff apps/web/e2e/image-delivery.spec.ts
+git diff apps/web/src/app/page.tsx
+git show 428c345:apps/web/src/app/page.tsx   # diffed against working tree — identical
+git show bbfd172:apps/web/e2e/image-delivery.spec.ts   # diffed against working tree — identical
+docker exec contoso-sizes-db-1 psql -U postgres -d contoso-db -c "select counts..."
+DATABASE_URL=... NEXTAUTH_SECRET=... NEXTAUTH_URL=... npm run build
+DATABASE_URL=... NEXTAUTH_SECRET=... NEXTAUTH_URL=... PORT=3100 npm run start &amp;
+rm -rf .next/cache/images &amp;&amp; mkdir -p .next/cache/images     # clean measurement of the disk cache
+node &lt;scratch probe script using playwright-core&gt;             # counted /_next/image requests + distinct cache keys for the home-grid sweep
+node &lt;scratch probe script&gt;                                    # measured exact box widths at 1015/1016/1017/1018 and 1104-1107
+E2E_BASE_URL=http://localhost:3100 npx playwright test --list
+E2E_BASE_URL=http://localhost:3100 npx playwright test
+npx eslint e2e/image-delivery.spec.ts src/app/page.tsx
+./node_modules/.bin/tsc --noEmit
+npm run test
+```
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/next/dist/server/image-optimizer.js`.</result>
+<usage><subagent_tokens>74637</subagent_tokens><tool_uses>77</tool_uses><duration_ms>909271</duration_ms></usage>
+</task-notification>
