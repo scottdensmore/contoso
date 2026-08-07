@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "b6215765ca95",
+  "strategy": "manual-commit",
+  "branch": "perf/size-product-images-to-their-boxes",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/web/e2e/image-delivery.spec.ts",
+    "apps/web/src/app/products/[slug]/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b6/215765ca95/0/metadata.json",
+      "transcript": "/b6/215765ca95/0/full.jsonl",
+      "compact_transcript": "/b6/215765ca95/0/transcript.jsonl",
+      "content_hash": "/b6/215765ca95/0/content_hash.txt",
+      "prompt": "/b6/215765ca95/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1116,
+    "cache_creation_tokens": 2268973,
+    "cache_read_tokens": 238457511,
+    "output_tokens": 464845,
+    "api_call_count": 595
+  }
+}
