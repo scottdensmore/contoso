@@ -79,10 +79,25 @@ export default async function Home() {
                     alt={product.name}
                     width={350}
                     height={350}
-                    // The box is fluid now, so the srcset has to be told about
-                    // it — keyed to the fixed 350px it serves a 384px asset
-                    // into a 175px slot on a phone.
-                    sizes="(min-width: 640px) 350px, 45vw"
+                    // 350px is the cap, not the box. The `minmax(0, 350px)`
+                    // tracks only reach it once the container can hold three of
+                    // them plus the gaps — from 1106px of viewport. Below that
+                    // the card tracks the viewport, and declaring 350 made a 2x
+                    // screen fetch w=750 where w=640 covers it, everywhere from
+                    // 640 to about 1016.
+                    //
+                    // So: the container less its gaps, over the column count,
+                    // with the fixed value only where the cap engages.
+                    //
+                    // The last clause has to keep a literal `50vw`. Next reads
+                    // the srcset's floor off the smallest `vw` token it can find
+                    // with /(^|\s)(1?\d?\d)vw/ — it never sees the arithmetic
+                    // around it. With `50vw` the floor is 320 and the ladder
+                    // starts at 384; write it as `( 100vw - 40px ) / 2` and Next
+                    // reads 100vw, drops every rung below 640, and a 175px phone
+                    // card fetches w=640. The middle clause's `100vw` is
+                    // harmless only because this one is here.
+                    sizes="(min-width: 1106px) 350px, (min-width: 640px) calc( ( 100vw - 56px ) / 3 ), calc( 50vw - 20px )"
                     // w-full so the image scales into its column: at its
                     // intrinsic 350px it overflows one instead.
                     className="rounded-3xl w-full h-auto"
