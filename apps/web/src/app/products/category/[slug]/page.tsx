@@ -51,10 +51,21 @@ export default async function CategoryPage({
                     alt={product.name}
                     width={350}
                     height={350}
-                    // 400px, not the 350 the width prop names: the three-column
-                    // grid gives each card a 397px box at 1440, so 350 asks for
-                    // an asset that then has to be upscaled to fill it.
-                    sizes="(min-width: 1024px) 400px, (min-width: 640px) 45vw, 90vw"
+                    // The card is the container split by the column count, less
+                    // the gaps and the container's own padding — so it tracks
+                    // the viewport between each breakpoint and only settles
+                    // once the container stops growing at xl.
+                    //
+                    // The previous value was a single 400px measured at 1440.
+                    // That is the top of the three-column range; at 1024 the
+                    // same card is 317px, so it pulled w=640 where w=384 covers
+                    // it. Deriving a `sizes` from one sampled width is the
+                    // mistake this replaces.
+                    //
+                    // Written as `100vw / 3` rather than `33.33vw` so that
+                    // next/image's /(^|\s)(1?\d?\d)vw/ can still find the
+                    // percentage and trim the srcset.
+                    sizes="(min-width: 1280px) 398px, (min-width: 1024px) calc( 100vw / 3 - 24px ), (min-width: 640px) calc( 50vw - 24px ), calc( 100vw - 24px )"
                     className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
                   />
                 ) : (

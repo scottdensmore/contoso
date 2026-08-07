@@ -139,7 +139,15 @@ export default async function Page({
             alt={product.name}
             width={550}
             height={550}
-            sizes="(min-width: 1024px) 550px, 100vw"
+            // `max-w-[550px]` caps the box, so it stops growing once the
+            // container can hold 550 — from 574px of viewport, not from the
+            // lg breakpoint the old value keyed on. Between the two it claimed
+            // the whole viewport for a 550px box and pulled w=1080.
+            //
+            // Spaces inside the parens: next/image finds the viewport
+            // percentage with /(^|\s)(1?\d?\d)vw/ to trim the srcset, and
+            // `calc(100vw` hides it behind a paren.
+            sizes="(min-width: 574px) 550px, calc( 100vw - 24px )"
             className="rounded-3xl w-full h-auto max-w-[550px] lg:mr-6"
           />
           <div
