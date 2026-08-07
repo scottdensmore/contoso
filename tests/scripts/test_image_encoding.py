@@ -29,11 +29,19 @@ IMAGES_DIR = REPO_ROOT / "apps/web/public/images"
 # not.
 CONFIG = json.loads((REPO_ROOT / "config/catalogue_images.json").read_text())
 
-# Two full-bleed CSS backgrounds and one `fill` image in a full-width band, all
-# rendered far wider than a product thumbnail and 3.1 MB together. Resizing
-# these down would be a visible regression for 0.6% of the bytes, so they are
-# deliberately out of scope -- see #96. Listed rather than pattern-matched: a
-# new full-bleed asset should have to say so.
+# The images that are not part of the catalogue contract. `about/mission.png`
+# is the only one left, and what exempts it is the generation count at
+# delivery: it is a lossless source the optimiser re-encodes on every request,
+# so converting it would make what a visitor receives a third generation. The
+# two backgrounds #158 converted are terminal -- nothing re-encodes them again
+# -- so contact-bg went from one lossy generation to two rather than to three,
+# measured at about 45 dB PSNR against the original render. See #165.
+#
+# The name says full-bleed and the reason is not: mission.png renders at most
+# 604 CSS px, half its container. What exempts it is that 604 at 2x already
+# wants more source than the 1024 it has.
+#
+# Listed rather than pattern-matched, so a new exemption has to say so.
 FULL_BLEED = set(CONFIG["fullBleed"])
 
 MAX_DIMENSION = CONFIG["maxDimension"]
@@ -170,17 +178,15 @@ class CatalogueEncodingTests(unittest.TestCase):
 
         `apps/web/next.config.js` derives its `deviceSizes` ceiling from
         `maxDimension`, because the optimiser never upscales and every srcset
-        candidate above the largest source returns identical bytes. Of the three
-        allowlisted images only `about/mission.png` goes through the optimiser,
-        so only it can be capped that way -- `hero.png` and `contact-bg.jpg` are
-        CSS background-image URLs, which `deviceSizes` cannot reach at all.
-        The allowlist is checked whole regardless: it is three files, the cost
-        is nothing, and the alternative is a second list to keep in step with
-        how each asset happens to be referenced today.
+        candidate above the largest source returns identical bytes. So an
+        exempt image that goes through the optimiser and is wider than
+        `maxDimension` would be capped on delivery with nothing to say so.
 
-        Dimensions come from the WebP parser above only for WebP; the allowlist
-        is PNG and JPEG, so this reads their headers directly. Both formats put
-        the size in a fixed place near the front of the file.
+        The allowlist is one file now -- #158 converted the two CSS backgrounds
+        and moved them into the contract -- and that one does go through the
+        optimiser, so this applies to all of it. The reader is still generic
+        because the allowlist is not: an exemption added tomorrow may be any
+        format, and reading headers directly costs nothing.
         """
         undersupplied = {}
         for name in sorted(FULL_BLEED):
@@ -215,8 +221,14 @@ class CatalogueEncodingTests(unittest.TestCase):
         self.assertEqual(
             oversized,
             {},
-            f"catalogue images must be at most {MAX_DIMENSION}px on the long edge; "
-            "pages render them at 350px and 550px",
+            f"images must be at most {MAX_DIMENSION}px on the long edge, which is "
+            "what the originals were; the catalogue renders at 350 and 550. Do not "
+            "reach for maxDimension to admit a sharper full-bleed background: it "
+            "governs all of the catalogue too, and next.config.js derives the srcset "
+            "ceiling from it, so raising it re-adds duplicate candidates for 854 "
+            "images that cannot use them -- while the background gains nothing, "
+            "because a CSS background-image never reaches the optimiser. That needs "
+            "the two ceilings separated first",
         )
 
     def test_no_catalogue_image_exceeds_the_outlier_ceiling(self):

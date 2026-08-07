@@ -42,7 +42,7 @@ IMAGES_DIR = PUBLIC_DIR / "images"
 
 # The whole app, not a list of the directories that happened to hold refs when
 # this was written. The orphan check below turns an incomplete scan into a
-# demand to delete a live asset: `hero.png` is reached only from
+# demand to delete a live asset: `hero.webp` is reached only from
 # tailwind.config.ts, which a src/public/prisma scan never opens.
 SEARCH_ROOT = "apps/web"
 SKIP_DIRS = {
