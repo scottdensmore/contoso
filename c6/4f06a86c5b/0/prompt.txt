@@ -2426,3 +2426,76 @@ docker compose ... down --volumes --remove-orphans
 - A full re-derivation of `test_image_references.py`'s pass/fail boundary via a synthetic typo fixture — you already did this yourself in both directions, I read the module and confirmed its `SEARCH_ROOT`/`PUBLIC_DIR` logic is sound and reaches all three reference sites, and the live-container + repo-grep checks above are direct, stronger evidence than re-deriving the same guard demonstration a second time.</result>
 <usage><subagent_tokens>99471</subagent_tokens><tool_uses>63</tool_uses><duration_ms>772554</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a7a7df30b4ebf9e07</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a7a7df30b4ebf9e07.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review background re-encode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All 13 image guards pass, the full `tests/scripts` suite passes (142 tests, 112 subtests), and no reference to `hero.png` or `contact-bg.jpg` survives anywhere in the tree. The assets themselves check out: `hero.webp` is 1024x450 / 78 KiB, `contact-bg.webp` is 1024x1024 / 214 KiB, both exactly at the `maxDimension` ceiling they now answer to, and `Dockerfile:30` copies `apps/web/public` wholesale so both ship.
+
+No defects. Three refinements, all in prose rather than code.
+
+---
+
+## 1. Raising `maxDimension` to admit a sharper background costs the catalogue and buys the background nothing (refinement, 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:222-226` — the rewritten failure message directs a future maintainer at the wrong knob:
+
+```
+"screen, so raising it for one is a deliberate change to maxDimension "
+"and to the srcset ceiling derived from it, not a file that slipped in",
+```
+
+It presents the srcset consequence as a cost to weigh. It is not a cost, it is a regression with no offsetting benefit, and the message does not say the third thing that matters: `maxDimension` also governs all 854 catalogue images.
+
+Concretely, if someone follows this advice to land a 2048px hero, `apps/web/next.config.js:19-23` recomputes the ladder from `[640,750,828,1080]` to `[640,750,828,1080,1200,1920,2048]`. Every catalogue source is 1024 wide, so `w=1080`, `1200`, `1920` and `2048` all return byte-identical 1024-wide bytes — four cache entries per image where there is one today, across 854 images. That is precisely the waste the derivation comment says it exists to remove ("w=1080 through w=3840 were six byte-identical responses per image, each its own cache entry"). And the hero gains nothing from any of it, because a CSS `background-image` URL never reaches the optimiser — a point `test_full_bleed_images_fit_the_srcset_ceiling` used to make in the very text this change deleted.
+
+So, to your question 1: governing the backgrounds by format and weight is right, but the dimension check is the one place the exemption was earning its keep. The knob is shared between two populations and the one that would need it raised is the one the ladder cannot serve. Either restore a dimension-only exemption for full-bleed art, or split the config into `maxDimension` (the guard) and a separate srcset ceiling, so raising one does not silently move the other. Failing that, the message should at least say that raising `maxDimension` relaxes the check for the whole catalogue and re-adds duplicate srcset candidates.
+
+## 2. The new comment states a corpus count that contradicts the line three below it (refinement, 90)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/config/catalogue_images.json:3` — the added `_fullBleed` says "854 images average 184 KiB either way". `_weights` on line 5, untouched, still says "Shipped, the 852 average 184 KiB with the largest at 446 KiB".
+
+Both describe the current governed corpus in the present tense, and this change is what moved it from 852 to 854. Measured: governed set is now 854 at mean 184.0 KiB; excluding the two backgrounds it was 852 at 184.1 KiB. Your "either way" claim is exact, and "largest at 446 KiB" survives (`products/backpacks/78/lifestyle.webp`, 446.4 KiB). Only the count is stale.
+
+What makes this worth a line rather than silence is that `tests/scripts/test_image_encoding.py:59-62` names this exact failure: "Restating them here is how this file and the config ended up quoting different figures for the same quantity, which is the drift the shared config exists to prevent." The new comment restates a measurement `_weights` already owns, and they now disagree. Either bump `_weights` to 854, or have `_fullBleed` point at `_weights` instead of re-quoting it.
+
+The `852` in `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/browse.spec.ts:57` is also now historical, but it is scoped to "this catalogue change" meaning #96, so it reads as accurate history. Leaving it is fine.
+
+## 3. "pure gain" overstates the lossy-on-lossy trade (refinement, 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:35-36` — "those are served byte-for-byte and so were pure gain".
+
+Your reasoning in question 3 is sound, and it is the part the comment leaves out. The distinction that holds is generation *count at delivery*: `mission.png` is a lossless source the optimiser re-encodes on every request, so converting it to lossy WebP makes delivery generation three. `contact-bg.webp` is generation two — JPEG, then one WebP pass — and terminal, because nothing re-encodes it again. That asymmetry justifies the split cleanly.
+
+But it is one added generation, not zero, and `ui-review` measured the cost at ~45 dB PSNR rather than finding none. "Pure gain" states the cost as zero on the one asset in this change that was lossy-on-lossy. Given that over-claiming is what `ui-review` already caught twice this session, I would say "one added generation rather than two, measured at ~45 dB" and let the number carry it.
+
+---
+
+## On your question 2, the other three comments
+
+I checked each rewritten claim against the code:
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/reencode-catalogue-images.mjs:10-16` — accurate. Scope really is data-file-driven (`DATA_FILES` scanned with `IMAGE_REF`), so "does not reach images referenced only from source" describes the mechanism rather than an intent, which is the correction that was wanted. "Anything new added under `public/images` is governed by that guard" holds for the six suffixes in `IMAGE_SUFFIXES`; an SVG would slip through, but there are none and the dimension and weight checks would be meaningless for one.
+- `test_image_encoding.py:183-187` — accurate. `mission.png` is a `next/image` `fill` at `apps/web/src/app/about/page.tsx:30-31`, so "that one does go through the optimiser" is right, and the generic reader is correctly justified.
+- `test_image_references.py:45` — accurate. `hero.webp` is reached only from `apps/web/tailwind.config.ts:13`; grep confirms no other reference.
+- The `_fullBleed` arithmetic all verifies: 814→78 and 443→214 KiB are correct to the rounding, 604 CSS px at 2x wants 1208 against 1024 (matching `next.config.js`), and hero can regress 8.23x before touching the 640 KiB ceiling, so "eightfold" is true and conservative. Worth knowing that `contact-bg` has only 3.00x of headroom — the comment illustrates with the loosest of the two, which is fair but not the binding case.
+
+One thing I could not verify: the config's `quality: 90` versus the q80 these two were encoded at. WebP does not record the encoder setting, so nothing on disk can confirm q80, and no guard checks quality. It causes no failure — the converter's scope never reaches these files — but the corpus now contains two files encoded off-contract while the config names a single quality.
+
+## Question 4, unrelated
+
+Nothing rising to its own issue. `#165` (the `fullBleed` field name outliving its meaning) is already filed and is now more acute with one entry left whose exemption has nothing to do with full-bleed, which the comment says plainly.
+
+---
+
+**Reviewed:** `git diff` across nine paths (no commits on the branch; `main...HEAD` is empty, everything is unstaged plus two untracked files). Read `apps/web/public/images/hero.webp` and `contact-bg.webp` directly as binaries — dimensions and weights from headers, and I compared against the originals recovered from `git show HEAD:`. Also read `apps/web/next.config.js`, `Dockerfile`, `.dockerignore`, `apps/web/src/app/about/page.tsx`, `apps/web/e2e/browse.spec.ts` and the root `AGENTS.md` for context.
+
+**Could not assess:** the visual result of the re-encode — I have the file headers and byte counts, not a rendered comparison, so the PSNR ≈45 dB and no-banding findings rest on `ui-review`'s screenshots rather than anything I confirmed. Likewise the container-serving check is `verifier`'s; I confirmed only that `Dockerfile:30` copies the directory that contains both new files.</result>
+<usage><subagent_tokens>43049</subagent_tokens><tool_uses>20</tool_uses><duration_ms>286941</duration_ms></usage>
+</task-notification>
