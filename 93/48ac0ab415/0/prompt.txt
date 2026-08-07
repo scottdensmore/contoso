@@ -2692,3 +2692,83 @@ git worktree remove --force ...; rm -rf .verifier-scratch*                      
 Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/[slug]/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx`.</result>
 <usage><subagent_tokens>101186</subagent_tokens><tool_uses>91</tool_uses><duration_ms>1069590</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a9c2f9421d48f3dfd</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/a9c2f9421d48f3dfd.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review LCP prioritisation" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Findings
+
+### 1. The guard cannot tell `priority` from `loading="eager"` — the mechanism the change is about is unasserted
+
+**Defect. Confidence 85.**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:287`
+
+```js
+eager: optimised.flatMap((i, n) =&gt; (i.loading === 'lazy' ? [] : [n])),
+```
+
+The eager set is read entirely from `HTMLImageElement.loading`. That attribute does not observe the preload, and the preload is where the measured gain comes from — your own `/about` comment says so in as many words: "this buys 300-500ms of LCP for 70-140ms of FCP, because the preload goes ahead of the stylesheet."
+
+Verified against the installed Next (16.2.12):
+
+- `node_modules/next/dist/shared/lib/get-img-props.js:584` — `meta.preload = preload || priority`, which is the only thing `priority` does beyond suppressing lazy.
+- Same file, `loadingFinal = isLazy ? 'lazy' : loading`. With `priority` set and no `loading` prop, `loadingFinal` is `undefined`, so React emits no `loading` attribute at all and the DOM getter returns the default `"eager"`.
+- `node_modules/next/dist/client/image-component.js` `ImagePreload` — app router path calls `ReactDOM.preload(src, { as: 'image', imageSrcSet, imageSizes, fetchPriority: undefined })`. (This also confirms the code comments: no `fetchpriority` is set. That part is accurate.)
+
+Concrete scenario: someone replaces `priority={i &lt; 3}` with `loading={i &lt; 3 ? 'eager' : 'lazy'}` on the category grid — a plausible edit, given Next 16 now errors on `preload &amp;&amp; priority` with "Only `preload` should be used" and invites people to fiddle with these props. Result: `img.loading` is byte-identical for all 21 cards, `optimised` is identical, `lcpIndex` is identical, all four assertions pass, and the page emits **zero** preload links. You lose the 1788ms the row is worth and the suite says nothing. This is the same shape as the two one-sided rounds you already found: an assertion that holds on both the right and a wrong implementation.
+
+Nothing else in the repo covers it — `grep -rn preload apps/web/e2e apps/web/src` returns only comments.
+
+Suggested fix, inside the existing `page.evaluate` so it costs no extra round trip:
+
+```js
+preloads: document.querySelectorAll('link[rel="preload"][as="image"]').length
+```
+
+and assert it equals `prioritised`. `ReactDOM.preload` dedupes by href and only `next/image` emits `as="image"` preloads on these three surfaces, so the count is exact: 1 on `/about`, 1 on product detail, 3 on the category grid. Stronger still would be checking each eager image's `currentSrc` against the links' `imagesrcset`, but the count alone kills the mutation above.
+
+### 2. The table has no self-checks: the two-part assertion is only sound while `among &lt;= prioritised`, and a renamed surface deletes its tests silently
+
+**Refinement. Confidence 80.**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:251` and `:304-312`
+
+Two related gaps in the new config-driven shape. Neither is a live bug — today's four entries are sound — but both are in code whose whole purpose is to stop a future edit from being one-sided.
+
+(a) `expect(lcpIndex).toBeLessThan(among)` combined with `expect(eager).toEqual([0..prioritised))` only implies "the LCP image was eager" when `among &lt;= prioritised`. Add an entry like `{ prioritised: 1, at: [{ viewport: 1440, among: 3 }] }` and the suite passes green with a lazy LCP element — precisely the condition the file exists to detect. Current entries: 3/1, 3/3, 1/1, 1/1, all fine. A single `expect(prioritised, '...').toBeGreaterThanOrEqual(among)` at the top of the test body closes it permanently.
+
+(b) `const { prioritised, at } = LCP_SURFACES[surface.name] ?? { prioritised: 0, at: [] }`. Rename a surface in `SURFACES`, or mistype a key here, and the lookup falls through to `at: []`, `for` iterates zero times, and the LCP tests for that surface stop existing. No failure, no skip, a shorter test list nobody reads. Per the root `AGENTS.md`: "A green run that never opened the fixture looks exactly like a guard that works." Iterating `Object.entries(LCP_SURFACES)` and resolving the surface from `SURFACES` (throwing on a miss), or asserting `Object.keys(LCP_SURFACES)` equals `SURFACES.map(s =&gt; s.name)`, removes the fallback entirely.
+
+---
+
+## Answers to your three questions
+
+**1. Is `among: 3` anchored to something stable?** Yes, and independently double-anchored. `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:40` is `grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8` — `xl` changes only the gap, so 3 is the terminal column count, and the `sizes` attribute on line 68 encodes the same three tiers. At any width ≥1024 the first row is structurally cards 0-2. `verifier` is right.
+
+The limit worth knowing, below my reporting bar: nothing links `lg:grid-cols-3`, `i &lt; 3`, `prioritised: 3` and `among: 3`. If the grid ever goes to four columns, `i &lt; 3` becomes wrong and the test fails only if LCP happens to land on the fourth card — and you measured it lands on index 1 in 35 of 35 runs, so it probably would not. The `among` check is a real guard against the *layout* moving LCP out of the prioritised set; it is a weak guard against the *column count* growing.
+
+**2. The 700ms wait — leave it.** The failure direction is safe. `waitForFunction` already gates on an optimised image being `complete`, and `buffered: true` replays entries recorded before `observe()` ran, so the risk is not "the entry has not arrived yet"; it is "the image decoded but has not painted, so LCP still reports a heading." That produces `lcpIndex === -1` and a hard failure, never a false pass. With `retries: 0` in `playwright.config.ts` a flake is loud, which is what that config wants. I would not replace it with a poll: polling until the LCP element *is* an image makes the assertion self-fulfilling and converts a genuine "LCP is the heading" failure into a timeout, which is worse diagnostics for the same outcome.
+
+**3. Unrelated, worth its own issue.** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/products.ts` — `getProductsByCategory` does `include: { products: true }` with no `take`/`skip`. `apps/web/public/products.json` puts 47 products each in Backpacks and Hiking Footwear, so those category pages render 47 cards and 47 optimised image requests in one response. Pre-existing and not touched here, but it bounds what `prioritised: 3` can be worth and it is the kind of thing that gets found again during the next perf pass. (I checked and dismissed the `categories.json` embedded `products` arrays as a second source of truth — `app/page.tsx:10` reads them for the home grid, so they are a deliberate curated subset, not drift.)
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; the branch carries no commits, all work is unstaged.
+- `git diff` — the three files, read in full alongside their surroundings: both changed pages end to end, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts` in full (not just the hunks), `apps/web/src/app/about/page.tsx`, `apps/web/src/app/page.tsx`, `apps/web/src/lib/products.ts`, `apps/web/prisma/seed.ts`, `apps/web/playwright.config.ts`.
+- `git diff --cached` and `git status --short` — nothing staged, no untracked files.
+- Root `AGENTS.md` and `apps/web/AGENTS.md`.
+- Next 16.2.12 internals (`get-img-props.js`, `image-component.js`) to confirm what `priority` actually emits, since both page comments make load-bearing factual claims about it. Both claims check out: a preload link, and no `fetchpriority`.
+- Seed data volumes, to confirm `priority={i &lt; 3}` is not vacuous — Tents has 21 products in `products.json`, not the 3 that `categories.json` lists, so the exactness assertion has 18 lazy cards to discriminate against.
+
+Not assessed: I did not run the suite, so I have not independently reproduced your 33/33 or the two demonstrated regressions; finding 1 is derived from the Next source rather than from a run. The `ui-review` measurements (the cutoff sweep, the 397.328/397.344px widths, the 35/35 LCP attribution) I took as given — they are not recoverable from the repository.</result>
+<usage><subagent_tokens>74515</subagent_tokens><tool_uses>33</tool_uses><duration_ms>490108</duration_ms></usage>
+</task-notification>
