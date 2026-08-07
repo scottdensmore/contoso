@@ -1696,3 +1696,95 @@ At 1x every card in that range lands on 384 either way, which is why it has neve
 Not assessed: the rendered-pixel claims from `ui-review` (no browser run here — I re-derived the box geometry from CSS and the built stylesheet instead), and the built CSS chunk itself, which is a generated artifact I read only to settle the `p-8` vs `pl-3` precedence.</result>
 <usage><subagent_tokens>79782</subagent_tokens><tool_uses>37</tool_uses><duration_ms>505212</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ab6639c5244fcae7f</task-id>
+<tool-use-id>toolu_01SQQohDTGPsRcJJpuNF9fWQ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/36922c54-b585-42f0-a25d-75c31be72b77/tasks/ab6639c5244fcae7f.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after refinement" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repository state is exactly as it was before this session (same three uncommitted modified files, no new changes from me), and only the pre-existing unrelated `travel-app` containers remain.
+
+## Verdict: Verified. The refinement did not weaken the guard — it strengthened it — and 29/29 passed against a real seeded stack.
+
+### 1. Does the refinement actually detect a parse regression?
+
+Yes, and it's strictly better than both the original `&gt;3` and the reviewer-flagged `&gt;1` floors. I extracted the exact parse logic from `deliveryOf` (`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:86-106`) into a scratch script and fed it a realistic 6-rung srcset, then broke the width regex the way a plausible refactor would (`/\s(\d+)w$/` → `/\s(\d{3})w$/`, silently dropping 4-digit widths):
+
+```
+real:                              offered=6 ladder=[384,640,750,828,1080,1200]
+  old guard (&gt;3):                  PASS (bug hidden)
+  old guard (&gt;1, the lowered one): PASS (bug hidden)
+  new guard (===offered):          PASS (correct, no bug)
+
+broken (3-digit only):             offered=6 ladder=[384,640,750,828]  (4 rungs)
+  old guard (&gt;3):                  PASS (bug hidden)   &lt;- the exact false-negative code-review found
+  old guard (&gt;1, the lowered one): PASS (bug hidden)
+  new guard (===offered):          FAIL (caught)
+```
+
+This reproduces exactly the scenario `code-review` identified: a regression that drops rungs down to 4 sails past both magic-number floors but is caught immediately by `expect(ladder.length).toBe(offered)`. The new guard is also correctly decoupled from `maxDimension`/encoding — it never fires on a legitimately narrow ladder, only on a ladder narrower than what was actually offered.
+
+### 2. Full suite rerun against a real seeded stack
+
+Ran all 29 Playwright specs (not just the changed file) against a docker-compose stack I built from this branch, with the DB brought up with visible output and verified by row count before trusting the seed (per your note):
+
+```
+docker exec contoso-db-1 psql -U postgres -d contoso-db -c "select ... count(*) ..."
+ Category |     7
+ Product  |   210
+ User     |    12
+```
+
+Result: **29 passed (2.7m)**, including the three product-detail/category-grid/about-mission image-delivery tests (`e2e/image-delivery.spec.ts:122`) and the auth specs (which worked fine in this run — docker-compose sets `NEXTAUTH_SECRET`/`NEXTAUTH_URL` itself, so your noted environmental auth failure didn't apply here, no `.env`/local-server run was in play).
+
+### 3. Dead code after removing `laddersSeen`
+
+None left. `grep -rn "laddersSeen"` across `apps/web/e2e/` returns nothing, and `eslint e2e/image-delivery.spec.ts` (which has `noUnusedLocals`/`noUnusedParameters` behind it via the project's strict tsconfig options, checked separately since e2e isn't in `tsconfig.json`'s `include`) came back clean. All `deliveryOf(...)` call sites (function def + 2 call sites) now consistently use the single-argument form — no leftover two-argument callers.
+
+### 4. Anything else the change touched
+
+Confirmed unchanged: both `apps/web/src/app/products/[slug]/page.tsx` and `apps/web/src/app/products/category/[slug]/page.tsx` — I diffed them and they contain only the `sizes` attribute changes that were the actual feature (already covered by your prior pass); nothing new landed there.
+
+One limitation I can't fully close: nothing on disk lets me diff the spec file against the exact snapshot you verified last (nothing was committed at any point — `main` and `HEAD` are the same commit, and the only stash present is an unrelated one from a different branch/session). So I can confirm the two described changes are present and correct, and that the file as a whole is internally consistent, green, and clean of dead code — but I can't independently prove no third change slipped in beyond your description. Functionally this doesn't matter for the verdict: the whole file passes lint, a manual type-check, and all three surface tests it drives.
+
+### Environment
+
+- Ports 5432 and 3000 were held by the unrelated `travel-app` project the whole session (`travel-app-db-1`, and a bare `next dev` process at PID 1909285/1909254 under `~/Developer/scottdensmore/travel-app`). Never touched them.
+- Used a scratch compose override (kept outside the repo, deleted afterward) remapping `db`→55433 and `web`→3100 via `ports: !override`, and `LLM_PROVIDER=gcp` for `chat` (no Ollama installed here).
+- Full stack (`db`, `chat`, `web`) built and ran cleanly; `chat` logged `Skipping local product indexing: LLM_PROVIDER=gcp` and came up healthy; `web` ran its own migrate/seed on entrypoint (idempotent against the already-seeded DB) and served 200s.
+- Tore everything down (`docker compose ... down --volumes --remove-orphans`) at the end; only `travel-app-db-1` and `travel-app-mailpit-1` remain running.
+
+### Commands run (for reproduction)
+
+```
+git status --short
+git diff --stat main...HEAD   # HEAD == main; all work is uncommitted
+git diff apps/web/e2e/image-delivery.spec.ts
+git diff apps/web/src/app/products/[slug]/page.tsx apps/web/src/app/products/category/[slug]/page.tsx
+apps/web/node_modules/.bin/eslint e2e/image-delivery.spec.ts
+apps/web/node_modules/.bin/tsc --noEmit --strict --esModuleInterop --moduleResolution bundler \
+  --module esnext --target es2020 --jsx react-jsx --skipLibCheck e2e/image-delivery.spec.ts
+apps/web/node_modules/.bin/playwright test --list
+node &lt;scratch&gt;/guard_check.js   # simulated the parse regression, see section 1
+docker compose -f docker-compose.yml -f &lt;scratch-override&gt;.yml up -d db
+DATABASE_URL=REDACTED npx prisma migrate deploy --schema prisma/schema.prisma
+DATABASE_URL=REDACTED npx prisma db seed --schema prisma/schema.prisma
+docker exec contoso-db-1 psql -U postgres -d contoso-db -c "select ... count(*) ..."
+docker compose -f docker-compose.yml -f &lt;scratch-override&gt;.yml up -d --build chat web
+E2E_BASE_URL=http://127.0.0.1:3100 apps/web/node_modules/.bin/playwright test
+make -C apps/web lint
+docker compose -f docker-compose.yml -f &lt;scratch-override&gt;.yml down --volumes --remove-orphans
+```
+
+### What I did not run, and why
+
+- `make e2e-smoke` / `make ci` — not run as the named make targets, because they hard-code port 3000 and would collide with `travel-app`; I ran the equivalent steps manually (compose build/up, migrate, seed, Playwright) against the overridden ports instead, which exercises the same real stack the target would.
+- `make -C apps/web typecheck` / full `quick-ci` — not run as named targets since `apps/web/tsconfig.json` excludes `e2e/**` (the structural gap you already filed as #170); I substituted a manual standalone `tsc` invocation on the one changed file. Did not rerun `typecheck`/`test` (vitest) for the two `page.tsx` files since they're unchanged from your prior verified pass and vitest doesn't touch `e2e/**` anyway.
+- `docs-check` — not applicable; no Markdown changed.
+- No fresh `ui-review` or `code-review` round — per step 8, a refinement-only change (which this is, per `code-review`'s own classification) doesn't re-arm those.</result>
+<usage><subagent_tokens>67323</subagent_tokens><tool_uses>42</tool_uses><duration_ms>688292</duration_ms></usage>
+</task-notification>
