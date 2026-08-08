@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "177fc070aa00",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-modal-below-lg",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/e2e/chat-modality.spec.ts",
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/turn.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/17/7fc070aa00/0/metadata.json",
+      "transcript": "/17/7fc070aa00/0/full.jsonl",
+      "compact_transcript": "/17/7fc070aa00/0/transcript.jsonl",
+      "content_hash": "/17/7fc070aa00/0/content_hash.txt",
+      "prompt": "/17/7fc070aa00/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1789,
+    "cache_creation_tokens": 4006689,
+    "cache_read_tokens": 426269608,
+    "output_tokens": 810386,
+    "api_call_count": 958
+  }
+}
