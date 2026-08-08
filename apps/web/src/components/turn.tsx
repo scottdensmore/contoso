@@ -71,10 +71,25 @@ export const Turn = ({ turn }: Props) => {
 
   // Gutters were a flat 96px. Inside a 358px panel at 390px that left a 218px
   // content column — 39% fixed gutter — wrapping product names onto two lines.
+  //
+  // `max-w-[46ch]` caps the other end. The gutters are fixed, so from 640 up the
+  // content column grew with the panel without limit: once #183 made the panel a
+  // full-screen sheet to 1023, a reply ran 81 characters per line at 834 and 103
+  // at 1023, against the 45–75 that is comfortable to read. The cap binds only
+  // where the panel is wide enough to exceed it, so the 390 measure above is
+  // untouched.
+  //
+  // `justify-end` is the cap's other half. While the bubble filled the column,
+  // which side a turn sat on was not a signal and only colour told them apart.
+  // Capped, it is a signal — and the default one pointed backwards: the
+  // assistant's bubble landed further right than the shopper's own, measured at
+  // 834 as assistant 228–649 against user 185–606. Main-end is the left for the
+  // row-reverse assistant row and the right for the user row, so one class puts
+  // each turn on the side every chat interface puts it.
   if (turn.type === "user") {
     return (
-      <div className="ml-8 sm:ml-24 flex gap-1">
-        <div className="grow min-w-0 break-words bg-sky-700 text-zinc-100 p-2 rounded-md">
+      <div className="ml-8 sm:ml-24 flex justify-end gap-1">
+        <div className="grow min-w-0 max-w-[46ch] break-words bg-sky-700 text-zinc-100 p-2 rounded-md">
           {getContent(turn)}
         </div>
         <div>
@@ -84,8 +99,8 @@ export const Turn = ({ turn }: Props) => {
     );
   } else {
     return (
-      <div className="flex flex-row-reverse gap-1 mr-8 sm:mr-24">
-        <div className="grow min-w-0 break-words bg-zinc-200 text-zinc-600 p-2 rounded-md">
+      <div className="flex flex-row-reverse justify-end gap-1 mr-8 sm:mr-24">
+        <div className="grow min-w-0 max-w-[46ch] break-words bg-zinc-200 text-zinc-600 p-2 rounded-md">
           {getContent(turn)}
         </div>
         <div>

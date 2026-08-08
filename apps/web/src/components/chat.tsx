@@ -56,22 +56,37 @@ export const Chat = () => {
   const launcherRef = useRef<HTMLButtonElement>(null);
   const widgetRef = useRef<HTMLDivElement>(null);
   const greetingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Why the panel last closed, read by the focus-return effect below.
+  const closedByFocusOut = useRef(false);
+  // Whether the panel is open *now*, for callbacks that were created while it
+  // was. A reply outlives the send that started it.
+  const showChatRef = useRef(false);
 
-  // Below `sm` the panel is a full-screen sheet, so it really does contain the
-  // user and says so. At `sm` and up it occupies a corner, the rest of the page
+  // Below `lg` the panel is a full-screen sheet, so it really does contain the
+  // user and says so. At `lg` and up it occupies a corner, the rest of the page
   // is usable, and trapping focus would take the site navigation away.
   //
   // `false` until mounted, so the server and the first client render agree.
-  // Only the semantics depend on this; the sheet itself is `max-sm:` CSS and is
+  // Only the semantics depend on this; the sheet itself is `max-lg:` CSS and is
   // right from first paint whether or not this has run.
   const [isCompact, setIsCompact] = useState(false);
 
-  // The exact complement of Tailwind's `sm:`, expressed as its own query rather
+  // What a reply announces when there is no panel to announce it in. See the
+  // effect below.
+  const [announcement, setAnnouncement] = useState("");
+
+  // The exact complement of Tailwind's `lg:`, expressed as its own query rather
   // than a `max-width` with an epsilon, so a fractional viewport cannot land
   // between the two and satisfy neither. `tailwind.config.ts` sets no `screens`
-  // override, so 640px is Tailwind's default and these two must move together.
+  // override, so 1024px is Tailwind's default and these two must move together.
+  //
+  // `lg` rather than `sm`, which is where #129 first drew it, because a card is
+  // only a card if the page is still there around it. Measured with the panel
+  // open: it covers 72% of the viewport at 640, 75% at 768 and 70% at 834 —
+  // against 40% at 1440. The three widths in that band were failing 2.4.11 the
+  // same way 390 was, one breakpoint up. See #183.
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 640px)");
+    const query = window.matchMedia("(min-width: 1024px)");
     const sync = () => setIsCompact(!query.matches);
     sync();
     query.addEventListener("change", sync);
@@ -123,7 +138,7 @@ export const Chat = () => {
   //
   // What is covered: both wrap branches, by `wraps focus at both ends of the
   // sheet` in chat.test.tsx, and their absence at desktop by `does not trap
-  // focus at sm and up`. Delete this effect and those go red.
+  // focus at lg and up`. Delete this effect and those go red.
   //
   // What is not covered by anything: the recovery branch below, for focus that
   // is already outside the widget — removing that alone leaves the whole suite
@@ -168,21 +183,95 @@ export const Chat = () => {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [isModal]);
 
+  // At `lg` and up the panel stays non-modal, and non-modal is a claim that the
+  // page behind is still usable. It is not quite: the card still covers 30-54%
+  // of the viewport there, and at 1440 four product links sit entirely behind
+  // it. Nothing can scroll them clear — they are ~400px tall and the panel
+  // leaves 12px above it and 100px below, so there is nowhere to scroll them
+  // to. Shrinking the panel does not fix it either: what is hidden depends on
+  // where the grid puts links, not on the panel's area (1280 measures 0 hidden
+  // and 1440 measures 4).
+  //
+  // So the panel gets out of the way instead of pretending it already has.
+  // Keyboard only, and the criterion is too: 2.4.11 is about the *focused*
+  // control, and focus is the thing this can observe. A mouse user still cannot
+  // reach what the card covers — 6 of 22 product links at 1440 and 7 of 22 at
+  // 1024, at some scroll position — because clicking bare page fires no
+  // `focusin` and the panel stays up. That is #187, not this.
+  //
+  // Nothing focused can be obscured behind a panel that is gone, and the
+  // conversation is not lost — the turns live in the reducer, so reopening
+  // restores the thread rather than starting a new one. See #183.
+  //
+  // Only where it is not modal: below `lg` the surrounding page is `inert`, so
+  // focus cannot land there in the first place, and this would be dead code
+  // that closes the sheet on nothing.
+  //
+  // Backwards only, deliberately. The widget is last in the document, so Tab
+  // forward off its final control leaves the page entirely: no `focusin` fires,
+  // and the panel stays up until focus re-enters at the top, one keystroke
+  // later. That stop is the browser's own chrome — the address bar — and
+  // dismissing the panel while the user is up there would be closing it for
+  // something that is not a page interaction at all.
+  useEffect(() => {
+    if (!showChat || isCompact) return;
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as Node | null;
+      if (target && widgetRef.current?.contains(target)) return;
+      // Focus has already moved to where the user asked for it. Say so, or the
+      // focus-return effect below reads this as an ordinary close and drags
+      // focus back onto the launcher they were leaving.
+      closedByFocusOut.current = true;
+      setShowChat(false);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [showChat, isCompact]);
+
+  useEffect(() => {
+    showChatRef.current = showChat;
+  }, [showChat]);
+
+  // Cancel an unfired greeting whenever the panel closes, by whatever route.
+  // The open branch of `toggleChat` guards on `turns.length`, but a pending
+  // timer has not dispatched yet, so closing and reopening inside 400ms — an
+  // ordinary impatient tap — schedules a second timer and both fire.
+  //
+  // Here rather than in `toggleChat`, which is where it used to live and only
+  // ever covered the button. Escape has always had the same hole, and closing
+  // on focus-out would have been a third way in. Measured, all three closed
+  // within 400ms and reopened: button one greeting, Escape two, focus-out two.
+  // One place, so a fourth close path cannot reintroduce it.
+  useEffect(() => {
+    if (showChat) return;
+    if (greetingTimer.current) clearTimeout(greetingTimer.current);
+  }, [showChat]);
+
   // Opening the panel left focus on the launcher, so the next Tab continued
   // into the page behind it rather than into the conversation.
   useEffect(() => {
     if (showChat) inputRef.current?.focus();
   }, [showChat]);
 
-  // Focus return, after the close rather than during it. Below `sm` the
+  // Focus return, after the close rather than during it. Below `lg` the
   // launcher is unmounted while the sheet is open, so a `focus()` inside the
   // close handler runs against an element that is not in the document yet and
   // silently drops focus to <body> — which is the bug moving focus in on open
   // was added to fix, in the other direction. One mechanism rather than two, so
   // both the Escape path and the button path go through here.
+  // Returned on an explicit dismissal — Escape, or the close button — and only
+  // then. A close caused by focus leaving the panel already has focus on the
+  // control the user moved to, and pulling it back onto the launcher undoes
+  // their keystroke: one Shift+Tab would close the panel, scroll to the link
+  // they reached, and then take focus off it again, leaving them where they
+  // started with the scroll position gone. That is WCAG 3.2.1 On Focus, and the
+  // widget is last in the document, so Shift+Tab is the only way out.
   const wasOpen = useRef(false);
   useEffect(() => {
-    if (wasOpen.current && !showChat) launcherRef.current?.focus();
+    if (wasOpen.current && !showChat && !closedByFocusOut.current) {
+      launcherRef.current?.focus();
+    }
+    closedByFocusOut.current = false;
     wasOpen.current = showChat;
   }, [showChat]);
 
@@ -314,6 +403,20 @@ export const Chat = () => {
       // the panel, which is mounted once in the root layout.
       if (!pendingIds.current.delete(pendingId)) return;
       dispatch({ type: "resolve", id: pendingId, payload: responseTurn });
+
+      // The panel's `role="log"` is what tells a screen-reader user an answer
+      // arrived, and closing on focus-out unmounts it mid-request. The turn
+      // still lands — this line ran — but with the log gone nothing says so,
+      // and asking a question then tabbing back into the page to keep browsing
+      // is what a non-modal panel is for. This change made that reachable, so
+      // it has to cover it.
+      //
+      // Here rather than in an effect watching `state.turns`: this is the
+      // moment a reply arrives, so there is no "did it arrive while closed?"
+      // to reconstruct, and no `setState` in an effect body to cascade from.
+      if (!showChatRef.current) {
+        setAnnouncement("Jane Doe replied. Open chat to read the answer.");
+      }
     };
 
     // sendChatMessage resolves with an error turn rather than rejecting, but a
@@ -350,14 +453,13 @@ export const Chat = () => {
       // of the document — 24 stops back to this launcher. Moving focus in on
       // open is only half the contract. Returned by the effect above, which
       // runs after the launcher is back in the document.
-      //
-      // Cancel an unfired greeting. The open branch below guards on
-      // turns.length, but a pending timer has not dispatched yet, so closing
-      // and reopening inside 400ms — an ordinary impatient tap — schedules a
-      // second timer and both fire.
-      if (greetingTimer.current) clearTimeout(greetingTimer.current);
       return;
     }
+
+    // Opening is reading: the announcement has served its purpose, and leaving
+    // it in the live region means the next reply that repeats it is a text
+    // change of nothing and may not be announced at all.
+    setAnnouncement("");
 
     scrollChat();
     if (state.turns.length === 0) {
@@ -374,9 +476,9 @@ export const Chat = () => {
         className="fixed bottom-0 right-0 mr-4 mb-4 sm:mr-12 sm:mb-12 z-10 flex flex-col items-end"
       >
         {showChat && (
-          // Two shapes, not one shape with overrides. Below `sm` a sheet, at
-          // `sm` and up a card, and the two sets of classes do not intersect —
-          // a base `rounded-lg` that `max-sm:rounded-none` has to win against
+          // Two shapes, not one shape with overrides. Below `lg` a sheet, at
+          // `lg` and up a card, and the two sets of classes do not intersect —
+          // a base radius that a max-width variant has to win against
           // depends on which variant Tailwind emits later, which is not
           // something this file should be betting on.
           //
@@ -394,13 +496,13 @@ export const Chat = () => {
             aria-modal={isCompact ? true : undefined}
             tabIndex={-1}
             className="flex flex-col bg-white outline-none
-                       max-sm:fixed max-sm:inset-x-0 max-sm:top-0
-                       max-sm:h-[100dvh] max-sm:w-full
-                       sm:mb-3 sm:shadow-md sm:rounded-lg
-                       sm:w-[min(650px,calc(100vw-7rem))]
-                       sm:h-[calc(100vh-7rem)]"
+                       max-lg:fixed max-lg:inset-x-0 max-lg:top-0
+                       max-lg:h-[100dvh] max-lg:w-full
+                       lg:mb-3 lg:shadow-md lg:rounded-lg
+                       lg:w-[min(650px,calc(100vw-7rem))]
+                       lg:h-[calc(100vh-7rem)]"
           >
-            <div className="p-2 flex items-center gap-1 max-sm:border-b max-sm:border-zinc-200">
+            <div className="p-2 flex items-center gap-1 mx-auto w-full max-w-2xl max-lg:border-b max-lg:border-zinc-200">
               {/*
                 A sheet has to introduce itself. A corner card can borrow
                 identity from the page around it; this one has covered that
@@ -452,7 +554,12 @@ export const Chat = () => {
               role="log"
               aria-live="polite"
               aria-label="Conversation"
-              className="grow p-2 overscroll-contain overflow-auto"
+              // Capped and centred rather than stretched. The sheet is as wide
+              // as the viewport up to 1023, and a conversation column that wide
+              // leaves the reply on one side and the input spanning the whole
+              // screen under it. No variant needed: the card is 650px, already
+              // narrower than the cap, so this binds only on the sheet.
+              className="grow p-2 overscroll-contain overflow-auto mx-auto w-full max-w-2xl"
               ref={chatDiv}
             >
               <div className="flex flex-col gap-4">
@@ -462,7 +569,7 @@ export const Chat = () => {
               </div>
             </div>
             {/* chat input section */}
-            <div className="p-3 flex gap-3">
+            <div className="p-3 flex gap-3 mx-auto w-full max-w-2xl">
               <input
                 id="chat"
                 name="chat"
@@ -491,14 +598,24 @@ export const Chat = () => {
           </div>
         )}
         {/*
+          `aria-live` without `role="status"`. The waiting turn inside the panel
+          is the page's status region and a test addresses it by that role; a
+          second one makes that query ambiguous, and this is a supplementary
+          announcer rather than something to navigate to. The live region works
+          on any element.
+        */}
+        <div aria-live="polite" className="sr-only">
+          {announcement}
+        </div>
+        {/*
           Not rendered while the sheet is open, because the sheet's own header
           is the way out there. Left in place it would be a second control named
           "Close chat", and it would be behind the sheet in any case: the panel
-          is positioned below `sm` and this button is not, so it loses the paint
+          is positioned below `lg` and this button is not, so it loses the paint
           order regardless of where it sits in the source.
 
           Only the state changes with width, not the element, so the launcher at
-          `sm` and up is exactly what it was.
+          `lg` and up is exactly what it was.
         */}
         {!(isCompact && showChat) && (
           <button

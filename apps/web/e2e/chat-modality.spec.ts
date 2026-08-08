@@ -1,20 +1,31 @@
 import { test, expect, Page } from '@playwright/test'
 
 /**
- * The chat panel is modal below `sm` and is not modal at `sm` and up.
+ * The chat panel is modal below `lg` and is not modal at `lg` and up.
  *
- * That asymmetry is the whole point, so both halves are asserted. At 390 the
- * panel fills the viewport, so everything behind it is obscured and a focus
- * stop landing there is WCAG 2.2 2.4.11 Focus Not Obscured (Minimum), Level AA
- * -- 26 of 43 stops did. At 1440 the panel occupies a corner, the page around
- * it is genuinely usable, and trapping focus there would take the site
- * navigation away for no reason.
+ * That asymmetry is the whole point, so both halves are asserted. Below the
+ * boundary the panel fills the viewport, so everything behind it is obscured
+ * and a focus stop landing there is WCAG 2.2 2.4.11 Focus Not Obscured
+ * (Minimum), Level AA -- 26 of 43 stops did at 390. At 1440 the panel occupies
+ * a corner and trapping focus would take the site navigation away for no
+ * reason.
  *
- * A test that only pinned the 390 half would pass just as happily if the panel
- * became modal everywhere, which is the fix #112's reviewers rejected.
+ * A test that only pinned the phone half would pass just as happily if the
+ * panel became modal everywhere, which is the fix #112's reviewers rejected.
+ *
+ * The boundary is `lg` rather than the `sm` #129 first used, because the card
+ * covered 72% of the viewport at 640, 75% at 768 and 70% at 834 -- not a
+ * corner. TABLET is in the band that moved, and is the case that would silently
+ * revert if someone put the breakpoint back.
+ *
+ * Above the boundary the panel closes when focus leaves it, which is what makes
+ * "non-modal" true rather than merely claimed: four ~400px product links sit
+ * entirely behind the card at 1440, and no scroll position can clear them --
+ * the panel leaves 12px above it and 100px below.
  */
 
 const PHONE = { width: 390, height: 844 }
+const TABLET = { width: 834, height: 1112 }
 const DESKTOP = { width: 1440, height: 900 }
 
 type Stop = {
@@ -80,7 +91,7 @@ async function openChat(page: Page) {
 }
 
 test.describe('chat panel modality', () => {
-  test('below sm the panel is modal', async ({ page }) => {
+  test('below lg the panel is modal', async ({ page }) => {
     await page.setViewportSize(PHONE)
     await openChat(page)
 
@@ -89,13 +100,13 @@ test.describe('chat panel modality', () => {
     // All four parts, because half of this is worse than none of it:
     // `aria-modal` without a trap tells assistive technology something false,
     // and a trap without `inert` leaves the covered controls clickable.
-    await expect(dialog, 'the panel does not claim containment below sm').toHaveAttribute(
+    await expect(dialog, 'the panel does not claim containment below lg').toHaveAttribute(
       'aria-modal',
       'true',
     )
     expect(
       await page.locator('main').evaluate((main) => main.hasAttribute('inert')),
-      'page content behind the panel is not inert below sm',
+      'page content behind the panel is not inert below lg',
     ).toBe(true)
 
     // A sheet that has covered the whole site has to say what it is. The panel
@@ -110,7 +121,7 @@ test.describe('chat panel modality', () => {
     // screen reader and unaddressable by name here.
     await expect(
       page.getByRole('button', { name: 'Close chat' }),
-      'more than one control is named "Close chat" below sm',
+      'more than one control is named "Close chat" below lg',
     ).toHaveCount(1)
 
     const stops = await tabCycle(page, 50)
@@ -135,7 +146,7 @@ test.describe('chat panel modality', () => {
     ).toEqual([])
   })
 
-  test('at sm and up the panel is not modal', async ({ page }) => {
+  test('at lg and up the panel is not modal', async ({ page }) => {
     await page.setViewportSize(DESKTOP)
     await openChat(page)
 
@@ -167,6 +178,141 @@ test.describe('chat panel modality', () => {
       stops.some((stop) => !stop.inWidget),
       'focus never left the chat widget at 1440, so the panel is trapping everywhere',
     ).toBe(true)
+  })
+
+  test('at lg and up the panel closes when focus leaves it', async ({ page }) => {
+    await page.setViewportSize(DESKTOP)
+    await openChat(page)
+
+    // Out of the widget by the shortest route: Shift+Tab from the first control
+    // in the panel goes to whatever precedes the whole widget in the document.
+    await page.getByRole('button', { name: 'Clear conversation' }).focus()
+    await page.keyboard.press('Shift+Tab')
+
+    await expect(
+      page.getByRole('dialog', { name: /chat/i }),
+      'focus left the panel and the panel stayed open, so it is still covering the page',
+    ).toHaveCount(0)
+
+    // Where focus actually is, not merely that it is somewhere. `not.toBe(BODY)`
+    // was the first version of this and it could not see the bug it was written
+    // for: closing ran the focus-return effect, which pulled focus back onto the
+    // launcher, so one Shift+Tab dismissed the panel and left the user exactly
+    // where they started with the scroll position spent. The launcher passes a
+    // BODY check perfectly well.
+    const landed = await page.evaluate(() => {
+      const active = document.activeElement as HTMLElement | null
+      const launcher = document.querySelector('[aria-label="Open chat"]')
+      return {
+        tag: active?.tagName ?? null,
+        isLauncher: !!active && active === launcher,
+        inWidget: !!launcher?.parentElement?.contains(active as Node),
+      }
+    })
+    expect(landed.tag, 'focus fell to nothing when the panel closed').not.toBe('BODY')
+    expect(
+      landed.isLauncher,
+      'closing on focus-out dragged focus back to the launcher, undoing the keystroke',
+    ).toBe(false)
+    expect(
+      landed.inWidget,
+      'focus ended up back inside the chat widget the user was leaving',
+    ).toBe(false)
+  })
+
+  test('no control is entirely hidden at the moment it holds focus', async ({ page }) => {
+    // 2.4.11 exactly, at the width that motivated #183: a control fails only
+    // when it is *completely* covered, measured at four corners and the centre
+    // rather than the centre alone, which is the stricter proxy the phone test
+    // uses.
+    //
+    // Note what this does and does not say. It is about focused controls, not
+    // about coverage in general -- the card still covers 18 product links at
+    // 1440, and a mouse user still cannot click them until the panel is closed.
+    // What it pins is that focus never lands on one of them, because the panel
+    // leaves before focus arrives.
+    //
+    // Not vacuous, though it reads that way: the panel closes a few stops in,
+    // so most of the cycle measures a page with no panel on it. The vacuity
+    // guard below is what keeps that honest, and removing the close-on-focus-out
+    // effect turns this red -- four ~400px links go entirely behind the card,
+    // and no scroll position can clear them, since the panel leaves 12px above
+    // it and 100px below.
+    await page.setViewportSize(DESKTOP)
+    await openChat(page)
+
+    const hidden: string[] = []
+    let visited = 0
+    for (let i = 0; i < 60; i += 1) {
+      await page.keyboard.press('Tab')
+      const stop = await page.evaluate(() => {
+        const element = document.activeElement as HTMLElement | null
+        if (!element || element === document.body) return null
+        const box = element.getBoundingClientRect()
+        if (box.width === 0 || box.height === 0) return null
+        const points = [
+          [0.5, 0.5],
+          [0.02, 0.02],
+          [0.98, 0.02],
+          [0.02, 0.98],
+          [0.98, 0.98],
+        ]
+        const visible = points.filter(([fx, fy]) => {
+          const onTop = document.elementFromPoint(box.left + box.width * fx, box.top + box.height * fy)
+          return onTop === element || element.contains(onTop)
+        }).length
+        return visible === 0
+          ? `${element.tagName.toLowerCase()} ${(element.textContent ?? '').trim().slice(0, 30)}`
+          : false
+      })
+      if (stop === null) continue
+      visited += 1
+      if (stop !== false) hidden.push(stop)
+    }
+
+    // The walk has to have reached the page, not just the widget's own handful
+    // of controls -- otherwise "nothing was hidden" is a statement about four
+    // buttons that were never at risk.
+    expect(
+      visited,
+      'the Tab cycle never got past the widget, so this asserts almost nothing',
+    ).toBeGreaterThan(10)
+    expect(hidden, 'focus stops entirely hidden behind the chat panel (WCAG 2.4.11)').toEqual([])
+  })
+
+  test('the tablet band is modal, not a corner card', async ({ page }) => {
+    // 834 was on the card side of the old `sm` boundary while the card covered
+    // 70% of the viewport. This is the width that reverts silently if the
+    // breakpoint moves back, and the phone test would not notice.
+    await page.setViewportSize(TABLET)
+    await openChat(page)
+
+    await expect(page.getByRole('dialog', { name: /chat/i })).toHaveAttribute('aria-modal', 'true')
+    expect(
+      await page.locator('main').evaluate((main) => main.hasAttribute('inert')),
+      'page content behind the panel is not inert at 834',
+    ).toBe(true)
+
+    const panel = await page.getByRole('dialog', { name: /chat/i }).boundingBox()
+    expect(panel!.width, 'the panel is not full-width at 834').toBeGreaterThanOrEqual(834)
+  })
+
+  test('the boundary sits at exactly 1024', async ({ page }) => {
+    // The CSS variant and the media query are two separate spellings of one
+    // number. They drifted apart would be invisible: the sheet would be a sheet
+    // while claiming nothing, or a card claiming containment.
+    await page.setViewportSize({ width: 1023, height: 800 })
+    await openChat(page)
+    await expect(
+      page.getByRole('dialog', { name: /chat/i }),
+      'not modal at 1023, one pixel below the boundary',
+    ).toHaveAttribute('aria-modal', 'true')
+
+    await page.setViewportSize({ width: 1024, height: 800 })
+    await expect(
+      page.getByRole('dialog', { name: /chat/i }),
+      'still modal at 1024, which is where the card starts',
+    ).not.toHaveAttribute('aria-modal', 'true')
   })
 
   test('modality follows a resize while the panel is open', async ({ page }) => {

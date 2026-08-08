@@ -10,8 +10,9 @@ vi.mock('next-auth/react', () => ({
 beforeEach(() => {
   Element.prototype.scrollTo = vi.fn()
 
-  // Desktop by default, which is the width every test below this line was
-  // written against — the panel as a corner card, non-modal, launcher present.
+  // Desktop by default -- `lg` and up -- which is the width every test below
+  // this line was written against: the panel as a corner card, non-modal,
+  // launcher present.
   //
   // Without this they inherit the stub in `src/test/setup.ts`, which reports
   // "no match" for everything; for a `min-width` query that means compact, so
@@ -662,7 +663,7 @@ describe('Chat placeholder timing', () => {
 })
 
 /**
- * Modality below `sm` only.
+ * Modality below `lg` only.
  *
  * The e2e spec is where the fix is really proven, because obscuring is a
  * question about painted pixels and jsdom paints nothing. What is worth
@@ -693,7 +694,7 @@ describe('Chat modality', () => {
   }
 
   // A controllable `matchMedia`, replacing the always-false one in setup.ts.
-  // The component asks for `(min-width: 640px)` and treats a non-match as
+  // The component asks for `(min-width: 1024px)` and treats a non-match as
   // compact, so `matches` is the inverse of the thing being described.
   //
   // One object per mount, with a live getter: the component captures the
@@ -729,7 +730,7 @@ describe('Chat modality', () => {
     vi.clearAllMocks()
   })
 
-  it('claims containment and inerts the page below sm', () => {
+  it('claims containment and inerts the page below lg', () => {
     useViewport(true)
     const { behind, cleanup } = renderInLayout()
     openChat()
@@ -742,7 +743,7 @@ describe('Chat modality', () => {
     cleanup()
   })
 
-  it('claims nothing at sm and up', () => {
+  it('claims nothing at lg and up', () => {
     useViewport(false)
     const { behind, cleanup } = renderInLayout()
     openChat()
@@ -826,7 +827,7 @@ describe('Chat modality', () => {
     cleanup()
   })
 
-  it('does not trap focus at sm and up', () => {
+  it('does not trap focus at lg and up', () => {
     // The same keystroke that wraps on the sheet must do nothing on the card,
     // or the site navigation is unreachable at desktop width — the outcome
     // #112's reviewers rejected and the reason this is width-scoped at all.
@@ -838,6 +839,73 @@ describe('Chat modality', () => {
     first.focus()
     fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
     expect(document.activeElement).toBe(first)
+
+    cleanup()
+  })
+
+  it('announces a reply that arrives after the panel closed', async () => {
+    // Closing on focus-out unmounts the `role="log"`, so a reply that settles
+    // afterwards lands in the reducer and is announced by nothing. Asking a
+    // question and then tabbing back into the page to keep browsing is the
+    // thing a non-modal panel is for, and this change is what made it
+    // reachable.
+    let resolveReply: (turn: unknown) => void = () => {}
+    sendChatMessage.mockReturnValue(new Promise((resolve) => { resolveReply = resolve }))
+
+    useViewport(false)
+    const { parent, cleanup } = renderInLayout()
+    openChat()
+
+    const input = screen.getByRole('textbox', { name: 'Message' })
+    fireEvent.change(input, { target: { value: 'which tent for winter?' } })
+    fireEvent.keyUp(input, { code: 'Enter' })
+
+    // Out of the widget, which at this width closes the panel.
+    const outside = parent.querySelector('a')! as HTMLElement
+    fireEvent.focusIn(outside, { target: outside })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    await act(async () => {
+      resolveReply({
+        name: 'Jane Doe', message: 'The TrailMaster X4.', status: 'done',
+        type: 'assistant', avatar: '',
+      })
+    })
+
+    expect(screen.getByText(/Jane Doe replied/i)).toBeInTheDocument()
+
+    cleanup()
+  })
+
+  it('stays silent while the panel is open, so a reply is not read twice', async () => {
+    // The log inside the panel is the announcement in that case. Two live
+    // regions saying the same thing is worse than one.
+    //
+    // The reply is settled inside `act` rather than awaited through `waitFor`
+    // on the message text. The first version did the latter and passed against
+    // a build with the open-guard deleted: `setAnnouncement` had run, and the
+    // assertion simply read the DOM before React re-rendered. A negative
+    // assertion that races the thing it is denying always passes.
+    let resolveReply: (turn: unknown) => void = () => {}
+    sendChatMessage.mockReturnValue(new Promise((resolve) => { resolveReply = resolve }))
+
+    useViewport(false)
+    const { cleanup } = renderInLayout()
+    openChat()
+
+    const input = screen.getByRole('textbox', { name: 'Message' })
+    fireEvent.change(input, { target: { value: 'which tent?' } })
+    fireEvent.keyUp(input, { code: 'Enter' })
+
+    await act(async () => {
+      resolveReply({
+        name: 'Jane Doe', message: 'The TrailMaster X4.', status: 'done',
+        type: 'assistant', avatar: '',
+      })
+    })
+
+    expect(screen.getByText('The TrailMaster X4.')).toBeInTheDocument()
+    expect(screen.queryByText(/Jane Doe replied/i)).not.toBeInTheDocument()
 
     cleanup()
   })
