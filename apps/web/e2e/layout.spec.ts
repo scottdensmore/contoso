@@ -14,6 +14,11 @@ import { test, expect, type Page } from '@playwright/test'
  * any sweep that steps over it.
  */
 const WIDTHS = [
+  // 320 is the narrowest width worth supporting: iPhone SE 1st gen, and any
+  // browser at 200% zoom on a 640px viewport. The sweep started at 360 and the
+  // home hero had been overflowing the document by 30px below that the whole
+  // time, unseen. See #162.
+  320,
   360, 375, 390, 414, // phones
   639, 640, 641, // sm boundary
   767, 768, 769, // md boundary
@@ -173,6 +178,55 @@ test.describe('no vertical collision', () => {
       `widths where fewer than ${TEXT_BLOCKS_BEFORE_THE_FIRST_CATEGORY} text blocks were measured, so the check below is weaker than it looks`,
     ).toEqual({})
     expect(collisions, 'widths where the hero paints over the section below').toEqual({})
+  })
+
+  test('the home hero band is shorter than a landscape viewport', async ({ page }) => {
+    // Every width in WIDTHS is measured at height 900, so this suite had never
+    // varied the viewport's height. A phone held sideways is what that hides:
+    // at 667x375 the band stood 424px tall, 113% of the screen, and at 844x390
+    // it was 102%. The whole first screen was hero.
+    //
+    // Read the name literally -- it is the band's *height* against the
+    // viewport's, and that is deliberately weaker than "something below the
+    // hero is on screen". The band does not start at the top: `Header` puts a
+    // 48px block above it, so at 667x375 a 344px band ends at y=392 in a 375px
+    // viewport and the first category heading is still below the fold. #192
+    // carries that residual and the measurements; it needs `min-h-80`
+    // revisited, not a bigger type step.
+    //
+    // Both sizes earn their place -- reverting only the h1 is caught at 844x390
+    // and passes at 667x375; reverting only the subhead and body is caught at
+    // 667x375 and passes at 844x390.
+    const LANDSCAPE = [
+      { width: 667, height: 375 },
+      { width: 844, height: 390 },
+    ]
+
+    await page.goto('/')
+
+    const tooTall: Record<string, string> = {}
+    for (const { width, height } of LANDSCAPE) {
+      await page.setViewportSize({ width, height })
+      await page.waitForTimeout(120)
+      // Selected by the class that makes it the hero rather than by walking up
+      // from the h1. `closest('div').parentElement` resolves correctly today,
+      // but wrapping the heading in any div inside `Block` would silently move
+      // the measurement to the inner container -- which is smaller, so it would
+      // fail open.
+      const band = await page.evaluate(() => {
+        const hero = document.querySelector('[class*="bg-hero-image"]')
+        return hero ? Math.round(hero.getBoundingClientRect().height) : null
+      })
+      if (band === null) {
+        throw new Error(`no hero band found at ${width}x${height}`)
+      }
+      if (band >= height) tooTall[`${width}x${height}`] = `hero is ${band}px of ${height}px`
+    }
+
+    expect(
+      tooTall,
+      'landscape sizes where the hero band is taller than the whole viewport',
+    ).toEqual({})
   })
 })
 
