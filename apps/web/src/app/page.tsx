@@ -30,17 +30,53 @@ export default async function Home() {
         // so the 1024x450 image tiled: already visible as a vertical seam past
         // 1024px wide, and a horizontal one as soon as the band grows taller
         // than 450px, which min-h-80 lets it do.
-        outerClassName="bg-blend-multiply bg-center bg-cover bg-no-repeat bg-hero-image min-h-80 pb-8 bg-neutral-600"
-        innerClassName=""
+        outerClassName="bg-blend-multiply bg-center bg-cover bg-no-repeat bg-hero-image min-h-80 bg-neutral-600"
+        // One owner for the band's vertical rhythm. It used to be two: `pt-12`
+        // on the h1 and `pb-8` out here on the full-bleed outer, which meant
+        // restyling the heading could silently take the top padding with it.
+        innerClassName="py-12"
       >
-        <h1 className="text-zinc-100 pt-12 text-7xl font-black subpixel-antialiased">
+        {/*
+          Fixed 72px type was the whole of #162. At 320 the word "Company"
+          alone is wider than the 296px content box, so the document itself
+          overflowed by 30px — and the band, growing to fit three lines of
+          unscaled copy, stood 672px tall in a 568px viewport. In landscape it
+          was 113% of the screen at 667x375: the entire first screen was hero
+          before you reached anything to buy.
+
+          Base is 5xl, not the 4xl that first fixed the overflow. 4xl is 36px
+          and the category `h2` below it is `text-5xl` at every width, so the
+          brand name rendered smaller than "Tents" — the page's own outline
+          inverted. 48px fits the 296px box at 320 with 70px to spare (the
+          widest word, "Company", inks 225.6px), and softens the step at the
+          `sm` boundary from 36->60 to 48->60.
+
+          7xl waits for `xl`, not `lg`. At 1024 the box is 1000px and 72px inks
+          973px — 2.7% of slack, and which side of that a client lands on
+          depends on the font it resolves from the stack: measured across
+          candidates, Arial and Verdana fit but DejaVu Sans inks 1088px and
+          wraps. At 1280 the box is 1256px, so the margin is 283px.
+        */}
+        <h1 className="text-zinc-100 text-5xl sm:text-6xl xl:text-7xl font-black subpixel-antialiased">
           Contoso Outdoor Company
         </h1>
-        <div className="text-zinc-100 mt-4 text-2xl">
+        <div className="text-zinc-100 mt-4 text-lg sm:text-xl lg:text-2xl text-balance">
           Embrace Adventure with Contoso Outdoors - Your Ultimate Partner in
           Exploring the Unseen!
         </div>
-        <div className="text-zinc-100 mt-2 text-lg w-2/3">
+        {/*
+          `w-2/3` applied at every width, so on a 320px screen this paragraph
+          was a 197px column — three words a line, and the tallest single
+          contributor to the band. The two-thirds measure is there to stop the
+          line running the full width of a desktop, which is not a problem a
+          phone has.
+
+          It comes back at `md` rather than `lg`. Held off to `lg`, the line
+          ran 95 characters at 768 and 131 at 1023 — the fraction was doing no
+          work exactly where the viewport had grown enough to need it. From
+          768 two thirds is 496px, about 55 characters.
+        */}
+        <div className="text-zinc-100 mt-2 text-base lg:text-lg w-full md:w-2/3">
           Choose from a variety of products to help you explore the outdoors.
           From camping to hiking, we have you covered with the best gear and the
           best prices.
