@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "9c68ffa32499",
+  "strategy": "manual-commit",
+  "branch": "fix/hero-responsive-type",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/e2e/layout.spec.ts",
+    "apps/web/src/app/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9c/68ffa32499/0/metadata.json",
+      "transcript": "/9c/68ffa32499/0/full.jsonl",
+      "compact_transcript": "/9c/68ffa32499/0/transcript.jsonl",
+      "content_hash": "/9c/68ffa32499/0/content_hash.txt",
+      "prompt": "/9c/68ffa32499/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1855,
+    "cache_creation_tokens": 4731432,
+    "cache_read_tokens": 438887933,
+    "output_tokens": 853048,
+    "api_call_count": 994
+  }
+}
