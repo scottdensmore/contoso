@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "3e9ca1a5c132",
+  "strategy": "manual-commit",
+  "branch": "fix/typecheck-e2e-specs",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/Makefile",
+    "apps/web/package.json",
+    "apps/web/tsconfig.e2e.json",
+    "tests/scripts/test_e2e_journey_wiring.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3e/9ca1a5c132/0/metadata.json",
+      "transcript": "/3e/9ca1a5c132/0/full.jsonl",
+      "compact_transcript": "/3e/9ca1a5c132/0/transcript.jsonl",
+      "content_hash": "/3e/9ca1a5c132/0/content_hash.txt",
+      "prompt": "/3e/9ca1a5c132/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2366,
+    "cache_creation_tokens": 6071824,
+    "cache_read_tokens": 621630642,
+    "output_tokens": 1209802,
+    "api_call_count": 1270
+  }
+}
