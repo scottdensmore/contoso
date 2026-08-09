@@ -32,27 +32,42 @@ import { test, expect, Page } from '@playwright/test'
  * an entry labelled "the hero photograph" there was measuring white page copy.
  * Four of these were the same near-white background until that was found.
  *
- * The mean brightness of the ring just outside the control is quoted for each,
- * measured on this build, so a surface that stops being what it says is
- * checkable rather than taken on trust.
+ * `brightness` is what stops that recurring. Reaching a scroll offset only
+ * proves the document is still long enough; it does not prove the launcher is
+ * still over the thing the label names. Copy, image sizes or section spacing
+ * move, the dark cases drift onto white, and the suite goes on passing while
+ * quietly testing one background eight times — which is how it would stop
+ * noticing that a ring had been removed.
+ *
+ * So the mean is asserted rather than recorded in a comment. It is a coarse
+ * instrument: it catches a surface converging on the page background, not a
+ * change in local structure, and the `/about` scroll-0 case is deliberately
+ * banded away from plain white for exactly that reason.
  */
 const SURFACES = [
-  // Dark.
-  { route: '/', width: 667, height: 375, scrollY: 0, on: 'the hero photograph, dark' }, // 15
-  { route: '/', width: 390, height: 844, scrollY: 2400, on: 'a product photograph, dark' }, // 86
-  { route: '/about', width: 390, height: 844, scrollY: 150, on: 'a photograph, dark' }, // 81
-  // Mid-tone, which is the case two tones cannot cover and the reason for three.
-  { route: '/', width: 390, height: 844, scrollY: 150, on: 'a photograph, mid-tone' }, // 132
-  { route: '/about', width: 390, height: 844, scrollY: 0, on: 'copy over a photograph edge' }, // 225
-  // Light.
-  { route: '/', width: 768, height: 1024, scrollY: 0, on: 'a product card, white' }, // 250
-  { route: '/faq', width: 390, height: 844, scrollY: 0, on: 'body copy, white' }, // 250
-  { route: '/', width: 1440, height: 900, scrollY: 0, on: 'the page background, zinc-50' }, // 250
+  // Dark. The mean is of every background pixel the walk reads, measured on
+  // this build; the band is that value with room for the page to change a
+  // little without the case losing its identity.
+  { route: '/', width: 667, height: 375, scrollY: 0, on: 'the hero photograph, dark', brightness: [10, 60] }, // 32
+  { route: '/about', width: 390, height: 844, scrollY: 150, on: 'a photograph, dark', brightness: [45, 95] }, // 69
+  { route: '/', width: 390, height: 844, scrollY: 150, on: 'a photograph, dark', brightness: [80, 135] }, // 106
+  { route: '/', width: 390, height: 844, scrollY: 2400, on: 'a product photograph, dark', brightness: [85, 140] }, // 109
+  // Light by the mean, and mixed underneath it — which is the interesting case
+  // and the one the mean cannot see. `/about` at scroll 0 averages 224 while
+  // individual directions land on the mountain photograph, and those are the
+  // mid-luminance readings that two tones cannot cover: removing the hairline
+  // fails here at 2.57:1 while the mean stays where it is.
+  { route: '/about', width: 390, height: 844, scrollY: 0, on: 'copy over a photograph edge', brightness: [200, 245] }, // 224
+  { route: '/', width: 1440, height: 900, scrollY: 0, on: 'the page background beside a card', brightness: [195, 245] }, // 220
+  // White.
+  { route: '/faq', width: 390, height: 844, scrollY: 0, on: 'body copy, white', brightness: [230, 255] }, // 246
+  { route: '/', width: 768, height: 1024, scrollY: 0, on: 'a product card, white', brightness: [230, 255] }, // 248
 ]
 
 const REQUIRED_RATIO = 3
 
 type Sample = { direction: string; best: number }
+type Reading = { samples: Sample[]; brightness: number }
 
 /**
  * The launcher's contrast against what is directly behind it, per side.
@@ -69,7 +84,7 @@ type Sample = { direction: string; best: number }
  * made the whole check a function of where the curve happened to fall between
  * two pixels.
  */
-async function contrastAroundLauncher(page: Page): Promise<Sample[]> {
+async function contrastAroundLauncher(page: Page): Promise<Reading> {
   const launcher = page.locator('[aria-label="Open chat"]')
   await expect(launcher).toBeVisible()
   const box = await launcher.boundingBox()
@@ -182,7 +197,7 @@ async function contrastAroundLauncher(page: Page): Promise<Sample[]> {
         ['W', -1, 0], ['NW', -0.7071, -0.7071], ['N', 0, -1], ['NE', 0.7071, -0.7071],
       ] as const
 
-      return directions.map(([direction, dx, dy]) => {
+      const readings = directions.map(([direction, dx, dy]) => {
         // Clear of the rings, and of the antialiasing either side of them, but
         // still the colour a visitor sees touching the control. The worst of
         // the three, so a light pixel next to a dark one does not average into
@@ -195,8 +210,19 @@ async function contrastAroundLauncher(page: Page): Promise<Sample[]> {
             Math.max(...tones.map((tone) => ratio(tone, background))),
           ),
         )
-        return { direction, best }
+        return { direction, best, background: behind }
       })
+
+      // The mean of every background pixel the walk looked at, which is what
+      // the surface's declared band is checked against.
+      const all = readings.flatMap((reading) => reading.background)
+      const brightness =
+        all.reduce((total, [r, g, b]) => total + (r + g + b) / 3, 0) / all.length
+
+      return {
+        samples: readings.map(({ direction, best }) => ({ direction, best })),
+        brightness,
+      }
     },
     { shot, pad: PAD, tones },
   )
@@ -219,11 +245,47 @@ test.describe('chat launcher', () => {
         ).toBeGreaterThanOrEqual(surface.scrollY - 1)
       }
 
-      const samples = await contrastAroundLauncher(page)
+      // Every image on screen has finished before anything is sampled. The
+      // below-the-fold cases scroll onto lazily loaded product photographs and
+      // `scrollTo` returns before those arrive, so the walk could measure the
+      // empty box where the picture is going to be — which is the page
+      // background, turning a dark surface into a light one.
+      //
+      // Insurance rather than a demonstrated fix, and worth saying which: the
+      // race would not reproduce here. A cold context throttled to 400kbps and
+      // 300ms of latency reads 109 either way, the same as an unthrottled run.
+      // What the wait buys is that the brightness band below cannot go red on
+      // a slower machine for a reason that has nothing to do with contrast.
+      await page.waitForFunction(() =>
+        Array.from(document.querySelectorAll('img'))
+          .filter((image) => {
+            const box = image.getBoundingClientRect()
+            return box.bottom > 0 && box.top < window.innerHeight && box.width > 0
+          })
+          .every((image) => image.complete && image.naturalWidth > 0),
+      )
+
+      const { samples, brightness } = await contrastAroundLauncher(page)
 
       // A walk that sampled nothing would report no failures, and so would a
       // launcher that had stopped rendering.
       expect(samples.length, 'no directions were sampled around the launcher').toBe(8)
+
+      // Still the surface this case is named after. Without this, reaching the
+      // scroll offset proves only that the document is long enough, and a case
+      // that drifts onto white keeps passing while testing nothing the other
+      // seven do not.
+      const [darkest, lightest] = surface.brightness
+      expect(
+        Math.round(brightness),
+        `this case is meant to sit on ${surface.on}, but the background around ` +
+          `the launcher averages ${Math.round(brightness)} of 255`,
+      ).toBeGreaterThanOrEqual(darkest)
+      expect(
+        Math.round(brightness),
+        `this case is meant to sit on ${surface.on}, but the background around ` +
+          `the launcher averages ${Math.round(brightness)} of 255`,
+      ).toBeLessThanOrEqual(lightest)
 
       const failing = samples
         .filter((sample) => sample.best < REQUIRED_RATIO)
