@@ -584,15 +584,62 @@ export const Chat = () => {
                 }}
                 // Resting ring was zinc-300 and the focus ring was the same
                 // colour, so focus was indicated by the browser default alone.
-                className="block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ring-2 ring-inset ring-zinc-300 focus:ring-sky-700 focus:outline-none"
+                //
+                // zinc-500 rather than zinc-300, which measured 1.48:1 against
+                // the panel — a declared boundary that was not one. zinc-400 is
+                // 2.62:1 and also misses; zinc-500 is 4.83:1 and is the first
+                // step on the scale that clears the 3:1 in WCAG 1.4.11.
+                //
+                // It matters more since the panel became a full-screen sheet:
+                // on a corner card the panel's own edge and shadow gave the
+                // input row some structure, and on the sheet this outline is
+                // the only thing separating the field from the surface.
+                //
+                // 1px, not 2. The contrast is in the colour, so a hairline
+                // scores the same 4.83:1 at half the weight, and every other
+                // field in the app is 1px — see #196, which is the same failure
+                // in ten more of them.
+                //
+                // And the focus indicator is now an outline rather than a
+                // recolour of this ring. It had been `focus:ring-sky-700` with
+                // `focus:outline-none`, which was fine while the resting ring
+                // was pale: 1.48:1 to 5.86:1 is a visible jump. Against
+                // zinc-500 it is not — sky-700 and zinc-500 differ by 1.21:1,
+                // the same lightness in two hues, indistinguishable in
+                // greyscale. That is WCAG 2.4.13, and no colour fixes it:
+                // resting and focused both have to be dark to clear 3:1 against
+                // a white panel, so they cannot also differ 3:1 from each
+                // other. The indicator has to change shape, which is what every
+                // other control in this widget already does.
+                className="block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ring-1 ring-inset ring-zinc-500 focus:ring-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               />
               <button
                 type="button"
                 onClick={sendMessage}
                 aria-label="Send message"
-                className="rounded-md p-2 border-solid border-2 border-zinc-300 hover:cursor-pointer hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                // Filled, not outlined. Giving this the same zinc-500 stroke
+                // the input got made the two identical — same weight, same
+                // colour, same radius, same height — so the row read as one
+                // wide box beside one small box rather than as a field and its
+                // action. A fill satisfies 1.4.11 through its own contrast
+                // against the panel (5.86:1) instead of a drawn line, and it
+                // says which of the two is the thing you press.
+                //
+                // sky-700 is the widget's own accent — the shopper's bubbles
+                // and the focus rings in here. It stays inside the panel; the
+                // launcher took the page's indigo in #190 precisely because
+                // that one sits on the page.
+                //
+                // `size-11` rather than `p-2`, because the border was load
+                // bearing: `border-2` on a border-box element was contributing
+                // 4px, so dropping it took the button from 44x44 to 40x40 and
+                // the input followed it down the stretch row. 44 is the comfort
+                // target in WCAG 2.5.5, Apple's HIG and Android's guidance, and
+                // this is the primary action of a full-screen sheet at phone
+                // width — a bad place to lose it to a side effect.
+                className="rounded-md size-11 flex items-center justify-center bg-sky-700 text-white hover:bg-sky-800 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               >
-                <PaperAirplaneIcon className="w-6 stroke-zinc-500" aria-hidden="true" />
+                <PaperAirplaneIcon className="w-6" aria-hidden="true" />
               </button>
             </div>
           </div>
