@@ -105,4 +105,58 @@ test.describe('browsing', () => {
     ).toBeGreaterThan(0)
     expect(failed, 'image requests returned an error status').toEqual([])
   })
+
+  test('a product gallery does not announce the same thing twice', async ({ page }) => {
+    // Every gallery image carried `alt={product.name}`, so a screen reader
+    // heard the product's name once per picture -- five times for most
+    // products -- and could not tell any of them apart. `lib/gallery-alt.ts`
+    // is unit-tested against the whole catalogue; this is the part that check
+    // cannot see, which is whether the page uses it.
+    //
+    // Sampled from a category page rather than from the home page. The home
+    // page links exactly the twenty seeded products, and those twenty are
+    // precisely the ones whose filenames are UUIDs -- so "follow the first
+    // product link" is the one route guaranteed to miss all 190 products whose
+    // shot types this is meant to be checking. The first version of this test
+    // did that, and asserted that a one-element list had no duplicates.
+    await page.goto('/products/category/tents')
+    const links = (
+      await page
+        .locator('a[href^="/products/"]')
+        .evaluateAll((anchors) =>
+          anchors.map((anchor) => (anchor as HTMLAnchorElement).getAttribute('href') ?? ''),
+        )
+    ).filter((href) => href && !href.startsWith('/products/category'))
+
+    expect(links.length, 'no product links on the category page').toBeGreaterThan(1)
+
+    let described = 0
+    for (const href of links.slice(0, 5)) {
+      await page.goto(href)
+      const alts = await page
+        .locator('main img')
+        .evaluateAll((images) => images.map((image) => (image as HTMLImageElement).alt))
+
+      expect(alts.length, `no gallery images on ${href}`).toBeGreaterThan(2)
+
+      // Decorative images announce nothing, and any number of those is fine.
+      const spoken = alts.filter((alt) => alt !== '')
+      expect(
+        spoken.filter((alt, index) => spoken.indexOf(alt) !== index),
+        `${href} announces something already announced`,
+      ).toEqual([])
+      expect(spoken.length, `${href} has an entirely silent gallery`).toBeGreaterThan(0)
+
+      if (spoken.length > 1) described += 1
+    }
+
+    // Without this the whole test passes on unlabelled products, where a single
+    // non-empty alt cannot duplicate anything and the shot-type phrasing is
+    // never rendered at all.
+    expect(
+      described,
+      'every sampled product was an unlabelled one, so no gallery with described shots was checked',
+    ).toBeGreaterThan(0)
+  })
+
 })
