@@ -168,7 +168,17 @@ Follow these steps in order for every change.
     - Open a normal, ready-for-review pull request by default. Do not open
       draft pull requests unless the user explicitly asks for a draft.
 
-11. **Merge only clean, passing pull requests.** Merge only after GitHub
+11. **Clear the automated pull request review before merging.** An automated
+    reviewer runs against pull requests here. Address what it raises, reply to
+    each comment with what changed and what was measured, and resolve the
+    thread. Treat its findings as real; when it is wrong, argue back with a
+    measurement rather than complying, and say so in the reply.
+
+    How it signals is not obvious, and the part it does document is buried in
+    a review body. See *The automated pull request reviewer* below before
+    concluding it is done.
+
+12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never bypass
     a failing or pending required check. Self-merges are allowed when these
     conditions are met. Use squash merge for short-lived development branches
@@ -210,6 +220,82 @@ it: a separate pull request is cheap, and an unscoped one is not.
 
 Sub-agents report findings; they do not file issues. Every finding they report
 that falls outside the current change needs the main agent to file it.
+
+### The automated pull request reviewer
+
+Observed on 2026-08-09 across pull requests #195 and #198. Not taken from the
+tool's own description, which lists triggers that do not match what happened.
+This is vendor behaviour and liable to drift, so read it as what was seen rather
+than what is guaranteed, and re-check it if it stops matching.
+
+`chatgpt-codex-connector[bot]` signals through **reactions on the pull request**
+— `GET /repos/:owner/:repo/issues/:number/reactions`, the issue endpoint.
+`gh pr view --json reactionGroups` does return them, but only as a content and a
+count, with no reacting login, which is exactly the part the condition below
+turns on.
+
+- `eyes` means a round is running, and is removed when that round ends. It is
+  only visible while it lasts, so seeing no `eyes` says nothing.
+- Findings arrive as inline review comments. The review body carries none of
+  them, but it is not inert: it records `**Reviewed commit:**` for that round,
+  which is the field that says which head was actually reviewed, and it is
+  where the tool states the `+1` convention itself. What it does not document
+  is `eyes` or the persistence of `+1`, and its trigger list is incomplete —
+  pushes to an open pull request drove four of the five rounds on #198 and are
+  not on it.
+- A clean round posts **no review at all** — not an empty one — and leaves
+  `+1`, which persists. Its only other trace is `eyes` appearing and clearing.
+
+**Done means a `+1` from that login, created later than both the last push and
+the newest inline comment from it, with every one of its threads resolved.**
+
+Each clause is there because a simpler version is wrong:
+
+- *Later than the last push*, because `+1` persists once left. Its presence
+  alone cannot tell a clean round just finished from a clean round three pushes
+  ago.
+
+  This clause has a limit, and it is the one place the section is known to run
+  out. Adding a reaction is idempotent, so a second clean round leaves the
+  original `+1` with its original timestamp — the condition is satisfiable on a
+  pull request's first clean round and not on a later one, where it would say
+  "not done" forever. No pull request in the sample had two clean rounds, so
+  this is reasoned rather than observed.
+
+  If it happens, do not wait on a timestamp that cannot move, and do not look
+  for the round's `**Reviewed commit:**` line either — a clean round posts no
+  review to carry one, so the newest names an older head and reads as "not
+  done". What is observable is the round itself: comment `@codex review`, watch
+  `eyes` appear and clear, and take "cleared, no new inline comments" as the
+  signal. The `+1` is then confirmation rather than the clock.
+- *Later than the newest inline comment*, and **not** "no comments against
+  `HEAD`". GitHub advances a review comment's `commit_id` to the head it still
+  applies to, so on #198 a comment raised on `dd1d694` reports `commit_id`
+  `770f77e` — the head that was merged, in the state that was done. Filtering on
+  `commit_id`, on `position`, or on `isOutdated` all conclude "not done" on a
+  pull request that was. `original_commit_id` is the field that records where a
+  comment was actually raised.
+
+It does not mean "no new review appeared". On #195 two pushes drew neither a
+review nor a reaction, and that pull request has an empty reaction set to this
+day — so silence is not a pass, and a round that never arrives is not the same
+as a round that found nothing. On #198 every one of four pushes drew a round,
+which is why the two cannot be told apart by waiting alone. Poll for an outcome,
+and if none arrives within a few minutes of the usual latency, say that rather
+than reading it as approval.
+
+Rounds followed pushes by roughly five to ten minutes on #198, measured from
+commit timestamps. A commit is made at or before its push, so those intervals
+overstate the true latency rather than understating it.
+
+Resolving a thread is a GraphQL `resolveReviewThread` mutation. `gh` has no
+subcommand for it.
+
+Worth the loop: on #198 it raised nine findings across four rounds, eight of
+them P1. It repeatedly caught guards that measured a CSS declaration rather than
+what was painted, and it overturned a `ui-review` conclusion that measurement
+then settled in its favour. It was also wrong once, on a focus-area formula that
+assumed square corners and failed a compliant rounded control by six pixels.
 
 ### Sub-agents this workflow depends on
 
