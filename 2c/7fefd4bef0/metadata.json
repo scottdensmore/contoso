@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "2c7fefd4bef0",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-control-boundaries",
+  "checkpoints_count": 2,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/2c/7fefd4bef0/0/metadata.json",
+      "transcript": "/2c/7fefd4bef0/0/full.jsonl",
+      "compact_transcript": "/2c/7fefd4bef0/0/transcript.jsonl",
+      "content_hash": "/2c/7fefd4bef0/0/content_hash.txt",
+      "prompt": "/2c/7fefd4bef0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2086,
+    "cache_creation_tokens": 4979823,
+    "cache_read_tokens": 504688023,
+    "output_tokens": 1042703,
+    "api_call_count": 1119
+  }
+}
