@@ -71,6 +71,24 @@ Follow these steps in order for every change.
    argued rather than demonstrated is the defect the guard was added to
    prevent, one level up.
 
+   **Measure what was produced, not what was asked for.** A guard that reads a
+   declaration is measuring the request, and the two come apart constantly: a
+   colour Tailwind serialises as `lab()` reads as a different colour through a
+   regex for numbers; `ring-0` leaves its colour in the computed box-shadow
+   with no geometry to paint it; a zero-width border still reports a border
+   colour; a blurred shadow reports its source colour while every pixel it
+   paints is composited toward the background; `outlineWidth` reports the
+   user-agent default of `3px` for an outline whose style is `none`. Every one
+   of those passed a check that looked right and was measuring something
+   adjacent to the claim. Read the rendered pixels, the served bytes, the
+   accessibility tree — whatever the asserted thing actually is.
+
+   The same trap catches fixtures and samples. A surface in a spec labelled
+   "the hero photograph" was measuring white page copy, because the launcher it
+   sampled around cannot reach the hero at that viewport. Assert that the
+   sample is what its name says: a brightness band, an overlap, a count that
+   only the intended case produces.
+
    Point the guard at a fixture tree; do not damage the real one. These modules
    compute their paths at import, so rebind **every path constant the assertion
    dereferences** — found by reading the module, not guessed from its name.
@@ -177,6 +195,21 @@ Follow these steps in order for every change.
     How it signals is not obvious, and the part it does document is buried in
     a review body. See *The automated pull request reviewer* below before
     concluding it is done.
+
+    If no round arrives, that is a state to establish rather than assume, and
+    the file says why: `eyes` is only visible while a round lasts, so a pull
+    request twenty seconds after a push looks exactly like one the reviewer
+    will never touch. Establish it — pushed, polled past the latency recorded
+    below, `@codex review` requested, and no `eyes` appearing — and say what
+    was observed.
+
+    Then do the substitute work rather than pointing at work already done:
+    steps 6 through 8 ran before the pull request existed, so run `code-review`
+    once more against the pull request head, and go on to step 12 on that.
+    Silence is not approval, and it is also not a reason to leave a reviewed,
+    passing pull request unmerged indefinitely. What is never allowed is
+    recording silence as a clean round, or reaching this paragraph by not
+    waiting.
 
 12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never bypass
@@ -300,8 +333,30 @@ assumed square corners and failed a compliant rounded control by six pixels.
 ### Sub-agents this workflow depends on
 
 Steps 6 through 8 use `ui-review`, `verifier`, and `code-review`, defined in
-`.claude/agents/`. All three run unattended: they cannot ask a question and
-cannot modify the repository they assess.
+`.claude/agents/`. All three run unattended: they cannot ask a question, and
+they are instructed not to modify the repository they assess. That is an
+instruction rather than a sandbox — each of them has `Bash` — so if a review
+round is followed by working-tree changes you did not make, check `git status`
+before assuming they are yours.
+
+**Their findings are claims, not verdicts.** Check the ones a change depends
+on. This workflow has had a rendered review call a compliant focus indicator
+"completely invisible" — acted on, it produced a guard that rejected a correct
+design — and the same review quote a contrast ratio the running build measured
+differently, zinc-400 at 2.56:1 against a measured 2.62:1. Both were believed
+before they were checked. Address every finding, and where one is wrong, say so
+with the measurement rather than complying; step 11 sets that standard for the
+automated reviewer, and it is the same standard here.
+
+Record a disputed finding where someone else can audit it, and note when:
+carried into the body of the commit step 9 is about to make, or into the pull
+request body when the dispute arises after committing. Neither surface exists
+while step 8 is running, so this is a commitment about what gets written, not a
+precondition to satisfy first. Step 8's loop ends on a round returning no
+defects, and a defect disputed rather than fixed counts as cleared only if it
+is written down that way — a commit whose body omits it means step 8 did not
+clear. Otherwise "I checked, it was wrong" lives inside one agent's reasoning,
+and the gate opens with nothing to inspect.
 
 If one is unavailable — a different assistant, or a session started before the
 definitions landed — carry out that step's intent directly and say which agent
