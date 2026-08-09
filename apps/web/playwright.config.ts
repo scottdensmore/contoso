@@ -14,6 +14,13 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './e2e',
+  // Narrower than Playwright's default, which also collects `.spec.mts`,
+  // `.spec.cts`, `.spec.js` and friends. Stating it makes the set of files that
+  // are journeys a single fact, which `tsconfig.e2e.json` and the pre-commit
+  // hook can then be checked against — `test_e2e_journey_wiring.py` asserts
+  // every file this collects is type-checked. Left at the default, each of
+  // those extensions was a journey that ran with nothing type-checking it.
+  testMatch: '**/*.spec.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,

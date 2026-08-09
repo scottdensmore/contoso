@@ -1,0 +1,31 @@
+{
+  // The Playwright specs, which `tsconfig.json` does not include and therefore
+  // never type-checked. A spec could call a helper with the wrong arity or a
+  // renamed export and every check stayed green -- #166 shipped exactly that,
+  // a `deliveryOf(page, 'Our Mission')` call left behind when the helper lost
+  // its second parameter, and nothing in the repository could see it.
+  //
+  // A separate config rather than adding the specs to the app's `include`,
+  // because the two run in different places. The app is compiled for the Next
+  // runtime and targets es5; a spec runs in Node, and the callbacks it hands to
+  // `page.evaluate` run in a browser. Under the app's target the specs produce
+  // 13 diagnostics -- 8 `TS2802` on iterating a `NodeListOf`, 5 `TS7006` on
+  // browser callback parameters -- every one an artifact of the target rather
+  // than a defect in the spec.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Node 22 and current Chromium, which is what actually runs this code.
+    // Removes the downlevel-iteration diagnostics without asking for
+    // `--downlevelIteration`, which would only suppress them.
+    "target": "es2022",
+    "lib": ["dom", "dom.iterable", "es2022"]
+  },
+  // `.ts` is what `playwright.config.ts` pins `testMatch` to, so that is the
+  // set of journeys. `.tsx` is here for anything else in the directory -- a
+  // helper module, or a `.spec.tsx` someone drops in expecting it to run. That
+  // second case is caught by `test_nothing_in_the_test_directory_is_silently_uncollected`
+  // rather than by this file, but type-checking it costs nothing and means the
+  // failure is about the file not running, not about it also being unchecked.
+  "include": ["e2e/**/*.ts", "e2e/**/*.tsx"],
+  "exclude": ["node_modules"]
+}
