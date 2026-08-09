@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "a408e01430b5",
+  "strategy": "manual-commit",
+  "branch": "fix/launcher-overlaps-content",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/e2e/chat-launcher.spec.ts",
+    "apps/web/src/components/chat.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a4/08e01430b5/0/metadata.json",
+      "transcript": "/a4/08e01430b5/0/full.jsonl",
+      "compact_transcript": "/a4/08e01430b5/0/transcript.jsonl",
+      "content_hash": "/a4/08e01430b5/0/content_hash.txt",
+      "prompt": "/a4/08e01430b5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1955,
+    "cache_creation_tokens": 4841908,
+    "cache_read_tokens": 463549230,
+    "output_tokens": 935945,
+    "api_call_count": 1048
+  }
+}
