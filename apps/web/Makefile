@@ -24,10 +24,14 @@ lint: ## Lint web app
 	$(MAKE) sync-env
 	$(NPM) run lint
 
-typecheck: ## Type-check web app
+# Two configs: the app's, and the specs'. The specs run in Node and the browser
+# rather than the Next runtime, so they need a different target -- see
+# tsconfig.e2e.json. Without the second line nothing here opens them.
+typecheck: ## Type-check web app and the Playwright specs
 	$(MAKE) sync-env
 	$(MAKE) prisma-generate
 	./node_modules/.bin/tsc --noEmit
+	./node_modules/.bin/tsc --noEmit -p tsconfig.e2e.json
 
 test: ## Run web tests
 	$(MAKE) sync-env
