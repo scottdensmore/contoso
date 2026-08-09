@@ -1,8 +1,9 @@
 """Guard AGENTS.md's claims about the workflow sub-agents against their definitions.
 
 AGENTS.md states that `ui-review`, `verifier`, and `code-review` are defined in
-`.claude/agents/`, that all three run unattended, and that none can modify the
-repository it assesses. Those claims are load-bearing: the first is why the
+`.claude/agents/`, that all three run unattended, and that each is *instructed*
+not to modify the repository it assesses — an instruction rather than a sandbox,
+because each of them has `Bash`. Those claims are load-bearing: the first is why the
 workflow can run without a human present, the second is why a review agent is
 trusted to look at uncommitted work.
 
@@ -83,6 +84,20 @@ def step_that_invokes(agent: str) -> int | None:
     return None
 
 
+def body_of(path: Path) -> str:
+    """Everything after the frontmatter.
+
+    The instruction being checked has to be in the agent's operating rules, not
+    in its `description:`. The description is a routing hint the caller reads
+    when picking an agent; it is not something the agent is told. Matching the
+    whole file passed on `description: ... does not modify code.` for two of the
+    three agents, so the check was live for exactly the one whose description
+    happened to omit the phrase.
+    """
+    parts = path.read_text(encoding="utf-8").split("---", 2)
+    return parts[2] if len(parts) > 2 else ""
+
+
 class AgentDefinitionTests(unittest.TestCase):
     def test_every_agent_the_docs_name_exists(self):
         for name in sorted(EXPECTED_STEP):
@@ -130,8 +145,15 @@ class AgentDefinitionTests(unittest.TestCase):
                         "AGENTS.md claims these agents run unattended",
                     )
 
-    def test_agents_cannot_modify_the_repository(self):
-        """AGENTS.md claims none of them can modify what they assess."""
+    def test_agents_have_no_direct_editing_tools(self):
+        """AGENTS.md claims none of them carries a tool whose purpose is editing.
+
+        Deliberately not "cannot modify": every one of them has `Bash` and could
+        write a file with it. AGENTS.md says so, and `test_agents_are_told_not_to_modify_and_could`
+        below guards the other half of that sentence. What this checks is the
+        weaker, true claim — that none of them is *equipped* to edit as a matter
+        of course.
+        """
         for name in sorted(defined_agents() | set(EXPECTED_STEP)):
             with self.subTest(agent=name):
                 tools = tools_of(frontmatter(AGENTS_DIR / f"{name}.md"))
@@ -140,9 +162,38 @@ class AgentDefinitionTests(unittest.TestCase):
                     self.assertNotIn(
                         banned,
                         tools,
-                        f"{name} has {banned}, so it can modify the repository it reviews; "
-                        "AGENTS.md claims it cannot",
+                        f"{name} has {banned}, an editing tool; AGENTS.md claims "
+                        "these agents carry none",
                     )
+
+    def test_agents_are_told_not_to_modify_and_could(self):
+        """Both halves of "an instruction rather than a sandbox".
+
+        AGENTS.md was corrected to say these agents are *instructed* not to
+        modify what they assess, rather than that they cannot — because each has
+        `Bash` and plainly could. That correction put two new factual claims into
+        the prose and neither was guarded: strip `Bash` from one agent, or drop
+        the instruction from its body, and the documentation goes wrong with the
+        suite green. That is the failure this module exists to prevent.
+        """
+        for name in sorted(defined_agents() | set(EXPECTED_STEP)):
+            with self.subTest(agent=name):
+                self.assertIn(
+                    "Bash",
+                    tools_of(frontmatter(AGENTS_DIR / f"{name}.md")),
+                    f"{name} has no Bash; AGENTS.md says each of them has it, and "
+                    "uses that to explain why not modifying is an instruction "
+                    "rather than a sandbox",
+                )
+                # `never modify` is a separate branch rather than redundant with
+                # `not modify` — it contains no "not".
+                self.assertRegex(
+                    body_of(AGENTS_DIR / f"{name}.md"),
+                    r"(?i)(?:do(?:es)? not|never) modify",
+                    f"{name} does not tell itself to leave the repository alone "
+                    "anywhere in its operating rules; AGENTS.md claims all three "
+                    "are instructed not to",
+                )
 
     def test_agent_description_matches_the_step_that_invokes_it(self):
         """The step number is read from AGENTS.md, not hardcoded.
