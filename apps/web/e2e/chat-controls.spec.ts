@@ -15,15 +15,18 @@ import { test, expect, Page } from '@playwright/test'
  * into the input, so this is not a hypothetical: it is what the first
  * measurement of this did.
  *
- * Colours are resolved by painting them on a canvas rather than parsed.
- * Tailwind v4 serialises this palette as `lab()`, and a regex for numbers drops
- * the minus signs — `lab(41.6% -9.1 -42.6)` reads as rgb(42,9,43). That turned
- * a sibling spec into a check of something else entirely; see the comment in
- * `chat-launcher.spec.ts`.
+ * Both states are measured from screenshots. The reference white is read from
+ * the panel's CSS and resolved by painting it on a canvas rather than parsing
+ * it — Tailwind v4 serialises this palette as `lab()`, and a regex for numbers
+ * drops the minus signs, so `lab(41.6% -9.1 -42.6)` reads as rgb(42,9,43).
+ * That turned a sibling spec into a check of something else entirely; see the
+ * comment in `chat-launcher.spec.ts`.
  *
- * Unlike the launcher, these controls sit on a known flat surface — the panel's
- * own white — so the background is read from CSS too rather than sampled from a
- * screenshot. There is no photograph underneath to be surprised by.
+ * Everything else comes from pixels, and did not always. The first several
+ * versions of this file read declarations — box-shadow, border colour,
+ * background, outline width — and each one was wrong in the same direction,
+ * crediting something CSS had been asked for rather than something a person
+ * could see. The helpers below say which mistake each replaced.
  *
  * Not covered here, having been measured and found fine: the clear and close
  * buttons carry no boundary at all, and what identifies them is their glyph,
@@ -56,114 +59,128 @@ const BOUNDARIES = [
 
 type Reading = { name: string; resting: number; focused: number }
 
+/**
+ * How far the control's edge stands out from the panel, measured from pixels.
+ *
+ * This used to read the declaration — box-shadow, border colour, background —
+ * and it kept being wrong in the same direction. A border with zero width still
+ * reports a colour. A ring set to `ring-0` still reports a colour. A shadow
+ * with a blur reports its source colour while every pixel it actually paints is
+ * composited half-way to the panel. And a boundary drawn with `outline` was not
+ * read at all, so a compliant refactor would have failed CI.
+ *
+ * Each of those was a separate finding and a separate patch. They are one bug:
+ * a declaration is not a boundary. What a boundary is, is pixels near the edge
+ * that differ from the surface behind them, so that is what is measured — and
+ * the property no longer cares which of the four ways CSS was asked to draw it.
+ *
+ * The reference is the panel's own flat white, read from CSS rather than
+ * sampled. Sampling it risks catching a neighbour: the send button sits 12px
+ * from the input, and a probe reaching outward for "the background" finds the
+ * other control's ring.
+ */
 async function boundaryContrast(page: Page): Promise<Reading[]> {
-  return page.evaluate((boundaries) => {
-    const COLOUR =
-      /(?:rgba?|lab|lch|oklab|oklch|hsla?|color)\([^)]*\)|#[0-9a-fA-F]{3,8}/g
+  const readings: Reading[] = []
 
-    const canvas = document.createElement('canvas')
-    canvas.width = 1
-    canvas.height = 1
-    const context = canvas.getContext('2d')!
-    const resolve = (colour: string) => {
-      context.clearRect(0, 0, 1, 1)
-      context.fillStyle = colour
-      context.fillRect(0, 0, 1, 1)
-      const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data
-      return { rgb: [r, g, b] as [number, number, number], opaque: a === 255 }
+  for (const { name, selector } of BOUNDARIES) {
+    const control = page.locator(selector)
+    const box = await control.boundingBox()
+    if (!box) throw new Error(`${selector} has no box`)
+
+    const PAD = 8
+    const clip = {
+      x: Math.max(0, box.x - PAD),
+      y: Math.max(0, box.y - PAD),
+      width: box.width + PAD * 2,
+      height: box.height + PAD * 2,
     }
 
-    const luminance = ([r, g, b]: [number, number, number]) => {
-      const channel = (value: number) => {
-        const v = value / 255
-        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
-      }
-      return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+    const measure = async () => {
+      const shot = (await page.screenshot({ clip })).toString('base64')
+      return page.evaluate(
+        async ({ shot, pad, width, height }) => {
+          const image = new Image()
+          image.src = `data:image/png;base64,${shot}`
+          await image.decode()
+          const canvas = document.createElement('canvas')
+          canvas.width = image.width
+          canvas.height = image.height
+          const context = canvas.getContext('2d')!
+          context.drawImage(image, 0, 0)
+          const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+          const at = (x: number, y: number) => {
+            const px = Math.min(Math.max(Math.round(x), 0), canvas.width - 1)
+            const py = Math.min(Math.max(Math.round(y), 0), canvas.height - 1)
+            const i = (py * canvas.width + px) * 4
+            return [data[i], data[i + 1], data[i + 2]] as [number, number, number]
+          }
+
+          const panel = document.querySelector('[role="dialog"]')
+          if (!panel) throw new Error('the chat panel is not open')
+          const surface = getComputedStyle(panel).backgroundColor
+          const probe = document.createElement('canvas')
+          probe.width = 1
+          probe.height = 1
+          const probeContext = probe.getContext('2d')!
+          probeContext.fillStyle = surface
+          probeContext.fillRect(0, 0, 1, 1)
+          const [br, bg, bb] = probeContext.getImageData(0, 0, 1, 1).data
+          const background: [number, number, number] = [br, bg, bb]
+
+          const luminance = ([r, g, b]: [number, number, number]) => {
+            const channel = (value: number) => {
+              const v = value / 255
+              return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+          }
+          const ratio = (a: [number, number, number], b: [number, number, number]) => {
+            const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x)
+            return (high + 0.05) / (low + 0.05)
+          }
+
+          // Points along each edge, kept away from the rounded corners, and a
+          // band running from just outside the control to just inside it so
+          // that a boundary drawn either way round is seen.
+          const fractions = [0.25, 0.5, 0.75]
+          const band = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
+          const edges: [number, number, number, number][] = []
+          for (const f of fractions) {
+            edges.push([pad + width * f, pad, 0, 1])
+            edges.push([pad + width * f, pad + height, 0, -1])
+            edges.push([pad, pad + height * f, 1, 0])
+            edges.push([pad + width, pad + height * f, -1, 0])
+          }
+
+          // The weakest edge, not the strongest: a control that is obvious on
+          // three sides and invisible on the fourth has an invisible side.
+          let weakest = Infinity
+          for (const [x, y, dx, dy] of edges) {
+            let best = 0
+            for (const offset of band) {
+              best = Math.max(best, ratio(at(x + dx * offset, y + dy * offset), background))
+            }
+            weakest = Math.min(weakest, best)
+          }
+          return weakest
+        },
+        { shot, pad: PAD, width: box.width, height: box.height },
+      )
     }
-    const ratio = (a: [number, number, number], b: [number, number, number]) => {
-      const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x)
-      return (high + 0.05) / (low + 0.05)
-    }
 
-    const panel = document.querySelector('[role="dialog"]')
-    if (!panel) throw new Error('the chat panel is not open')
-    const background = resolve(getComputedStyle(panel).backgroundColor).rgb
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    const resting = await measure()
+    await page.evaluate(
+      (sel) => (document.querySelector(sel) as HTMLElement).focus(),
+      selector,
+    )
+    const focused = await measure()
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 
-    // Best of whatever opaque colours the property carries. `ring` emits one
-    // shadow layer and `border` one colour, so this is a single value in
-    // practice; taking the max means a control that grows a second, stronger
-    // outline is credited for it rather than failed on the weaker one.
-    const outline = (selector: string) => {
-      const element = document.querySelector(selector)
-      if (!element) throw new Error(`no element matched ${selector}`)
-      const style = getComputedStyle(element)
-      // A border only counts if it is drawn. Tailwind's preflight leaves every
-      // element `border-style: solid; border-width: 0` with a default border
-      // colour, so `borderColor` always resolves to something -- gray-200 here,
-      // 1.24:1, which happens to be too weak to rescue a failing control. A
-      // zero-width `border-zinc-900` would not be, and would pass this on a
-      // border nobody can see.
-      const painted =
-        style.borderStyle !== 'none' && parseFloat(style.borderWidth) > 0
+    readings.push({ name, resting, focused })
+  }
 
-      // Shadow layers only count if they have some geometry. `ring-0` leaves
-      // the ring's colour in the computed box-shadow with every length at
-      // zero, so a control whose outline had been switched off would still be
-      // credited with its colour. Split on top-level commas, because the
-      // colours contain commas of their own.
-      const shadowLayers: string[] = []
-      let depth = 0
-      let current = ''
-      for (const character of style.boxShadow) {
-        if (character === '(') depth += 1
-        if (character === ')') depth -= 1
-        if (character === ',' && depth === 0) {
-          shadowLayers.push(current)
-          current = ''
-        } else {
-          current += character
-        }
-      }
-      if (current.trim()) shadowLayers.push(current)
-      const paintingShadows = shadowLayers.filter((layer) => {
-        const lengths = layer.replace(COLOUR, '').match(/-?\d*\.?\d+px/g) ?? []
-        return lengths.some((length) => parseFloat(length) !== 0)
-      })
-
-      const colours = [
-        ...paintingShadows,
-        painted ? style.borderColor : '',
-        style.backgroundColor,
-      ]
-        .flatMap((declared) => declared.match(COLOUR) ?? [])
-        .map(resolve)
-        .filter((colour) => colour.opaque)
-        .map((colour) => colour.rgb)
-      if (colours.length === 0) return null
-      return Math.max(...colours.map((colour) => ratio(colour, background)))
-    }
-
-    const input = document.querySelector('#chat') as HTMLElement | null
-
-    return boundaries.map(({ name, selector }) => {
-      // Resting first, and read with focus parked on nothing: opening the panel
-      // focuses the input, and both of these controls swap to sky-700 when
-      // focused.
-      input?.blur()
-      ;(document.activeElement as HTMLElement | null)?.blur()
-      const resting = outline(selector)
-
-      const element = document.querySelector(selector) as HTMLElement | null
-      element?.focus()
-      const focused = outline(selector)
-      element?.blur()
-
-      if (resting === null || focused === null) {
-        throw new Error(`${name} declares no opaque colour, so nothing was measured`)
-      }
-      return { name, resting, focused }
-    })
-  }, BOUNDARIES)
+  return readings
 }
 
 /**
