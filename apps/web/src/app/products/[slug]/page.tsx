@@ -5,6 +5,7 @@ import { Product } from "@/lib/types";
 import { promises as fs } from "fs";
 import { marked } from "marked";
 import Header from "@/components/header";
+import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
 
 // This function gets called at build time
@@ -136,7 +137,11 @@ export default async function Page({
         >
           <Image
             src={image}
-            alt={product.name}
+            // Not `product.name` on all of them, which announced the same
+            // six words once per picture and told a screen-reader user
+            // nothing about any of them. See lib/gallery-alt.ts for why the
+            // wording stays as close to the filename's claim as it does.
+            alt={galleryAlt(product.name, image, i)}
             width={550}
             height={550}
             // `max-w-[550px]` caps the box, so it stops growing once the
