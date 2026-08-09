@@ -13,6 +13,7 @@ own job; whether anything runs them is this file's.
 import json
 import re
 import unittest
+from fnmatch import fnmatch
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +33,60 @@ def integration_job() -> str:
     if match is None:
         raise AssertionError("integration-e2e job not found in ci.yml")
     return match.group(1)
+
+
+def expand_braces(pattern: str) -> list[str]:
+    """`*.{ts,tsx}` into `*.ts` and `*.tsx`, which `fnmatch` does not do."""
+    match = re.search(r"\{([^}]*)\}", pattern)
+    if not match:
+        return [pattern]
+    return [
+        expanded
+        for option in match.group(1).split(",")
+        for expanded in expand_braces(
+            pattern[: match.start()] + option + pattern[match.end() :]
+        )
+    ]
+
+
+def glob_to_regex(pattern: str) -> "re.Pattern[str]":
+    """A glob as a regex over POSIX paths, with `**/` spanning directories."""
+    out = []
+    i = 0
+    while i < len(pattern):
+        if pattern.startswith("**/", i):
+            out.append("(?:[^/]+/)*")
+            i += 3
+        elif pattern[i] == "*":
+            out.append("[^/]*")
+            i += 1
+        else:
+            out.append(re.escape(pattern[i]))
+            i += 1
+    return re.compile("^" + "".join(out) + "$")
+
+
+def playwright_specs() -> list[str]:
+    """The journeys Playwright collects, relative to `apps/web`.
+
+    Read from `testDir` and `testMatch` rather than assumed, so narrowing
+    either is visible to every check that depends on the set.
+    """
+    config = read("apps/web/playwright.config.ts")
+    test_dir = re.search(r"testDir:\s*['\"]([^'\"]+)['\"]", config)
+    test_match = re.search(r"testMatch:\s*['\"]([^'\"]+)['\"]", config)
+    if test_dir is None or test_match is None:
+        raise AssertionError(
+            "playwright.config.ts must state testDir and testMatch; the wiring "
+            "checks derive the set of journeys from them"
+        )
+    root = (WEB_DIR / test_dir.group(1)).resolve()
+    matcher = glob_to_regex(test_match.group(1))
+    return sorted(
+        path.relative_to(WEB_DIR).as_posix()
+        for path in root.rglob("*")
+        if path.is_file() and matcher.match(path.relative_to(root).as_posix())
+    )
 
 
 class JourneyWiringTests(unittest.TestCase):
@@ -67,45 +122,57 @@ class JourneyWiringTests(unittest.TestCase):
         )
 
     def test_the_journeys_are_type_checked(self):
-        """The specs are inside some tsconfig, and `make typecheck` opens it.
+        """Every file Playwright collects is inside the type-check config.
 
-        `apps/web/tsconfig.json` includes `src`, `prisma` and the Next stubs and
-        not `e2e`, so for a long time nothing in this repository type-checked a
-        spec. #166 shipped a `deliveryOf(page, 'Our Mission')` call left behind
-        when the helper lost its second parameter; `tsc` reports `TS2554` on it
-        the moment anything points at the file, and nothing did. ESLint does not
-        close the gap either -- `eslint-config-next` runs no type-aware rules.
+        `apps/web/tsconfig.json` covers `src`, `prisma` and the Next stubs and
+        not `e2e`, so for a long time nothing here opened a spec. #166 shipped a
+        `deliveryOf(page, 'Our Mission')` call left behind when the helper lost
+        its second parameter; `tsc` reports `TS2554` the moment anything points
+        at the file, and nothing did.
 
-        Two claims, because either alone leaves the hole open: a config that
-        covers the specs, and a target that runs it.
+        Asserted against the resolved set rather than the declarations, because
+        each declaration can look right while the coverage is wrong. An
+        `include` narrowed to `e2e/auth.spec.ts` still starts with `e2e/`, still
+        compiles clean, and leaves seven journeys unchecked.
         """
+        collected = playwright_specs()
+        self.assertGreaterEqual(
+            len(collected), 2, "no journeys found; the check below asserts nothing"
+        )
+
         config = json.loads(
             re.sub(r"^\s*//.*$", "", read("apps/web/tsconfig.e2e.json"), flags=re.MULTILINE)
         )
-        includes = config.get("include", [])
-        self.assertTrue(
-            any(pattern.startswith("e2e/") for pattern in includes),
-            f"tsconfig.e2e.json does not include the spec directory: {includes}",
+        patterns = [glob_to_regex(pattern) for pattern in config.get("include", [])]
+        uncovered = sorted(
+            spec for spec in collected if not any(p.match(spec) for p in patterns)
+        )
+        self.assertEqual(
+            uncovered,
+            [],
+            "journeys Playwright runs that tsconfig.e2e.json does not type-check",
         )
 
-        makefile = read("apps/web/Makefile")
-        target = re.search(
-            r"^typecheck:.*?$(.*?)(?:^\S|\Z)", makefile, re.MULTILINE | re.DOTALL
+    def test_nothing_in_the_test_directory_is_silently_uncollected(self):
+        """A spec-shaped file the narrowed `testMatch` skips.
+
+        `playwright.config.ts` pins `testMatch` to `**/*.spec.ts`, which is what
+        lets the type-check config be a single `.ts` glob. The cost is that a
+        file named `foo.spec.tsx` or `foo.spec.mts` would sit in the directory
+        and never run, where Playwright's own default would have collected it.
+        Silent either way, so it fails here rather than waiting to be noticed.
+        """
+        collected = set(playwright_specs())
+        spec_shaped = sorted(
+            path.relative_to(WEB_DIR).as_posix()
+            for path in (WEB_DIR / "e2e").rglob("*")
+            if path.is_file() and re.search(r"\.(spec|test)\.[cm]?[jt]sx?$", path.name)
         )
-        self.assertIsNotNone(target, "no typecheck target in apps/web/Makefile")
-        # A recipe line that actually invokes the compiler, not merely a
-        # mention. The target carries a comment naming the config, and an
-        # `assertIn` on the string was satisfied by that comment alone --
-        # deleting the command while leaving the comment left this green.
-        commands = [
-            line
-            for line in target.group(1).splitlines()
-            if line.startswith("\t") and not line.lstrip("\t").startswith("#")
-        ]
-        self.assertTrue(
-            any(re.search(r"tsc\b.*-p\s+\S*tsconfig\.e2e\.json", line) for line in commands),
-            "no recipe line in make typecheck runs tsc against tsconfig.e2e.json, "
-            f"so the specs are type-checked by nothing again: {commands}",
+        self.assertEqual(
+            [path for path in spec_shaped if path not in collected],
+            [],
+            "files in e2e/ shaped like journeys that the pinned testMatch does "
+            "not collect, so they never run",
         )
 
     def test_the_pre_commit_hook_type_checks_the_journeys_too(self):
@@ -113,44 +180,39 @@ class JourneyWiringTests(unittest.TestCase):
 
         `make typecheck` running both configs closes the gap in CI. It does not
         close it locally: lint-staged is what runs on commit, and a bare
-        invocation there means a spec arity error passes the hook and is caught
-        only after a push. That is most of the value of catching it at all.
+        invocation there means a spec arity error passes the hook and waits for
+        a push.
+
+        Both halves are checked -- that the hook still reaches lint-staged, and
+        that its glob actually matches a journey. A key narrowed to `*.mts`
+        still contains the substring "ts" while matching no journey this
+        repository has.
         """
+        self.assertIn(
+            "lint-staged",
+            read(".husky/pre-commit"),
+            ".husky/pre-commit no longer runs lint-staged, so none of the "
+            "commit-time checks below run at all",
+        )
+
+        collected = playwright_specs()
         config = json.loads(read("apps/web/package.json"))["lint-staged"]
-        commands = [
-            command
-            for pattern, entries in config.items()
-            if "ts" in pattern
-            for command in entries
+        matching = [
+            (pattern, commands)
+            for pattern, commands in config.items()
+            if any(
+                fnmatch(Path(spec).name, expansion)
+                for spec in collected
+                for expansion in expand_braces(pattern)
+            )
         ]
         self.assertTrue(
+            matching, f"no lint-staged pattern matches a journey: {sorted(config)}"
+        )
+        commands = [command for _, commands in matching for command in commands]
+        self.assertTrue(
             any(re.search(r"tsc\b.*-p\s+\S*tsconfig\.e2e\.json", c) for c in commands),
-            f"lint-staged never type-checks the specs on commit: {commands}",
-        )
-
-    def test_every_spec_is_covered_by_the_type_check(self):
-        """A spec outside `e2e/` would be silently unchecked.
-
-        The config covers `e2e/**`, so a journey added anywhere else -- beside
-        the component it exercises, say -- is back in the blind spot with the
-        suite green. This is the count that makes the check above mean
-        something for the files that actually exist.
-        """
-        # Both extensions. Playwright's default `testMatch` accepts `.tsx` and
-        # `playwright.config.ts` does not narrow it, so globbing only `.ts`
-        # would report no strays for exactly the file that reopens the hole.
-        strays = sorted(
-            path.relative_to(WEB_DIR).as_posix()
-            for pattern in ("*.spec.ts", "*.spec.tsx")
-            for path in WEB_DIR.rglob(pattern)
-            if "node_modules" not in path.parts
-            and not path.relative_to(WEB_DIR).as_posix().startswith("e2e/")
-        )
-        self.assertEqual(
-            strays,
-            [],
-            "Playwright specs outside apps/web/e2e are not covered by "
-            "tsconfig.e2e.json",
+            f"lint-staged never type-checks the journeys on commit: {commands}",
         )
 
     def test_make_target_exists(self):

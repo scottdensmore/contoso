@@ -20,10 +20,12 @@
     "target": "es2022",
     "lib": ["dom", "dom.iterable", "es2022"]
   },
-  // Both extensions, because Playwright's default `testMatch` accepts `.tsx`
-  // and `playwright.config.ts` does not narrow it. A spec written as `.tsx`
-  // would otherwise run as a journey and be type-checked by nothing, which is
-  // the hole this file exists to close.
+  // `.ts` is what `playwright.config.ts` pins `testMatch` to, so that is the
+  // set of journeys. `.tsx` is here for anything else in the directory -- a
+  // helper module, or a `.spec.tsx` someone drops in expecting it to run. That
+  // second case is caught by `test_nothing_in_the_test_directory_is_silently_uncollected`
+  // rather than by this file, but type-checking it costs nothing and means the
+  // failure is about the file not running, not about it also being unchecked.
   "include": ["e2e/**/*.ts", "e2e/**/*.tsx"],
   "exclude": ["node_modules"]
 }
