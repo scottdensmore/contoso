@@ -32,6 +32,7 @@ typecheck: ## Type-check web app and the Playwright specs
 	$(MAKE) prisma-generate
 	./node_modules/.bin/tsc --noEmit
 	./node_modules/.bin/tsc --noEmit -p tsconfig.e2e.json
+	node scripts/check-journey-coverage.mjs
 
 test: ## Run web tests
 	$(MAKE) sync-env

@@ -49,44 +49,18 @@ def expand_braces(pattern: str) -> list[str]:
     ]
 
 
-def glob_to_regex(pattern: str) -> "re.Pattern[str]":
-    """A glob as a regex over POSIX paths, with `**/` spanning directories."""
-    out = []
-    i = 0
-    while i < len(pattern):
-        if pattern.startswith("**/", i):
-            out.append("(?:[^/]+/)*")
-            i += 3
-        elif pattern[i] == "*":
-            out.append("[^/]*")
-            i += 1
-        else:
-            out.append(re.escape(pattern[i]))
-            i += 1
-    return re.compile("^" + "".join(out) + "$")
+def recipe_commands(block: str, prefix: str = "\t") -> list[str]:
+    """Executable lines only.
 
-
-def playwright_specs() -> list[str]:
-    """The journeys Playwright collects, relative to `apps/web`.
-
-    Read from `testDir` and `testMatch` rather than assumed, so narrowing
-    either is visible to every check that depends on the set.
+    Comments are the trap this exists for, twice over: a make recipe echoes its
+    `#` lines, and `# npx lint-staged` in a hook still contains the word. A
+    substring search over the raw block matches text that never runs.
     """
-    config = read("apps/web/playwright.config.ts")
-    test_dir = re.search(r"testDir:\s*['\"]([^'\"]+)['\"]", config)
-    test_match = re.search(r"testMatch:\s*['\"]([^'\"]+)['\"]", config)
-    if test_dir is None or test_match is None:
-        raise AssertionError(
-            "playwright.config.ts must state testDir and testMatch; the wiring "
-            "checks derive the set of journeys from them"
-        )
-    root = (WEB_DIR / test_dir.group(1)).resolve()
-    matcher = glob_to_regex(test_match.group(1))
-    return sorted(
-        path.relative_to(WEB_DIR).as_posix()
-        for path in root.rglob("*")
-        if path.is_file() and matcher.match(path.relative_to(root).as_posix())
-    )
+    return [
+        line.strip()
+        for line in block.splitlines()
+        if line.startswith(prefix) and line.strip() and not line.strip().startswith("#")
+    ]
 
 
 class JourneyWiringTests(unittest.TestCase):
@@ -121,95 +95,77 @@ class JourneyWiringTests(unittest.TestCase):
             re.compile(r"^\s*webServer\s*:", re.MULTILINE),
         )
 
-    def test_the_journeys_are_type_checked(self):
-        """Every file Playwright collects is inside the type-check config.
+    def test_make_typecheck_covers_the_journeys(self):
+        """The recipe runs the spec compiler and the coverage check.
 
         `apps/web/tsconfig.json` covers `src`, `prisma` and the Next stubs and
-        not `e2e`, so for a long time nothing here opened a spec. #166 shipped a
-        `deliveryOf(page, 'Our Mission')` call left behind when the helper lost
-        its second parameter; `tsc` reports `TS2554` the moment anything points
-        at the file, and nothing did.
+        not `e2e`, so nothing here opened a spec until `tsconfig.e2e.json`
+        existed. #166 shipped a `deliveryOf(page, 'Our Mission')` call left
+        behind when the helper lost its second parameter; `tsc` reports `TS2554`
+        the moment anything points at the file, and nothing did.
 
-        Asserted against the resolved set rather than the declarations, because
-        each declaration can look right while the coverage is wrong. An
-        `include` narrowed to `e2e/auth.spec.ts` still starts with `e2e/`, still
-        compiles clean, and leaves seven journeys unchecked.
+        Both lines, because they fail differently: the compiler catches type
+        errors in the files it resolves, and `check-journey-coverage.mjs`
+        catches the files it does not resolve. Deleting either leaves the other
+        green.
+
+        Asserted against recipe lines rather than the text of the target. An
+        `assertIn` on the config name passed when the command was deleted and
+        its explanatory comment left behind.
         """
-        collected = playwright_specs()
-        self.assertGreaterEqual(
-            len(collected), 2, "no journeys found; the check below asserts nothing"
+        makefile = read("apps/web/Makefile")
+        target = re.search(
+            r"^typecheck:.*?$(.*?)(?:^\S|\Z)", makefile, re.MULTILINE | re.DOTALL
         )
-
-        config = json.loads(
-            re.sub(r"^\s*//.*$", "", read("apps/web/tsconfig.e2e.json"), flags=re.MULTILINE)
+        self.assertIsNotNone(target, "no typecheck target in apps/web/Makefile")
+        commands = recipe_commands(target.group(1))
+        self.assertTrue(
+            any(re.search(r"tsc\b.*-p\s+\S*tsconfig\.e2e\.json", c) for c in commands),
+            f"make typecheck does not compile the journeys: {commands}",
         )
-        patterns = [glob_to_regex(pattern) for pattern in config.get("include", [])]
-        uncovered = sorted(
-            spec for spec in collected if not any(p.match(spec) for p in patterns)
-        )
-        self.assertEqual(
-            uncovered,
-            [],
-            "journeys Playwright runs that tsconfig.e2e.json does not type-check",
-        )
-
-    def test_nothing_in_the_test_directory_is_silently_uncollected(self):
-        """A spec-shaped file the narrowed `testMatch` skips.
-
-        `playwright.config.ts` pins `testMatch` to `**/*.spec.ts`, which is what
-        lets the type-check config be a single `.ts` glob. The cost is that a
-        file named `foo.spec.tsx` or `foo.spec.mts` would sit in the directory
-        and never run, where Playwright's own default would have collected it.
-        Silent either way, so it fails here rather than waiting to be noticed.
-        """
-        collected = set(playwright_specs())
-        spec_shaped = sorted(
-            path.relative_to(WEB_DIR).as_posix()
-            for path in (WEB_DIR / "e2e").rglob("*")
-            if path.is_file() and re.search(r"\.(spec|test)\.[cm]?[jt]sx?$", path.name)
-        )
-        self.assertEqual(
-            [path for path in spec_shaped if path not in collected],
-            [],
-            "files in e2e/ shaped like journeys that the pinned testMatch does "
-            "not collect, so they never run",
+        self.assertTrue(
+            any("check-journey-coverage" in c for c in commands),
+            f"make typecheck does not check which journeys are compiled: {commands}",
         )
 
     def test_the_pre_commit_hook_type_checks_the_journeys_too(self):
         """`tsc --noEmit` with no `-p` opens only the app config.
 
-        `make typecheck` running both configs closes the gap in CI. It does not
-        close it locally: lint-staged is what runs on commit, and a bare
-        invocation there means a spec arity error passes the hook and waits for
-        a push.
+        `make typecheck` closes the gap in CI. It does not close it locally:
+        lint-staged is what runs on commit, and a bare invocation there means a
+        spec arity error passes the hook and waits for a push.
 
-        Both halves are checked -- that the hook still reaches lint-staged, and
-        that its glob actually matches a journey. A key narrowed to `*.mts`
-        still contains the substring "ts" while matching no journey this
-        repository has.
+        Three things, each of which alone can be true while the check is dead:
+        the hook actually executes lint-staged, a lint-staged glob actually
+        matches a spec filename, and its commands include the spec compiler. A
+        hook line commented out still contains the word, and a key narrowed to
+        `*.mts` still contains the substring "ts".
         """
-        self.assertIn(
-            "lint-staged",
-            read(".husky/pre-commit"),
-            ".husky/pre-commit no longer runs lint-staged, so none of the "
-            "commit-time checks below run at all",
+        hook_commands = recipe_commands(read(".husky/pre-commit"), prefix="")
+        self.assertTrue(
+            any(re.search(r"(^|\s)(npx\s+)?lint-staged\b", c) for c in hook_commands),
+            f".husky/pre-commit does not execute lint-staged: {hook_commands}",
         )
 
-        collected = playwright_specs()
+        specs = sorted(
+            path.name for path in (WEB_DIR / "e2e").rglob("*.spec.ts") if path.is_file()
+        )
+        self.assertTrue(specs, "no specs found, so the glob check below asserts nothing")
+
         config = json.loads(read("apps/web/package.json"))["lint-staged"]
         matching = [
-            (pattern, commands)
+            commands
             for pattern, commands in config.items()
             if any(
-                fnmatch(Path(spec).name, expansion)
-                for spec in collected
+                fnmatch(name, expansion)
+                for name in specs
                 for expansion in expand_braces(pattern)
             )
         ]
         self.assertTrue(
-            matching, f"no lint-staged pattern matches a journey: {sorted(config)}"
+            matching, f"no lint-staged pattern matches a spec: {sorted(config)}"
         )
-        commands = [command for _, commands in matching for command in commands]
+        commands = [command for entry in matching for command in entry]
         self.assertTrue(
             any(re.search(r"tsc\b.*-p\s+\S*tsconfig\.e2e\.json", c) for c in commands),
             f"lint-staged never type-checks the journeys on commit: {commands}",
