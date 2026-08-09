@@ -620,10 +620,52 @@ export const Chat = () => {
         {!(isCompact && showChat) && (
           <button
             ref={launcherRef}
+            // Two tones, because this button does not have a background — it is
+            // `fixed`, so it has whatever the visitor has scrolled to. As a
+            // white disc it measured 1.04:1 against the page at nearly every
+            // viewport, which is why the hero copy underneath it disappeared
+            // rather than merely being covered: white text, white disc, 1.1:1.
+            //
+            // No single fill fixes that. The accent reads 5.9:1 on the white
+            // catalogue pages and 1.65:1 on the dark hero photograph.
+            //
+            // Hence three rings rather than two. Two tones have a hole that is
+            // arithmetic, not taste: against a background halfway between them
+            // in luminance both fail together, and for white and the accent that
+            // worst case is 2.43:1. This site lands in it — the tent canvas in
+            // the hero at 667x375 measures 2.76:1 and the mountain photograph
+            // on the about page 2.57:1. So a near-black ring sits outside the
+            // white one, and whatever is behind the control, one of the three
+            // has 3:1 against it.
+            //
+            // That ring was written, deleted as unnecessary, then put back. The
+            // check that cleared it was reading Tailwind's `lab()` colours
+            // through a number regex, which drops the minus signs and measured
+            // this fill as a near-black plum — so a dark tone was already in
+            // the set and removing the real one changed nothing. Worth knowing
+            // before deleting it again.
+            //
+            // Written as one `shadow` because these are stacked rings and
+            // Tailwind's `ring` gives only one. The last layer is the wide half
+            // of the `shadow-lg` this used to carry; its tight
+            // `0 4px 6px -4px` layer is dropped, being invisible beside two
+            // rings.
+            //
+            // indigo-600, which is what every call to action on the site is
+            // already — the header's Sign In and Sign Up, the login and signup
+            // submits, the contact form, the FAQ's link through to it. Not
+            // sky-700, which is this widget's own accent: the shopper's bubbles
+            // and the focus rings on the controls inside the panel. The
+            // launcher is the one piece of the widget that lives on the page,
+            // so it takes the page's accent and leaves sky to mean "inside the
+            // chat". The two are 1.09:1 apart in luminance and different in
+            // hue, which is close enough to look like a mistake rather than a
+            // hierarchy — and at 390x844 on /contact they touch.
+            //
             // Every other control in the widget styles its focus ring; this one
             // was left on the browser default, and the focus trap makes it a
             // stop that keyboard users land on every cycle.
-            className="bg-white rounded-full p-2 shadow-lg hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+            className="bg-indigo-600 text-white rounded-full p-2 shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#18181b,0_10px_15px_-3px_#0000001a] hover:bg-indigo-500 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
             onClick={toggleChat}
             aria-label={showChat ? "Close chat" : "Open chat"}
           >
