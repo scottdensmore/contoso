@@ -54,13 +54,7 @@ const BOUNDARIES = [
   { name: 'the send button', selector: '[aria-label="Send message"]' },
 ]
 
-type Reading = {
-  name: string
-  resting: number
-  focused: number
-  /** Something visible appeared on focus that was not there at rest. */
-  focusIndicator: boolean
-}
+type Reading = { name: string; resting: number; focused: number }
 
 async function boundaryContrast(page: Page): Promise<Reading[]> {
   return page.evaluate((boundaries) => {
@@ -103,7 +97,19 @@ async function boundaryContrast(page: Page): Promise<Reading[]> {
       const element = document.querySelector(selector)
       if (!element) throw new Error(`no element matched ${selector}`)
       const style = getComputedStyle(element)
-      const colours = [style.boxShadow, style.borderColor, style.backgroundColor]
+      // A border only counts if it is drawn. Tailwind's preflight leaves every
+      // element `border-style: solid; border-width: 0` with a default border
+      // colour, so `borderColor` always resolves to something -- gray-200 here,
+      // 1.24:1, which happens to be too weak to rescue a failing control. A
+      // zero-width `border-zinc-900` would not be, and would pass this on a
+      // border nobody can see.
+      const painted =
+        style.borderStyle !== 'none' && parseFloat(style.borderWidth) > 0
+      const colours = [
+        style.boxShadow,
+        painted ? style.borderColor : '',
+        style.backgroundColor,
+      ]
         .flatMap((declared) => declared.match(COLOUR) ?? [])
         .map(resolve)
         .filter((colour) => colour.opaque)
@@ -123,69 +129,110 @@ async function boundaryContrast(page: Page): Promise<Reading[]> {
       const resting = outline(selector)
 
       const element = document.querySelector(selector) as HTMLElement | null
-      // `outlineStyle`, not `outlineWidth`. Chromium reports the UA default
-      // width -- 3px -- for an element whose outline style is `none`, so
-      // comparing widths says a 2px focus outline is *narrower* than no
-      // outline at all, and every control looks like it has no focus
-      // indicator. Style is the honest signal: `none` at rest, `solid` on
-      // focus.
-      const restingOutlineStyle = element ? getComputedStyle(element).outlineStyle : 'none'
       element?.focus()
       const focused = outline(selector)
-      const focusedStyle = element ? getComputedStyle(element) : null
-      const gainedOutline =
-        !!focusedStyle &&
-        focusedStyle.outlineStyle !== 'none' &&
-        // `outline-0` computes to a solid outline zero pixels wide, which is
-        // no indicator at all.
-        parseFloat(focusedStyle.outlineWidth) > 0 &&
-        restingOutlineStyle === 'none'
-      const focusOutlineContrast = focusedStyle
-        ? (() => {
-            const colour = resolve(focusedStyle.outlineColor)
-            return colour.opaque ? ratio(colour.rgb, background) : 0
-          })()
-        : 0
-
-      // The outline has to contrast with what it actually touches, which is not
-      // always the panel. The send button's focus outline is sky-700 on a
-      // sky-700 fill: identical colours, and legible only because
-      // `outline-offset` leaves a ring of panel between them. Measuring it
-      // against the panel alone reports 5.86:1 for an indicator that would be
-      // completely invisible at `outline-offset: 0` — the same mistake as the
-      // bug this file was written for, the right ratio against the wrong
-      // background.
-      //
-      // So either the outline differs from the control's own fill, or there is
-      // a gap between them.
-      const separatedFromFill = (() => {
-        if (!focusedStyle) return false
-        const fill = resolve(focusedStyle.backgroundColor)
-        if (!fill.opaque) return true
-        const colour = resolve(focusedStyle.outlineColor)
-        if (colour.opaque && ratio(colour.rgb, fill.rgb) >= 3) return true
-        return parseFloat(focusedStyle.outlineOffset) >= 1
-      })()
       element?.blur()
 
       if (resting === null || focused === null) {
         throw new Error(`${name} declares no opaque colour, so nothing was measured`)
       }
-      // A focus indicator that is only a recolour of the resting boundary has
-      // to differ from it; one that adds a mark of its own does not, and is
-      // the only option open to a control whose resting boundary is already
-      // dark. Either counts.
-      const recolour = resting > 0 ? Math.max(resting, focused) / Math.min(resting, focused) : 0
-      return {
-        name,
-        resting,
-        focused,
-        focusIndicator:
-          (gainedOutline && focusOutlineContrast >= 3 && separatedFromFill) ||
-          recolour >= 3,
-      }
+      return { name, resting, focused }
     })
   }, BOUNDARIES)
+}
+
+/**
+ * What focusing a control actually changes on screen.
+ *
+ * WCAG 2.2 2.4.13 is about the indicator *area*: the pixels that change
+ * between the unfocused and focused states must contrast by 3:1, and must
+ * amount to at least the area of a 2px perimeter around the control. So this
+ * takes two screenshots and compares them, rather than reasoning from computed
+ * style about whether an outline "should" be visible.
+ *
+ * That is deliberate, and it settled a disagreement. Reading style alone, an
+ * outline the same colour as the control's own fill looks invisible — one
+ * review called `outline-offset: 0` on the filled send button "completely
+ * invisible" — while by the criterion it paints a new 2px perimeter over pixels
+ * that were white, which is a 5.86:1 change and compliant. Both arguments are
+ * plausible and neither is a measurement. The pixels are.
+ */
+async function focusChange(page: Page, selector: string) {
+  const control = page.locator(selector)
+  const box = await control.boundingBox()
+  if (!box) throw new Error(`${selector} has no box`)
+
+  // Wide enough to contain an outline drawn outside the border box, offset
+  // included.
+  const PAD = 10
+  const clip = {
+    x: Math.max(0, box.x - PAD),
+    y: Math.max(0, box.y - PAD),
+    width: box.width + PAD * 2,
+    height: box.height + PAD * 2,
+  }
+
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  const unfocused = (await page.screenshot({ clip })).toString('base64')
+  await page.evaluate((sel) => (document.querySelector(sel) as HTMLElement).focus(), selector)
+  const focused = (await page.screenshot({ clip })).toString('base64')
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+
+  return page.evaluate(
+    async ({ unfocused, focused, width, height }) => {
+      const read = async (data: string) => {
+        const image = new Image()
+        image.src = `data:image/png;base64,${data}`
+        await image.decode()
+        const canvas = document.createElement('canvas')
+        canvas.width = image.width
+        canvas.height = image.height
+        const context = canvas.getContext('2d')!
+        context.drawImage(image, 0, 0)
+        return {
+          data: context.getImageData(0, 0, canvas.width, canvas.height).data,
+          w: canvas.width,
+          h: canvas.height,
+        }
+      }
+      const before = await read(unfocused)
+      const after = await read(focused)
+
+      const luminance = (r: number, g: number, b: number) => {
+        const channel = (value: number) => {
+          const v = value / 255
+          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+      }
+
+      const ratios: number[] = []
+      for (let i = 0; i < before.data.length; i += 4) {
+        const [r1, g1, b1] = [before.data[i], before.data[i + 1], before.data[i + 2]]
+        const [r2, g2, b2] = [after.data[i], after.data[i + 1], after.data[i + 2]]
+        // Ignore the faint edges antialiasing leaves either side of a real
+        // change; a channel has to move meaningfully to count.
+        if (Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2) < 30) continue
+        const [high, low] = [luminance(r1, g1, b1), luminance(r2, g2, b2)].sort(
+          (a, b) => b - a,
+        )
+        ratios.push((high + 0.05) / (low + 0.05))
+      }
+
+      ratios.sort((a, b) => a - b)
+      return {
+        changed: ratios.length,
+        // The median, so a handful of strong pixels cannot carry a change that
+        // is mostly imperceptible.
+        median: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0,
+        // A 2px-thick perimeter around the control, which is the minimum area
+        // 2.4.13 describes. Halved, because antialiasing and rounded corners
+        // mean a real 2px ring never yields every pixel of the ideal one.
+        required: (width + height) * 2,
+      }
+    },
+    { unfocused, focused, width: box.width, height: box.height },
+  )
 }
 
 test.describe('chat panel controls', () => {
@@ -243,26 +290,25 @@ test.describe('chat panel controls', () => {
 
       expect(weakFocus, 'controls whose focused boundary is invisible').toEqual([])
 
-      // WCAG 2.4.13, and the reason this file exists in the shape it does.
-      // Raising the resting boundary to clear 1.4.11 moved it to within
-      // 1.21:1 of the focus colour -- the same lightness in two hues, and
-      // identical in greyscale -- so the fix for one criterion silently broke
-      // the other. Nothing here caught that, because every assertion above
-      // compares a state to the panel and never the two states to each other.
-      const noIndicator = readings
-        .filter((reading) => !reading.focusIndicator)
-        .map(
-          (reading) =>
-            `${reading.name} (resting ${reading.resting.toFixed(2)}:1, ` +
-            `focused ${reading.focused.toFixed(2)}:1, no outline gained)`,
-        )
-
-      expect(
-        noIndicator,
-        'controls with no perceivable focus indicator: the focused state must ' +
-          'either add an outline of its own or differ from the resting boundary ' +
-          `by ${REQUIRED_RATIO}:1`,
-      ).toEqual([])
+      // WCAG 2.4.13, measured rather than inferred. Raising the resting
+      // boundary to clear 1.4.11 moved it to within 1.21:1 of the focus colour
+      // -- the same lightness in two hues, identical in greyscale -- so the fix
+      // for one criterion silently broke the other. Nothing caught that,
+      // because every assertion above compares a state to the panel and never
+      // the two states to each other.
+      for (const { selector, name } of BOUNDARIES) {
+        const change = await focusChange(page, selector)
+        expect(
+          change.changed,
+          `${name} changes almost nothing on focus: ${change.changed} pixels ` +
+            `against the ${Math.round(change.required)} a 2px perimeter needs`,
+        ).toBeGreaterThanOrEqual(change.required)
+        expect(
+          change.median,
+          `${name}'s focus indicator only shifts its pixels by ` +
+            `${change.median.toFixed(2)}:1`,
+        ).toBeGreaterThanOrEqual(REQUIRED_RATIO)
+      }
     })
   }
 })
