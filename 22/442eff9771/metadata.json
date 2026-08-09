@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "22442eff9771",
+  "strategy": "manual-commit",
+  "branch": "fix/gallery-image-alt-text",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/web/e2e/browse.spec.ts",
+    "apps/web/src/app/products/[slug]/page.tsx",
+    "apps/web/src/lib/gallery-alt.test.ts",
+    "apps/web/src/lib/gallery-alt.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/22/442eff9771/0/metadata.json",
+      "transcript": "/22/442eff9771/0/full.jsonl",
+      "compact_transcript": "/22/442eff9771/0/transcript.jsonl",
+      "content_hash": "/22/442eff9771/0/content_hash.txt",
+      "prompt": "/22/442eff9771/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2246,
+    "cache_creation_tokens": 5115751,
+    "cache_read_tokens": 566978162,
+    "output_tokens": 1140479,
+    "api_call_count": 1205
+  }
+}
