@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "7ed00045159b",
+  "strategy": "manual-commit",
+  "branch": "docs/workflow-codex-review-loop",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/7e/d00045159b/0/metadata.json",
+      "transcript": "/7e/d00045159b/0/full.jsonl",
+      "compact_transcript": "/7e/d00045159b/0/transcript.jsonl",
+      "content_hash": "/7e/d00045159b/0/content_hash.txt",
+      "prompt": "/7e/d00045159b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2179,
+    "cache_creation_tokens": 5062032,
+    "cache_read_tokens": 539434333,
+    "output_tokens": 1102815,
+    "api_call_count": 1169
+  }
+}
