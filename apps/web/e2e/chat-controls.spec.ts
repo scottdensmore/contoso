@@ -197,6 +197,12 @@ async function focusChange(page: Page, selector: string) {
     height: box.height + PAD * 2,
   }
 
+  // The corner radius, because the perimeter of a rounded rectangle is shorter
+  // than that of a sharp one and the threshold below is derived from it.
+  const radius = await control.evaluate((element) =>
+    parseFloat(getComputedStyle(element).borderTopLeftRadius),
+  )
+
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
   const unfocused = (await page.screenshot({ clip })).toString('base64')
   await page.evaluate((sel) => (document.querySelector(sel) as HTMLElement).focus(), selector)
@@ -204,7 +210,7 @@ async function focusChange(page: Page, selector: string) {
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 
   return page.evaluate(
-    async ({ unfocused, focused, width, height }) => {
+    async ({ unfocused, focused, width, height, radius, required: minimumRatio }) => {
       const read = async (data: string) => {
         const image = new Image()
         image.src = `data:image/png;base64,${data}`
@@ -247,20 +253,42 @@ async function focusChange(page: Page, selector: string) {
       ratios.sort((a, b) => a - b)
       return {
         changed: ratios.length,
-        // The median, so a handful of strong pixels cannot carry a change that
-        // is mostly imperceptible.
+        // Only the pixels that actually changed by enough count toward the
+        // area. The two used to be separate assertions -- total area, and the
+        // median ratio -- and that let one cover for the other: the input's
+        // change is a mixture, its inset ring going zinc-500 to sky-700 at
+        // 1.21:1 and its outline appearing against white at 5.86:1. The dim
+        // ring pixels inflated the area while the bright outline pixels
+        // carried the median, so an outline regression could leave too little
+        // qualifying area and still pass both.
+        qualifying: ratios.filter((value) => value >= minimumRatio).length,
+        // Kept for the failure message rather than asserted on.
         median: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0,
-        // A 2px-thick perimeter around the control, which is the minimum area
-        // 2.4.13 describes: 4 * (w + h), not 2 * (w + h), which is a 1px ring
-        // and would admit `outline-1`. The shipped design clears it with room
-        // -- 2191 changed pixels against 1416 required for the input at 390,
-        // 415 against 352 for the send button -- so there is no need to
-        // discount it for antialiasing, and discounting it was how the
-        // threshold ended up describing the wrong perimeter.
-        required: (width + height) * 4,
+        // A 2px-thick perimeter of the unfocused control, which is the
+        // minimum area 2.4.13 describes.
+        //
+        // Derived from the actual shape rather than from `4 * (w + h)`, which
+        // is the perimeter of a *sharp* rectangle. These controls are
+        // `rounded-md`, and squaring off their corners overstates the ideal by
+        // just enough to matter: the shipped design measured 1410 qualifying
+        // pixels against a demanded 1416, failing by six on a corner radius
+        // rather than on anything a user could see. Each corner replaces two
+        // radius-length straight runs with a quarter circle.
+        required: (() => {
+          const r = Math.min(radius, width / 2, height / 2)
+          const perimeter = 2 * (width + height) - 8 * r + 2 * Math.PI * r
+          return perimeter * 2
+        })(),
       }
     },
-    { unfocused, focused, width: box.width, height: box.height },
+    {
+      unfocused,
+      focused,
+      width: box.width,
+      height: box.height,
+      radius,
+      required: REQUIRED_RATIO,
+    },
   )
 }
 
@@ -328,15 +356,13 @@ test.describe('chat panel controls', () => {
       for (const { selector, name } of BOUNDARIES) {
         const change = await focusChange(page, selector)
         expect(
-          change.changed,
-          `${name} changes almost nothing on focus: ${change.changed} pixels ` +
-            `against the ${Math.round(change.required)} a 2px perimeter needs`,
+          change.qualifying,
+          `${name}'s focus indicator covers ${change.qualifying} pixels that ` +
+            `change by ${REQUIRED_RATIO}:1 or more, against the ` +
+            `${Math.round(change.required)} a 2px perimeter needs ` +
+            `(${change.changed} changed at all, median ` +
+            `${change.median.toFixed(2)}:1)`,
         ).toBeGreaterThanOrEqual(change.required)
-        expect(
-          change.median,
-          `${name}'s focus indicator only shifts its pixels by ` +
-            `${change.median.toFixed(2)}:1`,
-        ).toBeGreaterThanOrEqual(REQUIRED_RATIO)
       }
     })
   }
