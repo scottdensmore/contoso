@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "bb1b0a12124f",
+  "strategy": "manual-commit",
+  "branch": "docs/workflow-measurement-and-escapes",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "AGENTS.md",
+    "tests/scripts/test_agent_definitions.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/1b0a12124f/0/metadata.json",
+      "transcript": "/bb/1b0a12124f/0/full.jsonl",
+      "compact_transcript": "/bb/1b0a12124f/0/transcript.jsonl",
+      "content_hash": "/bb/1b0a12124f/0/content_hash.txt",
+      "prompt": "/bb/1b0a12124f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2312,
+    "cache_creation_tokens": 5181079,
+    "cache_read_tokens": 596854157,
+    "output_tokens": 1182083,
+    "api_call_count": 1241
+  }
+}
