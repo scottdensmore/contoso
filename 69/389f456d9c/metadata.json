@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "69389f456d9c",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-control-boundaries",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/src/components/chat.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/69/389f456d9c/0/metadata.json",
+      "transcript": "/69/389f456d9c/0/full.jsonl",
+      "compact_transcript": "/69/389f456d9c/0/transcript.jsonl",
+      "content_hash": "/69/389f456d9c/0/content_hash.txt",
+      "prompt": "/69/389f456d9c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2066,
+    "cache_creation_tokens": 4957171,
+    "cache_read_tokens": 497608647,
+    "output_tokens": 1024502,
+    "api_call_count": 1108
+  }
+}
