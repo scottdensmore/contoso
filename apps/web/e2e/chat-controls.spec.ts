@@ -105,8 +105,33 @@ async function boundaryContrast(page: Page): Promise<Reading[]> {
       // border nobody can see.
       const painted =
         style.borderStyle !== 'none' && parseFloat(style.borderWidth) > 0
+
+      // Shadow layers only count if they have some geometry. `ring-0` leaves
+      // the ring's colour in the computed box-shadow with every length at
+      // zero, so a control whose outline had been switched off would still be
+      // credited with its colour. Split on top-level commas, because the
+      // colours contain commas of their own.
+      const shadowLayers: string[] = []
+      let depth = 0
+      let current = ''
+      for (const character of style.boxShadow) {
+        if (character === '(') depth += 1
+        if (character === ')') depth -= 1
+        if (character === ',' && depth === 0) {
+          shadowLayers.push(current)
+          current = ''
+        } else {
+          current += character
+        }
+      }
+      if (current.trim()) shadowLayers.push(current)
+      const paintingShadows = shadowLayers.filter((layer) => {
+        const lengths = layer.replace(COLOUR, '').match(/-?\d*\.?\d+px/g) ?? []
+        return lengths.some((length) => parseFloat(length) !== 0)
+      })
+
       const colours = [
-        style.boxShadow,
+        ...paintingShadows,
         painted ? style.borderColor : '',
         style.backgroundColor,
       ]
@@ -226,9 +251,13 @@ async function focusChange(page: Page, selector: string) {
         // is mostly imperceptible.
         median: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0,
         // A 2px-thick perimeter around the control, which is the minimum area
-        // 2.4.13 describes. Halved, because antialiasing and rounded corners
-        // mean a real 2px ring never yields every pixel of the ideal one.
-        required: (width + height) * 2,
+        // 2.4.13 describes: 4 * (w + h), not 2 * (w + h), which is a 1px ring
+        // and would admit `outline-1`. The shipped design clears it with room
+        // -- 2191 changed pixels against 1416 required for the input at 390,
+        // 415 against 352 for the send button -- so there is no need to
+        // discount it for antialiasing, and discounting it was how the
+        // threshold ended up describing the wrong perimeter.
+        required: (width + height) * 4,
       }
     },
     { unfocused, focused, width: box.width, height: box.height },
