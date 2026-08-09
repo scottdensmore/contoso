@@ -26,42 +26,61 @@ import { test, expect, Page } from '@playwright/test'
 /**
  * Where the launcher lands on genuinely different backgrounds.
  *
- * `scrollY` is part of the surface, not an afterthought. The launcher is fixed
- * to the bottom of the viewport, so at 390x844 it sits at y=788 while the hero
- * band ends at document y=492 — it can never be over the hero at that size, and
- * an entry labelled "the hero photograph" there was measuring white page copy.
- * Four of these were the same near-white background until that was found.
+ * Position is expressed as an `anchor` — a selector for the element the
+ * launcher should be sitting on — rather than as a scroll offset. A pixel
+ * offset only says how far down the document to go, and how far down the
+ * document a given photograph is depends on how many products the catalogue
+ * holds. `scrollY: 2400` put the launcher over a product image locally and
+ * over white space on CI, where the seeded catalogue is a different length.
  *
- * `brightness` is what stops that recurring. Reaching a scroll offset only
- * proves the document is still long enough; it does not prove the launcher is
- * still over the thing the label names. Copy, image sizes or section spacing
- * move, the dark cases drift onto white, and the suite goes on passing while
- * quietly testing one background eight times — which is how it would stop
- * noticing that a ring had been removed.
+ * Two things then check that the case is still what it claims. The anchor must
+ * actually end up behind the launcher, which is geometry and exact. And the
+ * background must fall inside `brightness`, which is coarse — it catches a
+ * surface converging on the page background, not a change in local structure.
  *
- * So the mean is asserted rather than recorded in a comment. It is a coarse
- * instrument: it catches a surface converging on the page background, not a
- * change in local structure, and the `/about` scroll-0 case is deliberately
- * banded away from plain white for exactly that reason.
+ * Both matter because this file's whole job is to arbitrate whether each ring
+ * on the control is still earning its place. A suite that had quietly become
+ * eight readings of the same white page would go on passing while answering
+ * that question wrongly.
  */
 const SURFACES = [
-  // Dark. The mean is of every background pixel the walk reads, measured on
-  // this build; the band is that value with room for the page to change a
-  // little without the case losing its identity.
-  { route: '/', width: 667, height: 375, scrollY: 0, on: 'the hero photograph, dark', brightness: [10, 60] }, // 32
-  { route: '/about', width: 390, height: 844, scrollY: 150, on: 'a photograph, dark', brightness: [45, 95] }, // 69
-  { route: '/', width: 390, height: 844, scrollY: 150, on: 'a photograph, dark', brightness: [80, 135] }, // 106
-  { route: '/', width: 390, height: 844, scrollY: 2400, on: 'a product photograph, dark', brightness: [85, 140] }, // 109
+  // Dark. The anchored ones are bounded loosely: which photograph the anchor
+  // resolves to depends on the catalogue, so the band asserts "not the page
+  // background" rather than a particular picture.
+  {
+    route: '/',
+    width: 667,
+    height: 375,
+    on: 'the hero photograph, dark',
+    anchor: '[class*="bg-hero-image"]',
+    brightness: [0, 90],
+  },
+  {
+    route: '/about',
+    width: 390,
+    height: 844,
+    on: 'a photograph, dark',
+    anchor: 'main img',
+    brightness: [0, 175],
+  },
+  {
+    route: '/',
+    width: 390,
+    height: 844,
+    on: 'a product photograph, dark',
+    anchor: 'main img',
+    brightness: [0, 175],
+  },
   // Light by the mean, and mixed underneath it — which is the interesting case
-  // and the one the mean cannot see. `/about` at scroll 0 averages 224 while
+  // and the one the mean cannot see. `/about` unscrolled averages 224 while
   // individual directions land on the mountain photograph, and those are the
-  // mid-luminance readings that two tones cannot cover: removing the hairline
-  // fails here at 2.57:1 while the mean stays where it is.
-  { route: '/about', width: 390, height: 844, scrollY: 0, on: 'copy over a photograph edge', brightness: [200, 245] }, // 224
-  { route: '/', width: 1440, height: 900, scrollY: 0, on: 'the page background beside a card', brightness: [195, 245] }, // 220
+  // mid-luminance readings two tones cannot cover: removing the hairline fails
+  // here at 2.57:1 while the mean stays where it is.
+  { route: '/about', width: 390, height: 844, on: 'copy over a photograph edge', brightness: [195, 245] }, // 224
+  { route: '/', width: 1440, height: 900, on: 'the page background beside a card', brightness: [190, 245] }, // 220
   // White.
-  { route: '/faq', width: 390, height: 844, scrollY: 0, on: 'body copy, white', brightness: [230, 255] }, // 246
-  { route: '/', width: 768, height: 1024, scrollY: 0, on: 'a product card, white', brightness: [230, 255] }, // 248
+  { route: '/faq', width: 390, height: 844, on: 'body copy, white', brightness: [230, 255] }, // 246
+  { route: '/', width: 768, height: 1024, on: 'a product card, white', brightness: [230, 255] }, // 248
 ]
 
 const REQUIRED_RATIO = 3
@@ -235,14 +254,55 @@ test.describe('chat launcher', () => {
     }) => {
       await page.setViewportSize({ width: surface.width, height: surface.height })
       await page.goto(surface.route)
-      if (surface.scrollY > 0) {
-        await page.evaluate((y) => window.scrollTo(0, y), surface.scrollY)
-        // The document has to be long enough to have reached the position the
-        // label describes; landing short puts the control back on white.
+      if (surface.anchor) {
+        // Scroll so the anchor's centre meets the launcher's centre, rather
+        // than to a fixed offset that means different things on different
+        // catalogues.
+        const moved = await page.evaluate((selector) => {
+          const launcher = document.querySelector('[aria-label="Open chat"]')
+          if (!launcher) return false
+          const launcherBox = launcher.getBoundingClientRect()
+          // Whichever match is in the launcher's column. The launcher hugs the
+          // right edge, and at 390 the product grid is two columns wide, so the
+          // first `main img` is on the left and scrolling it into line puts the
+          // gutter behind the control rather than the picture.
+          const target = Array.from(document.querySelectorAll(selector)).find((candidate) => {
+            const box = candidate.getBoundingClientRect()
+            return (
+              Math.min(launcherBox.right, box.right) - Math.max(launcherBox.left, box.left) > 0 &&
+              box.height > 0
+            )
+          })
+          if (!target) return false
+          const targetBox = target.getBoundingClientRect()
+          window.scrollBy(
+            0,
+            targetBox.top +
+              targetBox.height / 2 -
+              (launcherBox.top + launcherBox.height / 2),
+          )
+          return true
+        }, surface.anchor)
+        expect(moved, `no element matched ${surface.anchor} on ${surface.route}`).toBe(true)
+
+        // And it is actually behind the launcher now. This is the exact half of
+        // the identity check: brightness can be fooled by a coincidentally dark
+        // page, an overlap cannot.
+        const overlaps = await page.evaluate((selector) => {
+          const launcher = document.querySelector('[aria-label="Open chat"]')!
+          const a = launcher.getBoundingClientRect()
+          return Array.from(document.querySelectorAll(selector)).some((candidate) => {
+            const b = candidate.getBoundingClientRect()
+            return (
+              Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0 &&
+              Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0
+            )
+          })
+        }, surface.anchor)
         expect(
-          await page.evaluate(() => Math.round(window.scrollY)),
-          `the page did not scroll to ${surface.scrollY}, so this is not the surface it claims`,
-        ).toBeGreaterThanOrEqual(surface.scrollY - 1)
+          overlaps,
+          `${surface.anchor} did not end up behind the launcher, so this is not ${surface.on}`,
+        ).toBe(true)
       }
 
       // Every image on screen has finished before anything is sampled. The
