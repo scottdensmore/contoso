@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "61f1454321a1",
+  "strategy": "manual-commit",
+  "branch": "fix/launcher-overlaps-content",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/61/f1454321a1/0/metadata.json",
+      "transcript": "/61/f1454321a1/0/full.jsonl",
+      "compact_transcript": "/61/f1454321a1/0/transcript.jsonl",
+      "content_hash": "/61/f1454321a1/0/content_hash.txt",
+      "prompt": "/61/f1454321a1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1985,
+    "cache_creation_tokens": 4865534,
+    "cache_read_tokens": 471978180,
+    "output_tokens": 956104,
+    "api_call_count": 1064
+  }
+}
