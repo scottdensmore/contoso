@@ -1,4 +1,5 @@
 import importlib.util
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -162,6 +163,25 @@ class CheckAgentDocsTests(unittest.TestCase):
             vendored = root / "node_modules/some-package"
             vendored.mkdir(parents=True, exist_ok=True)
             (vendored / "AGENTS.md").write_text("# Vendored\n", encoding="utf-8")
+
+            errors = check_agent_docs.check_agent_docs(root=root)
+
+        self.assertEqual(errors, [])
+
+    def test_skips_untracked_files_ignored_by_git(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            subprocess.run(
+                ["git", "init", "--quiet", str(root)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            (root / ".gitignore").write_text("tmp/\n", encoding="utf-8")
+            build_repo(root)
+            ignored = root / "tmp/copied-source"
+            ignored.mkdir(parents=True)
+            (ignored / "AGENTS.md").write_text("# Ignored copy\n", encoding="utf-8")
 
             errors = check_agent_docs.check_agent_docs(root=root)
 

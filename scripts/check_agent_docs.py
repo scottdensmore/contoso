@@ -15,6 +15,7 @@ import argparse
 import difflib
 import os
 import posixpath
+import subprocess
 import sys
 from pathlib import Path
 
@@ -110,6 +111,36 @@ def normalize(text: str) -> list[str]:
 def find_agent_directories(root: Path) -> list[Path]:
     directories: set[Path] = set()
     tracked = {AGENTS_FILENAME, *SIBLING_POINTER_FILENAMES}
+
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "-z",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        result = None
+
+    if result is not None and result.returncode == 0:
+        for relative in result.stdout.split("\0"):
+            if not relative:
+                continue
+            path = Path(relative)
+            if SKIP_DIRECTORIES.intersection(path.parts):
+                continue
+            if path.name in tracked:
+                directories.add(root / path.parent)
+        return sorted(directories)
 
     for current_dir, dir_names, file_names in os.walk(root):
         dir_names[:] = [name for name in dir_names if name not in SKIP_DIRECTORIES]
