@@ -65,7 +65,56 @@
  * Both margins are thin because the criterion's floor is a 2px perimeter and
  * the indicator is a 2px outline, so the two are nearly the same number by
  * construction. That is a property of the measurement, not of this design.
+ *
+ * Changing shape rather than colour is also what keeps focus legible in forced
+ * colors, which was luck rather than foresight. There the resting border and
+ * the focused one differ by 1.86:1 in light and 2.41:1 in dark — under 3:1
+ * both times, so an indicator that recoloured would fail. What carries it is
+ * the outline painting on pixels that were Canvas: 11.31:1 and 8.73:1.
+ *
+ * ## `forced-colors:border`, and why the ring alone was not enough
+ *
+ * Tailwind compiles `ring-*` to an inset box-shadow, and forced-colors strips
+ * box-shadow outright. Ten of the eleven also carry `border-0`, so in Windows High
+ * Contrast and its equivalents there was nothing left to draw an edge:
+ * measured on `/login #email`, a vertical scan through the top edge returned
+ * sixteen rows of rgb(255,255,255) and a computed `boxShadow` of `none`. All
+ * ten fields read 1.00:1. Not a weak boundary — none.
+ *
+ * `forced-colors:border` adds a 1px border in that mode only. Chromium paints
+ * it in a system colour, which is why no colour is named here: naming one
+ * would be overridden anyway, and a `transparent` border works identically
+ * since forced-colors replaces the colour either way.
+ *
+ * The 2px of height it adds lands on whatever the field already was: 36 to 38
+ * on the account pages, 44 to 46 on the contact card, 48 to 50 there at phone
+ * widths. Everything below a field moves down by that much; what is unchanged
+ * is the gaps, which absorb it through `space-y`, and the absence of horizontal
+ * overflow on any route in either palette.
+ *
+ * Those are the ten page fields. The chat input answers differently and was
+ * measured rather than predicted: 44px in both modes. It is `grow` in a flex
+ * row whose height is set by a `size-11` button, so `align-items: stretch`
+ * fixes its height and the border comes out of the content box instead of
+ * adding to it. `chat-controls.spec.ts` covers it in forced colors.
+ *
+ * The usual advice is an unconditional `border border-transparent`. Measured,
+ * that does nothing on the ten page fields: they carry `border-0`, which beats
+ * an unvariant `border` — swapping the variant for one leaves the field 36px
+ * tall and all six forced-colors checks failing, exactly as if nothing had been
+ * added. Taking that route means deleting `border-0` from ten call sites first,
+ * and then paying 2px of height on every field everywhere for an edge nobody
+ * outside forced-colors can see. The chat input is the exception that proves
+ * the point: it carries no `border-0`, so there the rejected alternative would
+ * have worked and the two halves of this constant would have diverged again.
+ *
+ * The variant needs neither. It out-ranks `border-0` because Tailwind orders
+ * variant utilities after unvariant ones, so the media query wins where it
+ * applies and `border-0` holds everywhere else. That is cascade order rather
+ * than specificity — the kind of thing that changes quietly between releases —
+ * so `form-fields.spec.ts` measures painted pixels in both modes rather than
+ * trusting it, and the swap above is one of the mutations it catches.
  */
 export const FIELD_BOUNDARY =
-  'ring-1 ring-inset ring-zinc-500 focus:ring-sky-700 ' +
+  'ring-1 ring-inset ring-zinc-500 forced-colors:border focus:ring-sky-700 ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700'

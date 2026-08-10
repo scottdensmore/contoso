@@ -79,3 +79,38 @@ test.describe('chat panel controls', () => {
     })
   }
 })
+
+/**
+ * The same two controls in Windows High Contrast and its equivalents.
+ *
+ * #216 gave the shared field constant a `forced-colors:border`, because
+ * `ring-*` is an inset box-shadow and forced-colors strips box-shadow — the ten
+ * page fields measured 1.00:1 there, no boundary at all. The input here takes
+ * that constant, but its geometry is not theirs: those fields grow 2px, while
+ * this one is `grow` inside a row stretched by a `size-11` button, so the
+ * border has somewhere else to come from. Measured rather than predicted.
+ *
+ * The send button is measured too and is expected to be the weaker of the two:
+ * it is filled rather than outlined, and forced-colors replaces its background
+ * with a system colour. That is #227, which this does not fix — if it fails
+ * here, that is the finding rather than a flake.
+ */
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`chat panel controls in forced colors (${scheme})`, () => {
+    test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })
+
+    test('the message input keeps a boundary', async ({ page }) => {
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await page.goto('/')
+      await page.getByRole('button', { name: 'Open chat' }).click()
+      await expect(page.getByRole('dialog', { name: /chat/i })).toBeVisible()
+      await page.keyboard.press('Tab')
+      await page.mouse.move(2, 2)
+
+      await expectVisibleControls(page, [BOUNDARIES[0]], {
+        kind: 'css',
+        selector: '[role="dialog"]',
+      })
+    })
+  })
+}

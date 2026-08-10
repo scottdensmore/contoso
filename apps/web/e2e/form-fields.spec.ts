@@ -90,6 +90,42 @@ const WIDTHS = [
   { width: 1440, height: 900 },
 ]
 
+/**
+ * The same fields, in Windows High Contrast and its equivalents.
+ *
+ * All ten measured 1.00:1 before `forced-colors:border` was added to the
+ * shared constant — the boundary this file exists to protect was not weakened
+ * there, it was absent. Why, and why the fix takes the shape it does, is in
+ * `src/lib/field-classes.ts`.
+ *
+ * Both palettes, because they are not the same test. Chromium picks its system
+ * colours from the colour scheme, so the border is black on white in light and
+ * white on black in dark, and the focus Highlight goes from a dark violet to
+ * cyan. A regression confined to one of them would pass the other.
+ *
+ * Not covered here: the chat panel input, which carries the same constant but
+ * whose journeys need the composed stack, and every filled button on these
+ * pages, which is the same defect on a population with no shared constant and
+ * is #227.
+ */
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`form field boundaries in forced colors (${scheme})`, () => {
+    test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })
+
+    for (const { path, fields } of SURFACES) {
+      test(`the fields on ${path} keep a boundary`, async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 })
+        await page.goto(path)
+        await expect(page.locator(fields[0].selector)).toBeVisible()
+        await page.keyboard.press('Tab')
+        await page.mouse.move(2, 2)
+
+        await expectVisibleControls(page, fields, { kind: 'sample' })
+      })
+    }
+  })
+}
+
 test.describe('form field boundaries', () => {
   for (const { path, fields } of SURFACES) {
     for (const { width, height } of WIDTHS) {
