@@ -38,8 +38,31 @@ def missing_required_runbooks(
     return sorted(REQUIRED_RUNBOOKS - discovered)
 
 
+def workflow_step_numbers(text: str) -> set[int]:
+    """The numbers of the workflow's own numbered steps."""
+
+    return {int(match.group(1)) for match in re.finditer(r"(?m)^(\d+)\.\s+\*\*", text)}
+
+
+def referenced_step_numbers(text: str) -> set[int]:
+    """Every step number the prose points at, ranges expanded.
+
+    `steps 6 through 8` asserts the existence of 7 as much as of its endpoints,
+    so a range contributes all of its members rather than only the two written
+    down.
+    """
+
+    numbers: set[int] = set()
+    pattern = r"(?i)\bsteps?\s+(\d+)(?:\s+(?:to|through|and)\s+(\d+))?"
+    for match in re.finditer(pattern, text):
+        first = int(match.group(1))
+        last = int(match.group(2)) if match.group(2) else first
+        numbers.update(range(min(first, last), max(first, last) + 1))
+    return numbers
+
+
 def code_review_rule_sections(path: Path) -> list[list[str]]:
-    """Return rule bullets from each exact Codex review-rules section."""
+    """Return rule bullets from each exact review-rules section."""
 
     text = path.read_text(encoding="utf-8")
     matches = re.finditer(
@@ -67,7 +90,7 @@ def review_contract_error(path: Path) -> str | None:
 
 class AgentRunbookTests(unittest.TestCase):
     def test_every_runbook_has_two_or_three_code_review_rules(self):
-        """Codex should receive a concise, explicitly scoped review contract."""
+        """A reviewer should get a concise, explicitly scoped contract."""
 
         runbooks = agent_runbooks()
         self.assertEqual(
@@ -80,6 +103,107 @@ class AgentRunbookTests(unittest.TestCase):
             with self.subTest(runbook=path.relative_to(REPO_ROOT)):
                 error = review_contract_error(path)
                 self.assertIsNone(error, error)
+
+    def test_every_referenced_workflow_step_exists(self):
+        """A renumbered workflow must not leave a reference pointing at nothing.
+
+        The steps are cross-referenced by number, from the runbook's own prose
+        and from the `description:` of each agent in `.claude/agents/`. Removing
+        a step renumbers every step after it, and nothing here read those
+        references — so `step 12` survived deletion as a pointer to a step that
+        no longer existed, in a file whose whole job is to be followed.
+
+        `test_agent_definitions.py` covers the three agents' own step numbers.
+        This is the rest: every other place a number is written down.
+        """
+
+        runbook = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        steps = workflow_step_numbers(runbook)
+
+        # Without this the comparison below passes when the parse finds no
+        # steps at all, which is also what a reformatted workflow produces.
+        self.assertGreaterEqual(
+            len(steps), 8, "found too few numbered workflow steps to be reading them"
+        )
+        self.assertEqual(
+            steps,
+            set(range(1, max(steps) + 1)),
+            f"workflow step numbers are not consecutive from 1: {sorted(steps)}",
+        )
+
+        # A floor on the reference side too. `refs - steps` is empty whenever
+        # `refs` is, so a helper that has stopped reading reports nothing wrong
+        # and the whole test below passes while checking nothing.
+        #
+        # Deliberately just "not empty" rather than a literal set of the
+        # numbers the runbook currently cites. `test_step_references_expand_ranges`
+        # proves the parsing against a fixture it owns; pinning it here as well
+        # would make a copyedit — "steps 6-8" for "steps 6 to 8" — fail a test
+        # whose subject is the workflow's numbering, not its wording.
+        self.assertTrue(
+            referenced_step_numbers(runbook),
+            "the runbook cites no step at all, so nothing below is being compared",
+        )
+
+        sources = {Path("AGENTS.md"): runbook}
+        for path in sorted((REPO_ROOT / ".claude/agents").glob("*.md")):
+            sources[path.relative_to(REPO_ROOT)] = path.read_text(encoding="utf-8")
+
+        # Same floor for the glob: no matches means the loop body never runs.
+        self.assertGreater(
+            len(sources), 1, "no agent definitions were read, so only the runbook was checked"
+        )
+
+        for relative, text in sources.items():
+            with self.subTest(source=relative):
+                referenced = referenced_step_numbers(text)
+                if relative != Path("AGENTS.md"):
+                    self.assertTrue(
+                        referenced,
+                        f"{relative} names no workflow step, so it cannot name a "
+                        "wrong one; every agent's description says which step "
+                        "invokes it",
+                    )
+
+                dangling = sorted(referenced - steps)
+                self.assertEqual(
+                    [],
+                    dangling,
+                    f"{relative} refers to workflow step(s) {dangling}, which the "
+                    f"runbook does not define; it has steps 1 to {max(steps)}",
+                )
+
+    def test_step_references_expand_ranges(self):
+        """The parsing behind the check above, against fixtures it owns.
+
+        Kept off the live runbook on purpose. Anchoring this to real prose
+        makes the demonstration hostage to a copyedit, and leaves the one
+        behaviour worth demonstrating — expansion — provable only for as long
+        as some sentence happens to be phrased as a range.
+        """
+
+        cases = {
+            "steps 3 through 5": {3, 4, 5},
+            "steps 3 to 5": {3, 4, 5},
+            # "and" joins a list rather than a range, and is expanded anyway.
+            # Over-expansion only adds members, and the check this feeds
+            # subtracts the real steps from them, so it can never hide a
+            # dangling reference -- it errs loudly rather than quietly. The
+            # interpolated numbers are real steps besides, since that check
+            # also asserts the steps run consecutively from 1. Prose whose
+            # second number is not a step at all ("step 9 and 12 other
+            # checks") would fail noisily; the runbook has none.
+            "steps 3 and 5": {3, 4, 5},
+            "step 9": {9},
+            "Step 9 and the pull request body": {9},
+            "steps 5 to 3": {3, 4, 5},
+            "stepping over 9 rungs": set(),
+            "no numbers here": set(),
+        }
+
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(expected, referenced_step_numbers(text))
 
     def test_each_invalid_contract_shape_is_rejected(self):
         """Demonstrate the missing, underspecified, and overlong branches."""
@@ -146,7 +270,7 @@ class AgentRunbookTests(unittest.TestCase):
             )
 
     def test_grouped_review_rules_are_counted(self):
-        """Codex supports H3 headings that group related review checks."""
+        """H3 headings may group related review checks without hiding them."""
 
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "grouped-AGENTS.md"

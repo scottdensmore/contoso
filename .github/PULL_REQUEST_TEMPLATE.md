@@ -25,7 +25,6 @@ Paste command output snippets or concise summaries for what you actually ran.
 
 ### Before merge
 - [ ] Pull request head still matches the reviewed SHA
-- [ ] Codex final-head review is clear and every Codex thread is resolved
 - [ ] GitHub reports a clean merge state and all configured checks pass
 
 ## Release and Ops Impact
