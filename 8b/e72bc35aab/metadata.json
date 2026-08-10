@@ -4,11 +4,7 @@
   "strategy": "manual-commit",
   "branch": "docs/remove-codex-review",
   "checkpoints_count": 1,
-  "files_touched": [
-    ".github/PULL_REQUEST_TEMPLATE.md",
-    "AGENTS.md",
-    "tests/scripts/test_agent_runbooks.py"
-  ],
+  "files_touched": null,
   "sessions": [
     {
       "metadata": "/8b/e72bc35aab/0/metadata.json",
@@ -19,10 +15,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 2787,
-    "cache_creation_tokens": 6360344,
-    "cache_read_tokens": 669999142,
-    "output_tokens": 1358093,
-    "api_call_count": 1433
+    "input_tokens": 2813,
+    "cache_creation_tokens": 6377024,
+    "cache_read_tokens": 673782776,
+    "output_tokens": 1365566,
+    "api_call_count": 1447
   }
 }
