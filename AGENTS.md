@@ -186,36 +186,30 @@ Follow these steps in order for every change.
     - Open a normal, ready-for-review pull request by default. Do not open
       draft pull requests unless the user explicitly asks for a draft.
 
-11. **Clear the automated pull request review before merging.** An automated
-    reviewer runs against pull requests here. Address what it raises, reply to
-    each comment with what changed and what was measured, and resolve the
-    thread. Treat its findings as real; when it is wrong, argue back with a
-    measurement rather than complying, and say so in the reply.
+11. **Let Codex review the pull request, and answer it.** Automatic Codex
+    review is expected after each push, and its verdict gates the merge.
 
-    Confirm the pull request head still equals the SHA recorded before the last
-    push. Unless a fresh round is already observed for that head, request one
-    with an exact `@codex review` pull request comment. Automatic rounds after
-    pushes have been observed here, but they are not a documented trigger and
-    are not evidence until their start or outcome is observed.
-
-    How the reviewer signals is not obvious, and the clean-round convention is
-    documented in its review body rather than the public product documentation.
-    See *The automated pull request reviewer* below before concluding it is done.
-
-    If no round arrives, that is a state to establish rather than assume, and
-    the file says why: `eyes` is only visible while a round lasts, so a pull
-    request twenty seconds after a push looks exactly like one the reviewer
-    will never touch. Establish it — expected head unchanged, polled past the
-    latency recorded below, exact `@codex review` requested, and no `eyes`
-    appearing — and say what was observed.
-
-    Then do the substitute work rather than pointing at work already done:
-    steps 6 through 8 ran before the pull request existed, so run `code-review`
-    once more against the pull request head, and go on to step 12 on that.
-    Silence is not approval, and it is also not a reason to leave a reviewed,
-    passing pull request unmerged indefinitely. What is never allowed is
-    recording silence as a clean round, or reaching this paragraph by not
-    waiting.
+    - It reacts 👀 on the pull request while reading and 👍 when it is satisfied.
+      The reactions are on the pull request itself:
+      `gh api repos/<owner>/<repo>/issues/<pr>/reactions`.
+    - Findings are inline review threads, invisible to
+      `gh pr view --json comments`. Read them through GraphQL `reviewThreads`,
+      which gives the body, the `isResolved` state the merge gate turns on, and
+      the thread id needed to resolve it — the REST comments endpoint carries
+      none of the last two. Page it: a missed page reads as a finding that is
+      not there.
+    - The loop: address the findings, re-run steps 6 to 9 for what changed,
+      push, reply to each thread saying what changed, resolve it, wait for the
+      next verdict. Repeat until 👍. Treat P1 as blocking, and where a finding
+      is right about the problem but wrong about the fix, say so rather than
+      resolving quietly.
+    - **Only a 👍 you watched arrive counts.** The old one survives a push, and
+      survives a later review that had findings, so the reaction sitting there
+      may be about a commit two revisions back. Watch it go 👀 and then 👍
+      after your push; never read the one that was already there as approval.
+      Silence is pending, never approval. If no new review run starts, stop
+      before merging and report it as pending; do not post `@codex review`
+      unless the user explicitly requests it.
 
 12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never bypass
