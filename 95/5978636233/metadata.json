@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "955978636233",
+  "strategy": "manual-commit",
+  "branch": "fix/220-profile-field-boundaries",
+  "checkpoints_count": 20,
+  "files_touched": [
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/e2e/support/boundary.ts",
+    "apps/web/src/components/password-change-form.tsx",
+    "apps/web/src/components/shipping-address-form.tsx",
+    "apps/web/src/lib/field-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/95/5978636233/0/metadata.json",
+      "transcript": "/95/5978636233/0/full.jsonl",
+      "compact_transcript": "/95/5978636233/0/transcript.jsonl",
+      "content_hash": "/95/5978636233/0/content_hash.txt",
+      "prompt": "/95/5978636233/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3321,
+    "cache_creation_tokens": 7171953,
+    "cache_read_tokens": 801672343,
+    "output_tokens": 1602071,
+    "api_call_count": 1721
+  }
+}
