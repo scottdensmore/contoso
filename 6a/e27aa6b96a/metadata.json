@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "6ae27aa6b96a",
+  "strategy": "manual-commit",
+  "branch": "fix/216-forced-colors-boundary",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/src/lib/field-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6a/e27aa6b96a/0/metadata.json",
+      "transcript": "/6a/e27aa6b96a/0/full.jsonl",
+      "compact_transcript": "/6a/e27aa6b96a/0/transcript.jsonl",
+      "content_hash": "/6a/e27aa6b96a/0/content_hash.txt",
+      "prompt": "/6a/e27aa6b96a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3139,
+    "cache_creation_tokens": 7065392,
+    "cache_read_tokens": 744565643,
+    "output_tokens": 1532068,
+    "api_call_count": 1623
+  }
+}
