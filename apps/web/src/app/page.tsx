@@ -112,7 +112,11 @@ export default async function Home() {
                 <div className="items-center">
                   <Image
                     src={product.images[0]}
-                    alt={product.name}
+                    // Decorative, because the link already says it. The card
+                    // is one link whose text is the product's name, so
+                    // `alt={product.name}` made its accessible name the name
+                    // twice. See e2e/browse.spec.ts.
+                    alt=""
                     width={350}
                     height={350}
                     // 350px is the cap, not the box. The `minmax(0, 350px)`

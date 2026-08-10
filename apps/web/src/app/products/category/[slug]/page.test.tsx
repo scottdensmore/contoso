@@ -52,6 +52,46 @@ describe('Category Page', () => {
     expect(screen.getByText('Trail Boots')).toBeDefined()
   })
 
+  // The card is one link, so everything inside it is read out as that link's
+  // name. `getByRole('link', { name })` computes that name the way a screen
+  // reader does, which is the part `getByText` above cannot see: it passes
+  // just as happily when the name is announced twice.
+  //
+  // The e2e journey covers the image branch against the real catalogue. It
+  // cannot cover the branch below it, because every seeded product has an
+  // image -- these two are what make the empty state's wording checkable at
+  // all.
+  const categoryOf = (product: Record<string, unknown>) => ({
+    name: 'Hiking',
+    slug: 'hiking',
+    description: 'Explore the trails',
+    products: [{ id: '1', price: 120, slug: 'trail-boots', ...product }],
+  })
+
+  it('names a product card once when it has an image', async () => {
+    vi.mocked(getProductsByCategory).mockResolvedValue(
+      categoryOf({ name: 'Trail Boots', image: '/images/boots.webp' }) as any,
+    )
+
+    render(await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }))
+
+    expect(
+      screen.getByRole('link', { name: 'Trail Boots $120.00' }),
+    ).toBeDefined()
+  })
+
+  it('names a product card once when it has no image', async () => {
+    vi.mocked(getProductsByCategory).mockResolvedValue(
+      categoryOf({ name: 'Trail Boots', image: null }) as any,
+    )
+
+    render(await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }))
+
+    expect(
+      screen.getByRole('link', { name: 'No image available Trail Boots $120.00' }),
+    ).toBeDefined()
+  })
+
   it('calls notFound if category does not exist', async () => {
     vi.mocked(getProductsByCategory).mockResolvedValue(null)
 
