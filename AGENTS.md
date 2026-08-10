@@ -178,40 +178,12 @@ Follow these steps in order for every change.
       reopens here.
     - Do not repeat code review when the already-reviewed diff and worktree
       remain unchanged.
-    - Immediately before the push that creates or updates the pull request,
-      record the expected local `HEAD` SHA and a UTC cutoff. Carry both into
-      step 11 so an old review signal cannot satisfy the final-head gate.
     - Push and create the pull request only after local verification and any
       required code review are complete.
     - Open a normal, ready-for-review pull request by default. Do not open
       draft pull requests unless the user explicitly asks for a draft.
 
-11. **Let Codex review the pull request, and answer it.** Automatic Codex
-    review is expected after each push, and its verdict gates the merge.
-
-    - It reacts 👀 on the pull request while reading and 👍 when it is satisfied.
-      The reactions are on the pull request itself:
-      `gh api repos/<owner>/<repo>/issues/<pr>/reactions`.
-    - Findings are inline review threads, invisible to
-      `gh pr view --json comments`. Read them through GraphQL `reviewThreads`,
-      which gives the body, the `isResolved` state the merge gate turns on, and
-      the thread id needed to resolve it — the REST comments endpoint carries
-      none of the last two. Page it: a missed page reads as a finding that is
-      not there.
-    - The loop: address the findings, re-run steps 6 to 9 for what changed,
-      push, reply to each thread saying what changed, resolve it, wait for the
-      next verdict. Repeat until 👍. Treat P1 as blocking, and where a finding
-      is right about the problem but wrong about the fix, say so rather than
-      resolving quietly.
-    - **Only a 👍 you watched arrive counts.** The old one survives a push, and
-      survives a later review that had findings, so the reaction sitting there
-      may be about a commit two revisions back. Watch it go 👀 and then 👍
-      after your push; never read the one that was already there as approval.
-      Silence is pending, never approval. If no new review run starts, stop
-      before merging and report it as pending; do not post `@codex review`
-      unless the user explicitly requests it.
-
-12. **Merge only clean, passing pull requests.** Merge only after GitHub
+11. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never bypass
     a failing or pending required check. Self-merges are allowed when these
     conditions are met. Use squash merge for short-lived development branches
@@ -254,91 +226,6 @@ it: a separate pull request is cheap, and an unscoped one is not.
 Sub-agents report findings; they do not file issues. Every finding they report
 that falls outside the current change needs the main agent to file it.
 
-### The automated pull request reviewer
-
-Observed on 2026-08-09 across pull requests #195, #198, and #206. The
-[Codex GitHub review documentation](https://developers.openai.com/codex/integrations/github)
-guarantees the exact `@codex review` trigger and, when Automatic reviews are
-enabled for that event, review when a pull request is opened for review.
-Push-triggered rounds and the clean reaction behavior below are repository
-observations, not a public contract. This is vendor behavior and liable to drift,
-so re-check it if it stops matching.
-
-`chatgpt-codex-connector[bot]` signals through **reactions on the pull request**
-— `GET /repos/:owner/:repo/issues/:number/reactions`, the issue endpoint.
-`gh pr view --json reactionGroups` does return them, but only as a content and a
-count, with no reacting login, which is exactly the part the condition below
-turns on.
-
-GitHub spells the same identity differently across APIs. REST returns
-`chatgpt-codex-connector[bot]`; GraphQL review-thread `author.login` returns
-`chatgpt-codex-connector`. Account for both rather than filtering every response
-with one literal.
-
-- `eyes` means a round is running, and is removed when that round ends. It is
-  only visible while it lasts, so seeing no `eyes` says nothing.
-- Findings arrive as inline review comments. The review body carries none of
-  them, but it is not inert: it records `**Reviewed commit:**` for that round,
-  which is the field that says which head was actually reviewed, and it is
-  where the tool states the `+1` convention itself. What it does not document
-  is `eyes` or the persistence of `+1`, and its trigger list is incomplete —
-  pushes to an open pull request drove four of the five rounds on #198 and are
-  not on it.
-- A clean round posts **no review at all** — not an empty one — and leaves
-  `+1`, which persists. Its only other trace is `eyes` appearing and clearing.
-
-**Done means the pull request head still matches the recorded SHA, a `+1` from
-that login was created after both the recorded UTC cutoff and its newest inline
-comment, and every one of its threads is resolved.**
-
-Each clause is there because a simpler version is wrong:
-
-- *Later than the last push*, because `+1` persists once left. Its presence
-  alone cannot tell a clean round just finished from a clean round three pushes
-  ago.
-
-  This clause has a limit, and it is the one place the section is known to run
-  out. Adding a reaction is idempotent, so a second clean round leaves the
-  original `+1` with its original timestamp — the condition is satisfiable on a
-  pull request's first clean round and not on a later one, where it would say
-  "not done" forever. No pull request in the sample had two clean rounds, so
-  this is reasoned rather than observed.
-
-  If it happens, do not wait on a timestamp that cannot move, and do not look
-  for the round's `**Reviewed commit:**` line either — a clean round posts no
-  review to carry one, so the newest names an older head and reads as "not
-  done". What is observable is the round itself: comment `@codex review`, watch
-  `eyes` appear and clear, and take "cleared, no new inline comments" as the
-  signal. The `+1` is then confirmation rather than the clock.
-- *Later than the newest inline comment*, and **not** "no comments against
-  `HEAD`". GitHub advances a review comment's `commit_id` to the head it still
-  applies to, so on #198 a comment raised on `dd1d694` reports `commit_id`
-  `770f77e` — the head that was merged, in the state that was done. Filtering on
-  `commit_id`, on `position`, or on `isOutdated` all conclude "not done" on a
-  pull request that was. `original_commit_id` is the field that records where a
-  comment was actually raised.
-
-It does not mean "no new review appeared". On #195 two pushes drew neither a
-review nor a reaction, and that pull request has an empty reaction set to this
-day — so silence is not a pass, and a round that never arrives is not the same
-as a round that found nothing. On #198 every one of four pushes drew a round,
-which is why the two cannot be told apart by waiting alone. Poll for an outcome,
-and if none arrives within a few minutes of the usual latency, say that rather
-than reading it as approval.
-
-Rounds followed pushes by roughly five to ten minutes on #198, measured from
-commit timestamps. A commit is made at or before its push, so those intervals
-overstate the true latency rather than understating it.
-
-Resolving a thread is a GraphQL `resolveReviewThread` mutation. `gh` has no
-subcommand for it.
-
-Worth the loop: on #198 it raised nine findings across four rounds, eight of
-them P1. It repeatedly caught guards that measured a CSS declaration rather than
-what was painted, and it overturned a `ui-review` conclusion that measurement
-then settled in its favour. It was also wrong once, on a focus-area formula that
-assumed square corners and failed a compliant rounded control by six pixels.
-
 ### Sub-agents this workflow depends on
 
 Steps 6 through 8 use `ui-review`, `verifier`, and `code-review`, defined in
@@ -354,8 +241,7 @@ on. This workflow has had a rendered review call a compliant focus indicator
 design — and the same review quote a contrast ratio the running build measured
 differently, zinc-400 at 2.56:1 against a measured 2.62:1. Both were believed
 before they were checked. Address every finding, and where one is wrong, say so
-with the measurement rather than complying; step 11 sets that standard for the
-automated reviewer, and it is the same standard here.
+with the measurement rather than complying.
 
 Record a disputed finding where someone else can audit it, and note when:
 carried into the body of the commit step 9 is about to make, or into the pull
