@@ -48,7 +48,11 @@ export default async function CategoryPage({
                 {product.image ? (
                   <Image
                     src={product.image}
-                    alt={product.name}
+                    // Decorative, because the link already says it. The card
+                    // is one link whose heading is the product's name, so
+                    // `alt={product.name}` made its accessible name the name
+                    // twice. See e2e/browse.spec.ts.
+                    alt=""
                     width={350}
                     height={350}
                     // The card is the container split by the column count, less
@@ -103,9 +107,23 @@ export default async function CategoryPage({
                   // An empty state rather than a placeholder image: it costs no
                   // request, and it makes the missing data visible instead of
                   // papering over it.
+                  //
+                  // No `role="img"` and no `aria-label`. Removing them is not
+                  // neutral -- it is the fix on this branch. The label read
+                  // `No image available for ${product.name}`, and an
+                  // `aria-label` replaces the subtree it labels, so the words
+                  // reaching the link's name came from the label rather than
+                  // from the text node below. Measured on the card's markup:
+                  //
+                  //   with the pair:    No image available for X X $price
+                  //   without the pair: No image available X $price
+                  //
+                  // The text survives verbatim; what goes is the `for X`,
+                  // which repeated the heading two lines down. `role="img"`
+                  // named a region holding no image and bought nothing.
+                  // `page.test.tsx` pins the shorter name, and fails on the
+                  // longer one.
                   <div
-                    role="img"
-                    aria-label={`No image available for ${product.name}`}
                     className="flex h-full w-full items-center justify-center text-sm text-gray-500"
                   >
                     No image available

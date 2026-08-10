@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Locator } from '@playwright/test'
 
 /**
  * The anonymous shopping journey, end to end against the real stack.
@@ -159,4 +159,116 @@ test.describe('browsing', () => {
     ).toBeGreaterThan(0)
   })
 
+  test('a product card announces what it shows, once', async ({ page }) => {
+    // Both listings put `alt={product.name}` on an image inside a link whose
+    // own text already names the product, so the link's accessible name was
+    // the name twice -- 20 cards on the home page, and every card of every
+    // category, which runs from 18 to 47. The tents page this samples is 21,
+    // which is not the worst of them.
+    for (const path of ['/', '/products/category/tents']) {
+      await page.goto(path)
+
+      const cards = page.locator('a[href^="/products/"]:not([href^="/products/category/"])')
+      const count = await cards.count()
+      expect(count, `no product cards on ${path}`).toBeGreaterThan(1)
+
+      let withImage = 0
+      let firstName = ''
+
+      for (let index = 0; index < count; index += 1) {
+        const card = cards.nth(index)
+        if ((await card.locator('img').count()) > 0) withImage += 1
+
+        const name = await accessibleName(card)
+        expect(name, `card ${index} on ${path} has no accessible name`).not.toEqual('')
+        if (index === 0) firstName = name
+
+        // "The same thing twice in a row", and deliberately not "equal to the
+        // card's own visible text". Equality was the first version of this and
+        // it says something stronger than the defect: it rejects a badge image
+        // with a real `alt`, an `aria-hidden` separator, and CSS generated
+        // content, all of which are correct card designs that announce nothing
+        // twice. A rule that would reject the right answer to a later problem
+        // gets deleted on the day it matters rather than fixed.
+        //
+        // Swept over all 210 catalogue names paired with a price: none
+        // contains an adjacent repeat, and both pre-fix names do.
+        //
+        // What it does not catch: a duplicate that is not adjacent. Move the
+        // image below the price and restore its `alt` and the name reads
+        // `X $250.00 X`, which this passes. Both listings render the image
+        // first, so reaching that needs the defect and a reorder -- and the
+        // sampled check below still catches it on card 0 of each listing.
+        expect(
+          repeatedPhrase(name),
+          `card ${index} on ${path} announces the same thing twice: ${JSON.stringify(name)}`,
+        ).toBeNull()
+      }
+
+      // A card rendering no image cannot duplicate one, so without this the
+      // loop above passes on a listing that stopped rendering images at all.
+      // Counted across the listing rather than required of each card, because
+      // `image` is nullable on the category card and the empty state it falls
+      // back to is a legitimate render, not a failure.
+      expect(withImage, `no card on ${path} rendered an image`).toBeGreaterThan(0)
+
+      // What the loop cannot see: a card that announces nothing twice because
+      // it stopped naming its product at all. The name has to come from
+      // outside the card to check that, so it comes from the page the card
+      // links to, whose `h1` is the product's name.
+      //
+      // Sampled, since it costs a navigation and what it establishes is a
+      // property of the markup rather than of any one product.
+      const href = await cards.first().getAttribute('href')
+      expect(href, `first card on ${path} has no href`).toBeTruthy()
+      await page.goto(href ?? '')
+      const productName = (await page.getByRole('heading', { level: 1 }).innerText()).trim()
+      expect(productName, `${href} has no heading to take a name from`).not.toEqual('')
+      expect(
+        occurrences(firstName, productName),
+        `the first card on ${path} announces ${JSON.stringify(productName)} ${occurrences(firstName, productName)} times in ${JSON.stringify(firstName)}`,
+      ).toEqual(1)
+    }
+  })
 })
+
+/**
+ * The accessible name Chromium computes for an element.
+ *
+ * There is no getter for it, so this reads the first line of the ARIA
+ * snapshot — `- link "TrailMaster X4 Tent $250.00":` — which is Playwright's
+ * own implementation of the accname algorithm rather than a reading of the
+ * `alt` attribute that happens to feed it today. Callers pin the parse with
+ * `toHaveAccessibleName` so a snapshot format change cannot quietly turn every
+ * assertion below into one about the empty string.
+ */
+async function accessibleName(locator: Locator): Promise<string> {
+  const [first] = (await locator.ariaSnapshot()).split('\n')
+  // The quotes are optional so that an element with no accessible name comes
+  // back as `''` and fails the caller's assertion about the name, rather than
+  // throwing here and reporting a real defect as a parse failure. A line that
+  // is not `- <role>` at all still throws, which is the format change.
+  const match = /^-\s+[a-z][a-z-]*(?:\s+"(.*)")?\s*:?\s*$/.exec(first)
+  if (!match) {
+    throw new Error(`unreadable ARIA snapshot line ${JSON.stringify(first)}`)
+  }
+  const name = match[1] ?? ''
+  await expect(locator).toHaveAccessibleName(name)
+  return name
+}
+
+/** The first run of words that appears twice in a row, or null. */
+function repeatedPhrase(text: string): string | null {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean)
+  for (let length = 1; length <= Math.floor(words.length / 2); length += 1) {
+    for (let start = 0; start + 2 * length <= words.length; start += 1) {
+      const run = words.slice(start, start + length).join(' ')
+      if (run === words.slice(start + length, start + 2 * length).join(' ')) return run
+    }
+  }
+  return null
+}
+
+function occurrences(haystack: string, needle: string): number {
+  return haystack.toLowerCase().split(needle.toLowerCase()).length - 1
+}
