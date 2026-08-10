@@ -1,8 +1,9 @@
 # AGENTS (Chat Service)
 
-FastAPI chat service scope for coding agents. Source of truth for this scope: put
-instructions here, never in `services/chat/CLAUDE.md`. See the repo-root `AGENTS.md`
-for the policy.
+FastAPI chat service scope for coding agents. This file adds authoritative
+instructions for `services/chat/`; apply it together with the repo-root
+`AGENTS.md`. Put instructions here, never in `services/chat/CLAUDE.md` or
+`services/chat/GEMINI.md`.
 
 ## Entry points
 
@@ -98,8 +99,14 @@ and migrations. When it changes, update the SQL in `db.py` to match — the
 queries name tables and columns explicitly and nothing verifies them at build
 time.
 
-## Guardrails
+## Code Review Rules
 
-- Preserve API compatibility for web callers in `apps/web/src/lib/messaging.ts`.
-- If request or response schema changes, update both unit tests and web proxy behavior.
-- Keep external provider configuration behind environment variables.
+- Treat `apps/web/prisma/schema.prisma` and the handwritten `asyncpg` queries as
+  one data contract. Schema changes must update affected SQL and exercise the
+  real migration/query path; a successful Python build cannot detect drift.
+- Preserve the web/chat API contract across FastAPI models, the web proxy, and
+  `apps/web/src/lib/messaging.ts`. Request, success, validation, degraded, and
+  error shapes must change together with unit and contract coverage.
+- Keep provider choice and credentials behind environment variables. Core chat
+  paths must not import optional local-LLM/vector dependencies unless the full
+  profile is selected, and dependency versions belong in `constraints.txt`.

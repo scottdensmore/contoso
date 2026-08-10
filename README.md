@@ -215,9 +215,10 @@ make -C services/chat dev
 make -C services/chat ci
 ```
 
-For coding agents, see [AGENTS.md](./AGENTS.md). It is the single source of truth for
-agent instructions; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are
-pointers to it and must stay that way (CI enforces this via `make agent-docs-check`).
+For coding agents, start with [AGENTS.md](./AGENTS.md). `AGENTS.md` is the canonical
+instruction format: the root policy combines with the nearest nested runbook for a
+changed path. `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are
+pointers only, enforced by `make agent-docs-check`.
 
 PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
 

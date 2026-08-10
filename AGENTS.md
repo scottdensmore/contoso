@@ -9,8 +9,12 @@ Use this file as the default runbook for coding agents.
 
 ## Source of truth
 
-`AGENTS.md` is the single source of truth for agent instructions. Assistants that read
-their own context file get a pointer to `AGENTS.md` and nothing else:
+`AGENTS.md` is the canonical format for agent instructions. The root file defines
+repository-wide policy; a nested `AGENTS.md` adds authoritative instructions for
+its subtree. Apply both, from the root down to the file closest to the work.
+
+Assistant-specific context files are pointers only. They contain no independent
+instructions:
 
 | Assistant | Pointer file | Points at |
 | --- | --- | --- |
@@ -23,6 +27,7 @@ Scopes with their own runbook:
 - `AGENTS.md` (repo-wide)
 - `apps/web/AGENTS.md`
 - `services/chat/AGENTS.md`
+- `tests/scripts/AGENTS.md`
 
 Never add instructions to a pointer file. That includes memories captured by pressing
 `#` in Claude Code, which append to the nearest `CLAUDE.md` — move that text into the
@@ -35,6 +40,19 @@ moving the content across:
 ```bash
 make agent-docs-check FIX=1
 ```
+
+## Code Review Rules
+
+- Treat changes at system seams as one contract. When a change touches the web/chat
+  payload, Prisma schema and handwritten SQL, dependency manifests and constraints,
+  or container inputs and runtime files, inspect and validate both sides.
+- Require guards to measure effective behavior, not a nearby declaration. Reject
+  vacuous loops, mislabeled samples, or configuration checks that never exercise the
+  rendered pixels, served bytes, accessibility tree, resolved files, or tool output
+  named by the assertion.
+- For runtime and container changes, verify the built artifact and real integration
+  path. Unit tests cannot prove that a file was copied into an image, a service starts
+  with its deployed configuration, or the web/chat/database path works together.
 
 ## Development workflow
 
@@ -83,31 +101,10 @@ Follow these steps in order for every change.
    adjacent to the claim. Read the rendered pixels, the served bytes, the
    accessibility tree — whatever the asserted thing actually is.
 
-   The same trap catches fixtures and samples. A surface in a spec labelled
-   "the hero photograph" was measuring white page copy, because the launcher it
-   sampled around cannot reach the hero at that viewport. Assert that the
-   sample is what its name says: a brightness band, an overlap, a count that
-   only the intended case produces.
-
-   Point the guard at a fixture tree; do not damage the real one. These modules
-   compute their paths at import, so rebind **every path constant the assertion
-   dereferences** — found by reading the module, not guessed from its name.
-   That is more than the obvious one and is different per guard:
-   `test_image_encoding.py` reaches everything through `IMAGES_DIR`;
-   `test_image_references.py` also needs `PUBLIC_DIR`, which its `relative_to`
-   depends on, and `REPO_ROOT`, which it walks for references;
-   `test_page_headings.py` reads `REPO_ROOT` directly for the
-   component-supplied headings, so rebinding `APP_DIR` alone leaves that
-   assertion on the checkout. Rebinding a root that other constants were
-   derived from at import changes nothing they read.
-
-   Then confirm the run opened the fixture at all: a failure naming a path
-   inside it, or a vacuity guard reporting a count that matches what the
-   fixture holds. The count is the evidence, not the firing — a vacuity guard
-   fires on nothing found, which is equally what a mistyped fixture path
-   produces, and the assertions being demonstrated pass on the empty loop
-   either way. A green run that never opened the fixture looks exactly like a
-   guard that works.
+   The same trap catches fixtures and samples. Assert that a sample is what its
+   name says — for example, a brightness band, an overlap, or a count that only
+   the intended case produces. Fixture-isolation rules for the root guard suite
+   live in `tests/scripts/AGENTS.md`.
 
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
@@ -181,6 +178,9 @@ Follow these steps in order for every change.
       reopens here.
     - Do not repeat code review when the already-reviewed diff and worktree
       remain unchanged.
+    - Immediately before the push that creates or updates the pull request,
+      record the expected local `HEAD` SHA and a UTC cutoff. Carry both into
+      step 11 so an old review signal cannot satisfy the final-head gate.
     - Push and create the pull request only after local verification and any
       required code review are complete.
     - Open a normal, ready-for-review pull request by default. Do not open
@@ -192,16 +192,22 @@ Follow these steps in order for every change.
     thread. Treat its findings as real; when it is wrong, argue back with a
     measurement rather than complying, and say so in the reply.
 
-    How it signals is not obvious, and the part it does document is buried in
-    a review body. See *The automated pull request reviewer* below before
-    concluding it is done.
+    Confirm the pull request head still equals the SHA recorded before the last
+    push. Unless a fresh round is already observed for that head, request one
+    with an exact `@codex review` pull request comment. Automatic rounds after
+    pushes have been observed here, but they are not a documented trigger and
+    are not evidence until their start or outcome is observed.
+
+    How the reviewer signals is not obvious, and the clean-round convention is
+    documented in its review body rather than the public product documentation.
+    See *The automated pull request reviewer* below before concluding it is done.
 
     If no round arrives, that is a state to establish rather than assume, and
     the file says why: `eyes` is only visible while a round lasts, so a pull
     request twenty seconds after a push looks exactly like one the reviewer
-    will never touch. Establish it — pushed, polled past the latency recorded
-    below, `@codex review` requested, and no `eyes` appearing — and say what
-    was observed.
+    will never touch. Establish it — expected head unchanged, polled past the
+    latency recorded below, exact `@codex review` requested, and no `eyes`
+    appearing — and say what was observed.
 
     Then do the substitute work rather than pointing at work already done:
     steps 6 through 8 ran before the pull request existed, so run `code-review`
@@ -256,16 +262,24 @@ that falls outside the current change needs the main agent to file it.
 
 ### The automated pull request reviewer
 
-Observed on 2026-08-09 across pull requests #195 and #198. Not taken from the
-tool's own description, which lists triggers that do not match what happened.
-This is vendor behaviour and liable to drift, so read it as what was seen rather
-than what is guaranteed, and re-check it if it stops matching.
+Observed on 2026-08-09 across pull requests #195, #198, and #206. The
+[Codex GitHub review documentation](https://developers.openai.com/codex/integrations/github)
+guarantees the exact `@codex review` trigger and, when Automatic reviews are
+enabled for that event, review when a pull request is opened for review.
+Push-triggered rounds and the clean reaction behavior below are repository
+observations, not a public contract. This is vendor behavior and liable to drift,
+so re-check it if it stops matching.
 
 `chatgpt-codex-connector[bot]` signals through **reactions on the pull request**
 — `GET /repos/:owner/:repo/issues/:number/reactions`, the issue endpoint.
 `gh pr view --json reactionGroups` does return them, but only as a content and a
 count, with no reacting login, which is exactly the part the condition below
 turns on.
+
+GitHub spells the same identity differently across APIs. REST returns
+`chatgpt-codex-connector[bot]`; GraphQL review-thread `author.login` returns
+`chatgpt-codex-connector`. Account for both rather than filtering every response
+with one literal.
 
 - `eyes` means a round is running, and is removed when that round ends. It is
   only visible while it lasts, so seeing no `eyes` says nothing.
@@ -279,8 +293,9 @@ turns on.
 - A clean round posts **no review at all** — not an empty one — and leaves
   `+1`, which persists. Its only other trace is `eyes` appearing and clearing.
 
-**Done means a `+1` from that login, created later than both the last push and
-the newest inline comment from it, with every one of its threads resolved.**
+**Done means the pull request head still matches the recorded SHA, a `+1` from
+that login was created after both the recorded UTC cutoff and its newest inline
+comment, and every one of its threads is resolved.**
 
 Each clause is there because a simpler version is wrong:
 
@@ -378,6 +393,7 @@ review that claims viewports it never rendered is worse than none.
   `scripts/e2e_smoke.py`, which runs against a real stack.
 - `services/chat/Makefile`: chat-owned dev/test command surface.
 - `services/chat/AGENTS.md`: chat-scoped agent runbook.
+- `tests/scripts/AGENTS.md`: fixture and mutation rules for root guard tests.
 - `apps/web/prisma/`: shared data model and migrations.
 - `infrastructure/`: deployment scripts and Terraform.
 - `docs/`: operator and architecture docs.
@@ -501,12 +517,23 @@ Copy templates to `.env` before local development.
 
 ## Validation expectations
 
-- Default agent loop: `make quick-ci-changed`
-- Range-scoped agent validation: `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`
-- Web-only change: `make -C apps/web quick-ci`
-- Chat-only change: `make quick-ci-chat`
-- Scripts/tooling change: `make test-scripts`
-- Cross-surface change (web + chat + schema): `make ci`
+Use `make quick-ci-changed` during implementation, and rerun it against an
+explicit range when validating committed work:
+
+```bash
+CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
+```
+
+Before pushing, run the merge-gate command for every changed surface:
+
+- Web: `make -C apps/web ci` (includes lint, type-check, tests, and build)
+- Chat: `make -C services/chat ci`
+- Scripts/tooling: `make test-scripts`
+- Documentation/runbooks: `make docs-check`
+- Cross-surface or repository-wide: `make ci`
+
+Add integration confidence where the change crosses a runtime boundary:
+
 - Cross-surface integration confidence: `make e2e-smoke`
 - Contract-only integration confidence (minimal chat stack): `make e2e-smoke-lite`
 - Full local-provider integration confidence: `make e2e-smoke-full`
@@ -535,7 +562,9 @@ Copy templates to `.env` before local development.
 
 ## Building and running
 
-Before submitting any changes, it is crucial to validate them by running the full build and lint check. This command will build the repository and lint the code.
+Follow the validation matrix above. `make quick-ci-changed` is the iteration loop,
+not a substitute for the applicable merge-gate command. Web merge gates include a
+production build through `make -C apps/web ci` or `make ci`.
 
 When doing git operations use the GitHub CLI `gh` where possible.
 

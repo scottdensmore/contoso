@@ -48,7 +48,7 @@ If your change involves the database:
 
 Refer to:
 
-- `AGENTS.md` for coding agent runbooks and command conventions. It is the single source of truth for agent instructions; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
+- `AGENTS.md` files for coding agent runbooks and command conventions. The root policy combines with the nearest nested runbook; `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
 - `docs/` for architecture, database, deployment, and release runbooks.
 
 ### Quick Troubleshooting
