@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "13a6b1ebed64",
+  "strategy": "manual-commit",
+  "branch": "fix/200-listing-card-alt",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/web/e2e/browse.spec.ts",
+    "apps/web/src/app/page.test.tsx",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.test.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/13/a6b1ebed64/0/metadata.json",
+      "transcript": "/13/a6b1ebed64/0/full.jsonl",
+      "compact_transcript": "/13/a6b1ebed64/0/transcript.jsonl",
+      "content_hash": "/13/a6b1ebed64/0/content_hash.txt",
+      "prompt": "/13/a6b1ebed64/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2705,
+    "cache_creation_tokens": 6286626,
+    "cache_read_tokens": 660121404,
+    "output_tokens": 1318848,
+    "api_call_count": 1389
+  }
+}
