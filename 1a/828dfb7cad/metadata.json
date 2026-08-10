@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "1a828dfb7cad",
+  "strategy": "manual-commit",
+  "branch": "fix/196-field-boundaries",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/e2e/support/boundary.ts",
+    "apps/web/src/app/login/page.tsx",
+    "apps/web/src/app/signup/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/contact-form.tsx",
+    "apps/web/src/lib/field-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1a/828dfb7cad/0/metadata.json",
+      "transcript": "/1a/828dfb7cad/0/full.jsonl",
+      "compact_transcript": "/1a/828dfb7cad/0/transcript.jsonl",
+      "content_hash": "/1a/828dfb7cad/0/content_hash.txt",
+      "prompt": "/1a/828dfb7cad/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3024,
+    "cache_creation_tokens": 6544966,
+    "cache_read_tokens": 714606746,
+    "output_tokens": 1473955,
+    "api_call_count": 1561
+  }
+}
