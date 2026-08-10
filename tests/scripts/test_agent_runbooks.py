@@ -7,23 +7,24 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.check_agent_docs import SKIP_DIRECTORIES, find_agent_directories
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-IGNORED_DIRS = {".git", ".next", ".venv", "node_modules"}
 
 
-def agent_runbooks() -> list[Path]:
+def agent_runbooks(root: Path = REPO_ROOT) -> list[Path]:
     """Return repository-owned AGENTS.md files, including untracked additions."""
 
     return sorted(
-        path
-        for path in REPO_ROOT.rglob("AGENTS.md")
-        if not IGNORED_DIRS.intersection(path.relative_to(REPO_ROOT).parts)
+        directory / "AGENTS.md"
+        for directory in find_agent_directories(root)
+        if (directory / "AGENTS.md").exists()
     )
 
 
 def code_review_rules(path: Path) -> list[str] | None:
-    """Return top-level bullets in the exact Codex review-rules section."""
+    """Return bullets in the exact Codex review-rules section."""
 
     text = path.read_text(encoding="utf-8")
     match = re.search(
@@ -71,7 +72,7 @@ class AgentRunbookTests(unittest.TestCase):
             "missing": ("# AGENTS\n", "has no ## Code Review Rules section"),
             "one-rule": (
                 "# AGENTS\n\n## Code Review Rules\n\n- One rule.\n",
-                "at least two durable checks",
+                "review guidance should name at least two durable checks",
             ),
             "four-rules": (
                 "# AGENTS\n\n## Code Review Rules\n\n"
@@ -87,6 +88,34 @@ class AgentRunbookTests(unittest.TestCase):
                     path = fixture_root / f"{name}-AGENTS.md"
                     path.write_text(content, encoding="utf-8")
                     self.assertIn(expected, review_contract_error(path) or "")
+
+    def test_runbook_discovery_uses_the_pointer_tools_exclusions(self):
+        """Ignored generated trees must not become accidental review contracts."""
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture_root = Path(temp_dir)
+            expected = fixture_root / "AGENTS.md"
+            expected.write_text("# AGENTS\n", encoding="utf-8")
+
+            for directory in SKIP_DIRECTORIES:
+                ignored = fixture_root / directory / "AGENTS.md"
+                ignored.parent.mkdir(parents=True)
+                ignored.write_text("# Generated copy\n", encoding="utf-8")
+
+            self.assertEqual([expected], agent_runbooks(fixture_root))
+
+    def test_grouped_review_rules_are_counted(self):
+        """Codex supports H3 headings that group related review checks."""
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "grouped-AGENTS.md"
+            path.write_text(
+                "# AGENTS\n\n## Code Review Rules\n\n"
+                "### Database\n\n- Keep schema and queries aligned.\n\n"
+                "### API\n\n- Keep producers and consumers aligned.\n",
+                encoding="utf-8",
+            )
+            self.assertIsNone(review_contract_error(path))
 
 
 if __name__ == "__main__":
