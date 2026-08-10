@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { FIELD_BOUNDARY } from "@/lib/field-classes";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -68,7 +69,7 @@ export default function ContactForm() {
           required
           value={formData.name}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm ${FIELD_BOUNDARY}`}
           placeholder="Your name"
         />
       </div>
@@ -87,7 +88,7 @@ export default function ContactForm() {
           required
           value={formData.email}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm ${FIELD_BOUNDARY}`}
           placeholder="you@example.com"
         />
       </div>
@@ -107,7 +108,7 @@ export default function ContactForm() {
             required
             value={formData.subject}
             onChange={handleChange}
-            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm ${FIELD_BOUNDARY}`}
             placeholder="How can we help?"
           />
         </div>
@@ -124,7 +125,7 @@ export default function ContactForm() {
             name="orderNumber"
             value={formData.orderNumber}
             onChange={handleChange}
-            className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm ${FIELD_BOUNDARY}`}
             placeholder="Optional"
           />
         </div>
@@ -144,7 +145,7 @@ export default function ContactForm() {
           required
           value={formData.message}
           onChange={handleChange}
-          className="block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm"
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm ${FIELD_BOUNDARY}`}
           placeholder="Write your message here..."
         ></textarea>
       </div>
