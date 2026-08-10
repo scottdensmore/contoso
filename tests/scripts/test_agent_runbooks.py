@@ -11,6 +11,12 @@ from scripts.check_agent_docs import SKIP_DIRECTORIES, find_agent_directories
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+REQUIRED_RUNBOOKS = {
+    Path("AGENTS.md"),
+    Path("apps/web/AGENTS.md"),
+    Path("services/chat/AGENTS.md"),
+    Path("tests/scripts/AGENTS.md"),
+}
 
 
 def agent_runbooks(root: Path = REPO_ROOT) -> list[Path]:
@@ -23,25 +29,35 @@ def agent_runbooks(root: Path = REPO_ROOT) -> list[Path]:
     )
 
 
-def code_review_rules(path: Path) -> list[str] | None:
-    """Return bullets in the exact Codex review-rules section."""
+def missing_required_runbooks(
+    runbooks: list[Path], root: Path = REPO_ROOT
+) -> list[Path]:
+    """Return canonical runbook paths absent from the discovered repository set."""
+
+    discovered = {path.relative_to(root) for path in runbooks}
+    return sorted(REQUIRED_RUNBOOKS - discovered)
+
+
+def code_review_rule_sections(path: Path) -> list[list[str]]:
+    """Return rule bullets from each exact Codex review-rules section."""
 
     text = path.read_text(encoding="utf-8")
-    match = re.search(
+    matches = re.finditer(
         r"(?ms)^## Code Review Rules\s*$\n(?P<body>.*?)(?=^##\s|\Z)", text
     )
-    if match is None:
-        return None
-    return re.findall(r"(?m)^- .+$", match.group("body"))
+    return [re.findall(r"(?m)^- .+$", match.group("body")) for match in matches]
 
 
 def review_contract_error(path: Path) -> str | None:
     """Describe why one runbook does not provide a concise review contract."""
 
-    rules = code_review_rules(path)
+    sections = code_review_rule_sections(path)
     relative = path.relative_to(REPO_ROOT) if path.is_relative_to(REPO_ROOT) else path
-    if rules is None:
+    if not sections:
         return f"{relative} has no ## Code Review Rules section"
+    if len(sections) > 1:
+        return "runbooks should contain exactly one ## Code Review Rules section"
+    rules = sections[0]
     if len(rules) < 2:
         return "review guidance should name at least two durable checks"
     if len(rules) > 3:
@@ -54,10 +70,10 @@ class AgentRunbookTests(unittest.TestCase):
         """Codex should receive a concise, explicitly scoped review contract."""
 
         runbooks = agent_runbooks()
-        self.assertGreaterEqual(
-            len(runbooks),
-            4,
-            "expected root, web, chat, and script-guardrail agent runbooks",
+        self.assertEqual(
+            [],
+            missing_required_runbooks(runbooks),
+            "missing a canonical root, web, chat, or script-guardrail runbook",
         )
 
         for path in runbooks:
@@ -78,6 +94,11 @@ class AgentRunbookTests(unittest.TestCase):
                 "# AGENTS\n\n## Code Review Rules\n\n"
                 "- One.\n- Two.\n- Three.\n- Four.\n",
                 "keep review guidance concise",
+            ),
+            "duplicate-sections": (
+                "# AGENTS\n\n## Code Review Rules\n\n- One.\n- Two.\n\n"
+                "## Notes\n\nText.\n\n## Code Review Rules\n\n- Three.\n- Four.\n",
+                "exactly one ## Code Review Rules section",
             ),
         }
 
@@ -103,6 +124,26 @@ class AgentRunbookTests(unittest.TestCase):
                 ignored.write_text("# Generated copy\n", encoding="utf-8")
 
             self.assertEqual([expected], agent_runbooks(fixture_root))
+
+    def test_extra_scopes_cannot_replace_a_required_runbook(self):
+        """Each canonical scope must exist regardless of the discovered count."""
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture_root = Path(temp_dir)
+            missing = Path("apps/web/AGENTS.md")
+            fixture_paths = (REQUIRED_RUNBOOKS - {missing}) | {
+                Path("services/extra/AGENTS.md"),
+                Path("tools/AGENTS.md"),
+            }
+            for relative in fixture_paths:
+                path = fixture_root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# AGENTS\n", encoding="utf-8")
+
+            self.assertEqual(
+                [missing],
+                missing_required_runbooks(agent_runbooks(fixture_root), fixture_root),
+            )
 
     def test_grouped_review_rules_are_counted(self):
         """Codex supports H3 headings that group related review checks."""
