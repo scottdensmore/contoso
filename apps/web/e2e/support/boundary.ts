@@ -88,14 +88,46 @@ export async function boundaryContrast(
   // contamination rather than a wrong answer — no arrangement was found where
   // the reported number moved, and the claim here is only that the sampler no
   // longer reads a control and calls it a background.
+  //
+  // Held in *document* coordinates, not viewport ones. `boundingBox` is
+  // relative to the viewport and the loop below scrolls each control to centre
+  // before reading it, so a map captured once at some other offset compares
+  // fresh y values against stale ones. Past a field's height the overlap test
+  // stops matching, every clearance comes back Infinity, and the filtering
+  // quietly turns itself off — the probes go back to landing on the neighbour,
+  // which is the whole thing this map exists to stop.
+  const documentBox = async (selector: string) =>
+    page.locator(selector).evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return {
+        x: rect.x + window.scrollX,
+        y: rect.y + window.scrollY,
+        width: rect.width,
+        height: rect.height,
+      }
+    })
+
   const boxes = new Map<string, { x: number; y: number; width: number; height: number }>()
   for (const { selector } of boundaries) {
-    const box = await page.locator(selector).boundingBox()
-    if (box) boxes.set(selector, box)
+    boxes.set(selector, await documentBox(selector))
   }
 
   for (const { name, selector } of boundaries) {
     const control = page.locator(selector)
+    // Scrolled into view before its box is read. `boundingBox` is relative to
+    // the viewport, so a control below the fold reports coordinates outside it
+    // and every clamp below goes negative — on `/profile` at 390 the last
+    // shipping field sat 34px past the bottom edge and the reading refused.
+    // Focusing would scroll it anyway, which is the worse version of the same
+    // problem: the resting screenshot would be taken at one scroll offset and
+    // the focused one at another.
+    //
+    // Centred, not `scrollIntoViewIfNeeded`, which scrolls the minimum and
+    // leaves the control flush against the edge it came from — the same field
+    // then reported 0.0px of clearance and refused for the opposite reason.
+    await control.evaluate((element) =>
+      element.scrollIntoView({ block: 'center', inline: 'center' }),
+    )
     const box = await control.boundingBox()
     if (!box) throw new Error(`${selector} has no box`)
 
@@ -148,14 +180,17 @@ export async function boundaryContrast(
     // same row. Only controls that overlap vertically can be in the way; one
     // stacked above or below is behind the label, which is why sampling is
     // horizontal in the first place.
+    // Compared in the same document coordinates the map holds, so the scroll
+    // above cannot put the two out of step.
+    const here = boxes.get(selector) ?? (await documentBox(selector))
     const clearance = (towards: 'left' | 'right') => {
       let nearest = Infinity
       for (const [other, box2] of boxes) {
         if (other === selector) continue
-        const overlaps = box2.y < box.y + box.height && box.y < box2.y + box2.height
+        const overlaps = box2.y < here.y + here.height && here.y < box2.y + box2.height
         if (!overlaps) continue
         const gap =
-          towards === 'left' ? box.x - (box2.x + box2.width) : box2.x - (box.x + box.width)
+          towards === 'left' ? here.x - (box2.x + box2.width) : box2.x - (here.x + here.width)
         if (gap >= 0) nearest = Math.min(nearest, gap)
       }
       return nearest
@@ -306,6 +341,12 @@ export async function boundaryContrast(
  */
 export async function focusChange(page: Page, selector: string) {
   const control = page.locator(selector)
+  // Before the box, and before either screenshot: `focus()` scrolls a control
+  // that is off screen, and the two images are only comparable if nothing
+  // moves between them.
+  await control.evaluate((element) =>
+    element.scrollIntoView({ block: 'center', inline: 'center' }),
+  )
   const box = await control.boundingBox()
   if (!box) throw new Error(`${selector} has no box`)
 

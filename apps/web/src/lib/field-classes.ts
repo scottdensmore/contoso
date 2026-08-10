@@ -3,10 +3,13 @@
  * `/signup`, `/contact` and the chat panel.
  *
  * Eleven fields used to choose this for themselves, and they did not agree.
- * They are not all of them: `/profile` renders eleven more, behind its tabs,
- * which draw a `border` rather than a `ring` and fail the same criterion at
- * the same 1.41:1. See #220 — this constant does not drop into them unchanged,
- * and nothing here covers them.
+ * `/profile` renders eleven more behind its tabs. They drew a `border` rather
+ * than a `ring` and failed the same criterion at the same 1.41:1, and #220
+ * converted them to this constant — which did drop in unchanged, contrary to
+ * what this comment said while that was still unmeasured. What it cost was 2px
+ * of height each, since a `border` occupies layout and an inset `ring` does
+ * not, and nothing in forced colors, where `forced-colors:border` puts the
+ * same border back.
  * The ten on `/login`, `/signup` and `/contact` drew `ring-gray-300`, which
  * measured 1.41:1 on the account pages and 1.21:1 to 1.28:1 on the contact
  * card; the chat input was fixed separately in #184 and drew `ring-zinc-500`.

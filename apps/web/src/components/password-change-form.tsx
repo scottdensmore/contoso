@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FIELD_BOUNDARY } from "@/lib/field-classes";
 
 export default function PasswordChangeForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -60,7 +61,7 @@ export default function PasswordChangeForm() {
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
         />
       </div>
       <div>
@@ -76,7 +77,7 @@ export default function PasswordChangeForm() {
           required
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
         />
       </div>
       <div>
@@ -92,7 +93,7 @@ export default function PasswordChangeForm() {
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-xs p-2"
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
         />
       </div>
 

@@ -1,13 +1,20 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { expectVisibleControls, type Boundary } from './support/boundary'
 
 /**
- * The text fields on `/login`, `/signup` and `/contact` are visible before
- * you touch them.
+ * Every text field the app renders on a page is visible before you touch it.
  *
- * Not every field in the app: `/profile` has eleven more behind its tabs, at
- * the same 1.41:1 and drawn with a `border` rather than a `ring`. They are
- * #220, and the staleness check below only walks the three routes named here.
+ * Twenty-one of them: two on `/login`, three on `/signup`, five on `/contact`,
+ * and eleven behind `/profile`'s Security and Shipping tabs. The chat panel's
+ * input is the twenty-second and is measured by `chat-controls.spec.ts`, which
+ * opens the panel.
+ *
+ * `/profile`'s third tab is not walked. General holds one control, the avatar
+ * `input[type=file]`, which is `sr-only` and carries no `id` — so the staleness
+ * check below would fail on its own "renders a field with no id" assertion
+ * rather than measure anything. It is 1.41:1 with a focus indicator of zero
+ * pixels, and it is #231. A *text* field added to that tab would go unmeasured
+ * and unflagged, which is the one hole in the claim above.
  *
  * WCAG 2.2 1.4.11 asks 3:1 of a control's visual boundary. These ten measured
  * 1.41:1 on the account pages and 1.21:1 to 1.28:1 on the contact form — a
@@ -50,6 +57,64 @@ import { expectVisibleControls, type Boundary } from './support/boundary'
  * here and do not read a narrow pass as a near-miss.
  */
 
+const SEEDED_EMAIL = 'johnsmith@example.com'
+const SEEDED_PASSWORD = 'password'
+
+/**
+ * Sign in and open one of `/profile`'s tabs.
+ *
+ * The credentials are `auth.spec.ts`'s, which are `prisma/seed.ts`'s, so this
+ * fails for the same reason that spec does if the seed stops producing usable
+ * accounts. Going through the real form rather than planting a cookie is the
+ * slower option and the honest one: a session this suite forged would not
+ * prove the fields are reachable by a person.
+ *
+ * The cost of that honesty: the Security tab measured below can change this
+ * password, so exercising it for real breaks every test here. It has happened
+ * — a review submitted the form, and nine tests then failed at
+ * `toHaveURL(/\/$/)` with an error pointing at sign-in rather than at the
+ * cause. If they all fail that way at once, check the account before the code.
+ */
+async function openProfileTab(page: Page, tab: string) {
+  // Signing in lands on the home page, which asks the Next image optimiser for
+  // twenty product images at once. On a cold cache those take minutes, and the
+  // navigation to `/profile` queues behind them on a saturated server — the
+  // request is issued and simply never answered, which surfaces as
+  // `net::ERR_ABORTED` when the test gives up. Measured: still pending after
+  // 21 seconds, and `networkidle` never reached inside two minutes.
+  //
+  // None of the fields measured here is an image, so the transit does not need
+  // them. Dropped for the duration of the sign-in and restored afterwards, so
+  // that nothing else in the test runs against a page with its images blocked.
+  await page.route('**/_next/image**', (route) => route.abort())
+
+  await page.goto('/login')
+  await page.getByLabel('Email address').fill(SEEDED_EMAIL)
+  await page.getByLabel('Password').fill(SEEDED_PASSWORD)
+  await page.getByRole('button', { name: /sign in/i }).click()
+  // Wait for the redirect to land before touching anything. Signing in
+  // navigates home on its own, and the header renders the profile link as soon
+  // as the session exists — which is before that navigation finishes. A `goto`
+  // issued in that window aborts the one already running, and a click in it is
+  // undone by the redirect that follows.
+  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 })
+
+
+  // The header renders the profile link once the session exists, which is the
+  // signal that signing in worked. Navigating is then a `goto` rather than a
+  // click on it: a Next `<Link>` needs the client bundle to have taken over,
+  // and a click that arrives first does nothing at all — six tests sat on
+  // `http://127.0.0.1:3100/` waiting for a navigation that was never going to
+  // happen. `goto` is safe here in a way it was not a moment ago, because the
+  // redirect this waited for has already landed.
+  await expect(page.getByTitle('Profile Settings')).toBeVisible()
+  await page.goto('/profile')
+  await expect(page).toHaveURL(/\/profile/)
+  await page.unroute('**/_next/image**')
+
+  await page.getByRole('button', { name: tab }).click()
+}
+
 const SURFACES = [
   {
     path: '/login',
@@ -76,7 +141,42 @@ const SURFACES = [
       { name: 'the message field', selector: '#message' },
     ],
   },
-] satisfies { path: string; fields: Boundary[] }[]
+  {
+    path: '/profile',
+    tab: 'Security',
+    fields: [
+      { name: 'the current password field', selector: '#current-password' },
+      { name: 'the new password field', selector: '#new-password' },
+      { name: 'the confirm password field', selector: '#confirm-password' },
+    ],
+  },
+  {
+    path: '/profile',
+    tab: 'Shipping',
+    fields: [
+      { name: 'the full name field', selector: '#name' },
+      { name: 'the address line 1 field', selector: '#addressLine1' },
+      { name: 'the address line 2 field', selector: '#addressLine2' },
+      { name: 'the city field', selector: '#city' },
+      { name: 'the state field', selector: '#state' },
+      { name: 'the postcode field', selector: '#zipCode' },
+      { name: 'the country field', selector: '#country' },
+      { name: 'the phone number field', selector: '#phoneNumber' },
+    ],
+  },
+] satisfies { path: string; tab?: string; fields: Boundary[] }[]
+
+/** Reach a surface, signing in first when it is behind one. */
+async function reach(page: Page, surface: { path: string; tab?: string }) {
+  if (surface.tab) {
+    await openProfileTab(page, surface.tab)
+  } else {
+    await page.goto(surface.path)
+  }
+}
+
+const label = (surface: { path: string; tab?: string }) =>
+  surface.tab ? `${surface.path} (${surface.tab})` : surface.path
 
 /**
  * Phone and desktop, because the contact card's background is a `bg-cover`
@@ -112,10 +212,12 @@ for (const scheme of ['light', 'dark'] as const) {
   test.describe(`form field boundaries in forced colors (${scheme})`, () => {
     test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })
 
-    for (const { path, fields } of SURFACES) {
-      test(`the fields on ${path} keep a boundary`, async ({ page }) => {
+    for (const surface of SURFACES) {
+      test(`the fields on ${label(surface)} keep a boundary`, async ({ page }) => {
+        if (surface.tab) test.slow()
         await page.setViewportSize({ width: 1440, height: 900 })
-        await page.goto(path)
+        await reach(page, surface)
+        const fields = surface.fields
         await expect(page.locator(fields[0].selector)).toBeVisible()
         await page.keyboard.press('Tab')
         await page.mouse.move(2, 2)
@@ -127,13 +229,19 @@ for (const scheme of ['light', 'dark'] as const) {
 }
 
 test.describe('form field boundaries', () => {
-  for (const { path, fields } of SURFACES) {
+  for (const surface of SURFACES) {
     for (const { width, height } of WIDTHS) {
-      test(`the fields on ${path} are visible at rest at ${width}x${height}`, async ({
+      test(`the fields on ${label(surface)} are visible at rest at ${width}x${height}`, async ({
         page,
       }) => {
+        // Signing in and crossing two navigations eats a real share of the 30s
+        // default before any pixel is read — one of these timed out at 30.2s
+        // under load and passed in 6.3s on retry. `test.slow()` triples it for
+        // the surfaces that pay that cost and leaves the others alone.
+        if (surface.tab) test.slow()
         await page.setViewportSize({ width, height })
-        await page.goto(path)
+        await reach(page, surface)
+        const fields = surface.fields
         await expect(page.locator(fields[0].selector)).toBeVisible()
 
       // One real keypress before anything is measured. Chromium grants
@@ -153,11 +261,15 @@ test.describe('form field boundaries', () => {
   }
 
   test('every field on these pages is one of the ones checked', async ({ page }) => {
+    // This one walks every surface, so it pays the sign-in cost twice.
+    test.slow()
     // The lists above are written by hand, so they go stale silently: a sixth
     // field added to the contact form would be unmeasured and nothing here
     // would say so. This walks the rendered forms instead and compares.
-    for (const { path, fields } of SURFACES) {
-      await page.goto(path)
+    for (const surface of SURFACES) {
+      const { fields } = surface
+      const path = label(surface)
+      await reach(page, surface)
       const rendered = await page
         .locator('input:not([type="hidden"]):not([type="submit"]), textarea, select')
         .evaluateAll((nodes) =>
