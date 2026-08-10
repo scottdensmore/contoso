@@ -11,6 +11,7 @@ import Turn from "./turn";
 import { ChatTurn } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { sendChatMessage } from "@/lib/messaging";
+import { FIELD_BOUNDARY } from "@/lib/field-classes";
 
 interface ChatAction {
   type: "add" | "clear" | "resolve";
@@ -595,23 +596,11 @@ export const Chat = () => {
                 // input row some structure, and on the sheet this outline is
                 // the only thing separating the field from the surface.
                 //
-                // 1px, not 2. The contrast is in the colour, so a hairline
-                // scores the same 4.83:1 at half the weight, and every other
-                // field in the app is 1px — see #196, which is the same failure
-                // in ten more of them.
-                //
-                // And the focus indicator is now an outline rather than a
-                // recolour of this ring. It had been `focus:ring-sky-700` with
-                // `focus:outline-none`, which was fine while the resting ring
-                // was pale: 1.48:1 to 5.86:1 is a visible jump. Against
-                // zinc-500 it is not — sky-700 and zinc-500 differ by 1.21:1,
-                // the same lightness in two hues, indistinguishable in
-                // greyscale. That is WCAG 2.4.13, and no colour fixes it:
-                // resting and focused both have to be dark to clear 3:1 against
-                // a white panel, so they cannot also differ 3:1 from each
-                // other. The indicator has to change shape, which is what every
-                // other control in this widget already does.
-                className="block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ring-1 ring-inset ring-zinc-500 focus:ring-sky-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                // The boundary and focus indicator come from the shared
+                // constant, which is where the reasoning behind them now lives:
+                // this input and the ten in #196 had drifted apart, and having
+                // one definition is the point of that change.
+                className={`block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ${FIELD_BOUNDARY}`}
               />
               <button
                 type="button"
