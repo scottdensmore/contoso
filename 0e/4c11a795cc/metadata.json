@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "0e4c11a795cc",
+  "strategy": "manual-commit",
+  "branch": "docs/improve-agent-runbooks",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "apps/web/AGENTS.md",
+    "services/chat/AGENTS.md",
+    "tests/scripts/AGENTS.md",
+    "tests/scripts/test_agent_runbooks.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0e/4c11a795cc/0/metadata.json",
+      "transcript": "/0e/4c11a795cc/0/full.jsonl",
+      "compact_transcript": "/0e/4c11a795cc/0/transcript.jsonl",
+      "content_hash": "/0e/4c11a795cc/0/content_hash.txt",
+      "prompt": "/0e/4c11a795cc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 302723,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 11191808,
+    "output_tokens": 43079,
+    "api_call_count": 96
+  }
+}

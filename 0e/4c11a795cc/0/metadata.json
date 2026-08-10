@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "0e4c11a795cc",
+  "session_id": "019fe8f8-5e97-7e20-a5ed-bc693e0f2ba1",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-10T00:38:02.414160388Z",
+  "branch": "docs/improve-agent-runbooks",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "apps/web/AGENTS.md",
+    "services/chat/AGENTS.md",
+    "tests/scripts/AGENTS.md",
+    "tests/scripts/test_agent_runbooks.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.6-sol",
+  "turn_id": "9cbca081bb4f",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 302723,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 11191808,
+    "output_tokens": 43079,
+    "api_call_count": 96
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-10T00:38:01.887149211Z",
+    "agent_lines": 272,
+    "agent_removed": 182,
+    "human_added": 24,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 296,
+    "total_lines_changed": 478,
+    "agent_percentage": 94.97907949790795,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

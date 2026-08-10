@@ -1,0 +1,9 @@
+Take a look at AGENTS.md and scrutinize it for correctness and if we need to improve anything based on the codebase / workflow. I want to make sure that the codex review bot that acts on PRs is correct. Also we should understand why there are multiple AGENTS.md files in the repo. Should we have only one?
+
+---
+
+Should we have just one AGENTS.md file?
+
+---
+
+Ok. Lets make the changes that you suggested to improve
