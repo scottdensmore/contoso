@@ -600,7 +600,7 @@ export const Chat = () => {
                 // constant, which is where the reasoning behind them now lives:
                 // this input and the ten in #196 had drifted apart, and having
                 // one definition is the point of that change.
-                className={`block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs ${FIELD_BOUNDARY}`}
+                className={`block p-2 grow rounded-md text-zinc-700 placeholder:text-zinc-500 placeholder:opacity-100 shadow-xs focus:ring-sky-700 focus-visible:outline-sky-700 ${FIELD_BOUNDARY}`}
               />
               <button
                 type="button"
