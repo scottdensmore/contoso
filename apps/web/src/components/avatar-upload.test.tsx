@@ -10,12 +10,16 @@ import AvatarUpload from './avatar-upload'
  * the component reads `error` rather than treating the event as a result. The
  * stub reproduces that: `fails` makes it set `error` and still call `onloadend`.
  */
-function stubFileReader({ fails = false, via = 'onloadend' as 'onloadend' | 'onerror' } = {}) {
+function stubFileReader({
+  fails = false,
+  via = 'onloadend' as 'onloadend' | 'onerror',
+  result = 'data:image/png;base64,hello',
+} = {}) {
   vi.stubGlobal(
     'FileReader',
     class {
       readAsDataURL = vi.fn()
-      result = fails ? null : 'data:image/png;base64,hello'
+      result = fails ? null : result
       error = fails ? new Error('unreadable') : null
       onloadend: (() => void) | null = null
       onerror: (() => void) | null = null
@@ -227,6 +231,23 @@ describe('AvatarUpload', () => {
     })
     // Nothing was sent, so nothing can have been stored under a picture the
     // browser never managed to read.
+    expect(onUpload).not.toHaveBeenCalled()
+  })
+
+  it('refuses a file that is not an image', async () => {
+    // `accept="image/*"` filters the picker's dialog and nothing else; any file
+    // can be chosen past it. What the string becomes is the reason to check —
+    // it is stored on the account and later handed to an `<img src>`, here and
+    // in the chat.
+    const onUpload = vi.fn()
+    render(<AvatarUpload initialAvatar="" onUpload={onUpload} />)
+    stubFileReader({ result: 'data:text/html;base64,PHNjcmlwdD4=' })
+
+    selectAFile()
+
+    await waitFor(() => {
+      expect(screen.getByText('That picture was not saved.')).toBeDefined()
+    })
     expect(onUpload).not.toHaveBeenCalled()
   })
 

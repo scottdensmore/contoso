@@ -28,11 +28,23 @@ interface AvatarUploadProps {
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    const fail = () => reject(reader.error ?? new Error("The file could not be read"));
-    reader.onerror = fail;
+    const fail = (why?: string) =>
+      reject(why ? new Error(why) : (reader.error ?? new Error("The file could not be read")));
+    reader.onerror = () => fail();
     reader.onloadend = () => {
       if (reader.error || typeof reader.result !== "string") {
         fail();
+        return;
+      }
+      // `accept="image/*"` is a hint to the file picker, not a rule: it filters
+      // what the dialog offers and any file can still be chosen past it. This
+      // is the only place that checks, and what it protects is what the string
+      // becomes — the value is stored on the account and later handed to an
+      // `<img src>`, here and in the chat. A data URL declaring some other type
+      // is not a picture, so refusing it is both the security answer and the
+      // correct one.
+      if (!reader.result.startsWith("data:image/")) {
+        fail("That file is not an image");
         return;
       }
       resolve(reader.result);
