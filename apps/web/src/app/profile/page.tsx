@@ -7,6 +7,7 @@ import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
 import PasswordChangeForm from "@/components/password-change-form";
 import ShippingAddressForm from "@/components/shipping-address-form";
+import { ACTION_BOUNDARY } from "@/lib/control-classes";
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -58,7 +59,7 @@ export default function ProfilePage() {
           </p>
           <Link
             href="/login"
-            className="rounded-md bg-zinc-800 px-6 py-2 text-lg text-zinc-100 hover:bg-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+            className={`rounded-md bg-zinc-800 px-6 py-2 text-lg text-zinc-100 hover:bg-zinc-700 focus-visible:outline-sky-700 ${ACTION_BOUNDARY}`}
           >
             Sign in to continue
           </Link>

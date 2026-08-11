@@ -90,16 +90,17 @@ test.describe('chat panel controls', () => {
  * this one is `grow` inside a row stretched by a `size-11` button, so the
  * border has somewhere else to come from. Measured rather than predicted.
  *
- * The send button is measured too and is expected to be the weaker of the two:
- * it is filled rather than outlined, and forced-colors replaces its background
- * with a system colour. That is #227, which this does not fix — if it fails
- * here, that is the finding rather than a flake.
+ * Both controls, since #227 gave the send button `ACTION_BOUNDARY`. It is the
+ * one that needed it: filled rather than outlined, so forced colors replaced
+ * its background and left nothing at all, measured at 1.00:1 before. An
+ * earlier version of this block asserted on the input alone while this comment
+ * claimed both were covered.
  */
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`chat panel controls in forced colors (${scheme})`, () => {
     test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })
 
-    test('the message input keeps a boundary', async ({ page }) => {
+    test('the input and send button keep a boundary', async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 900 })
       await page.goto('/')
       await page.getByRole('button', { name: 'Open chat' }).click()
@@ -107,7 +108,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.keyboard.press('Tab')
       await page.mouse.move(2, 2)
 
-      await expectVisibleControls(page, [BOUNDARIES[0]], {
+      await expectVisibleControls(page, BOUNDARIES, {
         kind: 'css',
         selector: '[role="dialog"]',
       })

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { expectVisibleControls, type Boundary } from './support/boundary'
+import { openProfileTab } from './support/session'
 
 /**
  * Every text field the app renders on a page is visible before you touch it.
@@ -23,7 +24,7 @@ import { expectVisibleControls, type Boundary } from './support/boundary'
  *
  * The chat panel's input was fixed for the same reason in #184 and left the
  * app with two input treatments. That was the real cost of doing it piecemeal,
- * so the colour now lives in one place; see `src/lib/field-classes.ts`.
+ * so the colour now lives in one place; see `src/lib/control-classes.ts`.
  *
  * Both surfaces are read per field rather than assumed. `/login` and `/signup`
  * sit on rgb(250,250,250), not white, and the contact card is `bg-white/90`
@@ -50,70 +51,12 @@ import { expectVisibleControls, type Boundary } from './support/boundary'
  * indicator. But it means a green run here is not evidence that the designed
  * outline is doing anything, and the reason to keep it is cross-engine
  * consistency, which one Chromium project cannot test. See the note in
- * `src/lib/field-classes.ts`.
+ * `src/lib/control-classes.ts`.
  *
  * Both numbers sit near the threshold because a 2px outline and a 2px
  * perimeter are nearly the same area by construction. Expect small margins
  * here and do not read a narrow pass as a near-miss.
  */
-
-const SEEDED_EMAIL = 'johnsmith@example.com'
-const SEEDED_PASSWORD = 'password'
-
-/**
- * Sign in and open one of `/profile`'s tabs.
- *
- * The credentials are `auth.spec.ts`'s, which are `prisma/seed.ts`'s, so this
- * fails for the same reason that spec does if the seed stops producing usable
- * accounts. Going through the real form rather than planting a cookie is the
- * slower option and the honest one: a session this suite forged would not
- * prove the fields are reachable by a person.
- *
- * The cost of that honesty: the Security tab measured below can change this
- * password, so exercising it for real breaks every test here. It has happened
- * — a review submitted the form, and nine tests then failed at
- * `toHaveURL(/\/$/)` with an error pointing at sign-in rather than at the
- * cause. If they all fail that way at once, check the account before the code.
- */
-async function openProfileTab(page: Page, tab: string) {
-  // Signing in lands on the home page, which asks the Next image optimiser for
-  // twenty product images at once. On a cold cache those take minutes, and the
-  // navigation to `/profile` queues behind them on a saturated server — the
-  // request is issued and simply never answered, which surfaces as
-  // `net::ERR_ABORTED` when the test gives up. Measured: still pending after
-  // 21 seconds, and `networkidle` never reached inside two minutes.
-  //
-  // None of the fields measured here is an image, so the transit does not need
-  // them. Dropped for the duration of the sign-in and restored afterwards, so
-  // that nothing else in the test runs against a page with its images blocked.
-  await page.route('**/_next/image**', (route) => route.abort())
-
-  await page.goto('/login')
-  await page.getByLabel('Email address').fill(SEEDED_EMAIL)
-  await page.getByLabel('Password').fill(SEEDED_PASSWORD)
-  await page.getByRole('button', { name: /sign in/i }).click()
-  // Wait for the redirect to land before touching anything. Signing in
-  // navigates home on its own, and the header renders the profile link as soon
-  // as the session exists — which is before that navigation finishes. A `goto`
-  // issued in that window aborts the one already running, and a click in it is
-  // undone by the redirect that follows.
-  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 })
-
-
-  // The header renders the profile link once the session exists, which is the
-  // signal that signing in worked. Navigating is then a `goto` rather than a
-  // click on it: a Next `<Link>` needs the client bundle to have taken over,
-  // and a click that arrives first does nothing at all — six tests sat on
-  // `http://127.0.0.1:3100/` waiting for a navigation that was never going to
-  // happen. `goto` is safe here in a way it was not a moment ago, because the
-  // redirect this waited for has already landed.
-  await expect(page.getByTitle('Profile Settings')).toBeVisible()
-  await page.goto('/profile')
-  await expect(page).toHaveURL(/\/profile/)
-  await page.unroute('**/_next/image**')
-
-  await page.getByRole('button', { name: tab }).click()
-}
 
 const SURFACES = [
   {
@@ -196,7 +139,7 @@ const WIDTHS = [
  * All ten measured 1.00:1 before `forced-colors:border` was added to the
  * shared constant — the boundary this file exists to protect was not weakened
  * there, it was absent. Why, and why the fix takes the shape it does, is in
- * `src/lib/field-classes.ts`.
+ * `src/lib/control-classes.ts`.
  *
  * Both palettes, because they are not the same test. Chromium picks its system
  * colours from the colour scheme, so the border is black on white in light and
@@ -205,8 +148,8 @@ const WIDTHS = [
  *
  * Not covered here: the chat panel input, which carries the same constant but
  * whose journeys need the composed stack, and every filled button on these
- * pages, which is the same defect on a population with no shared constant and
- * is #227.
+ * pages — the same defect on a different population, closed by #227 and
+ * measured in `action-controls.spec.ts`.
  */
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`form field boundaries in forced colors (${scheme})`, () => {

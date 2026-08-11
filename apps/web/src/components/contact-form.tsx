@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FIELD_BOUNDARY } from "@/lib/field-classes";
+import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -155,7 +155,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className={`w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${ACTION_BOUNDARY}`}
       >
         {isSubmitting ? "Sending..." : "Send Message"}
       </button>

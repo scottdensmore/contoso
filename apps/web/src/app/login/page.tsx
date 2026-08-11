@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FIELD_BOUNDARY } from "@/lib/field-classes";
+import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -87,7 +87,7 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
             >
               Sign in
             </button>

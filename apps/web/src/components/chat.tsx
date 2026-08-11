@@ -11,7 +11,7 @@ import Turn from "./turn";
 import { ChatTurn } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { sendChatMessage } from "@/lib/messaging";
-import { FIELD_BOUNDARY } from "@/lib/field-classes";
+import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 interface ChatAction {
   type: "add" | "clear" | "resolve";
@@ -626,7 +626,7 @@ export const Chat = () => {
                 // target in WCAG 2.5.5, Apple's HIG and Android's guidance, and
                 // this is the primary action of a full-screen sheet at phone
                 // width — a bad place to lose it to a side effect.
-                className="rounded-md size-11 flex items-center justify-center bg-sky-700 text-white hover:bg-sky-800 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                className={`rounded-md size-11 flex items-center justify-center bg-sky-700 text-white hover:bg-sky-800 hover:cursor-pointer focus-visible:outline-sky-700 ${ACTION_BOUNDARY}`}
               >
                 <PaperAirplaneIcon className="w-6" aria-hidden="true" />
               </button>
@@ -701,7 +701,12 @@ export const Chat = () => {
             // Every other control in the widget styles its focus ring; this one
             // was left on the browser default, and the focus trap makes it a
             // stop that keyboard users land on every cycle.
-            className="bg-indigo-600 text-white rounded-full p-2 shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#18181b,0_10px_15px_-3px_#0000001a] hover:bg-indigo-500 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+            // The edge without `ACTION_FOCUS`'s offset: #190 gave this one
+            // offset-4 so the ring clears the photography behind it. Its
+            // three-ring `shadow-[...]` is a box-shadow, which forced colors
+            // strips outright -- measured 1.00:1 there, a bare glyph with no
+            // disc at all.
+            className="bg-indigo-600 text-white rounded-full p-2 shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#18181b,0_10px_15px_-3px_#0000001a] hover:bg-indigo-500 hover:cursor-pointer forced-colors:border-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
             onClick={toggleChat}
             aria-label={showChat ? "Close chat" : "Open chat"}
           >

@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import SidebarWrapper from "./sidebar-wrapper";
 import { Suspense } from "react";
+import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 
 export const Header = () => {
   const { data: session, status } = useSession();
@@ -59,17 +60,21 @@ export const Header = () => {
               </Link>
               <button
                 onClick={() => signOut()}
-                className="ml-4 px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500"
+                className={`ml-4 px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
               >
                 Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500">
+              <Link href="/login" className={`px-3 py-1.5 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}>
                 Sign In
               </Link>
-              <Link href="/signup" className="ml-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50 hover:text-indigo-700">
+              <Link href="/signup" // `ACTION_FOCUS`, not `ACTION_BOUNDARY`: outlined rather than
+                // filled, so it already has an edge forced colors keeps, and
+                // the constant's `border-2` would render it identically to the
+                // filled Sign In beside it.
+                className={`ml-2 px-3 py-1.5 text-sm font-semibold text-indigo-600 border border-indigo-600 rounded-md hover:bg-indigo-50 hover:text-indigo-700 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}>
                 Sign Up
               </Link>
             </>

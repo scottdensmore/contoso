@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FIELD_BOUNDARY } from "@/lib/field-classes";
+import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 export default function PasswordChangeForm() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -103,7 +103,7 @@ export default function PasswordChangeForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400"
+        className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
       >
         {isSubmitting ? "Updating..." : "Update Password"}
       </button>
