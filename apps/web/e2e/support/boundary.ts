@@ -41,7 +41,19 @@ export type Surface =
   | { kind: 'css'; selector: string }
   | { kind: 'sample' }
 
-export type Boundary = { name: string; selector: string }
+export type Boundary = {
+  name: string
+  selector: string
+  /**
+   * Walk the element's own circular perimeter rather than its bounding box.
+   *
+   * A round control's box corners are empty, so the rectangular walk below
+   * probes four regions the control does not occupy and reports the weakest of
+   * them — which is the background against itself. Measured on `/profile`'s
+   * avatar frame: 1.00:1 with a boundary plainly visible on screen.
+   */
+  round?: true
+}
 export type Reading = { name: string; resting: number; focused: number }
 
 /**
@@ -112,7 +124,7 @@ export async function boundaryContrast(
     boxes.set(selector, await documentBox(selector))
   }
 
-  for (const { name, selector } of boundaries) {
+  for (const { name, selector, round } of boundaries) {
     const control = page.locator(selector)
     // Scrolled into view before its box is read. `boundingBox` is relative to
     // the viewport, so a control below the fold reports coordinates outside it
@@ -226,7 +238,17 @@ export async function boundaryContrast(
     const measure = async () => {
       const shot = (await page.screenshot({ clip })).toString('base64')
       return page.evaluate(
-        async ({ shot, padLeft, padTop, width, height, surface, leftOffsets, rightOffsets }) => {
+        async ({
+          shot,
+          padLeft,
+          padTop,
+          width,
+          height,
+          surface,
+          leftOffsets,
+          rightOffsets,
+          round,
+        }) => {
           const image = new Image()
           image.src = `data:image/png;base64,${shot}`
           await image.decode()
@@ -292,11 +314,37 @@ export async function boundaryContrast(
 
           const band = [-5, -4, -3, -2, -1, 0, 1, 2, 3]
           const edges: [number, number, number, number][] = []
-          for (const f of fractions) {
-            edges.push([padLeft + width * f, padTop, 0, 1])
-            edges.push([padLeft + width * f, padTop + height, 0, -1])
-            edges.push([padLeft, padTop + height * f, 1, 0])
-            edges.push([padLeft + width, padTop + height * f, -1, 0])
+          if (round) {
+            // Sixteen radial probes, each stepping the band along its own
+            // outward normal. Fewer would step over the place a curve is
+            // weakest: a 1px stroke is fully covered where it runs straight
+            // and about a fifth covered at 45 degrees, so the diagonals are
+            // exactly where a round boundary fails and a walk that skipped
+            // them would report the axes and call it an edge.
+            const cx = padLeft + width / 2
+            const cy = padTop + height / 2
+            // A circle, not a stadium or a rounded rectangle. On anything but a
+            // square box this would trace the inscribed circle and report the
+            // interior as an edge — quietly, and in the direction that passes.
+            if (Math.abs(width - height) > 1) {
+              throw new Error(
+                `round asked of a ${width}x${height} box; it walks a circle and ` +
+                  'that is not one',
+              )
+            }
+            const radius = Math.min(width, height) / 2
+            for (let step = 0; step < 16; step++) {
+              const angle = (step / 16) * Math.PI * 2
+              const [ux, uy] = [Math.cos(angle), Math.sin(angle)]
+              edges.push([cx + ux * radius, cy + uy * radius, -ux, -uy])
+            }
+          } else {
+            for (const f of fractions) {
+              edges.push([padLeft + width * f, padTop, 0, 1])
+              edges.push([padLeft + width * f, padTop + height, 0, -1])
+              edges.push([padLeft, padTop + height * f, 1, 0])
+              edges.push([padLeft + width, padTop + height * f, -1, 0])
+            }
           }
 
           let weakest = Infinity
@@ -318,6 +366,7 @@ export async function boundaryContrast(
           surface,
           leftOffsets,
           rightOffsets,
+          round,
         },
       )
     }
