@@ -41,10 +41,23 @@ Pick the narrowest set that covers the change. From `AGENTS.md`:
 | docs | `make docs-check` |
 | cross-surface (web + chat + schema) | `make ci` |
 | integration confidence | `make e2e-smoke` |
+| user journeys | `make test-e2e` |
 
 Run `make docs-check` whenever any Markdown changed; it also runs `agent-docs-check`, which fails if a pointer file gained content.
 
 Run `make e2e-smoke` when the change touches runtime code, the Dockerfiles, or `docker-compose.yml`. It is the only check that exercises the built containers, and this repository has a history of breaks that only appear there — a missing `COPY` line, an unresolvable module inside the image, a stale build-time asset path. Green unit tests do not substitute for it.
+
+Run `make test-e2e` whenever the change touches anything a journey renders. It is not the same check as the smoke: the smoke asks whether routes respond, the journeys ask whether they work, and a page can return 200 while every image on it 404s. Step 4 runs the one spec under change and is told not to run the suite, so this is the only place it runs before a push.
+
+Run them in that order, smoke then journeys, and pass `KEEP_STACK=1`. The smoke always rebuilds: `--build --force-recreate` is unconditional, so it recreates the web and chat containers from current source whatever else is running, and only the teardown is conditional on that flag. Journeys first would measure the images the smoke is about to replace, which on a stack built several steps ago is code that no longer exists.
+
+`KEEP_STACK=1` is what makes a handover survive. Without it an `EXIT` trap runs `docker compose down --volumes`, taking the caller's stack and its seeded database with it — ordering does not save it, because the trap fires either way.
+
+Ports are where the two commands differ. `make test-e2e` goes wherever `E2E_BASE_URL` points, so a remapped stack is fine for it — measured, a stack on 3100 carrying the compose default `NEXTAUTH_URL` signs in and runs the profile journeys. `make e2e-smoke` cannot be aimed anywhere: it probes `http://127.0.0.1:3000` and `http://127.0.0.1:8000` literally.
+
+So on a remapped handover, run the journeys against the URL you were given and report that the smoke was not run and why. Do not run it anyway. What it would do to the stack you were handed depends on which compose files resolve and which ports are already held, and the outcomes range from dropping the remapping under you to probing an unrelated project's containers and coming back green — so the one thing you cannot do is trust its verdict.
+
+If there is no stack at all and you need one, say what you started and stop it when you are done.
 
 ## What to report
 
