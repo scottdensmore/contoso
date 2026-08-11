@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "48ddccb87549",
+  "strategy": "manual-commit",
+  "branch": "fix/227-button-boundaries",
+  "checkpoints_count": 16,
+  "files_touched": [
+    "apps/web/e2e/action-controls.spec.ts",
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/e2e/support/boundary.ts",
+    "apps/web/e2e/support/session.ts",
+    "apps/web/src/app/faq/page.tsx",
+    "apps/web/src/app/login/page.tsx",
+    "apps/web/src/app/profile/page.tsx",
+    "apps/web/src/app/signup/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/contact-form.tsx",
+    "apps/web/src/components/contact-thanks.tsx",
+    "apps/web/src/components/header.tsx",
+    "apps/web/src/components/password-change-form.tsx",
+    "apps/web/src/components/shipping-address-form.tsx",
+    "apps/web/src/lib/control-classes.ts",
+    "apps/web/src/lib/field-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/48/ddccb87549/0/metadata.json",
+      "transcript": "/48/ddccb87549/0/full.jsonl",
+      "compact_transcript": "/48/ddccb87549/0/transcript.jsonl",
+      "content_hash": "/48/ddccb87549/0/content_hash.txt",
+      "prompt": "/48/ddccb87549/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3470,
+    "cache_creation_tokens": 7914848,
+    "cache_read_tokens": 856739549,
+    "output_tokens": 1682757,
+    "api_call_count": 1801
+  }
+}

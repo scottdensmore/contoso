@@ -1,0 +1,207 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "48ddccb87549",
+  "session_id": "4368fb93-c8cc-4d91-99ab-3d6d4964d7d7",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-11T03:34:39.405270007Z",
+  "branch": "fix/227-button-boundaries",
+  "checkpoints_count": 16,
+  "save_step_count": 11,
+  "files_touched": [
+    "apps/web/e2e/action-controls.spec.ts",
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/e2e/support/boundary.ts",
+    "apps/web/e2e/support/session.ts",
+    "apps/web/src/app/faq/page.tsx",
+    "apps/web/src/app/login/page.tsx",
+    "apps/web/src/app/profile/page.tsx",
+    "apps/web/src/app/signup/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/contact-form.tsx",
+    "apps/web/src/components/contact-thanks.tsx",
+    "apps/web/src/components/header.tsx",
+    "apps/web/src/components/password-change-form.tsx",
+    "apps/web/src/components/shipping-address-form.tsx",
+    "apps/web/src/lib/control-classes.ts",
+    "apps/web/src/lib/field-classes.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "e624ad6ce0cd",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 3470,
+    "cache_creation_tokens": 7914848,
+    "cache_read_tokens": 856739549,
+    "output_tokens": 1682757,
+    "api_call_count": 1801
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01LZFqoaWFmCHv2Lv1mEwXZZ",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "artifact-design"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "e624ad6ce0cd",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 127,
+        "end": 128,
+        "entry_ids": [
+          "5989de3c-d3c0-4808-bc3d-f4a03c5e483c"
+        ],
+        "tool_use_id": "toolu_01LZFqoaWFmCHv2Lv1mEwXZZ"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01LZFqoaWFmCHv2Lv1mEwXZZ"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: artifact-design",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 50
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-11T03:34:33.075463758Z",
+    "agent_lines": 303,
+    "agent_removed": 177,
+    "human_added": 142,
+    "human_modified": 59,
+    "human_removed": 0,
+    "total_committed": 483,
+    "total_lines_changed": 681,
+    "agent_percentage": 70.48458149779736,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 390,
+      "agent_lines_removed": 197
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 5,
+      "user_lines_removed": 2,
+      "agent_lines_added": 390,
+      "agent_lines_removed": 197,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 5
+      },
+      "user_removed_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 2
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 15,
+      "user_lines_removed": 7,
+      "agent_lines_added": 404,
+      "agent_lines_removed": 201,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 15
+      },
+      "user_removed_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 7
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 15,
+      "user_lines_removed": 7,
+      "agent_lines_added": 404,
+      "agent_lines_removed": 201,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 15
+      },
+      "user_removed_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 7
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 443,
+      "agent_lines_removed": 204
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 445,
+      "agent_lines_removed": 204
+    },
+    {
+      "checkpoint_number": 9,
+      "user_lines_added": 2,
+      "user_lines_removed": 0,
+      "agent_lines_added": 455,
+      "agent_lines_removed": 213,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 2
+      }
+    },
+    {
+      "checkpoint_number": 10,
+      "user_lines_added": 16,
+      "user_lines_removed": 0,
+      "agent_lines_added": 455,
+      "agent_lines_removed": 213,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 16
+      }
+    },
+    {
+      "checkpoint_number": 11,
+      "user_lines_added": 42,
+      "user_lines_removed": 1,
+      "agent_lines_added": 455,
+      "agent_lines_removed": 213,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 16,
+        "apps/web/e2e/support/session.ts": 26
+      },
+      "user_removed_per_file": {
+        "apps/web/e2e/support/session.ts": 1
+      }
+    },
+    {
+      "checkpoint_number": 12,
+      "user_lines_added": 53,
+      "user_lines_removed": 21,
+      "agent_lines_added": 489,
+      "agent_lines_removed": 215,
+      "user_added_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 6,
+        "apps/web/e2e/support/session.ts": 47
+      },
+      "user_removed_per_file": {
+        "apps/web/e2e/action-controls.spec.ts": 6,
+        "apps/web/e2e/support/session.ts": 15
+      }
+    }
+  ]
+}
