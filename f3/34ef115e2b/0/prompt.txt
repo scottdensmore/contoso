@@ -3774,3 +3774,72 @@ You pick on the account fields, then lets do 237
 <status>completed</status>
 <summary>Background command "Wait for the verifier's suite run to finish" completed (exit code 0)</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a6518c7c6e7610f2f</task-id>
+<tool-use-id>toolu_01HMkg4cbnHzbNg32Fjnntd5</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/3f35c481-9e1b-4525-8dda-f7750cc702aa/tasks/a6518c7c6e7610f2f.output</output-file>
+<status>completed</status>
+<summary>Agent "Final battery on the accent change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The fix holds. `test-scripts` (153/153), `quick-ci-web` (lint + typecheck of app and specs + journey-coverage check + 137/137 unit tests), and the full Playwright battery (125/125, 7.8m, exit 0) against the composed stack on `E2E_BASE_URL=http://127.0.0.1:3100` all pass. `FIELD_BOUNDARY` carries `focus-visible:outline-2 focus-visible:outline-offset-2` again, every call site pairs its own accent, and the guard that catches the regression (`a form and its submit agree on a focus indicator`) is green.
+
+### The three scrutiny points
+
+**1. `2px solid` on all five submits, including the two `/profile` submits with no `outline-solid`.** Confirmed, by two independent routes.
+
+- Compiled Tailwind v4's output directly (`@tailwindcss/postcss` against a probe stylesheet) rather than guessing: `outline-2` emits `outline-style: var(--tw-outline-style); outline-width: 2px`, and `--tw-outline-style` is a registered `@property` with `initial-value: solid`. So any element that applies `outline-2` (i.e. `ACTION_FOCUS`, used by both `password-change-form.tsx` and `shipping-address-form.tsx` via `ACTION_BOUNDARY`) resolves to `outline-style: solid` even without the literal `outline-solid` class — the explicit class on `/login` and `/signup`'s submits is redundant belt-and-suspenders, not load-bearing.
+- `form-fields.spec.ts:212` (`a form and its submit agree on a focus indicator`) exercises this live for real, across all five forms including `/profile (Security)` and `/profile (Shipping)`, comparing computed `outlineWidth`/`outlineStyle` field-vs-submit. It passed (2.3s) in the run above. This is the same test the previous pass verified fails red against the mutation, so a green here is a real check, not an unexercised assertion.
+
+**2. The `Tab` added on `/login` in `chat-controls.spec.ts`.** Read the diff: it's pressed after `page.goto('/login')` and before reading `submit.focus()`'s `outlineColor`, on a freshly-navigated page with no prior focus state — its only job is to prime Chromium's `:focus-visible` grant for the programmatic focus that follows, exactly as the adjacent comment says. It does not touch the dialog-side read (that happens earlier, before navigation, on `[role="dialog"] input, button`). Both `chat-controls.spec.ts` tests that exercise this block (`every panel control agrees in the sheet/card, and none is the page accent`) passed. Confirmed not disturbed.
+
+**3. Comments asserting something nothing checks.** None found. I read `control-classes.ts` end to end against what the specs actually measure: the "11 fields behind /profile" claim (3 Security + 8 Shipping = 11, matches `SURFACES` in `form-fields.spec.ts`), the "22 fields on Chromium's fallback" claim (matches the mutation description and the width/style comparison that now catches it), the "eleven page controls, chat launcher excluded" claim (matches `CONTROLS` in `action-controls.spec.ts`, 11 entries, launcher absent), and the `1.21:1`/`1.34:1` ring-contribution figures (consistent with `boundaryContrast`'s measurement method). Everything I checked has a corresponding assertion.
+
+## Failures
+None.
+
+## Flakes
+None observed. One run had to be discarded and redone (see Environment issues below), but that was infrastructure on my end, not a flaky test — the restarted run passed cleanly start to finish with no retries (retries are off in `playwright.config.ts` anyway, so a flake would show as a hard failure, not a retry-then-pass).
+
+## Missing coverage
+None new introduced by this change that I could find. The suite's own comments already name its known gaps accurately (chat send button's own call site, header's `Sign Out`, `/profile`'s General tab avatar-only third tab) — these are pre-existing, documented, and not something this branch touched.
+
+## Environment issues
+- My first attempt to run the full Playwright suite (`... | tail -200` in the background) died silently: no process, no output, no completion marker, after being moved to background. I never determined the cause (possibly a harness/session artifact, not a Chromium or stack problem — the stack was healthy throughout, `docker ps` showed `contosofld-*` up the whole time). I discarded that run and restarted with direct file redirection instead of a piped `tail`, which completed normally end-to-end (125 passed, exit 0). Flagging this as an environment hiccup on my side rather than a product defect, since the second run had no anomalies.
+- Per your instructions, `make e2e-smoke` was **not run** — it probes `127.0.0.1:3000`/`8000` literally and your stack is remapped to 3100/8100/55433 under project `contosofld`. Running it would either fight your remapped stack or hit an unrelated project's containers on the default ports; I did not attempt it.
+- No port or `LLM_PROVIDER` collisions encountered, since I reused your existing stack rather than starting my own — the `travel-app` (5432/3000) and `LLM_PROVIDER=local`/Ollama constraints noted in memory didn't come into play.
+- I did not submit the password-change form on `/profile`; I confirmed no spec in `e2e/` clicks its submit either.
+- Working tree confirmed unchanged (`git status --short` matches the original 11 modified files, nothing added/removed by me) and your containers were not touched — same `Up` durations before and after.
+
+## What I did not run, and why
+- `make e2e-smoke` / `make e2e-smoke-lite` / `make e2e-smoke-full` — cannot be aimed at your remapped ports; you already told me not to run it against this stack.
+- Nothing else in the recommended battery was skipped: `test-scripts`, `quick-ci-web` (lint/typecheck/unit), and the full `test:e2e` Playwright run (all `*.spec.ts` under `apps/web/e2e/`, 125 tests) all ran to completion.
+
+## Commands run
+```bash
+git status --short
+git diff --stat main...HEAD   # empty: no commits differ from main, all changes uncommitted
+.venv/bin/python scripts/detect_changed_surfaces.py --print-targets   # -&gt; test-scripts quick-ci-web
+make test-scripts
+make quick-ci-web
+curl checks against http://127.0.0.1:3100/, /login, http://127.0.0.1:8100/  # warm the stack
+E2E_BASE_URL=http://127.0.0.1:3100 npx playwright test
+```
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/form-fields.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/chat-controls.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/action-controls.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/password-change-form.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/shipping-address-form.tsx`.</result>
+<usage><subagent_tokens>143730</subagent_tokens><tool_uses>89</tool_uses><duration_ms>582759</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ber3ti90l</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/3f35c481-9e1b-4525-8dda-f7750cc702aa/tasks/ber3ti90l.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for the verifier's final report" completed (exit code 0)</summary>
+</task-notification>
