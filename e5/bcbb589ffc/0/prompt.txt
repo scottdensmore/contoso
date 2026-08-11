@@ -3517,3 +3517,7 @@ What is next? Also why should we need that stash?
 ---
 
 Go ahead looks good
+
+---
+
+You should be running suites and tests in the verifier (at least I thought was the workflow)
