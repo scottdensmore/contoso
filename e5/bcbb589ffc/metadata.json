@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "e5bcbb589ffc",
+  "strategy": "manual-commit",
+  "branch": "fix/231-avatar-control",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "apps/web/e2e/action-controls.spec.ts",
+    "apps/web/src/components/avatar-upload.tsx",
+    "apps/web/src/lib/control-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e5/bcbb589ffc/0/metadata.json",
+      "transcript": "/e5/bcbb589ffc/0/full.jsonl",
+      "compact_transcript": "/e5/bcbb589ffc/0/transcript.jsonl",
+      "content_hash": "/e5/bcbb589ffc/0/content_hash.txt",
+      "prompt": "/e5/bcbb589ffc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3549,
+    "cache_creation_tokens": 7971044,
+    "cache_read_tokens": 889486411,
+    "output_tokens": 1718689,
+    "api_call_count": 1843
+  }
+}
