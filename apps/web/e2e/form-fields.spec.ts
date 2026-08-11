@@ -38,19 +38,25 @@ import { openProfileTab } from './support/session'
  * disappear into. Swept over fifteen widths from 360 to 1920, the worst
  * perimeter pixel on any field is 3.80:1.
  *
- * ## What the focus half of this does not catch
+ * ## What the contrast half of this does not catch
  *
- * Deleting the designed outline from `FIELD_BOUNDARY`. Chromium then paints
- * its own `auto 1px rgb(16,16,16)` ring, which satisfies 2.4.13 by itself:
- * measured, `/login`'s email field gives 1662 qualifying pixels against 1659
- * required without the outline, and 1673 with it. Only the contact textarea
- * notices, and by three pixels.
+ * Deleting the designed outline from `FIELD_BOUNDARY`. That measurement was
+ * taken when the constant still carried the colour, and gave Chromium's own
+ * `auto 1px rgb(16,16,16)` ring at 1662 qualifying pixels against 1659
+ * required. Since the accent moved to the call sites the mutation is fainter
+ * still: the fallback ring wears the author's colour, so the field focuses 1px
+ * of indigo rather than 2px, and every pixel count in this file passes.
  *
- * That is the check being right rather than weak — the criterion asks whether
- * focus is visible, not whose CSS made it so, and a browser default is a real
- * indicator. But it means a green run here is not evidence that the designed
- * outline is doing anything, and the reason to keep it is cross-engine
- * consistency, which one Chromium project cannot test. See the note in
+ * That is those checks being right rather than weak — the criterion asks
+ * whether focus is visible, not whose CSS made it so, and a browser default is
+ * a real indicator. But it means a contrast run is not evidence that the
+ * designed outline is doing anything. `a form and its submit agree on a focus
+ * indicator`, below, is what closes it: it compares each field's computed
+ * outline width and style against the submit's, so a field on the fallback
+ * reads `1px auto` against a `2px solid` button and fails. That mutation ran
+ * red before this paragraph was written. What no Chromium-only project can
+ * test is the reason the designed outline exists at all, which is that the
+ * fallback differs between engines — see the note in
  * `src/lib/control-classes.ts`.
  *
  * Both numbers sit near the threshold because a 2px outline and a 2px
@@ -202,6 +208,136 @@ test.describe('form field boundaries', () => {
       })
     }
   }
+
+  test('a form and its submit agree on a focus indicator', async ({ page }) => {
+    test.slow()
+    // Relational rather than a hardcoded hue: what matters is that a keyboard
+    // user tabbing a form does not watch the indicator change colour partway
+    // down it. `/login` did exactly that until the fields moved off sky-700 —
+    // the two inputs focused sky, the button under them indigo, 45 degrees of
+    // hue apart inside one form.
+    //
+    // Read from computed style rather than the class list, so a call site
+    // naming an accent Tailwind never emitted fails here rather than passing on
+    // a string. It is not a paint reading, and that is the point: the geometry
+    // it compares is invisible to everything that measures pixels. Delete
+    // `focus-visible:outline-2` from `FIELD_BOUNDARY` and Chromium falls back to
+    // `outline-style: auto` while keeping the call site's colour, so the field
+    // focuses a 1px ring instead of a 2px one in the right hue — which every
+    // contrast check in this file passes, because they weigh colour and not
+    // width. That is not hypothetical: this change dropped `outline-2` while
+    // moving the accent out to the call sites, all 22 fields shipped on
+    // Chromium's fallback ring, and five review rounds and two green batteries
+    // went past it before the width was read.
+    // `/profile`'s two forms are in here because this change touched them too:
+    // eleven of the twenty-one fields it moved to indigo are behind those tabs,
+    // and a loop over the anonymous routes alone would not have seen them.
+    const FORMS = [
+      { label: '/login', reach: (p: Page) => p.goto('/login').then(() => undefined) },
+      { label: '/signup', reach: (p: Page) => p.goto('/signup').then(() => undefined) },
+      { label: '/contact', reach: (p: Page) => p.goto('/contact').then(() => undefined) },
+      { label: '/profile (Security)', reach: (p: Page) => openProfileTab(p, 'Security') },
+      { label: '/profile (Shipping)', reach: (p: Page) => openProfileTab(p, 'Shipping') },
+    ]
+
+    for (const { label: path, reach } of FORMS) {
+      await reach(page)
+
+      // Pointer parked, then one real keypress, and the order matters here for
+      // the same reason it does in `action-controls.spec.ts`: Chromium grants
+      // `:focus-visible` to a programmatically focused *button* only when the
+      // last interaction was a keyboard one. `openProfileTab` ends by clicking
+      // a tab, so without this the submit reports `currentColor` — white on a
+      // white-on-indigo button — and the form looks like it disagrees with
+      // itself when it does not.
+      await page.mouse.move(2, 2)
+      await page.keyboard.press('Tab')
+
+      // Transitions off before reading, for the reason `support/boundary.ts`
+      // gives: Tailwind transitions `outline-color`, so a colour read the
+      // instant after `focus()` is whatever the indicator is fading *from* —
+      // `currentColor`, which on `/contact`'s white-on-indigo submit is white.
+      // That is #235, and it made this check fail on a form that agrees.
+      await page.addStyleTag({
+        content: '*, *::before, *::after { transition: none !important; }',
+      })
+
+      // The submit sets the expectation for the outline; the ring expectation
+      // comes from the first field, since a button has no ring to compare.
+      //
+      // Width and style come from the submit too, and they are what pins the
+      // geometry. `ACTION_FOCUS` and `FIELD_BOUNDARY` both ask for `outline-2`,
+      // so a form whose fields have it reads `2px solid` on both sides; a form
+      // that has lost it reads `1px auto` on the fields against the button's
+      // `2px solid` and fails here. Relational again, so raising the app to a
+      // 3px indicator stays a one-line change.
+      const submit = page.locator('button[type=submit]').first()
+      await submit.evaluate((node) => (node as HTMLElement).focus())
+      const { outline, width, style: outlineStyle } = await submit.evaluate((node) => {
+        const computed = getComputedStyle(node)
+        return {
+          outline: computed.outlineColor,
+          width: computed.outlineWidth,
+          style: computed.outlineStyle,
+        }
+      })
+      const ring = await page
+        .locator('form input, form textarea')
+        .first()
+        .evaluate((node) => {
+          ;(node as HTMLElement).focus()
+          return getComputedStyle(node).boxShadow
+        })
+      const expected = { colour: outline, ring, width, style: outlineStyle }
+
+      // Every field, not the first one. Before this change the accent came from
+      // the shared constant and a field could not have the wrong one; now it is
+      // a literal pair copied to each call site, so the invariant is only as
+      // good as what reads it. A `.first()` here would have watched five of the
+      // twenty-one, and `textarea` is in the selector because `/contact`'s
+      // `#message` is one of them.
+      const wrong = await page
+        .locator('form input, form textarea')
+        .evaluateAll((nodes, want) =>
+          nodes
+            .map((node) => {
+              ;(node as HTMLElement).focus()
+              const style = getComputedStyle(node)
+              // The ring half of the pair as well as the outline. Each call
+              // site copies `focus:ring-<accent> focus-visible:outline-<accent>`
+              // and reading one of the two leaves the other free to drift —
+              // the ring moves only 1.34:1, below what `expectVisibleControls`
+              // counts, so nothing else would see it.
+              return {
+                id: node.id,
+                colour: style.outlineColor,
+                ring: style.boxShadow,
+                width: style.outlineWidth,
+                style: style.outlineStyle,
+              }
+            })
+            .filter(
+              (field) =>
+                field.colour !== want.colour ||
+                field.ring !== want.ring ||
+                field.width !== want.width ||
+                field.style !== want.style,
+            )
+            .map(
+              (field) =>
+                `${field.id || '(no id)'} focuses ${field.width} ${field.style} ` +
+                `${field.colour} / ${field.ring}`,
+            ),
+          expected,
+        )
+
+      expect(
+        wrong,
+        `${path} focuses its submit ${width} ${outlineStyle} ${outline}; these ` +
+          `disagree, so the indicator changes partway down the form`,
+      ).toEqual([])
+    }
+  })
 
   test('every field on these pages is one of the ones checked', async ({ page }) => {
     // This one walks every surface, so it pays the sign-in cost twice.

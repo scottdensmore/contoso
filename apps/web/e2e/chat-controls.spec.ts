@@ -80,6 +80,103 @@ test.describe('chat panel controls', () => {
   }
 })
 
+test.describe('chat panel accent', () => {
+  for (const { width, height, shape } of WIDTHS) {
+    test(`every panel control agrees in the ${shape}, and none is the page accent`, async ({
+      page,
+    }) => {
+    // The widget is the one place that is deliberately not indigo: #184 gave it
+    // sky-700 so the panel reads as its own place, and #221's fields took sky
+    // everywhere before that split had a name. When the page fields moved to
+    // indigo and `/profile`'s CTA with them, sky is the widget's alone — this
+    // input, its send button, and the clear and close controls. This is what
+    // says it stayed, and that the row agrees with itself.
+    // Both shapes, because the close button only exists below `lg`: at 1440 the
+    // walk finds three controls, and the sheet is where the fourth lives.
+    // Running one width would have left it measured by nothing while this
+    // test's own comment claimed otherwise.
+    await page.setViewportSize({ width, height })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Open chat' }).click()
+    await expect(page.getByRole('dialog', { name: /chat/i })).toBeVisible()
+    await page.mouse.move(2, 2)
+    await page.keyboard.press('Tab')
+    await page.addStyleTag({
+      content: '*, *::before, *::after { transition: none !important; }',
+    })
+
+    // Every focusable control the panel renders, not a list of selectors. The
+    // widget's close button only exists below `lg`, so naming four would either
+    // miss it here or fail at this width; walking whatever is present says the
+    // same thing without knowing which shape the panel is in.
+    const accents = await page
+      .locator('[role="dialog"] input, [role="dialog"] button')
+      .evaluateAll((nodes) =>
+        nodes.map((node) => {
+          ;(node as HTMLElement).focus()
+          return {
+            name: node.getAttribute('aria-label') ?? node.id ?? node.tagName,
+            colour: getComputedStyle(node).outlineColor,
+          }
+        }),
+      )
+
+    // The population, not a floor. `toBeGreaterThan(1)` re-armed the very gap
+    // the both-shapes run closed: if the close button stopped rendering at 390,
+    // the sheet would walk three controls, pass, and leave it measured by
+    // nothing while the comment above said otherwise.
+    expect(
+      accents.map((control) => control.name).sort(),
+      `the ${shape} did not render the controls this expects`,
+    ).toEqual(
+      shape === 'sheet'
+        ? ['Clear conversation', 'Close chat', 'Message', 'Send message']
+        : ['Clear conversation', 'Message', 'Send message'],
+    )
+
+    const widget = accents[0].colour
+    expect(
+      accents.filter((control) => control.colour !== widget).map((c) => `${c.name}: ${c.colour}`),
+      `${accents[0].name} focuses ${widget}; these panel controls disagree`,
+    ).toEqual([])
+
+    // And that it is the widget's accent rather than the page's. Read off a
+    // page control rather than named, so this does not have to know a hex.
+    //
+    // Two things have to hold for the read to be real, and the failure mode of
+    // either is a pass rather than a failure — a wrong colour here differs from
+    // the widget's, which is exactly what this asserts. So the two lines below
+    // arrange them instead of relying on them.
+    //
+    // The `Tab` re-primes Chromium's keyboard state after the navigation, since
+    // it grants `:focus-visible` to a programmatically focused button only when
+    // the last interaction was a keypress. Measured, the press before the
+    // `goto` does carry across; this does not depend on that holding.
+    //
+    // The style tag defuses a transition. Tailwind transitions `outline-color`,
+    // so a submit that grew `transition-colors` would be read mid-fade from
+    // `currentColor` — white, on a white-on-indigo button. That is #235.
+    // `/login`'s submit carries no transition today.
+    await page.goto('/login')
+    await page.keyboard.press('Tab')
+    await page.addStyleTag({
+      content: '*, *::before, *::after { transition: none !important; }',
+    })
+    const pageAccent = await page
+      .locator('button[type=submit]')
+      .evaluate((node) => {
+        ;(node as HTMLElement).focus()
+        return getComputedStyle(node).outlineColor
+      })
+    expect(
+      widget,
+      `the panel focuses ${widget}, the same as the page's ${pageAccent}, ` +
+        'so it no longer reads as its own place',
+      ).not.toBe(pageAccent)
+    })
+  }
+})
+
 /**
  * The same two controls in Windows High Contrast and its equivalents.
  *

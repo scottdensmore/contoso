@@ -3,13 +3,28 @@
  *
  * Four exports, because fields and action controls fail differently, are fixed
  * differently, and a control whose focusable element is a descendant needs a
- * different variant again. `FIELD_BOUNDARY` carries a colour, since a text field's
- * resting edge has a single correct value everywhere. `ACTION_BOUNDARY` does
- * not: a button's accent is indigo on the page and sky-700 inside the chat
- * widget, and #184 chose that split deliberately so the send button reads as
- * part of the panel rather than part of the page. So the mechanism is shared
- * and the accent stays at the call site — the same division as radius and
+ * different variant again. None of them carries an accent. A control's focus
+ * colour is indigo on the page and sky-700 inside the chat widget — #184 chose
+ * that split so the panel reads as its own place — so the mechanism is shared
+ * and the accent stays at the call site, the same division as radius and
  * padding staying with each field below.
+ *
+ * Two things were contradicting that and both moved together. The fields took
+ * sky-700 in #221, standardising on the only example that existed at the time,
+ * and `/profile`'s signed-out CTA had carried it since #144 — both predating
+ * #236, which named the axis as location rather than control type and so made
+ * a field on `/login` a page control. Until they moved, `/login` changed the
+ * colour of its focus indicator between the password field and the button
+ * underneath it.
+ *
+ * Sky now appears only inside the widget: the chat input, its send button, and
+ * its clear and close controls. `chat-controls.spec.ts` walks whatever the
+ * panel renders, in both shapes, and asserts they agree with each other and
+ * differ from the page. `action-controls.spec.ts` asserts the same agreement
+ * across the eleven page controls it lists — which is not every page control:
+ * the chat launcher is one, sits outside the dialog, and nothing reads its
+ * accent. The header's `Open menu` has no focus accent at all, which predates
+ * any of this.
  */
 
 /**
@@ -55,11 +70,19 @@
  * indicator has to change *shape*. So focus keeps the ring and adds an offset
  * outline, painting a new perimeter over pixels that were background.
  *
- * The ring still recolours to sky-700 as well. It contributes almost nothing —
- * `e2e/support/boundary.ts` measures those pixels changing at 1.21:1, below
- * the 3:1 that counts toward the indicator area — and it is here because the
- * chat panel does it, and having eleven fields that are actually identical is
- * the point of this file.
+ * The accent is not here, for the reason `ACTION_FOCUS` gives: a control on the
+ * page focuses indigo and one inside the chat widget focuses sky-700, which
+ * #184 chose so the panel reads as its own place. The fields carried sky-700
+ * everywhere until that convention existed, which left `/login` changing the
+ * colour of its focus indicator between the password field and the button
+ * underneath it — 45 degrees of hue, inside one form, for no reason a user
+ * could infer.
+ *
+ * Each call site pairs this with `focus:ring-<accent> focus-visible:outline-<accent>`.
+ * The ring recolour contributes almost nothing on its own —
+ * `e2e/support/boundary.ts` measures those pixels changing at 1.21:1, below the
+ * 3:1 that counts toward the indicator area — and is kept so that a field and
+ * its neighbours agree rather than because it is doing work.
  *
  * `focus-visible`, not `focus`, for the outline: a pointer user who clicks
  * into a field has not lost track of where they are, and does not need a
@@ -67,17 +90,25 @@
  *
  * ## What the outline is actually buying, measured
  *
- * Not Chromium compliance. Strip these three classes and Chromium paints its
- * own `auto 1px rgb(16,16,16)` ring, which passes 2.4.13 on its own — measured
- * at 1662 qualifying pixels against the 1659 a 2px perimeter of `/login`'s
- * email field needs. With the outline the same field measures 1673. Both
- * clear it; the browser's does so by three pixels.
+ * Not Chromium compliance. Strip the outline entirely — the two classes here
+ * and the call site's colour with them — and Chromium paints its own
+ * `auto 1px rgb(16,16,16)` ring, which passes 2.4.13 on its own: measured at
+ * 1662 qualifying pixels against the 1659 a 2px perimeter of `/login`'s email
+ * field needs. With the outline the same field measures 1673. Both clear it;
+ * the browser's does so by three pixels.
  *
- * What the outline buys is that the indicator is ours: a known 2px sky-700 at
- * a known offset, the same in every engine, rather than a default that differs
- * between Chromium, Firefox and Safari and that the suite only ever sees one
- * of. It is also what keeps the *change* visible, since the ring recolour it
- * sits beside is a 1.21:1 change that no one would notice.
+ * Strip only `outline-2` and the fallback is worse to spot, because the colour
+ * survives: `auto 1px` in the call site's own accent, which looks deliberate
+ * and passes every pixel check here. That happened on this branch and shipped
+ * green twice. `form-fields.spec.ts` now reads the computed width and style
+ * against the submit's, which is the only thing that catches it.
+ *
+ * What the outline buys is that the indicator is ours: a known 2px at a known
+ * offset in the surface's own accent, the same in every engine, rather than a
+ * default that differs between Chromium, Firefox and Safari and that the suite
+ * only ever sees one of. It is also what keeps the *change* visible, since the
+ * ring recolour it sits beside moves 1.34:1 against indigo and 1.21:1 against
+ * sky — neither of which anyone would notice on its own.
  *
  * Both margins are thin because the criterion's floor is a 2px perimeter and
  * the indicator is a 2px outline, so the two are nearly the same number by
@@ -133,8 +164,8 @@
  * trusting it, and the swap above is one of the mutations it catches.
  */
 export const FIELD_BOUNDARY =
-  'ring-1 ring-inset ring-zinc-500 forced-colors:border focus:ring-sky-700 ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700'
+  'ring-1 ring-inset ring-zinc-500 forced-colors:border ' +
+  'focus-visible:outline-2 focus-visible:outline-offset-2'
 
 /**
  * What every button and button-shaped link needs, minus its colour.

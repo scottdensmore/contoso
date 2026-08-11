@@ -148,6 +148,45 @@ test.describe('action controls', () => {
   }
 })
 
+test.describe('page controls', () => {
+  test('all agree on one focus accent', async ({ page }) => {
+    // `control-classes.ts` says a control on the page focuses indigo and one
+    // inside the chat widget focuses sky. That is a claim about every control
+    // in the app, so it wants something that walks them rather than a comment.
+    //
+    // Relational, like its sibling in `form-fields.spec.ts`: the first control
+    // sets the expectation and the rest must match it, so the accent can be
+    // changed in one place without editing this. What it will not tolerate is
+    // two of them disagreeing.
+    test.slow()
+    await page.setViewportSize({ width: 1440, height: 900 })
+
+    const seen: { name: string; colour: string }[] = []
+    for (const control of CONTROLS) {
+      await reach(page, control)
+      await page.mouse.move(2, 2)
+      await page.keyboard.press('Tab')
+      await page.addStyleTag({
+        content: '*, *::before, *::after { transition: none !important; }',
+      })
+      const colour = await page
+        .locator(control.selector)
+        .first()
+        .evaluate((node) => {
+          ;(node as HTMLElement).focus()
+          return getComputedStyle(node).outlineColor
+        })
+      seen.push({ name: control.name, colour })
+    }
+
+    const expected = seen[0].colour
+    expect(
+      seen.filter((control) => control.colour !== expected).map((c) => `${c.name}: ${c.colour}`),
+      `${seen[0].name} focuses ${expected}; these page controls disagree`,
+    ).toEqual([])
+  })
+})
+
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`action controls in forced colors (${scheme})`, () => {
     test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })

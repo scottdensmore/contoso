@@ -61,7 +61,7 @@ export default function PasswordChangeForm() {
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
       <div>
@@ -77,7 +77,7 @@ export default function PasswordChangeForm() {
           required
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
       <div>
@@ -93,7 +93,7 @@ export default function PasswordChangeForm() {
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+          className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
 

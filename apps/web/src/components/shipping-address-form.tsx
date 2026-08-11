@@ -63,7 +63,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.name || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div className="sm:col-span-2">
@@ -75,7 +75,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.addressLine1 || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div className="sm:col-span-2">
@@ -87,7 +87,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.addressLine2 || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div>
@@ -99,7 +99,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.city || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div>
@@ -111,7 +111,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.state || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div>
@@ -123,7 +123,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.zipCode || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div>
@@ -135,7 +135,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.country || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
         <div className="sm:col-span-2">
@@ -147,7 +147,7 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
             type="text"
             value={formData.phoneNumber || ""}
             onChange={handleChange}
-            className={`mt-1 block w-full rounded-md shadow-xs p-2 ${FIELD_BOUNDARY}`}
+            className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
       </div>
