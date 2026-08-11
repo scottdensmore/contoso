@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, ChangeEvent } from "react";
+import { ACTION_FOCUS_WITHIN } from "@/lib/control-classes";
 
 interface AvatarUploadProps {
   initialAvatar: string;
@@ -51,7 +52,27 @@ export default function AvatarUpload({ initialAvatar, onUpload }: AvatarUploadPr
         )}
       </div>
       
-      <label className="cursor-pointer bg-white px-3 py-2 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50">
+      {/*
+        The boundary and the focus indicator both belong here rather than on
+        the input: this label is the control anyone can see, and the input it
+        wraps is `sr-only`. `border-gray-300` measured 1.41:1 against the
+        white it sits on, the same value #196 took off the text fields.
+
+        `forced-colors:border-2` because that is flatly what an action is in
+        this app there, and a field is 1px. Not because of what sits nearby: in
+        ordinary rendering this control is a 1px zinc-500 rounded edge, which
+        is `FIELD_BOUNDARY`'s treatment exactly, so it reads as a field
+        normally and as an action in forced colors. The convention carries it;
+        the neighbours are on another tab and never share a screen.
+
+        Written out rather than taken from `ACTION_BOUNDARY`, which pairs it
+        with `focus-visible` — and the focusable element here is a descendant.
+        If a second control ever needs this pairing, the edge wants its own
+        constant rather than a second copy of this literal.
+      */}
+      <label
+        className={`cursor-pointer bg-white px-3 py-2 border border-zinc-500 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 has-[:focus-visible]:outline-indigo-600 forced-colors:border-2 ${ACTION_FOCUS_WITHIN}`}
+      >
         <span>Upload Avatar</span>
         <input
           type="file"

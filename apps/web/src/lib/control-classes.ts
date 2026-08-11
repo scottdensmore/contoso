@@ -1,8 +1,9 @@
 /**
  * What the app's controls share, for the parts that have one right answer.
  *
- * Two exports, because fields and action controls fail differently and are
- * fixed differently. `FIELD_BOUNDARY` carries a colour, since a text field's
+ * Four exports, because fields and action controls fail differently, are fixed
+ * differently, and a control whose focusable element is a descendant needs a
+ * different variant again. `FIELD_BOUNDARY` carries a colour, since a text field's
  * resting edge has a single correct value everywhere. `ACTION_BOUNDARY` does
  * not: a button's accent is indigo on the page and sky-700 inside the chat
  * widget, and #184 chose that split deliberately so the send button reads as
@@ -194,3 +195,24 @@ export const ACTION_FOCUS =
  * control, with one of them dropped.
  */
 export const ACTION_BOUNDARY = `forced-colors:border-2 ${ACTION_FOCUS}`
+
+/**
+ * `ACTION_FOCUS` for a control whose focusable element is a descendant.
+ *
+ * The avatar upload is a `<label>` wrapping an `sr-only` `<input type="file">`.
+ * The label is what a person sees and clicks; the input is a 1x1 clipped box,
+ * and it is the input that takes focus. So Chromium paints its default ring on
+ * a 1x1 element and the visible control shows nothing at all — measured, the
+ * pixels changing anywhere around it on focus were 0, against the 610 a 2px
+ * perimeter of the label needs. Not a weak indicator; none.
+ *
+ * `has-[:focus-visible]:`, not `focus-within:`. Focus-within also fires for a
+ * pointer, and the whole reason the rest of this file uses `focus-visible` is
+ * that someone who clicked a control knows where they are.
+ *
+ * The geometry is the same as `ACTION_FOCUS` and has to be repeated rather
+ * than composed, because a Tailwind variant is a prefix on each class and the
+ * scanner only sees literals.
+ */
+export const ACTION_FOCUS_WITHIN =
+  'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2'
