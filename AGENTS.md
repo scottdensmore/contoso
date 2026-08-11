@@ -106,6 +106,22 @@ Follow these steps in order for every change.
    the intended case produces. Fixture-isolation rules for the root guard suite
    live in `tests/scripts/AGENTS.md`.
 
+   **Run the focused test here, and only the focused test.** This step needs
+   the one spec or module under change, its red phase, and the mutations that
+   demonstrate what each assertion catches. The `verifier` will not do those:
+   it is instructed not to modify the repository, so breaking an input on
+   purpose is not available to it. Fast whole-suite runners are fine too where
+   they are genuinely fast — `make test-web` is a few seconds.
+
+   The one spec may itself be a journey, and then it needs a composed stack:
+   `make e2e-smoke KEEP_STACK=1` builds one and leaves it up, and steps 6 and 7
+   will want that same one. No make target runs a single spec, so running just
+   the one is `npx playwright test <file>` from `apps/web`.
+
+   What does not belong here is the whole journey suite. Running it costs
+   minutes per iteration, and the trigger for handing over is "I believe this
+   is done", not "I want to know whether it works".
+
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
    preserving work that belongs to the user. A real problem found here is filed
@@ -135,12 +151,41 @@ Follow these steps in order for every change.
    not applicable. If a finding is not applicable, record the concrete reason
    rather than silently ignoring it.
 
+   `ui-review` may start and stop a stack of its own. If one is already up from
+   step 4, say so and say it is not to be torn down — otherwise step 7's
+   handover below promises a stack that stopped existing here.
+
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to run
    the builds, static checks, tests, and journey coverage appropriate for the
    change. The verifier must report failures, flakes, missing coverage, and
    environment issues. Fix or explicitly resolve every actionable finding
    before starting code review. If a verifier finding requires a code change,
    rerun the verifier after addressing it.
+
+   **The whole battery belongs here** — the merge-gate command, the production
+   build, the root guard suite, and the full journey run. Do not pre-run those
+   and hand over a summary: it doubles the wall-clock, and a summary is not
+   what the next step needs.
+
+   **Hand over the stack rather than leaving one to be found.** Where journeys
+   need a composed stack, step 4 has usually built one, and step 6 may have
+   built its own — `ui-review` is allowed to, and that one is then its to tear
+   down and may be on ports it chose. Give the `E2E_BASE_URL`, say the stack is
+   yours, and say `KEEP_STACK=1`: without that flag `make e2e-smoke` deletes
+   the containers and their volumes on exit. What the handover buys is not the
+   rebuild, which happens either way, but that the verifier knows a stack
+   exists, knows where it is, and knows not to destroy it. Tear it down after
+   the last step that needs it, not after this one.
+
+   Say the ports if they are not the defaults. `make test-e2e` follows
+   `E2E_BASE_URL` anywhere; `make e2e-smoke` probes `127.0.0.1:3000` and
+   `:8000` literally and cannot be aimed elsewhere, so it and a remapped stack
+   do not mix. One of the ways they fail is a green smoke run against an
+   unrelated project's containers, which is worse than a failure because
+   nothing looks wrong. Exactly which way you get depends on which compose
+   files resolve and which ports are already held, and is not worth predicting
+   here. Free the default ports before step 7, or hand over nothing and say
+   why.
 
 8. **Run `code-review` before every commit.** Invoke the `code-review`
    sub-agent against the current branch diff and every staged, unstaged, and
@@ -404,7 +449,9 @@ explicit range when validating committed work:
 CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
 ```
 
-Before pushing, run the merge-gate command for every changed surface:
+Every changed surface's merge-gate command has to have run before pushing.
+Step 7 is where that happens, so this matrix is what tells `verifier` which
+ones apply rather than a list to work through by hand:
 
 - Web: `make -C apps/web ci` (includes lint, type-check, tests, and build)
 - Chat: `make -C services/chat ci`
@@ -412,8 +459,10 @@ Before pushing, run the merge-gate command for every changed surface:
 - Documentation/runbooks: `make docs-check`
 - Cross-surface or repository-wide: `make ci`
 
-Add integration confidence where the change crosses a runtime boundary:
+Add integration confidence where the change crosses a runtime boundary. These
+are the verifier's too.
 
+- End-to-end journeys: `make test-e2e` (needs a running stack; see step 7)
 - Cross-surface integration confidence: `make e2e-smoke`
 - Contract-only integration confidence (minimal chat stack): `make e2e-smoke-lite`
 - Full local-provider integration confidence: `make e2e-smoke-full`
