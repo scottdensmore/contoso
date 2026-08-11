@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FIELD_BOUNDARY } from "@/lib/field-classes";
+import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -116,7 +116,7 @@ export default function SignUpPage() {
           <div>
             <button
               type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
             >
               Sign up
             </button>

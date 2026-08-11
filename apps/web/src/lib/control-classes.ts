@@ -1,6 +1,19 @@
 /**
+ * What the app's controls share, for the parts that have one right answer.
+ *
+ * Two exports, because fields and action controls fail differently and are
+ * fixed differently. `FIELD_BOUNDARY` carries a colour, since a text field's
+ * resting edge has a single correct value everywhere. `ACTION_BOUNDARY` does
+ * not: a button's accent is indigo on the page and sky-700 inside the chat
+ * widget, and #184 chose that split deliberately so the send button reads as
+ * part of the panel rather than part of the page. So the mechanism is shared
+ * and the accent stays at the call site — the same division as radius and
+ * padding staying with each field below.
+ */
+
+/**
  * The boundary and focus indicator shared by the text fields on `/login`,
- * `/signup`, `/contact` and the chat panel.
+ * `/signup`, `/contact`, `/profile` and the chat panel.
  *
  * Eleven fields used to choose this for themselves, and they did not agree.
  * `/profile` renders eleven more behind its tabs. They drew a `border` rather
@@ -121,3 +134,63 @@
 export const FIELD_BOUNDARY =
   'ring-1 ring-inset ring-zinc-500 forced-colors:border focus:ring-sky-700 ' +
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700'
+
+/**
+ * What every button and button-shaped link needs, minus its colour.
+ *
+ * Filled controls have no boundary of their own — their edge *is* their
+ * background, and forced-colors replaces every background with a system
+ * colour. Measured at 1440x900 before this: `Sign in`, `Create account`,
+ * `Contact Support` and the header's `Sign In` all read 6.19:1 normally and
+ * **1.00:1** in forced colors, `Send Message` 5.28:1 and 1.09:1. The header's
+ * `Sign Up` is the control that proves the mechanism — it is outlined rather
+ * than filled, carries `border border-indigo-600`, and reads 13.99:1 there.
+ * `forced-colors:border-2` gives the filled ones the same edge.
+ *
+ * Two pixels, not one, and the second is doing work. At 1px every control
+ * converges on the same rectangle there: measured on `/login`, the submit came
+ * out 384x38 with a 1px border and a 6px radius — the same three numbers as
+ * the two fields above it, with only a bold centred label to say which one you
+ * press. The header was worse: filled `Sign In` and outlined `Sign Up`
+ * rendered as identical declarations, so primary and secondary became tellable
+ * apart only by label width. Forced colors takes the colours away, so weight
+ * is what is left to carry hierarchy, and an action gets twice a field's.
+ *
+ * The outline width and offset are here; the colour is not. `outline-2` and
+ * `outline-offset-2` are right for anything sitting on a page — the chat
+ * launcher is the exception, at `outline-offset-4`, because it sits on
+ * photography and #190 gave it the extra air deliberately. Every call site
+ * should already
+ * pair this with its own `focus-visible:outline-indigo-600` or
+ * `-outline-sky-700`. Six controls carried no focus treatment at all before
+ * this — both `/profile` submits, the FAQ's `Contact Support`, and all three
+ * in the header — which measured 2 qualifying pixels against the 728 a 2px
+ * perimeter needs, because Chromium's dark default ring on `indigo-600` is
+ * 2.44:1.
+ *
+ * Deliberately not a function taking the colour. Tailwind scans source text
+ * for literal class names, so a computed `outline-${accent}` is a class that
+ * never reaches the stylesheet — the failure would be a silently missing
+ * indicator, which is the thing this file exists to prevent.
+ */
+export const ACTION_FOCUS =
+  'focus-visible:outline-2 focus-visible:outline-offset-2'
+
+/**
+ * The focus half plus the forced-colors edge, for controls whose edge is their
+ * fill.
+ *
+ * Split from `ACTION_FOCUS` because the two halves are independent and two
+ * controls need exactly one each. The header's `Sign Up` is outlined rather
+ * than filled — it already has an edge forced colors keeps, measured 13.99:1
+ * there — so taking `border-2` would put it at 2px beside the filled `Sign In`
+ * and render the two as identical declarations, which is the distinction
+ * `border-2` exists to restore. The chat launcher needs the opposite: the edge,
+ * but not `outline-offset-2`, since #190 gave it offset-4 to clear the
+ * photography behind it.
+ *
+ * Both wrote their classes out longhand before this split. That is the failure
+ * this file exists to prevent — six literal classes copied by the next outlined
+ * control, with one of them dropped.
+ */
+export const ACTION_BOUNDARY = `forced-colors:border-2 ${ACTION_FOCUS}`

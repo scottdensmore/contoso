@@ -168,11 +168,23 @@ export async function boundaryContrast(
     // Loudly, rather than measuring whatever happens to be in range. A control
     // pressed against a viewport edge cannot be read this way, and a number
     // produced anyway would look exactly like a real one.
-    const tight = Math.min(padLeft, padTop, padRight, padBottom)
-    if (tight < NEEDED) {
+    //
+    // Asked for per axis, because the two are not used alike: the surface
+    // samples reach sideways only, so the wider margin is horizontal, while the
+    // band walk crosses every edge and needs its reach on all four sides.
+    // Demanding the horizontal figure vertically as well refused the header's
+    // links, which sit 6px below the top of a page already scrolled to the top
+    // — a clearance no scroll can create, for probes never going to look up.
+    // 5, because `band` is [-5..3] and each probe steps by one, so that is
+    // exactly how far outside an edge the walk reaches.
+    const BAND = 5
+    const tightVertical = Math.min(padTop, padBottom)
+    const tightHorizontal = Math.min(padLeft, padRight)
+    if (tightVertical < BAND || tightHorizontal < NEEDED) {
       throw new Error(
-        `${selector} sits ${tight.toFixed(1)}px from a viewport edge, and this ` +
-          `reading needs ${NEEDED}px of surface around it`,
+        `${selector} has ${tightHorizontal.toFixed(1)}px of surface either side and ` +
+          `${tightVertical.toFixed(1)}px above and below; this reading needs ` +
+          `${NEEDED}px horizontally and ${BAND}px vertically`,
       )
     }
 
@@ -310,6 +322,11 @@ export async function boundaryContrast(
       )
     }
 
+    // Transitions killed here too. `focusChange` did this and this function did
+    // not, which is the same race in the sibling: no control currently routed
+    // through here carries `transition-colors` or `transition-all`, so it never
+    // bit — the next one added would have found it.
+    await settled(page)
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
     const resting = await measure()
     await page.evaluate(
@@ -323,6 +340,33 @@ export async function boundaryContrast(
   }
 
   return readings
+}
+
+/**
+ * Take the animation out of the measurement.
+ *
+ * Several controls carry `transition-colors` or `transition-all`, and Tailwind
+ * v4 includes `outline-color` in both — so a focus indicator *fades in* from
+ * `currentColor`, which on a white-on-indigo button is white. A screenshot the
+ * instant after `focus()` catches that: `/faq`'s Contact Support read 0
+ * qualifying pixels, and 892 once settled.
+ *
+ * This was first written as a poll — read the computed outline until two
+ * consecutive reads agree — and that is a race, not a wait. The easing has a
+ * slow start, so two reads 25ms apart can match while the colour is still near
+ * its beginning, and `/contact`'s submit duly passed in isolation and failed
+ * at 0 qualifying pixels under load. Killing the transitions is deterministic
+ * where waiting for them is not.
+ *
+ * It means the suite measures the settled indicator and nothing about how long
+ * it takes to arrive. That gap is real and is #235 — where the same control
+ * measures 0 qualifying pixels for the first ~100ms and then 1998 all at once.
+ */
+async function settled(page: Page) {
+  await page.addStyleTag({
+    content:
+      '*, *::before, *::after { transition: none !important; animation: none !important; }',
+  })
 }
 
 /**
@@ -363,8 +407,10 @@ export async function focusChange(page: Page, selector: string) {
   )
 
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+  await settled(page)
   const unfocused = (await page.screenshot({ clip })).toString('base64')
   await page.evaluate((sel) => (document.querySelector(sel) as HTMLElement).focus(), selector)
+  await settled(page)
   const focused = (await page.screenshot({ clip })).toString('base64')
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
 
