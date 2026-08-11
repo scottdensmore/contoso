@@ -64,6 +64,19 @@ const CONTROLS: Control[] = [
     selector: 'a[href="/login"].bg-zinc-800',
     path: '/profile',
   },
+  // The visible control is the label; the input it wraps is `sr-only`, a 1x1
+  // clipped box. Measuring the input would measure nothing a user can see.
+  //
+  // `focusChange` calls `.focus()` on this label, which is not itself
+  // focusable — Chromium delegates that to the labelled control, so the input
+  // takes focus, `:has(:focus-visible)` matches and the outline paints. That
+  // delegation is load-bearing and this suite is Chromium-only: if it ever
+  // stopped, the reading would be 0 rather than an error.
+  {
+    name: "the avatar control",
+    selector: 'label:has(input[type="file"])',
+    tab: 'General',
+  },
   { name: 'the password submit', selector: 'button[type=submit]', tab: 'Security' },
   { name: 'the address submit', selector: 'button[type=submit]', tab: 'Shipping' },
 ]
@@ -80,6 +93,34 @@ async function reach(page: Page, control: Control) {
 
 test.describe('action controls', () => {
   for (const control of CONTROLS) {
+    test(`${control.name} has an edge at rest`, async ({ page }) => {
+      // Ordinary rendering, and the only resting check these controls have in
+      // it — the forced-colors one below replaces every fill with a system
+      // colour, so a fill regression is invisible there.
+      //
+      // The indigo-filled controls clear this on their background alone at
+      // 6.19:1, and the outlined ones go further: `Sign Up` reads 13.99:1. So
+      // it bites two things. An outlined control whose edge is too pale, which
+      // is what it caught here — the avatar's `border-gray-300` measured
+      // 1.41:1, the value #196 removed from the text fields. And a fill that
+      // goes light, `bg-indigo-600` to `bg-indigo-300`, which nothing else
+      // would see.
+      if (control.tab) test.slow()
+      await page.setViewportSize({ width: 1440, height: 900 })
+      await reach(page, control)
+      await page.mouse.move(2, 2)
+
+      const [reading] = await boundaryContrast(
+        page,
+        [{ name: control.name, selector: control.selector }],
+        { kind: 'sample' },
+      )
+      expect(
+        reading.resting,
+        `${control.name} has no visible edge at rest (WCAG 1.4.11 asks ${REQUIRED_RATIO}:1)`,
+      ).toBeGreaterThanOrEqual(REQUIRED_RATIO)
+    })
+
     test(`${control.name} has a focus indicator`, async ({ page }) => {
       if (control.tab) test.slow()
       await page.setViewportSize({ width: 1440, height: 900 })
