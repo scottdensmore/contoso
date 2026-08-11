@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "f334ef115e2b",
+  "strategy": "manual-commit",
+  "branch": "fix/field-focus-accent",
+  "checkpoints_count": 17,
+  "files_touched": [
+    "apps/web/e2e/action-controls.spec.ts",
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/src/app/login/page.tsx",
+    "apps/web/src/app/profile/page.tsx",
+    "apps/web/src/app/signup/page.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/components/contact-form.tsx",
+    "apps/web/src/components/password-change-form.tsx",
+    "apps/web/src/components/shipping-address-form.tsx",
+    "apps/web/src/lib/control-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f3/34ef115e2b/0/metadata.json",
+      "transcript": "/f3/34ef115e2b/0/full.jsonl",
+      "compact_transcript": "/f3/34ef115e2b/0/transcript.jsonl",
+      "content_hash": "/f3/34ef115e2b/0/content_hash.txt",
+      "prompt": "/f3/34ef115e2b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3911,
+    "cache_creation_tokens": 9137775,
+    "cache_read_tokens": 1011530187,
+    "output_tokens": 1856070,
+    "api_call_count": 2037
+  }
+}
