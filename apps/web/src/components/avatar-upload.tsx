@@ -53,6 +53,34 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
+/**
+ * The URL forms this frame will render, and nothing else.
+ *
+ * `preview` is not a value this component chose. It arrives as `initialAvatar`
+ * from `/api/profile`, which returns what is stored on the account, and what is
+ * stored on the account is whatever a previous upload put there. Handing that
+ * straight to `src` is CodeQL's `js/xss-through-dom`, open against this line
+ * since February.
+ *
+ * The exploit that rule names does not land here — an `<img src>` runs neither
+ * `javascript:` nor `data:text/html`, it just fails to paint — and only the
+ * account holder can write their own avatar. But "an arbitrary string from the
+ * database is fine as a URL because of how one element happens to treat it" is
+ * an argument that stops being true the moment the value is rendered somewhere
+ * else, and it already is: the chat panel reads the same field.
+ *
+ * So the three shapes an avatar can legitimately have: a `blob:` URL this
+ * component just minted, a `data:image/` URL a save produced, and an ordinary
+ * http(s) or site-relative path for accounts whose picture is hosted. Anything
+ * else renders as no picture at all, which is the honest outcome — it is not a
+ * picture.
+ */
+const RENDERABLE = /^(?:blob:|data:image\/|https?:\/\/|\/)/;
+
+function pictureSrc(value: string): string {
+  return RENDERABLE.test(value) ? value : "";
+}
+
 type Status =
   | { state: "idle" }
   | { state: "uploading" }
@@ -166,9 +194,9 @@ export default function AvatarUpload({ initialAvatar, onUpload }: AvatarUploadPr
         on the whole perimeter is 15.52:1.
       */}
       <div className="relative h-32 w-32 rounded-full forced-colors:border-2">
-        {preview ? (
+        {pictureSrc(preview) ? (
           <img
-            src={preview}
+            src={pictureSrc(preview)}
             alt="Avatar Preview"
             className="h-full w-full rounded-full object-cover"
           />

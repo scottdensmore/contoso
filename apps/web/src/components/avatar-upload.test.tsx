@@ -234,6 +234,31 @@ describe('AvatarUpload', () => {
     expect(onUpload).not.toHaveBeenCalled()
   })
 
+  it('renders no picture for a stored value that is not a picture URL', async () => {
+    // `initialAvatar` is whatever is on the account, and the account holds
+    // whatever a previous save put there. A `javascript:` URL does not execute
+    // in an `<img src>` — it simply fails to paint — but the value is rendered
+    // in the chat panel too, and "safe because of how one element treats it" is
+    // an argument with a short shelf life. CodeQL calls this flow
+    // `js/xss-through-dom`.
+    render(<AvatarUpload initialAvatar="javascript:alert(1)" onUpload={() => {}} />)
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.getByText('No Image')).toBeDefined()
+  })
+
+  it('renders the picture URLs an avatar can legitimately have', () => {
+    for (const src of [
+      'blob:http://localhost/abc',
+      'data:image/png;base64,hello',
+      'https://example.com/a.png',
+      '/uploads/a.png',
+    ]) {
+      const { unmount } = render(<AvatarUpload initialAvatar={src} onUpload={() => {}} />)
+      expect((screen.getByRole('img') as HTMLImageElement).getAttribute('src')).toBe(src)
+      unmount()
+    }
+  })
+
   it('refuses a file that is not an image', async () => {
     // `accept="image/*"` filters the picker's dialog and nothing else; any file
     // can be chosen past it. What the string becomes is the reason to check —
