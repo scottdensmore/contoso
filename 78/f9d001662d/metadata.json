@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "78f9d001662d",
+  "strategy": "manual-commit",
+  "branch": "fix/command-surface",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "Makefile",
+    "README.md",
+    "apps/web/Makefile",
+    "apps/web/playwright.config.ts",
+    "package.json",
+    "tests/scripts/test_command_surface.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/78/f9d001662d/0/metadata.json",
+      "transcript": "/78/f9d001662d/0/full.jsonl",
+      "compact_transcript": "/78/f9d001662d/0/transcript.jsonl",
+      "content_hash": "/78/f9d001662d/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 171,
+    "cache_creation_tokens": 129151,
+    "cache_read_tokens": 23962830,
+    "output_tokens": 63351,
+    "api_call_count": 92
+  }
+}
