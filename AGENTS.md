@@ -140,20 +140,33 @@ Follow these steps in order for every change.
 
    A viewport is a width in CSS pixels, which says nothing about how many
    device pixels fill it. Where the change affects what the browser requests —
-   anything carrying a `srcset` — exercise it at **2x as well as 1x**. A 2x
-   screen asks for twice the CSS width, and the optimiser never upscales past
-   the source, so a source that satisfies 1x can fall short at 2x while every
-   1x measurement stays clean. The 600px re-encode first tried in #152 came out
-   at −0.9 to −2.2 dB PSNR at 1x and −4.4 to −6.6 dB at 2x: a difference at 1x
-   small enough to accept, and one at 2x that was plainly visible.
+   anything carrying a `srcset`, or a source whose dimensions changed —
+   exercise it at **2x as well as 1x**. Density is a property of the browser
+   context (`deviceScaleFactor: 2`), not a width, so it needs a second pass
+   rather than another viewport. A 2x screen asks for twice the CSS width, and
+   the optimiser never upscales past the source, so a source that satisfies 1x
+   can fall short at 2x while every 1x measurement stays clean. The 600px
+   re-encode first tried in #152 came out at −0.9 to −2.2 dB PSNR at 1x and
+   −4.4 to −6.6 dB at 2x: a difference at 1x small enough to accept, and one at
+   2x that was plainly visible.
+
+   A change is UI-affecting when it moves a rendering dependency, too —
+   `tailwindcss`, `next`, `react`, `postcss`, or a UI library in
+   `apps/web/package.json`. That diff touches no component and can still change
+   every rendered pixel; a Tailwind major shipped here with every check green.
 
    For changes with no UI impact, explicitly record that rendered UI review is
    not applicable. If a finding is not applicable, record the concrete reason
    rather than silently ignoring it.
 
-   `ui-review` may start and stop a stack of its own. If one is already up from
-   step 4, say so and say it is not to be torn down — otherwise step 7's
-   handover below promises a stack that stopped existing here.
+   `ui-review` may start and stop a stack of its own. If one is already up —
+   from step 4, or from an earlier pass through steps 6 and 7 when step 8 sends
+   you back here — give it the `E2E_BASE_URL` and the ports if they are not the
+   defaults, say the stack is not to be torn down, and say it is not
+   `ui-review`'s. Naming it without addressing it is not a handover: remapped
+   ports are normal here, and a reviewer that cannot reach the stack starts its
+   own or renders nothing. Otherwise step 7's handover below promises a stack
+   that stopped existing here.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to run
    the builds, static checks, tests, and journey coverage appropriate for the
@@ -202,6 +215,14 @@ Follow these steps in order for every change.
    refinement-only change does not earn a fresh review round, here or at
    step 10.
 
+   **A fix made in this loop can invalidate step 6 as well.** If it alters what
+   a page renders, rerun `ui-review` before the verifier and carry its verdict
+   forward; the screenshots from step 6 otherwise describe a state that no
+   longer exists. If it does not, record that the fix was not UI-affecting and
+   go straight to the verifier. Only defects reopen step 6, on the same
+   reasoning that ends this loop — a refinement applied to a rendered surface
+   does not.
+
 9. **Commit after approval.** Commit only after verification and code review
    are complete. Use Conventional Commits:
 
@@ -223,6 +244,18 @@ Follow these steps in order for every change.
       reopens here.
     - Do not repeat code review when the already-reviewed diff and worktree
       remain unchanged.
+    - Updating the branch from `main` — rebase, merge, or conflict resolution —
+      invalidates **verification** as well as review. The builds, merge gates,
+      smoke, and journeys were measured against a tree that no longer exists,
+      so rerun step 7's applicable commands against the updated one rather than
+      rerunning `code-review` alone.
+    - Tear down any stack steps 4, 6, or 7 left running, once step 8's loop has
+      closed and no further `verifier` run is coming: `make down`, or
+      `docker compose down --volumes` to drop the seeded database with it. Step
+      7 hands its stack forward under `KEEP_STACK=1`, which disables the only
+      teardown the workflow otherwise performs — so without this the containers
+      outlive the change and hold ports 3000, 5432, and 8000 against the next
+      one.
     - Push and create the pull request only after local verification and any
       required code review are complete.
     - Open a normal, ready-for-review pull request by default. Do not open
@@ -371,6 +404,7 @@ make diagnose-chat-local
 make docker-init-fresh
 make prisma-generate
 make dev
+make down
 make test
 make test-scripts
 make quick-ci
@@ -438,6 +472,15 @@ Copy templates to `.env` before local development.
   - `apps/web/src/app/api/chat/*`
   - `services/chat/src/api/*`
 - If you change Prisma schema, run migrations and validate both web/chat tests.
+  State whether the migration is destructive — a dropped or renamed column, a
+  `NOT NULL` added to an existing one, a narrowed type. Local checks cannot tell
+  you: they build the database fresh and seed it, so there is no data to lose and
+  no older reader still running. Deployment has both.
+  `infrastructure/scripts/docker-entrypoint.sh` applies migrations at container
+  start while the previous revision is still serving, and rollback is a traffic
+  shift back to that revision — which a destructive migration has already made
+  unservable. Split those across two releases, expand then contract, or say in
+  the pull request why this one does not need it.
 - Prefer keeping generated artifacts and local runtime outputs out of commits.
 
 ## Validation expectations
