@@ -1,0 +1,58 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "d435c7602d57",
+  "strategy": "manual-commit",
+  "branch": "fix/avatar-upload-feedback",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "AGENTS.md",
+    "Dockerfile",
+    "apps/web/e2e/action-controls.spec.ts",
+    "apps/web/e2e/browse.spec.ts",
+    "apps/web/e2e/chat-controls.spec.ts",
+    "apps/web/e2e/chat-launcher.spec.ts",
+    "apps/web/e2e/chat-modality.spec.ts",
+    "apps/web/e2e/form-fields.spec.ts",
+    "apps/web/e2e/image-delivery.spec.ts",
+    "apps/web/e2e/layout.spec.ts",
+    "apps/web/next-env.d.ts",
+    "apps/web/next.config.js",
+    "apps/web/next.config.test.ts",
+    "apps/web/scripts/check-journey-coverage.mjs",
+    "apps/web/src/app/about/page.tsx",
+    "apps/web/src/app/page.test.tsx",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/app/products/[slug]/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.test.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx",
+    "apps/web/src/components/chat.test.tsx",
+    "apps/web/src/components/chat.tsx",
+    "apps/web/src/lib/control-classes.ts",
+    "apps/web/src/lib/gallery-alt.test.ts",
+    "apps/web/src/lib/gallery-alt.ts",
+    "apps/web/src/test/setup.ts",
+    "apps/web/tsconfig.e2e.json",
+    "config/catalogue_images.json",
+    "scripts/reencode-catalogue-images.mjs",
+    "tests/scripts/test_agent_runbooks.py",
+    "tests/scripts/test_image_encoding.py",
+    "tests/scripts/test_image_references.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d4/35c7602d57/0/metadata.json",
+      "transcript": "/d4/35c7602d57/0/full.jsonl",
+      "compact_transcript": "/d4/35c7602d57/0/transcript.jsonl",
+      "content_hash": "/d4/35c7602d57/0/content_hash.txt",
+      "prompt": "/d4/35c7602d57/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4301,
+    "cache_creation_tokens": 9636769,
+    "cache_read_tokens": 1058794868,
+    "output_tokens": 1980117,
+    "api_call_count": 2245
+  }
+}
