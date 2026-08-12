@@ -26,7 +26,7 @@ git diff --stat main...HEAD
 .venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
 ```
 
-`detect_changed_surfaces.py` prints the recommended make targets. Prefer its answer over your own guess. Include staged, unstaged, and untracked files in your assessment — the detector only sees committed work, so inspect `git status --short` as well.
+`detect_changed_surfaces.py` prints the recommended make targets. Prefer its answer over your own guess for *which surfaces changed*. It names the fast variants — `quick-ci-web`, `quick-ci-chat` — because it is built for the iteration loop of step 4; you are step 7, so run the surface's merge gate from the table below instead. Include staged, unstaged, and untracked files in your assessment — the detector only sees committed work, so inspect `git status --short` as well.
 
 ## Checks
 
@@ -34,14 +34,19 @@ Pick the narrowest set that covers the change. From `AGENTS.md`:
 
 | Change | Command |
 | --- | --- |
-| default agent loop | `make quick-ci-changed` |
-| web only | `make -C apps/web quick-ci` |
-| chat only | `make quick-ci-chat` |
+| web only | `make -C apps/web ci` |
+| chat only | `make -C services/chat ci` |
 | scripts or tooling | `make test-scripts` |
 | docs | `make docs-check` |
 | cross-surface (web + chat + schema) | `make ci` |
 | integration confidence | `make e2e-smoke` |
 | user journeys | `make test-e2e` |
+| chat dependency profile changed | `make e2e-smoke-lite`, `make e2e-smoke-full` |
+| release guardrails, `.github/workflows/release.yml` | `make release-dry-run RELEASE_TAG=vX.Y.Z` |
+
+**Run the merge gate, not the fast variant.** `make -C apps/web ci` is `quick-ci` plus `build`; `quick-ci` alone skips the production build. Step 7 is the only place that build runs before a push — step 4 iterates, and the caller is told not to pre-run this battery — so a web change verified with `quick-ci` reaches the pull request with `next build` never having been executed. The same holds for `make quick-ci-changed`: `AGENTS.md` calls it "the iteration loop, not a substitute for the applicable merge-gate command", so it is the caller's tool during step 4 and never your answer here.
+
+The two smoke profiles differ only by `CHAT_INSTALL_LOCAL_STACK`, which defaults to `0` — so plain `make e2e-smoke` already is the lite profile, and running both is duplicated work unless the change touches which chat dependencies get installed.
 
 Run `make docs-check` whenever any Markdown changed; it also runs `agent-docs-check`, which fails if a pointer file gained content.
 
