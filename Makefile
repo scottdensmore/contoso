@@ -25,7 +25,12 @@ E2E_COMPOSE_UP_FLAGS ?= -d --build --force-recreate
 E2E_LOG_TAIL ?= 200
 CHAT_INSTALL_LOCAL_STACK ?= 0
 CHAT_SETUP_PROFILE ?= core
-DOCKER_DATABASE_URL ?= postgresql://postgres:postgres@localhost:5432/contoso-db
+# Empty by default on purpose. `docker-init-fresh` asks compose which host port
+# it actually published for `db` and builds the URL from that, because a
+# hardcoded port aims the migrate and the seed at whatever else holds it — on a
+# machine where another project owns 5432, that is someone else's database. Set
+# this to override the whole URL.
+DOCKER_DATABASE_URL ?=
 
 WEB_DIR := apps/web
 WEB_MAKE := $(MAKE) -C $(WEB_DIR)
@@ -39,7 +44,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate prisma-generate lint typecheck test test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate migrate-deploy prisma-generate lint typecheck test test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -110,10 +115,19 @@ diagnose-chat-local: ## Run local chat diagnostics (preflight, health snapshot, 
 docker-init-fresh: ## Initialize fresh Docker DB data (migrate+seed) and restart chat indexing
 	@set -euo pipefail; \
 	$(DOCKER_COMPOSE) up -d db; \
-	echo "Applying migrations to $(DOCKER_DATABASE_URL)..."; \
-	cd "$(WEB_DIR)" && DATABASE_URL="$(DOCKER_DATABASE_URL)" npx prisma migrate deploy --schema prisma/schema.prisma; \
-	echo "Seeding data into $(DOCKER_DATABASE_URL)..."; \
-	cd "$(WEB_DIR)" && DATABASE_URL="$(DOCKER_DATABASE_URL)" npx prisma db seed --schema prisma/schema.prisma; \
+	url="$(DOCKER_DATABASE_URL)"; \
+	if [ -z "$$url" ]; then \
+		published="$$($(DOCKER_COMPOSE) port db 5432 | head -1 || true)"; \
+		if [ -z "$$published" ]; then \
+			echo "docker-init-fresh: compose published no host port for db"; \
+			exit 2; \
+		fi; \
+		url="postgresql://postgres:postgres@localhost:$${published##*:}/contoso-db"; \
+	fi; \
+	echo "Applying migrations to $$url..."; \
+	( cd "$(WEB_DIR)" && DATABASE_URL="$$url" npx prisma migrate deploy --schema prisma/schema.prisma ); \
+	echo "Seeding data into $$url..."; \
+	( cd "$(WEB_DIR)" && DATABASE_URL="$$url" npx prisma db seed --schema prisma/schema.prisma ); \
 	$(DOCKER_COMPOSE) up -d chat web; \
 	$(DOCKER_COMPOSE) restart chat; \
 	echo "docker-init-fresh complete."
@@ -135,7 +149,33 @@ up: ## Start all Docker services
 down: ## Stop all Docker services
 	$(DOCKER_COMPOSE) down
 
-migrate: ## Run Prisma migrations using DATABASE_URL
+# Prisma 7 does not read `.env` itself, and `prisma.config.ts` resolves
+# `datasource.url` from `DATABASE_URL`. Without this the command aborts on a
+# missing property before it ever reaches the database, which is not what
+# "run migrations" is supposed to mean.
+#
+# `.env` supplies the default and never an override. `set -a; . .env` assigns
+# unconditionally, so sourcing alone would discard a `DATABASE_URL` the caller
+# exported deliberately — the documented way to migrate a database other than
+# the one `.env` names — and would migrate the wrong one without saying so.
+# `local-provider-check` has the same shape and does not need this; it reads
+# state, while these two write schema.
+migrate-deploy: ## Apply pending migrations without authoring one
+	@set -euo pipefail; \
+	preset="$${DATABASE_URL:-}"; \
+	set -a; \
+	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
+	set +a; \
+	if [ -n "$$preset" ]; then export DATABASE_URL="$$preset"; fi; \
+	$(WEB_MAKE) migrate-deploy
+
+migrate: ## Author a new migration from a schema change (set NAME=<migration-name>)
+	@set -euo pipefail; \
+	preset="$${DATABASE_URL:-}"; \
+	set -a; \
+	if [ -f "$(ENV_FILE)" ]; then . "$(ENV_FILE)"; fi; \
+	set +a; \
+	if [ -n "$$preset" ]; then export DATABASE_URL="$$preset"; fi; \
 	$(WEB_MAKE) migrate
 
 prisma-generate: ## Generate Prisma client for the web app

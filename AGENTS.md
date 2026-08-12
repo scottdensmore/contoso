@@ -364,17 +364,22 @@ make toolchain-doctor
 make env-contract-check
 make agent-doctor
 make env-init
-make setup
+make setup            # web dependencies only — see the note below
+make setup-chat
 make setup-chat-full
 make local-provider-check
 make diagnose-chat-local
 make docker-init-fresh
 make prisma-generate
+make migrate-deploy
+make migrate NAME=add-order-status
 make dev
 make test
 make test-scripts
 make quick-ci
+make quick-ci-chat
 make quick-ci-changed
+make test-e2e
 make e2e-smoke
 make e2e-smoke-lite
 make e2e-smoke-full
@@ -390,7 +395,8 @@ Unified npm command surface (root `package.json`):
 npm run bootstrap
 npm run doctor
 npm run env-contract-check
-npm run setup
+npm run setup         # web + chat — not the same as `make setup`
+npm run setup:chat
 npm run setup:chat:full
 npm run local-provider-check
 npm run diagnose:chat:local
@@ -410,6 +416,11 @@ npm run ci:web
 npm run ci:chat
 npm run ci
 ```
+
+The two `setup` entries are not the same command. `make setup` installs web
+dependencies only; `npm run setup` runs `setup:web` then `setup:chat`. Use
+`make bootstrap` when you want both through make, and reach for `make setup-chat`
+if you already ran `make setup` and the chat imports are missing.
 
 Useful split commands:
 
@@ -462,7 +473,8 @@ ones apply rather than a list to work through by hand:
 Add integration confidence where the change crosses a runtime boundary. These
 are the verifier's too.
 
-- End-to-end journeys: `make test-e2e` (needs a running stack; see step 7)
+- End-to-end journeys: `make test-e2e` (needs a running stack and the Playwright
+  browser; see step 7)
 - Cross-surface integration confidence: `make e2e-smoke`
 - Contract-only integration confidence (minimal chat stack): `make e2e-smoke-lite`
 - Full local-provider integration confidence: `make e2e-smoke-full`
@@ -472,7 +484,8 @@ are the verifier's too.
 
 - Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
 - Virtualenv missing, broken, or on the wrong Python: run `rm -rf .venv && make venv`.
-- `ModuleNotFoundError` for a chat dependency: you are probably outside the venv — re-run through `make`, or use `.venv/bin/python`.
+- `ModuleNotFoundError` for a chat dependency: you are probably outside the venv — re-run through `make`, or use `.venv/bin/python`. If you are inside it, the chat dependencies were never installed: `make setup` covers web only, so run `make setup-chat`.
+- Playwright journeys fail with a missing browser: run `make -C apps/web install-e2e-browsers`, then rerun `make test-e2e`. Neither `make setup` nor `make bootstrap` installs it.
 - Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
 - Docs link drift (including root runbooks): run `make docs-check`.
 - Agent doc drift (a `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` gained content): move the flagged lines into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.

@@ -4,7 +4,7 @@ NPM ?= npm
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup sync-env dev lint typecheck test build migrate prisma-generate quick-ci ci
+.PHONY: help setup sync-env dev lint typecheck test build migrate migrate-deploy prisma-generate quick-ci ci
 
 help: ## Show available web-app tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nWeb app tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-20s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -49,8 +49,16 @@ build: ## Build web app
 	$(MAKE) prisma-generate
 	$(NPM) run build
 
-migrate: ## Run Prisma migrations using DATABASE_URL
-	npx prisma migrate dev --schema prisma/schema.prisma
+migrate-deploy: ## Apply pending migrations without authoring one
+	npx prisma migrate deploy --schema prisma/schema.prisma
+
+migrate: ## Author a new migration from a schema change (set NAME=<migration-name>)
+	@test -n "$(NAME)" || { \
+		echo "migrate: set NAME=<migration-name>, e.g. make migrate NAME=add-order-status"; \
+		echo "Without it, prisma migrate dev prompts for a name and cannot run unattended."; \
+		exit 2; \
+	}
+	npx prisma migrate dev --schema prisma/schema.prisma --name $(NAME)
 
 prisma-generate: ## Generate Prisma client
 	npx prisma generate --generator client --schema prisma/schema.prisma
