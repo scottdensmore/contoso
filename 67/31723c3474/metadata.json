@@ -3,7 +3,7 @@
   "checkpoint_id": "6731723c3474",
   "strategy": "manual-commit",
   "branch": "fix/workflow-gaps",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "AGENTS.md",
     "tests/scripts/test_agent_runbooks.py"
@@ -15,13 +15,20 @@
       "compact_transcript": "/67/31723c3474/0/transcript.jsonl",
       "content_hash": "/67/31723c3474/0/content_hash.txt",
       "prompt": "/67/31723c3474/0/prompt.txt"
+    },
+    {
+      "metadata": "/67/31723c3474/1/metadata.json",
+      "transcript": "/67/31723c3474/1/full.jsonl",
+      "compact_transcript": "/67/31723c3474/1/transcript.jsonl",
+      "content_hash": "/67/31723c3474/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 4339,
-    "cache_creation_tokens": 9647123,
-    "cache_read_tokens": 1065520683,
-    "output_tokens": 1986885,
-    "api_call_count": 2265
+    "input_tokens": 4373,
+    "cache_creation_tokens": 9674189,
+    "cache_read_tokens": 1068905363,
+    "output_tokens": 2000497,
+    "api_call_count": 2283
   }
 }
