@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "5416ff5ba974",
+  "strategy": "manual-commit",
+  "branch": "fix/avatar-upload-feedback",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/54/16ff5ba974/0/metadata.json",
+      "transcript": "/54/16ff5ba974/0/full.jsonl",
+      "compact_transcript": "/54/16ff5ba974/0/transcript.jsonl",
+      "content_hash": "/54/16ff5ba974/0/content_hash.txt",
+      "prompt": "/54/16ff5ba974/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4278,
+    "cache_creation_tokens": 9628049,
+    "cache_read_tokens": 1054880953,
+    "output_tokens": 1973928,
+    "api_call_count": 2233
+  }
+}
