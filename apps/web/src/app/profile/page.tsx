@@ -30,7 +30,21 @@ export default function ProfilePage() {
     }
   }, [status]);
 
-  if (status === "loading" || (status === "authenticated" && isLoadingProfile)) {
+  // `!profileData` and not `status === "loading"` on its own. `update()` puts
+  // the session back into `loading` every time it refreshes, and this branch
+  // then replaced the whole page — tabs, heading and all — with the first-load
+  // spinner. Measured after a successful avatar save: the page blanked for
+  // ~35ms, `AvatarUpload` unmounted mid-save so its "Picture saved." was set on
+  // a component that no longer existed and never rendered, and focus fell from
+  // the file input to `body`. A keyboard user saved their picture and was
+  // returned to the top of the document with no confirmation.
+  //
+  // This is the first load only: nothing to show yet. A refresh behind a page
+  // that already has its data leaves that page alone.
+  if (
+    (status === "loading" && !profileData) ||
+    (status === "authenticated" && isLoadingProfile)
+  ) {
     // role=status so the wait is announced rather than being a silent blank
     // screen for anyone not watching the pixels.
     return (
@@ -68,20 +82,22 @@ export default function ProfilePage() {
     );
   }
 
+  // Throws when the picture was not stored, and does not catch what `fetch`
+  // throws. Both are the contract `AvatarUpload` needs: it shows the new
+  // picture as soon as it is chosen, so a failure it is not told about leaves
+  // the visitor looking at a change that did not happen. This used to do
+  // nothing at all on a non-ok response and send a thrown error to the console.
   const handleAvatarUpload = async (url: string) => {
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar: url }),
-      });
-      if (response.ok) {
-        await update();
-        setProfileData({ ...profileData, avatar: url });
-      }
-    } catch (err) {
-      console.error("Failed to update avatar", err);
+    const response = await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatar: url }),
+    });
+    if (!response.ok) {
+      throw new Error(`The server did not save the avatar (${response.status})`);
     }
+    await update();
+    setProfileData({ ...profileData, avatar: url });
   };
 
   const tabs = [
