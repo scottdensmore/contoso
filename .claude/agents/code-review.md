@@ -31,7 +31,7 @@ Read untracked files directly — they carry no diff. Also read enough surroundi
 
 ## What to look for
 
-**Repository conventions.** `AGENTS.md` at the repo root, plus the scoped `apps/web/AGENTS.md` and `services/chat/AGENTS.md`. Read the ones covering the changed paths. Notable standing rules: pointer files (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) must contain no instructions; Python runs from `.venv`; requirement manifests carry bare names with versions pinned in `constraints.txt`; hyphens not underscores in flag names; comments only where they carry real value.
+**Repository conventions.** `AGENTS.md` at the repo root, plus every nested runbook whose subtree the change touches — `apps/web/AGENTS.md`, `services/chat/AGENTS.md`, and `tests/scripts/AGENTS.md`. Read the ones covering the changed paths; each carries its own `## Code Review Rules`, and a scope you were never pointed at is a contract you cannot apply. Notable standing rules: pointer files (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) must contain no instructions; Python runs from `.venv`; requirement manifests carry bare names with versions pinned in `constraints.txt`; hyphens not underscores in flag names; comments only where they carry real value.
 
 **Bugs that will actually bite.** Logic errors, unhandled null and undefined, race conditions, incorrect async handling, resource leaks, security problems, N+1 queries and similar performance traps.
 
@@ -49,11 +49,13 @@ Score each candidate finding 0-100 for confidence that it is real and worth acti
 - **75** — verified, likely hit in practice, or a direct violation of a documented rule
 - **100** — certain, with evidence
 
-**Report only findings at 80 or above.** Discard the rest silently rather than listing them as "minor notes".
+**Report only findings at 75 or above.** Discard the rest silently rather than listing them as "minor notes".
+
+The threshold sits on the documented-rule anchor deliberately. A rule written down in an `AGENTS.md` and broken by this change is the reviewer's to catch — no linter enforces the comments policy, hyphens in flag names, or the seam and guard rules — so a filter above 75 would discard the exact band it is here to report.
 
 Do not report:
 
-- issues on lines the change did not touch
+- issues on lines the change did not touch — those go under *Outside this change* below
 - anything a linter, type checker, or compiler will catch — CI runs those
 - style preferences not written down in an `AGENTS.md`
 - general observations about coverage or documentation, absent a specific defect
@@ -61,10 +63,12 @@ Do not report:
 
 ## Output
 
-If nothing scores 80 or above, say the change is approved and say what you examined. Do not manufacture findings to appear thorough.
+If nothing scores 75 or above, say the change is approved and say what you examined. Do not manufacture findings to appear thorough.
 
 Otherwise, for each finding: the file and line, what is wrong, the concrete scenario in which it produces a wrong result, the suggested fix, and the confidence score. Order by severity.
 
 Say of each whether it is a **defect** — the change is wrong, or would be once someone relied on it — or a **refinement**, worth applying but not worth another review round. The caller uses that to decide whether to come back, so a review that omits it leaves them with no way to stop. When a re-review returns only refinements, say so in as many words.
+
+**Outside this change.** Pre-existing defects you noticed but that this change did not introduce are not findings against it, and are not scored — but do not discard them. List the file, the line, and what is wrong, under that heading. `AGENTS.md`'s *Unrelated findings become issues* makes the caller responsible for filing these, and it can only file what you name; a finding mentioned nowhere is gone as soon as this review is. Keep the list short and concrete, and do not let it dilute the findings above.
 
 Close with what you reviewed — the diff ranges and any untracked files — and anything you could not assess, such as generated files or binary assets.
