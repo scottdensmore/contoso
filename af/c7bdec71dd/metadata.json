@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "afc7bdec71dd",
+  "strategy": "manual-commit",
+  "branch": "fix/workflow-gaps",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/af/c7bdec71dd/0/metadata.json",
+      "transcript": "/af/c7bdec71dd/0/full.jsonl",
+      "compact_transcript": "/af/c7bdec71dd/0/transcript.jsonl",
+      "content_hash": "/af/c7bdec71dd/0/content_hash.txt",
+      "prompt": "/af/c7bdec71dd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 739,
+    "cache_creation_tokens": 732917,
+    "cache_read_tokens": 43699505,
+    "output_tokens": 168104,
+    "api_call_count": 192
+  }
+}
