@@ -83,8 +83,11 @@ This runs the Web App, AI Chat Service, and Database in containers. The default 
 
 3.  **Run Migrations:**
     ```bash
-    make migrate
+    make migrate-deploy
     ```
+    This applies the migrations already in `apps/web/prisma/migrations/`. Use
+    `make migrate NAME=<migration-name>` only when you have changed
+    `schema.prisma` and want to author a new one.
 
 4.  **Start Web App:**
     ```bash

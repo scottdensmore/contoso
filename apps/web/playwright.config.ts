@@ -4,8 +4,9 @@ import { defineConfig, devices } from '@playwright/test'
  * End-to-end journeys against a running stack.
  *
  * There is deliberately no `webServer` here. These journeys cross web, chat and
- * the database, so the stack has to be the real composed one — `make e2e-up`
- * locally, or the stack the Integration E2E Smoke job already leaves running.
+ * the database, so the stack has to be the real composed one —
+ * `make e2e-smoke KEEP_STACK=1` locally, or the stack the Integration E2E Smoke
+ * job already leaves running.
  * Starting `next dev` from Playwright would test a web app talking to nothing.
  *
  * Retries are off. A retried failure is a failure that gets ignored, and a
