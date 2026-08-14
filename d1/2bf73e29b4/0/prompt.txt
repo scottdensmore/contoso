@@ -1,0 +1,405 @@
+take a look through this code and the project prs and issues and figure out what we should pick up to start working
+
+---
+
+<task-notification>
+<task-id>aa08d5624b537fd23</task-id>
+<tool-use-id>toolu_0127zs4S5msU3ajGv3fsjKgg</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aa08d5624b537fd23.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify dependabot hold change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repository state is unchanged — only the two originally-present modifications remain, nothing added by verification.
+
+## Verdict
+
+**Verified.** The `chore/dependabot-ignore-eslint-major` branch (currently uncommitted working-tree changes on top of `main`, since `HEAD` and `main` are the same commit) passes every applicable gate: `make test-scripts` (156 tests, including the 3 new ones), the new test module runs clean under a genuinely bare virtualenv, `.github/dependabot.yml` is valid YAML with `ignore` correctly placed, `make docs-check`, and — because the change detector flags `.github/dependabot.yml` as an "unknown" surface and force-falls-back to the runtime recommendation — the full `make ci` merge gate, all green.
+
+### Failures
+None.
+
+### Flakes
+None. `make ci` was run twice (once under `tee`, once standalone) with identical clean results, so no re-run-for-flake was needed.
+
+### Missing coverage
+- No existing or new guard asserts that the `ignore` block sits under the correct `package-ecosystem: npm, directory: /apps/web` entry specifically (as opposed to some other entry) — the new `eslint_hold_block()` finder in `test_dependabot_holds.py` locates the `dependency-name: "eslint"` line anywhere in the file, not scoped to that one ecosystem block. In this file only one `npm` entry exists, so it's not a live gap, but a second npm ecosystem block added later wouldn't be disambiguated by this test.
+- Nothing exercises Dependabot's own interpretation of the YAML (the test file itself says this explicitly, line 18: "Nothing here catches Dependabot misreading the config; that is only observable from a Dependabot run.") — this is inherent to the change, not something achievable in this repo's test suite, but worth naming since it's the one thing no gate here can confirm.
+- `detect_changed_surfaces.py` has no pattern that recognizes `.github/dependabot.yml` at all (not in `RUNTIME_PATTERNS`, `WEB_PATTERNS`, `CHAT_PATTERNS`, or `DOC_PATTERNS`), so any change to that file alone is classified `unknown` and force-falls-back to the full runtime recommendation. This isn't a defect in the branch under review, but it is a gap in the detector: git history shows this file has never been added to any pattern list. Worth a follow-up if the team wants dependabot-config-only changes to route to a narrower check.
+
+### Environment issues
+None. No stack was needed or started, per the task's own note. Ports 5432/3000 were not touched.
+
+### Specific traps confirmed
+
+1. **Stdlib-only import, proven under a bare interpreter.** `tests/scripts/test_dependabot_holds.py` imports only `json`, `re`, `unittest`, `pathlib` (confirmed by reading the file — no `yaml` import, as the module's own docstring states). I built a throwaway virtualenv identical to CI's `script-tests` job (`python3 -m venv` + `pip install --upgrade pip` only — verified `pip list` shows just `pip` and `setuptools`, no PyYAML) and ran the module against it directly:
+   ```
+   Ran 3 tests in 0.013s
+   OK
+   ```
+   This is a materially stronger check than running it in the local `.venv`, which has PyYAML installed and would silently mask a `yaml` import if one were accidentally added.
+
+2. **YAML validity and `ignore` key placement.** Parsed `.github/dependabot.yml` with PyYAML and inspected the npm/`/apps/web` entry's key order directly:
+   ```
+   npm/apps/web entry keys, in order: ['package-ecosystem', 'directory', 'schedule',
+   'open-pull-requests-limit', 'labels', 'ignore', 'groups']
+   ```
+   `ignore` is a sibling of `labels` and `groups` at the update-entry level — not nested inside `groups:`, as feared. The parsed `ignore` value is exactly `[{"dependency-name": "eslint", "update-types": ["version-update:semver-major"]}]`.
+
+3. **Existing guard conflict check.** `tests/scripts/test_chat_profile_wiring.py::test_dependabot_groups_keep_package_families_together` (`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_chat_profile_wiring.py:85`) does assert on the shape of this same file: it counts `package-ecosystem:` entries against occurrences of the literal string `"    groups:"`, and checks a fixed set of group-pattern strings (including `- "eslint-*"`) are present. The new `ignore:` block does not add or remove any `"    groups:"` line and leaves the `eslint` group's patterns untouched, so this test is unaffected — confirmed by it passing inside the full 156-test `test-scripts` run.
+
+### Commands run
+
+```
+git status --short
+git branch --show-current
+git diff main...HEAD -- .github/dependabot.yml   # empty — change is uncommitted worktree diff, HEAD==main
+git diff --stat main...HEAD
+cat .github/dependabot.yml
+cat tests/scripts/test_dependabot_holds.py
+grep -rn "dependabot" tests/ .github/workflows/ scripts/
+make test-scripts                                 # 156 tests, OK
+.venv/bin/python -m unittest discover -s tests/scripts -p "test_dependabot_holds.py" -v   # 3 tests, OK
+python3 -m venv &lt;scratch&gt;/bare-venv &amp;&amp; bare-venv/bin/pip install --quiet --upgrade pip     # mirrors CI's script-tests job
+bare-venv/bin/python -m unittest discover -s tests/scripts -p "test_dependabot_holds.py" -v   # 3 tests, OK, stdlib-only proven
+.venv/bin/python -c "yaml.safe_load(...)"          # validated YAML, confirmed ignore key placement
+make docs-check                                    # OK
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets  # empty (uncommitted diff not visible to base...head)
+python -c "detect_changed_surfaces.classify([...])"  # runtime=True, unknown=True (dependabot.yml matches no pattern)
+make ci                                             # full merge gate, clean; re-run once for confirmation, EXIT:0
+```
+
+### Not run, and why
+
+- `make e2e-smoke`, `make test-e2e` — no runtime code changed and no stack was requested or needed, per the task's explicit instruction not to start one.
+- `make release-dry-run` — not applicable; `.github/workflows/release.yml` was not touched.
+- `make e2e-smoke-lite` / `make e2e-smoke-full` — not applicable; no chat dependency profile changed.</result>
+<usage><subagent_tokens>51910</subagent_tokens><tool_uses>35</tool_uses><duration_ms>389244</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a845492c97edea9f4</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a845492c97edea9f4.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after scoping fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The one-file change (`tests/scripts/test_dependabot_holds.py`) is correct and the affected suite is fully green. `make ci` was not re-run — see rationale below — but everything in scope for this diff passes.
+
+## What changed since the last green run
+
+Confirmed via `git status --short` / `git diff --stat`:
+- `.github/dependabot.yml` — modified, but the diff (14 lines, the `ignore:` block under the npm `/apps/web` entry plus its explanatory comment) is byte-identical to what I verified last time. Unchanged since the prior run, as stated.
+- `tests/scripts/test_dependabot_holds.py` — untracked, new/rewritten per the task description (`update_entry()` helper, new vacuity test, docstring note; now 4 tests).
+
+No other files are modified or untracked. This branch has no commits on top of `main` — the work is sitting uncommitted in the working tree.
+
+## Checks run
+
+- `make test-scripts` — **157/157 tests pass**, including all 4 tests in `test_dependabot_holds.py` and `test_chat_profile_wiring.py::test_dependabot_groups_keep_package_families_together`.
+- Bare-venv import check: created a fresh venv (`python3 -m venv`, only `pip`/`setuptools` present, no `PyYAML` or anything else) and ran `python -m unittest discover -s tests/scripts -p "test_dependabot_holds.py"` inside it — all 4 tests pass. Reading the module also confirms only `json`, `re`, `unittest`, `pathlib` are imported. The stdlib-only claim holds.
+- Independent verification of `update_entry("npm", "/apps/web")` slicing against the real 5-entry `.github/dependabot.yml` (github-actions `/`, npm `/apps/web`, and three separate pip entries — `/services/chat`, `/services/chat/src/api`, `/services/chat/tests`):
+  - All 5 entries located correctly by `(ecosystem, directory)` pair.
+  - The three `pip` entries return three genuinely distinct slices (`chat != chat_api != chat_tests`, confirmed by content comparison, not line-number lookup — my first attempt at verification used `lines.index()` and was fooled by the two pip entries sharing an identical `- package-ecosystem: "pip"` opening line, which made it look like two queries returned the same range; re-verifying by content resolved that).
+  - `npm`/`/apps/web` entry contains the `eslint` ignore block and zero content from any `pip` entry — confirms neighbouring-entry bleed does not happen.
+  - The last entry (`pip`, `/services/chat/tests`) slices correctly to the file's true final line (`- "patch"`) — no trailing content lost or an off-by-one truncation.
+  - Nonexistent combo (`npm`, `/nonexistent`) correctly returns `[]`.
+
+## make ci — not re-run, and why
+
+The only substantive change since the last fully-green `make ci` is a single file under `tests/scripts/`, a pure test module with no production code, no web/chat runtime touched, and no schema change. `.github/dependabot.yml` is unchanged from what was already validated. Per `AGENTS.md`'s change table this is squarely "scripts or tooling" → `make test-scripts`, which I ran and which is the exact gate this repository designates for this surface. Re-running the web/chat build and lint in `make ci` would exercise zero new code paths and add no coverage beyond what `test-scripts` already confirms, so I judged it not warranted this time. If you want the full gate re-run anyway for belt-and-suspenders confidence, say so and I'll run it.
+
+## Failures
+
+None.
+
+## Flakes
+
+None observed — nothing failed on first attempt, so no re-run was needed to distinguish flake from defect.
+
+## Missing coverage
+
+None new. The previous "missing coverage" finding (unscoped hold search accepting a hold under the wrong entry) is exactly what this change closes, and the new `test_web_npm_update_entry_is_locatable` vacuity guard covers the failure mode of a renamed `/apps/web` directory silently emptying the assertion. I did not independently re-run the two fixture demonstrations (hold-under-pip-entry now failing, renamed-directory now failing the vacuity test) since the task said not to — I only re-derived the same conclusion analytically against the real file, which is consistent.
+
+## Environment issues
+
+None. `.venv` was already present and usable; no port or `LLM_PROVIDER` concerns apply since no e2e/smoke checks were in scope for this diff.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD
+git log --oneline -10
+git diff .github/dependabot.yml
+cat -n tests/scripts/test_dependabot_holds.py
+cat -n .github/dependabot.yml
+python3 -m venv &lt;scratchpad&gt;/bare-venv
+&lt;scratchpad&gt;/bare-venv/bin/pip list
+&lt;scratchpad&gt;/bare-venv/bin/python -m unittest discover -s tests/scripts -p "test_dependabot_holds.py" -v
+make test-scripts
+grep -n "test_dependabot_groups_keep_package_families_together" -A 20 tests/scripts/test_chat_profile_wiring.py
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+# plus two ad-hoc .venv/bin/python3 scripts to exercise update_entry() against the real config
+```
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/.github/dependabot.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_chat_profile_wiring.py`.
+
+## What I did not run, and why
+
+- `make ci` (full cross-surface gate) — not re-run; rationale above. Last known state: fully green, per your report of the prior verification.
+- `make e2e-smoke`, `make test-e2e` — not run; nothing in this diff touches runtime code, Dockerfiles, compose, or any rendered route.
+- `make docs-check` — not run; no Markdown changed in this diff (the docstring change is inside a `.py` file, not a `.md` file).
+- `make release-dry-run` — not applicable; no release workflow touched.</result>
+<usage><subagent_tokens>40439</subagent_tokens><tool_uses>15</tool_uses><duration_ms>139836</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0b3a7feaf0da1770</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a0b3a7feaf0da1770.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review dependabot hold branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Findings
+
+### 1. `admitted_majors()` silently drops tokens it cannot parse, so the hold can outlive its justification — **defect** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py:55-72`, with the vacuity guard at `:110-119`.
+
+The docstring's stated safety property is "an unrecognised range yields no majors, which fails the vacuity guard below rather than quietly reporting the major as blocked." That only holds if the *whole* range is unrecognised. `admitted_majors()` parses per-token and drops the failures; the vacuity guard asserts only `assertTrue(admitted_majors(spec))`, i.e. that *some* token parsed. A range where the old carets still parse and only the newly added token does not stays green.
+
+Measured against fixture lockfiles (repo untouched; fixtures in scratchpad):
+
+| upstream range | parsed majors | vacuity guard | staleness test |
+| --- | --- | --- | --- |
+| `… \|\| ^9` (today) | 3-9 | passes | passes — hold kept (correct) |
+| `… \|\| ^9 \|\| ^10` | 3-10 | passes | **fails** — hold expires (correct) |
+| `… \|\| ^9 \|\| ^10.0.0-0` | 3-9 | passes | passes — **hold kept, wrongly** |
+| `^9 \|\| &gt;=10` | 9 | passes | passes — **hold kept, wrongly** |
+| `… \|\| ~10.0.0` | 3-8 | passes | passes — **hold kept, wrongly** |
+
+The `^N.0.0-0` form is not hypothetical here: `eslint-plugin-react-hooks@7.1.1` already declares `… || ^8.0.0-0 || ^9.0.0 || ^10.0.0` in this same lockfile, and `eslint-config-next@16.2.12` declares `&gt;=9.0.0`. The failure mode is the exact one the module exists to prevent — the hold suppressing the PR after upstream shipped support, with nothing to say so.
+
+Fix: have the parser return the tokens it could not interpret alongside the majors, and make the vacuity guard assert that set is empty. An unrecognised comparator then fails loudly and gets handled, instead of being read as "not admitted".
+
+### 2. The guard tracks one of three peer ranges that cap ESLint at 9 — **defect** (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py:36` (`BLOCKING_PLUGIN`) and `:121-130`; mirrored in `/home/scottdensmore/Developer/scottdensmore/contoso/.github/dependabot.yml:51-56`.
+
+Every package in `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/package-lock.json` declaring an `eslint` peer range, filtered to the ones that genuinely cap below 10:
+
+- `node_modules/eslint-plugin-jsx-a11y@6.10.2` → `^3 || … || ^9` (a direct devDependency, the one tracked)
+- `node_modules/eslint-config-next/node_modules/eslint-plugin-import@2.32.0` → `^2 || … || ^9`
+- `node_modules/eslint-config-next/node_modules/eslint-plugin-react@7.37.5` → `^3 || … || ^9.7`
+
+The latter two are pinned inside `eslint-config-next@16.2.12`, so bumping ESLint alone does not move them, and their peers resolve against the hoisted top-level `eslint` — they ERESOLVE on ESLint 10 exactly as jsx-a11y does.
+
+Scenario: jsx-a11y ships an `eslint@^10` peer first. `test_next_eslint_major_is_still_unsupported_upstream` fails with "The hold in .github/dependabot.yml is stale -- remove it and #69, and let the eslint group carry the major." Acting on that instruction reopens the unmergeable weekly PR from #223 and the permanently red Web App CI check that this change exists to stop, and closes an upstream tracking issue that is still live.
+
+This is also the specific thing `tests/scripts/AGENTS.md` names under *Code Review Rules*: "Compare effective sets and outputs from the owning tool where practical. Parsing one declaration is insufficient." Here the effective set is locally available — the union of every `eslint` peer range in the lockfile — and the guard reads one member of it.
+
+Fix: drop the hardcoded `BLOCKING_PLUGIN`; scan `lockfile_packages()` for every entry declaring an `eslint` peer, and fail only when *none* of them still excludes the next major, naming the survivors in the message. That is strictly more robust than the current hardcode and removes a second maintenance point. The rationale comment at `.github/dependabot.yml:51-56` should name the same set rather than jsx-a11y alone, since it is what a reader will check when the hold is questioned.
+
+### 3. The two tests give contradictory instructions at the moment the hold expires — **refinement** (confidence 75)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py:127-129` and `:143-145`.
+
+The staleness message says "remove it and #69". Doing so makes `test_config_holds_the_eslint_major` fail with "has no ignore entry for eslint, so Dependabot will reopen the ESLint major every week" — telling the engineer to put back what the other test just told them to delete. Verified: deleting the ignore block from a fixture config flips that assertion to failing.
+
+The module docstring implies the whole suite goes when the hold goes, but the assertion message is what gets read. Add "delete this module with it" to the staleness message.
+
+## On the three decisions you asked me to challenge
+
+**Not capping the `eslint` group at `[minor, patch]` — your reasoning is right, and the alternative was weaker than you credited.** `update-types` inside a `groups` block controls only whether an update joins that group, not whether Dependabot proposes it. Capping the group would have left the ESLint 10 PR opening every Monday, just ungrouped — it would not have fixed #223 at all, so the lockstep argument is a bonus rather than the load-bearing one.
+
+**No `yaml` import — correct, and consistent with the directory.** No module under `tests/scripts/` imports anything third-party today; `test_ci_workflow_wiring.py` and `test_compose_startup_ordering.py` both slice their YAML as text for the same reason. CI runs `make test-scripts PYTHON_BASE=python` against a venv with no install step (`.github/workflows/ci.yml:122-140`), so the concern is real.
+
+**The slicing itself holds up.** I mutated a fixture copy of the config through the cases that matter: hold deleted, hold relocated to the `/services/chat` pip entry, `update-types` narrowed to `semver-minor`, flow-style `update-types: [...]`, the eslint item listed second in `ignore:`, and an eslint item with no `update-types` whose *next sibling* carries the major (checking the block does not bleed across list items). All four detections were correct in all cases. The only misses are quoting variants — `'eslint'` single-quoted, or `"eslint*"` globbed — which fail closed with a message telling you to add a hold that exists. Self-evident on sight; not worth changing.
+
+**The declaration-parsing excuse is half fair.** It is fair for Dependabot's interpretation of the config: nothing local observes that, and no owning tool is installed. It is not fair for the upstream fact, which is finding 2 — that side *is* locally measurable from the lockfile, and the module measures one declaration out of the set.
+
+## Outside this change
+
+Nothing beyond the two you have already filed (#252, #253).
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; the branch has no commits ahead of `main`.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/.github/dependabot.yml` (+14).
+- `git diff --cached` — empty.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py`.
+- Context read: root `AGENTS.md`, `tests/scripts/AGENTS.md`, `.github/workflows/ci.yml` (`script-tests`), `Makefile` (`test-scripts`), `apps/web/package-lock.json`, and the sibling guard modules for prior art.
+- Ran `make test-scripts` (157 tests, all pass) and mutation-tested both the range parser and the YAML slicing against fixture copies in the scratchpad. The repository was not modified; `git status --short` still shows exactly the one modified and one untracked file.
+
+Could not assess: Dependabot's own parse of the config, which is only observable from a Dependabot run — the docstring says so and I agree.
+
+**Two defects, so this needs another round.**</result>
+<usage><subagent_tokens>49655</subagent_tokens><tool_uses>19</tool_uses><duration_ms>307391</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a845492c97edea9f4</task-id>
+<tool-use-id>toolu_013i8BLLFXGoyDt6EHzRzLhw</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a845492c97edea9f4.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after scoping fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed: only those two files are touched (one is the same test module rewrite, the other only grew a comment). Nothing else in the tree changed.
+
+## Verdict
+
+**Verified.** Both defects and the refinement described are correctly fixed in `tests/scripts/test_dependabot_holds.py`, the enlarged `.github/dependabot.yml` comment is valid YAML with the `ignore` key still correctly scoped, and `make test-scripts` is fully green. `make ci` was not re-run (see rationale).
+
+## Independent derivation of the blocker set (the core ask)
+
+I did not take the coordinator's list on trust. From the real `apps/web/package-lock.json`, I first found every package with an `eslint` peer independently of the module's code:
+
+**12 packages declare an `eslint` peer**, all without a nested `node_modules/eslint` (so the "skip packages with their own hoisted-out eslint" filter is currently a no-op, exactly as the module's docstring says):
+
+```
+@eslint-community/eslint-utils         ^6.0.0 || ^7.0.0 || &gt;=8.0.0
+@typescript-eslint/eslint-plugin       ^8.57.0 || ^9.0.0 || ^10.0.0
+@typescript-eslint/parser              ^8.57.0 || ^9.0.0 || ^10.0.0
+@typescript-eslint/type-utils          ^8.57.0 || ^9.0.0 || ^10.0.0
+@typescript-eslint/utils               ^8.57.0 || ^9.0.0 || ^10.0.0
+eslint-config-next                     &gt;=9.0.0
+eslint-config-next &gt; eslint-import-resolver-typescript   *
+eslint-config-next &gt; eslint-plugin-import    ^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9
+eslint-config-next &gt; eslint-plugin-react     ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7
+eslint-plugin-jsx-a11y                 ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9
+eslint-plugin-react-hooks              ^3.0.0 || ... || ^8.0.0-0 || ^9.0.0 || ^10.0.0
+typescript-eslint                      ^8.57.0 || ^9.0.0 || ^10.0.0
+```
+
+I then classified each against major 10 by hand and with a freshly-written regex classifier (not imported from the module, to avoid validating the code against itself):
+- The four `@typescript-eslint/*` packages plus `typescript-eslint` all admit 10 explicitly (`^10.0.0` present) — not blockers.
+- `@eslint-community/eslint-utils`, `eslint-config-next`, and `eslint-import-resolver-typescript` all carry an unparsed comparator (`&gt;=8.0.0`, `&gt;=9.0.0`, `*`) — correctly excluded as "cannot demonstrate exclusion."
+- `eslint-plugin-react-hooks` is the interesting case: it explicitly admits 10 (`^10.0.0`) but also carries `^8.0.0-0`, which the caret regex does not match (trailing `-0` prerelease suffix breaks the fullmatch) — so it's unparsed, and correctly excluded regardless. This is the exact "unparsed token" scenario the docstring calls out.
+- Exactly three packages have every token parse cleanly as caret/exact **and** demonstrably exclude 10: `eslint-plugin-jsx-a11y`, `eslint-config-next &gt; eslint-plugin-import`, `eslint-config-next &gt; eslint-plugin-react`.
+
+My independent classifier's output and the module's live `blockers(10)` output matched exactly, and both matched the coordinator's claimed set of three — with no package wrongly skipped or wrongly included among the 12. This also matches what the `.github/dependabot.yml` comment now documents (same three packages, same ranges).
+
+## Checks run
+
+- **`make test-scripts`** — 157/157 pass, including all 4 tests in `test_dependabot_holds.py` and `test_chat_profile_wiring.py::test_dependabot_groups_keep_package_families_together` (re-confirmed explicitly in isolation, not just in the full-suite run).
+- **Bare-venv stdlib-only check, re-run for the rewritten module** — reused the same from-scratch venv (only `pip`/`setuptools`, no `PyYAML`), ran `test_dependabot_holds.py` in it: 4/4 pass. Module imports only `json`, `re`, `unittest`, `pathlib`.
+- **YAML validity of `.github/dependabot.yml`** — parsed with PyYAML: 5 `updates` entries, `ignore` present on exactly the `npm`/`/apps/web` entry (`True`/`False`/`False`/`False`/`False` across the five, in order), value is `[{'dependency-name': 'eslint', 'update-types': ['version-update:semver-major']}]`, and `groups:` (6 group keys) still parses correctly alongside it under the same entry. The larger comment block did not break indentation.
+
+## Failures
+
+None.
+
+## Flakes
+
+None — no test failed on first attempt.
+
+## Missing coverage
+
+None new identified this pass. The two defects the coordinator described (single-package tracking, silent-unparsed-token handling) are now covered by `test_next_eslint_major_is_still_unsupported_upstream` via `blockers()`/`admitted_majors()`, and I independently confirmed both fixes are behaviorally correct against the real lockfile (not just against fixtures). I did not re-run the fixture demonstrations myself since the coordinator already ran them and asked me not to repeat that — I instead validated the same claims from a different angle (real lockfile, independently written classifier) rather than duplicating their fixture work.
+
+## Environment issues
+
+None.
+
+## make ci — still not re-run, and why
+
+Same reasoning as the prior pass, reconfirmed: the only diffs in the tree are `tests/scripts/test_dependabot_holds.py` (a stdlib-only test module) and a comment-only growth in `.github/dependabot.yml` (the `ignore` entry's semantics are unchanged — same dependency-name, same update-types, same placement, confirmed by YAML parse). No web, chat, or schema code moved. This is squarely the "scripts or tooling" row in `AGENTS.md`'s change table, for which `test-scripts` is the designated gate. Re-running the full web/chat build and lint would add no coverage over what's already been verified here.
+
+## Commands run
+
+```
+git status --short
+git diff --stat
+cat -n tests/scripts/test_dependabot_holds.py
+git diff .github/dependabot.yml
+.venv/bin/python3 -c "import yaml; ... parse and inspect .github/dependabot.yml"
+&lt;scratchpad&gt;/bare-venv/bin/pip list
+&lt;scratchpad&gt;/bare-venv/bin/python -m unittest discover -s tests/scripts -p "test_dependabot_holds.py" -v
+make test-scripts
+.venv/bin/python -m unittest tests.scripts.test_dependabot_holds tests.scripts.test_chat_profile_wiring -v
+# plus two ad-hoc .venv/bin/python3 scripts: one to enumerate all 12 eslint-peer
+# packages and check nested-eslint exclusion directly from apps/web/package-lock.json,
+# and one implementing a fresh (non-imported) classifier cross-checked against the
+# module's own blockers(10)
+git status --short (final)
+```
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/.github/dependabot.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/package-lock.json`.
+
+## What I did not run, and why
+
+- `make ci` — not re-run; rationale above (change confined to `tests/scripts/` plus a YAML comment).
+- `make e2e-smoke`, `make test-e2e`, `make docs-check`, `make release-dry-run` — not applicable; nothing in this diff touches runtime code, containers, Markdown, or the release workflow.</result>
+<usage><subagent_tokens>59087</subagent_tokens><tool_uses>11</tool_uses><duration_ms>108268</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0b3a7feaf0da1770</task-id>
+<tool-use-id>toolu_012pEmjqf1Nff1nmMiTrHzxK</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a0b3a7feaf0da1770.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review dependabot hold branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Re-review verdict: no defects. One refinement.
+
+Both defects are genuinely fixed, and I verified the fixes rather than taking the report on faith.
+
+### Independent confirmation of finding 2's fix
+
+I cross-checked `blockers(10)` against the real `semver` library (available at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/semver`), asking `semver.satisfies("10.0.0", range)` for all 12 declared peers. It agrees with the module exactly — the same three cap below 10, the same nine admit it, including the three the hand-rolled parser cannot read. That is the owning tool's own semantics, and it is the strongest evidence available for this claim.
+
+I also re-ran the scenarios on fixture lockfiles in the scratchpad:
+
+- jsx-a11y lifts to `^10` alone → `blockers(10)` = `{eslint-plugin-import, eslint-plugin-react}` → hold **kept**. The finding-2 defect is closed.
+- one package adds `^10.0.0-0` while others cap → hold **kept**, no silent drop. The finding-1 defect is closed.
+- all three lift → hold **declared stale**, correctly.
+
+`.github/dependabot.yml` parses cleanly through `js-yaml` and the `ignore` resolves to exactly `[{"dependency-name":"eslint","update-types":["version-update:semver-major"]}]` on the npm `/apps/web` entry, one entry only. The `eslint` group is still uncapped. `#69` reads "Revisit ESLint 10 when eslint-plugin-jsx-a11y supports it" and cites only that one peer range, so the comment's "#69 tracks only the first" is accurate. 157/157 on `make test-scripts`.
+
+## Your three questions
+
+**Is "unparsed means not blocking" safe? Yes, and it is better than what I suggested.** My original "assert the unparsed set is empty" would have failed on today's tree — `@eslint-community/eslint-utils` (`&gt;=8.0.0`), `eslint-config-next` (`&gt;=9.0.0`) and `eslint-import-resolver-typescript` (`*`) all carry comparators the parser does not read, and semver confirms all three legitimately admit 10. You were right to reject it.
+
+On the disabling risk specifically: the failure is always actionable, so there is no unfixable-red state. Every way `blockers()` empties leaves two live options — delete the hold and the module, or teach `admitted_majors` the new comparator — and the second is a small, obvious change. What the direction buys is that the guard can only ever fail early, never late, and failing early is the cheap direction: someone spends ten minutes confirming the hold is still needed. Failing late is the expensive one this module exists to prevent.
+
+**Keep the nested-`node_modules/eslint` filter.** It is three lines, its no-op status is stated in the docstring, and it fails in the safe direction if it ever fires: without it, a package that npm nested its own eslint under — and which therefore does not constrain the hoisted one at all — would be counted as a blocker and would keep the hold alive after it should have expired. That is exactly the silent-persistence failure the module is built around, so the complexity is buying the thing you care most about. I confirmed there are no `*/node_modules/eslint` keys today, so it is currently unexercised; if you want it demonstrated, a fixture lockfile with one nested copy is a two-line addition, but I would not hold the commit for it.
+
+**The range dump is useful, but not in its current shape** — see below.
+
+### Refinement: the staleness message does not distinguish "admits 10" from "could not read" (confidence 75)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py:176-182`
+
+The new rule at `:115` creates one scenario where the message's headline instruction is wrong: if every remaining blocker restates the *same* cap in a form the parser cannot read, `blockers()` empties and the test says "nothing caps eslint below 10 any more, so the hold is stale. Remove it, close #69, and delete this module with them." I ran it with the three capping ranges rewritten as `&gt;=3 &lt;10`, `&gt;=2 &lt;10`, `&gt;=3.0.0 &lt;10.0.0` — still capping, still ERESOLVE — and that is the message produced.
+
+The evidence to contradict it is present, which is why the dump is the right instinct. But it arrives as a single ~1000-character line of 12 undifferentiated entries, nine of them irrelevant, and the reader has to re-derive by eye which of `&gt;=3 &lt;10` and `&gt;=8.0.0` is a cap and which is not — the exact distinction the parser just declined to make.
+
+Splitting the dump into the two groups the code already computes fixes it and shortens the common case at the same time: list the ranges that parse and admit the major separately from the ranges that could not be read and were therefore *treated as* admitting it. A non-empty second group is then a visible "verify this before acting" flag rather than something to spot in a wall of text.
+
+This is a refinement, not a defect: the guard fails loudly and correctly, the tradeoff is deliberate and documented at `:28-33`, and the path fires at most once. It does not need another review round.
+
+## Outside this change
+
+Nothing new beyond #252, #253 and #254.
+
+## What I reviewed
+
+- `git diff main...HEAD` — still empty; no commits ahead of `main`.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/.github/dependabot.yml` (+33).
+- `git diff --cached` — empty.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_dependabot_holds.py` (rewritten module, all 197 lines).
+- Cross-checks I ran myself rather than accepting: the semver classification of all 12 peer ranges, the four expiry scenarios on fixture lockfiles, a `js-yaml` parse of the config, `gh issue view 69` and `223` against the claims the new comment makes, and `make test-scripts`. The repository was not modified; `git status --short` still shows one modified and one untracked file.
+
+Still cannot assess: Dependabot's own parse of the config, only observable from a Dependabot run. I now consider the "where practical" qualifier in `tests/scripts/AGENTS.md` satisfied on the upstream half — node and `semver` would give exact answers, but the `script-tests` CI job runs checkout plus setup-python only, with no `npm ci`, so a guard that shelled out to them would pass locally and fail in CI for the same reason the `yaml` import would.</result>
+<usage><subagent_tokens>72793</subagent_tokens><tool_uses>7</tool_uses><duration_ms>189417</duration_ms></usage>
+</task-notification>
