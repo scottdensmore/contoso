@@ -11,6 +11,10 @@
 #
 # Groups are repeated per pip directory rather than shared via a YAML anchor,
 # because Dependabot's config parser does not reliably support aliases.
+#
+# An `ignore` here is for an upgrade a resolver cannot install, not one nobody
+# has read yet. Without it Dependabot reopens the same unmergeable pull request
+# every Monday, and a permanently red check stops being read as a signal.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -43,6 +47,25 @@ updates:
     labels:
       - "dependencies"
       - "web"
+    ignore:
+      # ESLint 10 cannot be installed here. Three packages peer on `eslint` with
+      # a range that stops at 9, so npm fails with ERESOLVE before any lint rule
+      # runs -- Dependabot proposed the major as #223 and Web App CI failed on
+      # exactly that:
+      #
+      #   eslint-plugin-jsx-a11y@6.10.2                  ^3 || ... || ^9
+      #   eslint-config-next > eslint-plugin-import       ^2 || ... || ^9
+      #   eslint-config-next > eslint-plugin-react        ^3 || ... || ^9.7
+      #
+      # #69 tracks only the first. The other two are pinned inside
+      # eslint-config-next, so bumping ESLint alone does not move them and
+      # jsx-a11y shipping support is not on its own enough to lift this.
+      # `tests/scripts/test_dependabot_holds.py` measures all three and fails
+      # once none of them caps below 10; drop this entry when it does, and let
+      # the eslint group carry the major as one lockstep pull request.
+      - dependency-name: "eslint"
+        update-types:
+          - "version-update:semver-major"
     groups:
       eslint:
         patterns:
