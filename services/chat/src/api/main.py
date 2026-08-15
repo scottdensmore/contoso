@@ -72,7 +72,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 # CORS middleware - restrict to known origins
-_allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3100").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,

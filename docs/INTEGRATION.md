@@ -170,7 +170,7 @@ If smoke fails:
    `docker compose ps`
    `docker compose logs --no-color db chat web`
 5. retry smoke only:
-   `python scripts/e2e_smoke.py --web-url http://127.0.0.1:3000 --chat-url http://127.0.0.1:8000`
+   `python scripts/e2e_smoke.py --web-url http://127.0.0.1:3100 --chat-url http://127.0.0.1:8100`
 
 For full-profile failures:
 

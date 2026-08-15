@@ -247,7 +247,7 @@ e2e-smoke: | $(VENV_PYTHON) ## Run dockerized end-to-end smoke check (web -> cha
 	}; \
 	trap 'cleanup $$?' EXIT; \
 	CHAT_INSTALL_LOCAL_STACK="$(CHAT_INSTALL_LOCAL_STACK)" $(DOCKER_COMPOSE) up $(E2E_COMPOSE_UP_FLAGS) db chat web; \
-	$(PYTHON) $(E2E_SMOKE_SCRIPT) --web-url "http://127.0.0.1:3000" --chat-url "http://127.0.0.1:8000" --timeout $(E2E_SMOKE_TIMEOUT)
+	$(PYTHON) $(E2E_SMOKE_SCRIPT) --web-url "http://127.0.0.1:3100" --chat-url "http://127.0.0.1:8100" --timeout $(E2E_SMOKE_TIMEOUT)
 
 e2e-smoke-lite: ## Run dockerized contract smoke with minimal chat dependency profile
 	$(MAKE) e2e-smoke CHAT_INSTALL_LOCAL_STACK=0

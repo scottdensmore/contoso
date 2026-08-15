@@ -55,7 +55,7 @@ docker compose up -d --build db chat web
 
 Bring up `chat` alongside `db` and `web` whenever you start your own. `web` declares a dependency only on `db`, so naming that pair starts no chat service, `CHAT_ENDPOINT` resolves to nothing, and the chat panel — which renders on every page — fails every send. Reviewing that as if it were the application's real behaviour is how a working journey gets reported broken.
 
-Host ports 5432, 3000, and 8000 may already be taken by unrelated projects. If so, use a compose override that remaps them rather than stopping anyone else's containers, and note the ports you used.
+Host ports 3100, 8100, and 55432 may already be taken by unrelated projects. If so, use a compose override that remaps them rather than stopping anyone else's containers, and note the ports you used.
 
 Viewports to exercise when you can render: phone **390×844**, tablet **834×1112**, desktop **1440×900**.
 

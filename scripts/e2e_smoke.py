@@ -20,8 +20,8 @@ class NonRetryableSmokeError(RuntimeError):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--web-url", default="http://127.0.0.1:3000", help="Base URL for web app.")
-    parser.add_argument("--chat-url", default="http://127.0.0.1:8000", help="Base URL for chat service.")
+    parser.add_argument("--web-url", default="http://127.0.0.1:3100", help="Base URL for web app.")
+    parser.add_argument("--chat-url", default="http://127.0.0.1:8100", help="Base URL for chat service.")
     parser.add_argument("--timeout", type=int, default=240, help="Total timeout in seconds.")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds.")
     return parser.parse_args()

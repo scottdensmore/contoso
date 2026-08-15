@@ -322,9 +322,16 @@ jobs:
       - name: Run end-to-end journeys
         if: always() && steps.run_smoke.outcome == 'success'
         env:
-          # Must match NEXTAUTH_URL in docker-compose.yml, or the session
-          # cookie is set for a different origin than the journeys browse.
-          E2E_BASE_URL: http://localhost:3000
+          # The port the composed `web` service publishes. It matches
+          # `NEXTAUTH_URL` in docker-compose.yml, but not because it has to:
+          # the claim this comment used to make — that a mismatch sets the
+          # session cookie for a different origin — is wrong, since cookies are
+          # not isolated by port (RFC 6265 section 8.5). Measured in #240: a
+          # stack remapped off the published port signs in and runs the
+          # journeys with `NEXTAUTH_URL` left behind. What a mismatch does
+          # break is sign-out, which no journey exercises. What this has to
+          # match is the port the stack actually answers on.
+          E2E_BASE_URL: http://localhost:3100
         run: make test-e2e
 
       - name: Upload journey failure artifacts
@@ -351,7 +358,7 @@ jobs:
 
           out_file = os.environ["OUT_FILE"]
           profile_label = os.environ["PROFILE_LABEL"]
-          url = "http://127.0.0.1:8000/health/dependencies"
+          url = "http://127.0.0.1:8100/health/dependencies"
 
           payload = None
           capture_error = None
@@ -579,7 +586,7 @@ jobs:
 
           out_file = os.environ["OUT_FILE"]
           profile_label = os.environ["PROFILE_LABEL"]
-          url = "http://127.0.0.1:8000/health/dependencies"
+          url = "http://127.0.0.1:8100/health/dependencies"
 
           payload = None
           capture_error = None
