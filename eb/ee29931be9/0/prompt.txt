@@ -448,3 +448,83 @@ Two of the three findings are refinements. The one defect is finding 1, and it i
 <status>completed</status>
 <summary>Background command "Verify stack and run web merge gate" completed (exit code 0)</summary>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a236084e9b8a3502b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a236084e9b8a3502b.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Re-review: fresh round
+
+All three prior findings are fixed and the fixes are correct. `next-env.d.ts` is clean, `page.tsx` and `setup.ts` are unchanged from the last round. Two new refinements, no defects.
+
+---
+
+## Findings
+
+### 1. The #263 deferral justification misstates why the category grid is out of scope — **refinement** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:31-32`
+
+&gt; *"It is left out here rather than overlooked: it needs a database to render, so it cannot be measured the way every number above was."*
+
+The first half is true — `getProductsByCategory` at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/products.ts:6` is a `prisma.category.findUnique`. The inference is not. These journeys run against the composed stack, which *has* the seeded database, and the category grid is already measured on it by two files in this directory: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:101-108` resolves the slug from `/categories.json` and measures that surface across 21 widths at two densities, and `browse.spec.ts:172` navigates to `/products/category/tents` directly.
+
+I measured it against your running stack with the same method as the header's home-page numbers, at 1440x900:
+
+```
+status 200
+category cards: 21
+optimiser requests before scrolling: 21
+doc height: 3965
+```
+
+Twenty-one of twenty-one, on a document short enough that Chrome's ~3900px threshold swallows the whole page — the identical shape of finding to the home page's 18 of 20, obtained the same way. So the sentence claims an obstacle that does not exist, and it is the sentence a future reader will use to decide whether #263 is cheap.
+
+The two honest reasons are already in the same paragraph and are sufficient on their own: the slice boundary, and the `priority={i &lt; 3}` cutoff being an open question in #180. Fix: drop the database clause, or replace it with the measurement above — which would also give #263 a starting number it does not currently have.
+
+---
+
+### 2. The 30s budget arithmetic omits `page.goto`, which is the largest term on a cold cache — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:120`
+
+&gt; *"15s keeps the whole journey inside the 30s budget."*
+
+The budget is 3s + 3s + 15s **+ `page.goto('/')`**. `goto` defaults to `waitUntil: 'load'`, and the `load` event waits on the six server-rendered images plus the three the observer inserts during hydration — nine optimisations, which is exactly what I measure on your stack.
+
+That term is near zero warm and large cold. Measured just now on this 24-core machine, nine concurrent cold optimisations: 815ms wall, 527-800ms each. Scaled to the runner this change is about, #230's own body is the better number — *"still-pending after 21s: 20 x /\_next/image"*, i.e. roughly one image per second at two cores, so ~9s for `goto` to return. Add 3 + 3 and a poll that in the passing case still has to wait out the last row's share of eleven queued optimisations, and the test sits around 25s with about 5s of headroom. When it goes over, the failure is `Test timeout of 30000ms exceeded`, which says less than the assertion it replaced.
+
+The full-suite CI path is safe, but only by accident: `browse.spec.ts` sorts before `image-deferral.spec.ts` under `workers: 1`, and its first test scrolls the entire home page. The home card box is 350px at both 1280 (browse's default viewport) and 1440, so it warms the exact `w=384` variants this spec needs. Nothing states that dependency, and it breaks on a rename. The exposed path is the one AGENTS.md step 4 prescribes — `npx playwright test e2e/image-deferral.spec.ts` against a freshly composed stack.
+
+Fix: `test.setTimeout(60_000)` on the scrolling test, with the cold-cache reason. There is precedent three files over — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:180` raises its own for the same reason and explains it. Then correct the comment to name `goto` as the term that dominates.
+
+---
+
+## Your three questions
+
+**Is `expect.poll` at 15s now soft?** No. Waiting longer cannot turn a wrong result into a right one here — the predicate is `naturalWidth === 0`, and an image that 404s or never decodes stays at 0 forever, so a broken deferral still fails, just 12s later. What a fixed 3s bought that the poll does not is an implicit latency ceiling, and this file explicitly disclaims that property in its own header (*"the defect is the count, not the cost per image"*), so nothing that was being asserted stopped being asserted. The shape is right.
+
+One thing worth knowing rather than acting on: the predicate returns 0 both when everything decoded and when there is nothing on screen to measure, so if the `PRODUCT_CARD img` selector ever stops matching — the image moving outside the `&lt;a&gt;`, say — the assertion passes on zero samples. That was equally true of the fixed wait, so the fix did not introduce it, and the `requested.size &gt; initial` assertion above catches the failure mode that actually produces it (deferral that never resolves). I score it below the reporting bar and am not filing it; if you want the file's third vacuity guard for symmetry with the other two, polling the on-screen image count to be `&gt; 0` is the one-liner.
+
+**Literal `'1200px'` versus importing `ROOT_MARGIN`.** Keep the literal. Importing it would make the assertion tautological in the direction that matters: `expect(options[0]?.rootMargin).toBe(ROOT_MARGIN)` passes for `'0px'`, for `'50px'`, for any value someone edits the constant to — it would catch only the dropped-argument mutation, not the retuned-margin one, and the retuned one is the whole reason the assertion exists. That is the "measure what was produced, not what was asked for" rule in root `AGENTS.md`, and an imported constant measures the request. It would also mean exporting a constant purely for a test. I checked the failure path: with the options argument dropped, `options[0]` is `undefined`, `undefined?.rootMargin` is `undefined`, and `toBe('1200px')` fails rather than short-circuiting — so the optional chaining does not soften it. Your demonstration matches.
+
+**Do the issue framings misstate the code?** #262's does not — I re-verified every claim in it. `test_image_encoding.py:196` and `:220` are both `max(width, height) &gt; MAX_DIMENSION`, so a 1024x600 does pass everything. The count is exact: 853 catalogue WebPs at 1024x1024, with the 1024x450 hero being the full-bleed allowlist entry and outside `catalogue_images()`. "The markup it replaces took its box from the source's own ratio" is right for the loaded state — `width`/`height` give the UA an `aspect-ratio: auto 350 / 350`, whose `auto` keyword defers to the natural ratio once loaded, and `h-auto` lets it through. The category grid's `object-cover` crop at `products/category/[slug]/page.tsx:104` is stated correctly. 2b is correct in both directions: `about/page.tsx:29` is `bg-zinc-200`, `products/category/[slug]/page.tsx:47` is `bg-gray-200`. #263's framing is finding 1 above.
+
+---
+
+## What I reviewed this round
+
+- `git status --short`: `apps/web/src/app/page.tsx` and `apps/web/src/test/setup.ts` modified (both byte-identical to the last round), three untracked files. `next-env.d.ts` no longer listed. Still no commits on the branch.
+- Re-read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`.
+- Re-verified against source: `test_image_encoding.py:176-232`, `catalogue_images.json`, `src/lib/products.ts`, `about/page.tsx`, `products/category/[slug]/page.tsx`, `next.config.js:14-31`, `browse.spec.ts`, `image-delivery.spec.ts`, `playwright.config.ts`.
+- Measured against your stack (not torn down, nothing written to it): nine concurrent cold `w=828` optimisations at 815ms wall / 527-800ms each on 24 cores; `/products/category/tents` at 21 cards, 21 optimiser requests, 3965px document.
+- Not re-assessed: `make -C apps/web ci`, the 7/7 journey run, and the mutation demo — taken as reported.
+
+**This round returns no defects — both findings are refinements.** Per step 8 the loop has closed; applying these does not earn another review round, and neither touches rendered output, so step 6 stays closed too.</result>
+<usage><subagent_tokens>105042</subagent_tokens><tool_uses>10</tool_uses><duration_ms>254154</duration_ms></usage>
+</task-notification>
