@@ -1440,3 +1440,67 @@ One thing I verified that you may have assumed rather than checked, and it is in
 I confirmed no CI job creates a root `.env` before `make -C apps/web ci` or `make ci`, so the now-working `sync-env` stays a no-op in CI, and the Docker build calls `npm run build` directly without going through the Makefile. Nothing here needed a running stack. I did not assess `node_modules` contents beyond the two schema and CLI checks above.</result>
 <usage><subagent_tokens>68236</subagent_tokens><tool_uses>35</tool_uses><duration_ms>387958</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>aa2edeffd8a6f697e</task-id>
+<tool-use-id>toolu_01PJwUZaUozsSLdjcJtQsoam</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aa2edeffd8a6f697e.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify local dev surface fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — the refinement holds.** Confirmed the guard's new claim (widened `MigrateCommandTests` scope, `seen == 3`) against the real tree, and re-ran both requested commands clean. No defects found; nothing here should block your commit/PR.
+
+## What I checked
+
+**Production files unchanged, as claimed.**
+```
+git diff --stat -- .gitignore apps/web/Makefile apps/web/next.config.js docs/DATABASE.md
+```
+Byte-for-byte the same stat as my prior run (7/8/-5/2 lines respectively). Only `tests/scripts/test_local_dev_surface.py` moved.
+
+**`seen == 3`, and no fourth markdown occurrence exists.**
+```
+git grep -ni "npx prisma migrate dev"
+```
+returned exactly four hits repo-wide:
+- `CONTRIBUTING.md:44` — inline span, carries `--name` ✓
+- `README.md:321` — carries `--name` ✓
+- `docs/DATABASE.md:37` — carries `--name` ✓
+- `apps/web/Makefile:67` — carries `--name $(NAME)` ✓, but this is the *implementation* `make migrate` shells out to, not documentation, and `tracked_docs()` globs only `*.md` (`git ls-files "*.md"` → 54 files, all `.md`, no `.mdx` in the tree) — so it's correctly out of the guard's scope, and it was already correct anyway.
+
+So `seen == 3` is right, and there is no fourth `npx prisma migrate dev` invocation anywhere tracked that the widened guard still misses. I also confirmed the `--name`-stripped demonstration claim indirectly by reading the new `MigrateCommandTests` docstring and code (keyed on the literal `npx prisma migrate dev` substring, no fencing requirement, still excludes `docs/DATABASE.md:21`'s prose "during `prisma migrate dev`" because that line lacks `npx`) — the logic matches the described behavior exactly.
+
+**Commands run:**
+```
+make test-scripts          # 183/183, OK
+.venv/bin/python -m unittest tests.scripts.test_local_dev_surface -v   # 6/6, OK
+make -C apps/web ci        # exit 0 — lint clean, 154/154 tests, next build succeeded
+```
+`apps/web ci` is unchanged from my earlier run, as expected: same eslint clean pass, same 36 files / 154 tests, same clean `next build` with no unrecognized-key warning.
+
+## On running `make` inside `unittest` in CI
+
+Nothing alarming, but here's what I actually checked rather than inferred:
+
+- **`make`'s presence isn't a new dependency.** The job that runs this file is `make test-scripts` itself — if `make` weren't on the CI runner's PATH, the job would never reach this test in the first place. So the new `SyncEnvExecutionTests` doesn't introduce a fresh environment requirement; it rides on one already load-bearing for the whole job.
+- **The recipe under test has no dependency surface beyond POSIX `test`/`cp` and `bash`** (`SHELL := /bin/bash` is set at the top of the copied Makefile). No `npm`, no network, no other included Makefiles — `shutil.copy` only needs the single file, and the target references no other variable that requires resolution to run.
+- **Directory depth is preserved correctly.** The fixture builds `root/apps/web`, so `../../.env` from the fixture's `web/` resolves to the fixture's `root/.env` — the same two-level relationship as the real repo (`apps/web` → repo root). If someone later changes the fixture layout without noticing this coupling, it'd silently test the wrong path resolution; not fragile today, but worth knowing it's implicit rather than asserted.
+- **One real, minor gap:** `subprocess.run(["make", "sync-env"], cwd=web, capture_output=True, text=True)` sets no `timeout=`. Nothing in the recipe can block on input, so this shouldn't matter in practice — but if `make` ever hung for an unrelated reason (a misconfigured environment variable, a shell rc file doing something unexpected under `/bin/bash` invocation, etc.), this test would hang rather than fail fast, consuming the job's time budget instead of surfacing a clear failure. Not something I'd hold the PR for, but I'd flag it as the one thing I'd add if touching this file again.
+- I ran this on my local sandbox (also Linux/bash/make), not literally inside the GitHub Actions container — I can't claim to have observed the actual CI image. But given the job's existing hard dependency on `make` and the recipe's total absence of other tool dependencies, I have no basis to expect divergent behavior there, and said so rather than rounding it up to "confirmed on CI."
+
+## Failures / Flakes / Missing coverage / Environment issues
+
+- Failures: none.
+- Flakes: none; single run of each command was sufficient (no reason to suspect environmental flakiness here — no network, no containers, no ports).
+- Missing coverage: none beyond what was already flagged in my first pass (the still-undisclaimed-by-design eslint removal, which remains intentionally untested and independently verified by me earlier). The migrate-guard widening itself is now behaviorally demonstrated (per your description) and I independently reproduced the `seen == 3` count against the live tree.
+- Environment issues: none. No stack needed or started.
+
+## Not run
+
+Same set as before, for the same reasons — no chat, cross-surface, docs-check re-run (docs content unchanged since my last full pass), e2e-smoke, test-e2e, or release-dry-run: nothing in this delta touches those surfaces, and the task explicitly scoped this follow-up to `test-scripts` + `apps/web ci`.</result>
+<usage><subagent_tokens>64994</subagent_tokens><tool_uses>12</tool_uses><duration_ms>237310</duration_ms></usage>
+</task-notification>
