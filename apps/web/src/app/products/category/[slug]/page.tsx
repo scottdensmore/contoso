@@ -2,7 +2,7 @@ import Block from "@/components/block";
 import Header from "@/components/header";
 import { getProductsByCategory } from "@/lib/products";
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import DeferredImage from "@/components/deferred-image";
 
 type CategoryProductCard = {
   id: string;
@@ -46,15 +46,13 @@ export default async function CategoryPage({
             >
               <div className="aspect-square w-full overflow-hidden rounded-3xl bg-gray-200">
                 {product.image ? (
-                  <Image
+                  <DeferredImage
                     src={product.image}
                     // Decorative, because the link already says it. The card
                     // is one link whose heading is the product's name, so
                     // `alt={product.name}` made its accessible name the name
                     // twice. See e2e/browse.spec.ts.
                     alt=""
-                    width={350}
-                    height={350}
                     // The card is the container split by the column count, less
                     // the gaps and the container's own padding — so it tracks
                     // the viewport between each breakpoint and only settles
@@ -101,6 +99,52 @@ export default async function CategoryPage({
                     // card 3 is eager and card 4 is lazy, both 251px above the
                     // fold, and the second arrives about 2.7s later. See #180.
                     priority={i < 3}
+                    // Everything below the fold waits until it is nearly on
+                    // screen. Before this the grid fetched every card at once
+                    // -- 21 of 21 on `tents`, measured at 1440x900 on a 3965px
+                    // document, because Chrome's lazy threshold (~3900px)
+                    // covers the whole page. See #263.
+                    //
+                    // Six, not three. `priority` implies eager inside the
+                    // component -- a preloaded image that is also deferred is a
+                    // contradiction -- so leaving this off would have made the
+                    // preload cutoff the only thing rendering server-side, and
+                    // that cutoff is three because three is the widest the grid
+                    // gets. It is not the widest the *fold* gets: at `sm` the
+                    // grid is two columns, so card 3 opens the second row and
+                    // sits 251px on screen at 834x1112 -- the same 251px the
+                    // note above records for #180.
+                    //
+                    // A deferred card cannot be requested until this component
+                    // hydrates, and measured at 834x1112 that wait is 245ms
+                    // unthrottled, 1155ms at 4x CPU and 2385ms at 6x. So three
+                    // would have traded a request the browser used to start at
+                    // parse for a grey box a tablet visitor watches for over
+                    // two seconds.
+                    //
+                    // Six rather than four, and 1440x900 is the wrong reason.
+                    // There the second row is a 63px sliver and four would look
+                    // sufficient. It is the taller desktops that decide it: the
+                    // same row measures 243px at 1440x1080, 145px at 1512x982
+                    // and 363px at 1920x1200 -- most of a card. Four would fill
+                    // card 3 and leave 4 and 5 grey beside it, ragged within a
+                    // single row, which reads worse than a row that is
+                    // uniformly not there yet.
+                    //
+                    // The price is two requests on a phone, where the grid is
+                    // one column and cards 4 and 5 are about 2.2 and 2.7
+                    // viewports down: that surface goes 7 unaided, 4 with
+                    // deferral alone, 6 with this. Desktop and tablet pay
+                    // nothing, because those cards already sit inside the
+                    // 1200px margin and this only moves them out of the
+                    // post-hydration path and into the HTML.
+                    //
+                    // `eager` and `priority` are separate on purpose. Preload
+                    // is a bet on which card paints last and is measured
+                    // against LCP; eager is about which cards a visitor is
+                    // already looking at. Widening the first to cover the
+                    // second would preload six cards and lose that measurement.
+                    eager={i < 6}
                     className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
                   />
                 ) : (
