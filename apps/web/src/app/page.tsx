@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ListingImage from "@/components/listing-image";
 import Block from "@/components/block";
 import { ProductGroup } from "@/lib/types";
 import { promises as fs } from "fs";
@@ -110,15 +110,26 @@ export default async function Home() {
                 className="w-full max-w-[350px]"
               >
                 <div className="items-center">
-                  <Image
+                  <ListingImage
+                    // The first two categories, not just the first. A deferred
+                    // image cannot be requested until this component hydrates,
+                    // and that wait grows with the device: measured at +237ms
+                    // unthrottled but +2.0s at 6x CPU throttle. At 1440x2000
+                    // nine cards are above the fold, so covering only the
+                    // first category left six of them as empty boxes for that
+                    // whole window before the request even started.
+                    //
+                    // Two categories covers the first screen at every viewport
+                    // measured up to 1440x2000, for three extra server-rendered
+                    // images. Everything below is one to four viewports down --
+                    // see #230 for the measured positions.
+                    eager={i <= 1}
                     src={product.images[0]}
                     // Decorative, because the link already says it. The card
                     // is one link whose text is the product's name, so
                     // `alt={product.name}` made its accessible name the name
                     // twice. See e2e/browse.spec.ts.
                     alt=""
-                    width={350}
-                    height={350}
                     // 350px is the cap, not the box. The `minmax(0, 350px)`
                     // tracks only reach it once the container can hold three of
                     // them plus the gaps — from 1106px of viewport. Below that
@@ -138,9 +149,6 @@ export default async function Home() {
                     // card fetches w=640. The middle clause's `100vw` is
                     // harmless only because this one is here.
                     sizes="(min-width: 1106px) 350px, (min-width: 640px) calc( ( 100vw - 56px ) / 3 ), calc( 50vw - 20px )"
-                    // w-full so the image scales into its column: at its
-                    // intrinsic 350px it overflows one instead.
-                    className="rounded-3xl w-full h-auto"
                   />
                   <div className="text-center mt-2 text-base sm:text-xl md:text-2xl font-semibold break-words">
                     {product.name}
