@@ -1149,3 +1149,79 @@ I did not re-check `.env` / `services/chat/.env` state this round beyond what `a
 `git diff` across all 21 modified files, with `scripts/agent_doctor.py`, both READMEs, `docker-compose.yml`, `.github/workflows/ci.yml` and `tests/scripts/AGENTS.md` read in full context; `git diff --cached` (empty); `git log main..HEAD` (empty — still all uncommitted); and both untracked guard modules read in full. Ran: the full guard suite (177/177), four mutations against `test_agent_doctor.py` through a scratchpad harness that patches the loaded module rather than the repository, ruff on the three changed/new Python files, and a grep of the whole tree for the sign-in/sign-out rationale text that produced finding 1. Verified the chat README heading boundaries and the compose/`.dockerignore` facts behind finding 2. No compose command was run; your stack was not touched.</result>
 <usage><subagent_tokens>164894</subagent_tokens><tool_uses>9</tool_uses><duration_ms>163042</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All confirmed: `make ci` exit 0, web 149/149, chat 60/60, test-scripts 177/177, docs-check 8/8, ruff still exactly the 2 pre-existing errors (now shifted one line, consistent with the removed conditional), stack still healthy and untouched by me. This is my final report before the coordinator tears the stack down.
+
+## Verdict
+
+Verified. `make ci` passes clean on the final diff, the sentinel refactor is confirmed behavior-preserving by direct comparison of live output (not just test counts), and I independently reproduced the mutation-testing claim without touching the repository. No blockers. This diff is ready to commit and open as a PR from my side.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. `make ci` ran once and passed.
+
+## Results
+
+- `make ci` — **PASS** (exit 0). Web 149/149, chat 60/60, `next build` succeeded, `test-scripts` 177/177, `docs-check` 8/8. Same totals as last round, as expected for a behavior-preserving refactor plus doc reordering.
+- Ruff on `scripts/agent_doctor.py` — still exactly the 2 pre-existing errors (`EXE001`, `TRY004`), now at line 138 (shifted by one, consistent with the conditional line that was deleted). Nothing new.
+
+## Sentinel refactor — confirmed behavior-preserving, from the live run, not just the diff
+
+Ran `scripts/agent_doctor.py` live against this machine's actual `.env` files and diffed the output character-for-character against last round's:
+
+```
+[WARN] .env host ports disagree with docker-compose.yml — NEXTAUTH_URL names :3000, compose publishes :3100; CHAT_ENDPOINT names :8000, compose publishes :8100; ALLOWED_ORIGINS names :3000, compose publishes :3100. Update .env against .env.example; a stale port reaches whatever else owns it rather than failing.
+[WARN] services/chat/.env host ports disagree with docker-compose.yml — ALLOWED_ORIGINS names :3000, compose publishes :3100; DATABASE_URL names :5432, compose publishes :55432. Update it against services/chat/.env.example.
+```
+
+Identical to the prior round in both content and wording — `ALLOWED_ORIGINS` is still being compared against the **web** port (`:3100`) in both warnings, not chat's (`:8100`). Exit 0, unchanged.
+
+Also reproduced the `code-review` mutation claim independently, without modifying the repo: wrote a standalone comparison in a throwaway Python snippet that maps `ALLOWED_ORIGINS` to `"chat"` instead of `"web"` and ran it against a correct value (`ALLOWED_ORIGINS=http://localhost:3100`). The real code correctly reports no drift; the mutated mapping falsely flags it (`ALLOWED_ORIGINS names [3100], compose publishes :8100`) — confirming the sentinel removal didn't just pass by coincidence, the comparison is genuinely pinned to the web port and a regression there is test-visible.
+
+## Doc reordering — confirmed correct
+
+- `README.md`: the migration callout now sits directly under the "Option 2" heading, before the numbered steps — so it's read before step 3 (`make migrate-deploy`, which sources `.env` and is where a stale `DATABASE_URL` would actually run against the wrong database). Previously it followed step 4.
+- `services/chat/README.md`: the note is now under "Option 2: Run directly with Python" rather than "Option 1" — correct, since I confirmed by reading `docker-compose.yml`'s `chat` service definition that it sets environment explicitly with no `env_file:` directive, and the note itself now correctly states `.dockerignore` excludes `.env` from the image, so Option 1 (Docker) genuinely never reads `services/chat/.env`.
+- Fifth "after sign-in" site: grepped all sign-in/sign-out mentions across the changed files — the one remaining "sign-in fails" in `docker-compose.yml` (line 28) is about a missing `NEXTAUTH_SECRET`, an unrelated claim about a different variable, not the retracted port-mismatch claim. All five sites of the retracted claim (`docker-compose.yml`, `ci.yml`, `test_published_ports.py` ×2, `agent_doctor.py`) now consistently say sign-out.
+
+## Journeys — skipped, and I agree with your reasoning
+
+Same conclusion as the last two rounds, reconfirmed: the sentinel refactor and README moves touch no `apps/web/src` or `services/chat/src` file. `scripts/agent_doctor.py` remains a standalone CLI never imported by runtime code. No behavior surface a journey could exercise changed. Skipped.
+
+## Missing coverage / Environment issues
+
+None new. The full history stands: the `.env` LLM_PROVIDER=local vs. gcp trap from round 1 is environmental and pre-existing, not part of this diff, and the stack remains in the `gcp`/healthy state I restored it to after round 1's incident — untouched by every round since.
+
+## Commands run
+
+```
+git status --short / git diff --stat
+git diff -- scripts/agent_doctor.py README.md services/chat/README.md
+grep -rn "sign-in\|sign-out\|signOut" across the changed files
+make ci                                                         # PASS, exit 0
+.venv/bin/python scripts/agent_doctor.py                        # live run, diffed against prior round's output
+.venv/bin/python -m ruff check scripts/agent_doctor.py          # same 2 pre-existing
+python probe reproducing the ALLOWED_ORIGINS-&gt;chat mutation independently
+docker compose ps (final confirmation before handover)
+```
+
+## What I did not run, and why
+
+`make test-e2e` — skipped per your call, agreed above (no runtime behavior changed). `make e2e-smoke`, `make docker-init-fresh`, `make release-dry-run` — not run this round or last, unchanged reasoning: nothing in these last two rounds' diffs touches what they exercise, and this is explicitly the final gate before you tear the stack down yourself, so there's no reason to touch it further.
+
+This is my last action against the stack — I'm making no more calls against it. Go ahead and commit and open the PR; from my side this branch is clean across all five verification rounds (cross-surface `make ci`, the full 130-journey suite, `docker-init-fresh`, and now the drift-detection tooling with live, reproduced confirmation).</result>
+<usage><subagent_tokens>199823</subagent_tokens><tool_uses>64</tool_uses><duration_ms>2985157</duration_ms></usage>
+</task-notification>
