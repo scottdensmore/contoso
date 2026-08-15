@@ -1,0 +1,450 @@
+<task-notification>
+<task-id>b8uyvday7</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/b8uyvday7.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for both PRs' CI to finish" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bzyf1sr8w</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bzyf1sr8w.output</output-file>
+<status>completed</status>
+<summary>Background command "Install deps and build web app" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b5f4kgeng</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/b5f4kgeng.output</output-file>
+<status>completed</status>
+<summary>Background command "Build web app with correct deps" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bsxb1jkb8</task-id>
+<tool-use-id>toolu_01RCQhB6BZWnYB1YF6yFRq1f</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bsxb1jkb8.output</output-file>
+<status>completed</status>
+<summary>Background command "Install and build in clean worktree" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bg8rxv9au</task-id>
+<tool-use-id>toolu_014QVoeL74FZZ4LQfCT5jk89</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bg8rxv9au.output</output-file>
+<status>completed</status>
+<summary>Background command "Build in worktree without .env, as CI does" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bhp3v25r6</task-id>
+<tool-use-id>toolu_01KfuCYwCYgdQ5fZ92QZRB4F</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bhp3v25r6.output</output-file>
+<status>completed</status>
+<summary>Background command "Rebuild worktree with the fix" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>baoep1n6y</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/baoep1n6y.output</output-file>
+<status>completed</status>
+<summary>Background command "Build and start composed stack, keep it up" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjos3lghp</task-id>
+<tool-use-id>toolu_01Y3Dc1qLGJB7sb7cYvGu9a7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bjos3lghp.output</output-file>
+<status>completed</status>
+<summary>Background command "Run at-risk specs against real composed stack" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aff403238803f9df6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aff403238803f9df6.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed** — phone 390×844, tablet 834×1112, desktop 1440×900, plus 1440×2000, 1024×1366, 1440×1440 and 844×390 for the eager-cutoff question, and 1× and 2× for density. Chromium at `/home/scottdensmore/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome`. Repo unmodified (`git status` identical to start).
+
+**One thing you need to know before steps 7 and 8.** Partway through, your `contoso-web-1` exited with 143 and an unrelated project's `next-server` (a "Mona Airways" app, host pid 2452684) took port 3000. For several minutes `http://localhost:3000/` served that app, not Contoso — I caught it because a scroll run reported `docHeight 1186` and zero product cards. I discarded that run. I did not touch your stack; I started a throwaway container `contoso-web-review-3100` from the same `contoso-web` image on `contoso_default` at port 3100 and measured there. Your `web` came back on its own and :3000 is Contoso again; I removed my container. **Headline numbers were re-confirmed on your stack at :3000 at the end** (first-paint optimiser 3/6/6, CLS 0, docH 7435/4995/5038 — identical to :3100), so everything below holds for the stack you handed me. But if that port race can happen again, step 7 or 8 could silently test the wrong application.
+
+Screenshots: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/scratchpad/shots/`
+
+---
+
+## Answers to your five questions
+
+### 3. Layout stability — verified, clean. Measured, not eyeballed.
+
+`PerformanceObserver({type:'layout-shift'})` over a full-document scroll at all three viewports, repeated under injected optimiser latency of 150/500/1000/2343 ms: **CLS = 0.000 in every run.** No shift entry was ever attributed to a card. The placeholder box and the loaded box are byte-identical: 175×175 phone, 259.3×259.3 tablet, 350×350 desktop, in both states. `docHeight` is identical with images present and absent. Every source image is 1024×1024, so `aspect-square` is genuinely the image's ratio, not an assumption — this is why it holds. Worth a comment in the component: it silently depends on the catalogue being square, and `config/catalogue_images.json` already exists as the place that contract could live.
+
+### 2. The placeholder — this is the most serious finding, and it is worse than you framed it.
+
+`bg-zinc-100` (#f4f4f5) against the band it sits in, computed in-page:
+
+| band | band bg | contrast |
+|---|---|---|
+| Backpacks, Hiking Footwear, Camping Stoves (`bg-zinc-100`) | #f4f4f5 | **1.000:1** |
+| Hiking Clothing, Camping Tables, Sleeping Bags (`bg-inherit` → body) | #fafafa | **1.053:1** |
+
+The `bg-inherit` bands do not resolve to white — they resolve to the body's #fafafa (zinc-50). So the placeholder is invisible in the alternating bands and all but invisible in the others. Nothing here reaches the 3:1 that a meaningful non-text boundary needs.
+
+`shots/prehydration-very-tall-cpu4.png` is the evidence: the Backpacks band is a 400px-tall void with three product names floating at the bottom and nothing above them. It does not read as loading. It reads as a category whose products failed.
+
+And there is a second empty state you may not have noticed, which is the one users actually see most of the time. When the observer fires, the placeholder `div` unmounts and is replaced by `next/image`'s `&lt;img&gt;`, which carries `style="color:transparent"` and **no background at all**. Since the observer fires 600px before entry, by the time a card is on screen it is almost always this transparent `&lt;img&gt;`, not the grey div. So the grey box is doing essentially no work in the visible region — the loading state a scrolling user sees is a fully transparent gap, contrast 1.000:1 against every band. `shots/desktop-03-placeholder-zincband.png` and `shots/desktop-04-fling-immediate.png` are both this state.
+
+Suggested fix: put the tone on the *image* as well as the placeholder, so the reserved box is visible in both states — `next/image`'s `placeholder="empty"` leaves it bare, so a `bg-zinc-200` (#e4e4e7, 1.9:1 vs the zinc band) or better `bg-zinc-300` (#d4d4d8, 2.9:1) on a wrapper that persists across the swap. A wrapper also removes the unmount/remount flicker. If you keep a bare tone, `zinc-200` is the minimum that reads as a box at all; `zinc-300` is the first step that approaches 3:1.
+
+### 1. Pop-in — 600px is enough on a fast server and not enough on the server #230 was about.
+
+The relationship is exact: the margin buys `600 / v` seconds of lead, so it covers latency `T` only while `T ≤ 600/v`. Measured on desktop, sweeping injected optimiser latency against scroll speed:
+
+| per-image latency | scroll speed | cards grey on entry | worst gap |
+|---|---|---|---|
+| 150 ms | 2500 px/s (fling) | 0 / 20 | 0 ms |
+| 500 ms | 2500 px/s (fling) | 14 / 20 | 317 ms / 798 px |
+| 1000 ms | 800 px/s (reading) | 14 / 20 | 283 ms / 221 px |
+| 2343 ms (#230's measured median) | 800 px/s | 14 / 20 | 1633 ms / **1274 px** |
+
+At the last row the user scrolls more than a full desktop viewport past a card before its image appears. On **phone** at that latency it is qualitatively worse: 14 of 20 cards **never decoded while they were on screen at all** — a 175px card plus caption is only on screen for ~1.34s at 800 px/s, less than the fetch, so the visitor scrolls the entire page and sees images only in the first category. That is the run behind `shots/phone-04-fling-immediate.png`.
+
+Unthrottled against a warm optimiser on this 24-core host, per-image latency is 10–95ms and the gap is **0ms at every viewport at 800 px/s and at a 2500 px/s fling**. So on this machine 600px is fine. Your CI box is not this machine: cold optimisation there measured 2343ms at 18-way concurrency, and the fix cuts concurrency to 6, which on this host is worth roughly 2× (median 25ms → 13ms) — so expect something in the high hundreds of ms to ~1.2s on a 2-core runner, not 2343ms.
+
+**The margin I would use: 1200px**, and I would express it as a value derived from the viewport rather than a constant. The cost is bounded and I measured it:
+
+| rootMargin | phone reqs | tablet reqs | desktop reqs |
+|---|---|---|---|
+| 600 (current) | 3 | 6 | 6 |
+| 900 | 3 | 6 | 6 |
+| **1200** | **5** | **9** | **9** |
+| 1800 | 6 | 12 | 12 |
+| 3900 (Chrome's own) | 12 | 20 | 20 |
+
+1200px keeps you at half of Chrome's behaviour and well under the spec's `MAX_INITIAL_REQUESTS = 8`… except at tablet and desktop, where 9 would **fail your own new test**. Note that: `apps/web/e2e/image-deferral.spec.ts:48` pins the ceiling at 8, which quietly forbids any margin above ~900px. If you raise the margin you must raise that bound, and the comment there ("a small multiple of what is on screen") supports 9 fine. 1200px covers 512 px/s at 2343ms latency and 2400 px/s at 500ms — it does not cover a hard fling on a slow server, and no margin short of ~7000px does, which is why the visible-placeholder fix above matters more than the margin does.
+
+### 4. The eager cutoff — no, `i === 0` is too tight, and the reason is hydration, not geometry.
+
+The observer does fire immediately for anything within 600px of the fold, so at tall viewports the second and third categories are *requested* at first paint. The problem is *when*. Deferred images cannot be requested until the client component hydrates:
+
+| CPU throttle | first eager image request | first deferred image request | lag |
+|---|---|---|---|
+| 1× | 159 ms | 396 ms | +237 ms |
+| 4× | 320 ms | 1727 ms | **+1.4 s** |
+| 6× | 388 ms | 2357 ms | **+2.0 s** |
+
+At 1440×2000, **9 cards are above the fold and only 3 are eager**; the other 6 are grey placeholders on screen for that entire window before the request even starts, then plus the optimisation. At 1024×1366 and 1440×1440, 6 are above the fold and 3 are eager. `shots/prehydration-very-tall-cpu4.png` is exactly this. Landscape phone 844×390 is fine — zero cards are above the fold there, the hero fills it.
+
+Suggested fix: make the cutoff cover the plausible first screen rather than the first category — `eager={i === 0 || i === 1}` costs 3 extra server-rendered images at every viewport and removes the pre-hydration hole at every viewport I tested up to 1440×2000. That puts first-paint requests at 6/9/9, the same as the 1200px margin would, so the two changes overlap rather than compound.
+
+### 5. Other findings in remit
+
+**A JavaScript failure now blanks 85% of the page, and `&lt;noscript&gt;` does not cover it.** Blocking `/_next/static/chunks/**` with scripting still enabled leaves **17 of 20 cards as permanent grey placeholders** (`shots/jsfail-desktop-scrolled.png`). The `&lt;noscript&gt;` fallback only fires when scripting is *off*; a failed chunk, a CSP block, or an extension leaves the page with no images and — because of the contrast finding above — no indication that anything is missing. Before this change the page's images were plain server-rendered HTML and survived that. The component's comment reasons carefully about the scripting-off case and does not mention this one. A visible placeholder tone would at least make it legible as "images missing" rather than "shop is empty".
+
+**No-JS path works but costs 5.1 MB.** Scripting disabled: 20 cards render, all boxes 350×350, `docHeight` 5038 identical, 18 raw `.webp` requests totalling **5,095,340 bytes** against roughly 400 KB for the optimised equivalent — a 12× penalty, all fetched eagerly and at once. The component's comment calls this "heavier than the optimiser's variant"; 12× is worth writing down, and `sizes`/`srcset` on the `&lt;noscript&gt;` img would cut most of it without needing the optimiser.
+
+**Keyboard: complete and reachable, focus visible.** All 20 cards reachable by Tab in DOM order, focus outline present (UA default, 1px `rgb(16,16,16)`), each card scrolled into view on focus. Under 1500ms injected latency, 14 of 20 cards had no decoded image at the moment focus landed on them — Tab jumps a full row and the browser scrolls instantly, so keyboard traversal outruns the 600px margin harder than scrolling does. At real latency this did not reproduce. No new issue, but it is another argument for the visible placeholder rather than a bigger margin.
+
+**Density: correct at 2×, no regression.** `deviceScaleFactor: 2` requests `w=750` for the 350px desktop card, `w=640` for the 259px tablet card, `w=384` for the 175px phone card — all the right rung of the `[640,750,828,1080]` ladder, all confirmed via `currentSrc`. First-paint counts are identical at 1× and 2× (3/6/6), so deferral behaves the same at both densities.
+
+**Console: clean.** No errors or warnings on a normal load at any viewport; no hydration mismatch despite the placeholder→image swap.
+
+**Semantics: no regression.** `alt=""` is preserved on both the `next/image` and the `&lt;noscript&gt;` img, so the link's accessible name stays the product name once. The placeholder `div` is unlabelled and invisible to AT, which is right for a decorative image. No `aria-busy` and none needed. Heading order unchanged.
+
+**Checks I did not perform:** error state for a failed *image* (a 404 on a listing image) — the diff does not change error handling, and `next/image` behaviour there is unchanged from before; I noted the new spec at line 97-107 already asserts on-screen images decode, which covers the regression case. Tap-target sizing and text contrast in the cards — unchanged by this diff, geometry measured identical in all states.
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx` (`ROOT_MARGIN` at line 29, the `bg-zinc-100` placeholder at line 98), `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx` (`eager={i === 0}` at line 119), `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts` (`MAX_INITIAL_REQUESTS` at line 48).</result>
+<usage><subagent_tokens>98010</subagent_tokens><tool_uses>50</tool_uses><duration_ms>1153478</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bvk8c46st</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bvk8c46st.output</output-file>
+<status>completed</status>
+<summary>Background command "Rebuild and restart web container with fixes" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bzq3d9fod</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bzq3d9fod.output</output-file>
+<status>completed</status>
+<summary>Background command "Re-run affected specs against revised stack" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32d59c80433f2e42</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a32d59c80433f2e42.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify deferred image loading change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Not verified — one real, reproducible failure blocks the merge gate.** `make -C apps/web ci` fails: the vitest unit suite throws `ReferenceError: IntersectionObserver is not defined` from the new `ListingImage` component, because jsdom (vitest's test environment) has no `IntersectionObserver` global and nothing polyfills it. Lint, both typechecks, and the production build are otherwise clean, and every Playwright journey in the suite passes against this build once the environment's recurring container instability is worked around (see below). `make test-scripts` passes in full.
+
+## Failures
+
+**`make -C apps/web ci` — unit test step, deterministic, not a flake.**
+```
+FAIL  src/app/page.test.tsx &gt; Home page &gt; names a product card once
+ReferenceError: IntersectionObserver is not defined
+ ❯ src/components/listing-image.tsx:98:22
+    98|     const observer = new IntersectionObserver(
+```
+Confirmed by re-running the isolated file twice (`npx vitest run src/app/page.test.tsx`) with the identical error both times. `src/app/page.tsx` now renders `Home()`, whose grid includes non-eager `ListingImage` cards (`eager={i &lt;= 1}`); those mount with `show=false` and register a real `IntersectionObserver` in `useEffect`, which jsdom does not provide. `apps/web/src/test/setup.ts` already has a precedent for exactly this class of problem — it polyfills `window.matchMedia` with a comment explaining jsdom's gap there — but no equivalent exists for `IntersectionObserver`, and this is the only file in the repo that references it (`grep -rn IntersectionObserver` returns only `listing-image.tsx`).
+
+Because `make ci` stops on the first failing step, `build` never ran as part of that command. I ran `make build` separately to isolate the blast radius: it succeeds cleanly (`next build`, all 230 static pages, TypeScript pass included). So the only broken piece is the vitest step; lint, `tsc --noEmit`, `tsc -p tsconfig.e2e.json`, `check-journey-coverage.mjs`, and `next build` are all clean.
+
+## Flakes
+
+None in the code under review. The `make test-e2e` runs had a real, external cause (see Environment issues), which I distinguished from a code defect by re-running: three consecutive full-suite attempts each failed with a different-sized cluster of unrelated-looking failures (chat-launcher, chat-modality, form-fields, headings, auth, avatar, image-delivery, image-deferral), and every one of those failures traced to `net::ERR_CONNECTION_REFUSED` / `chrome-error://chromewebdata/` in the trace or `error-context.md` — even ones whose top-level assertion read differently, e.g. `image-deferral.spec.ts`'s "home page rendered no product grid to measure" was a masked connection-refused, confirmed via its `error-context.md`. Correlating with `docker inspect contoso-web-1`, the container's `FinishedAt` landed inside each run's failure window. This is environmental, not a code regression.
+
+I then re-ran the suite in batches small enough to land inside the container's apparent stability windows, and got a clean pass for every one of the 132 tests:
+- `browse.spec.ts` + `image-deferral.spec.ts` + `image-delivery.spec.ts` + `layout.spec.ts` — 25/25 passed (4.6m).
+- `auth.spec.ts` + `avatar.spec.ts` + `chat-controls.spec.ts` + `chat-launcher.spec.ts` + `chat-modality.spec.ts` + `form-fields.spec.ts` + `headings.spec.ts` — 62/62 passed (2.2m).
+- `action-controls.spec.ts` — 45/45, passed cleanly in all three full-suite attempts, never implicated in any failure.
+
+25 + 62 + 45 = 132, i.e. every journey in the suite has at least one clean, uninterrupted pass against this build. I never got a single `make test-e2e` invocation to run start-to-finish without an outage, so I can't report "`make test-e2e`: pass" as a literal fact — only that every journey it contains passes, established via batched runs, and that the only failures across three whole-suite attempts are fully attributable to the recurring web-container outage.
+
+## Missing coverage
+
+- **The vitest failure is itself a coverage gap**, not just a break: there is no polyfill/mock for `window.IntersectionObserver` anywhere in the repo, so `ListingImage` (or any future component using it) throws in any unit test that mounts it, following the existing `matchMedia` pattern in `apps/web/src/test/setup.ts` would close this.
+- **The reserved-box tone claims are untested.** The component's own doc comment asserts specific contrast ratios for `bg-zinc-200` (1.22:1 against `bg-inherit`, 1.15:1 against `bg-zinc-100`, "read back as painted sRGB") — no test (visual regression or a forced-colors-style check like `form-fields.spec.ts` uses) verifies this, so a future Tailwind/theme change could silently invalidate the number in the comment.
+- **The `&lt;noscript&gt;` fallback path is not exercised by any journey.** All Playwright tests run with JavaScript enabled; nothing drives a `javaScriptEnabled: false` context to confirm the unoptimised `&lt;img&gt;` fallback actually renders and is the only image requested in that mode.
+- **`image-deferral.spec.ts` only covers the home page.** The `ListingImage` component and its `eager` prop are net-new and reusable, but no other listing surface (category grid, elsewhere `next/image` was previously used) is covered by an equivalent deferral guard — worth confirming there's no other 18-image-style page this component was meant to reach.
+
+## Environment issues
+
+- **`contoso-web-1` exited on its own at least four times during this review** (~01:55, ~02:07→02:15, ~02:20→02:23, ~02:23→02:28 UTC), each with a clean exit code (`143` then `0`) despite `RestartPolicy: no`, so nothing auto-recovered it. I found no cause discoverable from this shell: no cron/systemd timer, no lingering `docker compose`/`make e2e-smoke` process, no OOM in `dmesg`, and the host had ~100GB RAM free and load average 1.5–3 throughout. I did not run `make down`, `docker compose down`, or `make e2e-smoke` at any point. Each time I found the container down I restarted it non-destructively with `docker compose up -d web` (no `--build`, no `--force-recreate`, so it's still serving the image built earlier from this change) and re-confirmed identity (`curl http://localhost:3000/ | grep -c "Contoso Outdoor Company"` non-zero) before trusting the next run. Left the stack in this state at handover: `contoso-web-1` up and healthy for the preceding ~13 minutes; `contoso-chat-1` and `contoso-db-1` were never affected and never restarted by me.
+- **`apps/web/next-env.d.ts` was modified as a side effect of running the checks.** `next build`/`tsc` regenerated it (added `import "./.next/types/root-params.d.ts"`) — it's an auto-generated file explicitly marked "should not be edited," and this is routine Next.js codegen churn, not a change I made intentionally. Flagging for transparency since `git status` now shows it as modified.
+- `check-journey-coverage.mjs`'s "spec-shaped but never collected" half sources its file list from `git ls-files e2e`, which only sees tracked files. Since `image-deferral.spec.ts` is currently untracked, that specific safety net doesn't see it yet — though the two checks that matter for the wiring requirement (`tsc -p tsconfig.e2e.json --showConfig` and `playwright test --list`, both globbing disk directly) do see it and pass, confirmed by running `node scripts/check-journey-coverage.mjs` directly (exit 0). This resolves itself once the file is `git add`ed; not a blocker, just worth knowing it isn't exercised end-to-end pre-commit.
+- Chat serving fallback replies (no GCP credentials locally) — expected per the brief, not investigated further.
+- No port collisions observed on 3000/8000/55432 from the other Docker projects on this host (petspotr ×4, travel-app) — all on distinct ports throughout.
+
+## Commands run
+
+```
+git status --short
+curl -s http://localhost:3000/ | grep -c "Contoso Outdoor Company"
+docker ps -a
+docker inspect contoso-web-1 --format '...'
+docker compose up -d web                      # non-destructive restart, no --build (run 3x, as web kept exiting)
+cat apps/web/e2e/image-deferral.spec.ts
+cat apps/web/src/components/listing-image.tsx
+git diff apps/web/src/app/page.tsx
+cd apps/web &amp;&amp; make ci                         # FAILS at `make test`; lint/typecheck/build clean in isolation
+cd apps/web &amp;&amp; make build                      # isolated confirmation: production build succeeds
+cd apps/web &amp;&amp; npx vitest run src/app/page.test.tsx   # x2, confirms deterministic failure
+make test-scripts                              # 157/157 pass
+cd apps/web &amp;&amp; node scripts/check-journey-coverage.mjs   # exit 0
+E2E_BASE_URL=http://localhost:3000 make test-e2e         # x3 full runs, 40/85/20 failed each time, all traced to container outages
+cd apps/web &amp;&amp; npx playwright test e2e/browse.spec.ts e2e/image-deferral.spec.ts e2e/image-delivery.spec.ts e2e/layout.spec.ts   # 25/25 clean
+cd apps/web &amp;&amp; npx playwright test e2e/auth.spec.ts e2e/avatar.spec.ts e2e/chat-controls.spec.ts e2e/chat-launcher.spec.ts e2e/chat-modality.spec.ts e2e/form-fields.spec.ts e2e/headings.spec.ts   # 62/62 clean
+```
+
+## What I did not run, and why
+
+- **`make ci` (repo-wide)** — judged unnecessary: this change touches only `apps/web` (a new component, a modified page, a new Playwright spec); no `services/chat` files or Markdown changed. `make ci` would additionally run chat's `quick-ci` and `docs-check`, neither of which this diff can affect. `make -C apps/web ci` plus `make test-scripts` already cover everything relevant.
+- **`make e2e-smoke`** — explicitly forbidden by the handover (rebuilds and would recreate the containers I was told to preserve).
+- **`make down` / `docker compose down`** — explicitly forbidden.
+- I did not attempt to root-cause the `contoso-web-1` outages beyond what's reportable from this shell (checked `dmesg`, cron, systemd timers, lingering compose processes, `docker events`, host memory/load — all inconclusive or clean). Whatever is cycling that container is outside what I can observe or safely intervene in further.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/setup.ts`.</result>
+<usage><subagent_tokens>133068</subagent_tokens><tool_uses>87</tool_uses><duration_ms>2848685</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>brit7ghsk</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/brit7ghsk.output</output-file>
+<status>completed</status>
+<summary>Background command "Run full web merge gate" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32d59c80433f2e42</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a32d59c80433f2e42.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify deferred image loading change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The blocker is fixed. `make -C apps/web ci` is green — confirmed independently, twice, not on the coordinator's word. `make test-scripts` is unaffected and green. I'm skipping a fresh journey run, with reasons below, since I can show the browser-facing code is unchanged from the build I already fully verified.
+
+## Independent re-verification
+
+- `cd apps/web &amp;&amp; HUSKY=0 make ci` — **exit 0**, run twice for certainty. Lint clean, both typechecks clean (app + `tsconfig.e2e.json` + `check-journey-coverage.mjs`), `npm run test` → **154/154 passed** (up from 149; +5 for `listing-image.test.tsx`, and the previously-throwing `page.test.tsx &gt; Home page &gt; names a product card once` now passes), production build succeeds (all 230 pages).
+- `make test-scripts` — **157/157 pass, exit 0**, unchanged from before. Confirmed specifically that `test_journey_specs_exist` and `test_vitest_does_not_also_collect_the_journeys` still pass: the former only globs `apps/web/e2e/*.spec.ts`, so `listing-image.test.tsx` (in `src/components/`) is outside its scope; the latter just checks `vitest.config.ts` excludes `e2e/**`, unaffected by a new unit test. No root guard inventories vitest test files, so nothing chokes on the new file.
+- Stack: identity confirmed (`curl .../ | grep -c "Contoso Outdoor Company"` → 2), `contoso-web-1` up 17+ minutes at time of check, stable throughout this pass.
+
+## Journeys — skipped, and why
+
+I agree the suite cannot be affected, on direct evidence rather than the coordinator's assertion:
+- `git diff apps/web/src/app/page.tsx` is byte-identical to the diff I already ran 132/132 journeys against.
+- `apps/web/src/components/listing-image.tsx` is untracked, so `git diff` shows nothing for it either way — I re-read the full file directly and compared it against what I transcribed in my first pass. It is identical, including the `#261` contrast paragraph, which was already present when I first read it. There is no functional (or textual) change to this file since my 132/132 result.
+- `setup.ts` and `listing-image.test.tsx` are both vitest-only: `setup.ts` is wired through `vitest.config.ts`'s `setupFiles`, and Playwright's config has no dependency on it; the `.test.tsx` file is excluded from Playwright's `testMatch` by extension. Neither ships to the browser or is reachable from anything the 132 journeys execute.
+
+Given that, re-running the full suite would only re-fight the container instability from my last pass for zero incremental signal. I'm not spending the ~13+ minutes (and risk of another outage) on a re-run whose outcome is already determined by evidence already in hand. If you want the cheap insurance anyway, `browse` + `image-deferral` is a 5-minute pair I can still run on request.
+
+## Judgement: "observe, never fire" as the polyfill default
+
+**I agree with the choice.** The reasoning that would make me push back — "a component that genuinely needs the observer to fire silently renders its empty state and nobody notices" — doesn't hold here, because the failure mode is loud, not silent: any test that expects the *visible* state (an `&lt;img&gt;` with a `/_next/image` src, a queryable `role="img"`, etc.) gets nothing in the DOM and its assertion fails outright. That's the opposite of a trap. The actual trap would be the reverse default — firing on construction — which is the one that makes deferral itself untestable and would let a regression that deleted the deferral entirely (i.e., un-fixing #230) pass every unit test silently, since "always visible" would be indistinguishable from "correctly deferred, then arrived." `listing-image.test.tsx` already demonstrates the correct escape hatch (`vi.stubGlobal` + `afterEach: vi.unstubAllGlobals()` to drive `arrive()` locally), so it's a discoverable pattern, not a one-off.
+
+One real but different edge worth watching, not a defect in this choice: the risk this default does create is a *vacuous pass*, not a silent one — a future test that walks a full rendered page asserting something generic across "every image" (e.g., "every image has valid dimensions") would see zero images for any deferred card and pass trivially, because nothing rendered, not because the property held. Neither `page.test.tsx` nor `listing-image.test.tsx` falls into this today; flagging it only as the shape of trap to watch for as broader/whole-page unit tests are added later — any such test needs to either render eagerly or drive the observer itself, same as `listing-image.test.tsx` already does.
+
+## Missing coverage — updated
+
+The gap I flagged last round (no unit coverage of the deferral itself) is closed by `listing-image.test.tsx`. Remaining, unchanged from before, still worth noting:
+- The `bg-zinc-200` contrast ratios asserted in the doc comment (1.22:1, 1.15:1) are still untested by any check — no test verifies the claim, only documents it.
+- The `&lt;noscript&gt;` fallback path (JS disabled) is still not exercised by any journey.
+
+## Environment
+
+Unchanged from the prior report and not re-litigated: `contoso-web-1`'s earlier instability was environmental, not code-related, and is not implicated in this verification since I didn't need to run journeys against it this round. `apps/web/next-env.d.ts` churn is confirmed reverted (`git status` no longer shows it; filed as #260 per the coordinator).
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/setup.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx`.</result>
+<usage><subagent_tokens>146054</subagent_tokens><tool_uses>9</tool_uses><duration_ms>231375</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a236084e9b8a3502b</task-id>
+<tool-use-id>toolu_01UuGQPVaJZgcJVoTC4D5T6N</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a236084e9b8a3502b.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/230-defer-offscreen-listing-images`
+
+Branch carries no commits (`git log main..HEAD` is empty); everything is in the working tree. Reviewed all of it, plus the surrounding code the change leans on.
+
+---
+
+## Findings
+
+### 1. The decode assertion waits a fixed 3s that the file's own measurements say is too short — **defect** (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:95`
+
+```ts
+await page.evaluate(() =&gt; window.scrollTo(0, document.body.scrollHeight))
+await page.waitForTimeout(3000)
+```
+
+The `requested.size &gt; initial` assertion only needs requests *issued*, and 3s is ample for that. The `broken === 0` check at line 114 needs them **decoded**, and the same file records (line 68) that "the slowest optimisation measured on a constrained server was 3253ms" with a median of 2343ms on two cores — and explicitly notes that a request "is issued long before it completes". The second wait reuses a number that was justified for the weaker property.
+
+Concrete failure: CI runs a fresh composed stack, so `.next/cache/images` is cold. `image-deferral.spec.ts` sorts before `image-delivery.spec.ts`, so nothing has warmed the below-fold variants. Scrolling to the bottom of a 5038px document brings the remaining deferred cards inside the 1200px margin at once — I measured 9 optimiser requests before scrolling and 20 after, so ~11 `sharp` jobs queue on two shared cores. The last row's three on-screen images are somewhere in that queue; at a 2343ms median they routinely will not have `naturalWidth &gt; 0` at 3000ms. `playwright.config.ts` sets `retries: 0`, so that is a hard red on a page that is behaving correctly — the same class of CI failure #230 exists to remove.
+
+Fix: keep the 3s wait for the request-count assertion, and poll the decode predicate instead of timing it. `await expect.poll(() =&gt; page.evaluate(...), { timeout: 15_000 }).toBe(0)` fits inside the 30s test budget (3s + 3s + 15s) and fails with the same message when deferral genuinely breaks.
+
+---
+
+### 2. The component doc comment asserts a contract that no guard holds, and names the wrong sibling surface — **refinement** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx:57` and `:61-66`
+
+Two claims in the doc block do not hold:
+
+**a. The squareness contract.** Line 61: *"`aspect-square` is a claim about the catalogue, not a guess: every source under `public/images` is 1024x1024, held there by `config/catalogue_images.json` and `tests/scripts/test_image_encoding.py`."* Neither file holds that. `catalogue_images.json` carries `maxDimension` only, and `test_image_encoding.py:196` and `:220` both test `if max(width, height) &gt; MAX_DIMENSION` — a long-edge ceiling. A 1024x600 WebP passes every guard in the repository.
+
+This matters because the change *introduces* the dependency. The old markup was `width={350} height={350}` plus `h-auto`, which took its box from the source's own ratio; the new wrapper hard-codes `aspect-square` and the image is `w-full h-auto`, so a non-square source letterboxes with a `bg-zinc-200` strip under it and nothing turns red. Measured the current state: all 853 catalogue WebPs are 1024x1024 (the single 1024x450 is the hero background, which is on the full-bleed allowlist and never reaches this component), so nothing renders wrong today. The comment is what a future maintainer would rely on when adding an image.
+
+Fix: either state it as an observation ("every source is 1024x1024 today; nothing enforces the ratio") or add the assertion to `test_image_encoding.py`, which already reads both dimensions and would need `width == height`.
+
+**b. The tone precedent.** Line 57: *"It is the same tone the category grid already uses."* The category grid at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:47` uses `bg-gray-200`, not `bg-zinc-200`. The `bg-zinc-200` precedent is `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx:29`. The contrast ratios quoted just above it are yours and measured; only the attribution is wrong.
+
+---
+
+### 3. `ROOT_MARGIN` is the tuning knob nothing measures — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx:104`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx:32`
+
+The unit test's fake observer takes only the callback:
+
+```ts
+constructor(callback: IntersectionObserverCallback) {
+  callbacks.push(callback)
+}
+```
+
+The options argument is discarded, so nothing anywhere observes that `{ rootMargin: ROOT_MARGIN }` is passed at all. Delete that second argument — or set it to `0px` — and every unit test still passes, and `image-deferral.spec.ts` gets *better*: fewer initial requests, comfortably under the bound. The user-visible result is the pop-in the 1200px value was measured against (your own note: at 1000ms optimiser latency, 14 of 20 cards grey as they enter). The one regression the constant exists to prevent is the one direction no guard can see, in a file whose sibling comment says the knobs are "tuned against pop-in rather than against this bound".
+
+Fix: capture the second constructor argument in the stub and assert `rootMargin` is `'1200px'` on the deferred-render test. One line each, and it makes the constant's value a fact rather than a comment.
+
+---
+
+## Your four questions
+
+**`eager={i &lt;= 1}`** — acceptable as written. Expressing it as a card count means threading a cumulative index across categories (`categories.slice(0, i).reduce(...)`), which is more machinery producing the same unguarded number, and the real invariant genuinely is per-category: the grid restarts at each `Block` with an `h2` and a description between, so "the first two categories" is the unit the layout actually has. What is worth knowing is that nothing fails if it becomes wrong in the *shrinking* direction — a taller hero or a fourth product per category leaves above-fold cards deferred again, and `MAX_INITIAL_REQUESTS` is an upper bound only. Not a finding; the comment already states the measurement.
+
+**`bg-zinc-200` contrast** — the reasoning is sound, not self-serving. 1.4.11 scopes to UI components and graphical objects required to understand the content; this is the transient loading state of an `alt=""` image whose card takes its accessible name entirely from the link text, so neither clause reaches it. The case where the argument stops holding is the permanent one, which is exactly what #261 is. Only the attribution in the comment is wrong (finding 2b).
+
+**Can the polyfill produce vacuous passes?** Bounded today, and I agree with `verifier`. `ListingImage` is the only `IntersectionObserver` consumer in `src/` (grepped), and `listing-image.test.tsx` stubs its own via `vi.stubGlobal`, so it never touches the polyfill. The one place the polyfill actually applies is `src/app/page.test.tsx`, which renders `await Home()` and therefore renders 14 of the 20 cards as empty boxes. Its single assertion targets `catalogue[0].products[0]`, which is eager, so it is not vacuous now. The exposure is a *future* jsdom assertion phrased over "every card's image", which would silently measure 6 of 20. That is worth one sentence in the setup comment; it is not a defect in this change.
+
+**`MAX_INITIAL_REQUESTS = 12`** — right for what this spec runs. It only measures at 1440x900, where I re-measured 9 against your 9, so there are 3 of headroom, and the regressions it must catch all land at 20 (lazy-only, observer dropped, `eager` widened to every category). Tripping it accidentally needs three more above-fold cards at desktop, which is a deliberate layout change. The 1440x2000 measurement of exactly 12 does not constrain it, because the spec never visits that viewport — if you want the bound to survive there, the honest move is a second viewport in the spec rather than a looser number.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:41-105` has the same defect #230 describes, untouched: `priority={i &lt; 3}` and everything else lazy, on a grid `browse.spec.ts:153` documents as running 18 to 47 cards. At 1440 that document is inside Chrome's ~3900px lazy threshold, so a category landing fires ~21 concurrent optimisations. The new journey's header says "The listing pages request images for cards the visitor can reach" but only guards `/`. No open issue covers it (checked; #180 is the tablet priority-cutoff row split, #169 is closed). Worth filing before this merges, so the header's scope and the guard's scope are reconciled deliberately rather than by omission.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:196,220` — nothing enforces a square aspect ratio, which two rendering surfaces now depend on (`category/[slug]/page.tsx:47` via `object-cover`, and now `listing-image.tsx:113`). The `object-cover` one crops silently; the new one letterboxes. Same root cause as finding 2a, but the guard gap itself is pre-existing.
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty, no commits on the branch.
+- Unstaged: `apps/web/src/app/page.tsx`, `apps/web/src/test/setup.ts`, `apps/web/next-env.d.ts` (skipped per #260). Staged: nothing.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`.
+- Context: root and `apps/web` `AGENTS.md`; `e2e/browse.spec.ts`, `e2e/image-delivery.spec.ts`, `src/app/page.test.tsx`, `src/app/products/category/[slug]/page.tsx`, `playwright.config.ts`, `vitest.config.ts`, `tests/scripts/test_image_encoding.py`, `config/catalogue_images.json`.
+- Against your running stack (confirmed identity, not touched, not torn down): 9 initial optimiser requests and 20 after scrolling at 1440x900; document height 5038px; **zero console errors or warnings**, so React's `shouldSetTextContent` handling of `&lt;noscript&gt;` produces no hydration mismatch — the SSR HTML carries 20 `&lt;img&gt;` (6 eager + 14 inert in `noscript`) and the live DOM 9; first card measures a 350x350 box with a 350x350 image, `border-radius: 24px`, `overflow: hidden`, zero gap. Catalogue dimensions read with `.venv/bin/python`: 853 files at 1024x1024, one at 1024x450 (hero background).
+- Not assessed: the 2x-density and phone/tablet measurements, the mutation demonstrations, and the red phase — taken as reported per your instruction not to redo verification. `next-env.d.ts` is generated; excluded per #260.
+
+Two of the three findings are refinements. The one defect is finding 1, and it is confined to the new journey spec — no product code changes, so a fix for it does not reopen step 6.</result>
+<usage><subagent_tokens>77722</subagent_tokens><tool_uses>29</tool_uses><duration_ms>479627</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bamnf1u0w</task-id>
+<tool-use-id>toolu_017cY4K4tyneDTW1MgEraDtF</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bamnf1u0w.output</output-file>
+<status>completed</status>
+<summary>Background command "Verify stack and run web merge gate" completed (exit code 0)</summary>
+</task-notification>

@@ -1,0 +1,205 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ebee29931be9",
+  "session_id": "6981b884-fc97-4527-9bb8-dfe067a590b0",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-15T03:08:52.777551987Z",
+  "branch": "fix/230-defer-offscreen-listing-images",
+  "checkpoints_count": 17,
+  "save_step_count": 14,
+  "files_touched": [
+    "apps/web/e2e/image-deferral.spec.ts",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/components/listing-image.test.tsx",
+    "apps/web/src/components/listing-image.tsx",
+    "apps/web/src/test/setup.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5[1m]",
+  "turn_id": "f80f4b06bec3",
+  "checkpoint_transcript_start": 596,
+  "transcript_lines_at_start": 596,
+  "compact_transcript_start": 105,
+  "token_usage": {
+    "input_tokens": 362,
+    "cache_creation_tokens": 436346,
+    "cache_read_tokens": 50807913,
+    "output_tokens": 127599,
+    "api_call_count": 181,
+    "subagent_tokens": {
+      "input_tokens": 330,
+      "cache_creation_tokens": 683677,
+      "cache_read_tokens": 10853644,
+      "output_tokens": 146341,
+      "api_call_count": 165
+    }
+  },
+  "session_metrics": {
+    "turn_count": 23
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-15T03:08:51.876700771Z",
+    "agent_lines": 449,
+    "agent_removed": 7,
+    "human_added": 14,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 470,
+    "total_lines_changed": 477,
+    "agent_percentage": 95.59748427672956,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 11,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "apps/web/next-env.d.ts": 1,
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 222,
+      "agent_lines_removed": 4,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 222,
+      "agent_lines_removed": 4,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 222,
+      "agent_lines_removed": 4,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 222,
+      "agent_lines_removed": 4,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 252,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 9,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 262,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 10,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 263,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 11,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 410,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 12,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 410,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 13,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 410,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 14,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 457,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    },
+    {
+      "checkpoint_number": 15,
+      "user_lines_added": 10,
+      "user_lines_removed": 0,
+      "agent_lines_added": 456,
+      "agent_lines_removed": 7,
+      "user_added_per_file": {
+        "docker-compose.override.yml": 10
+      }
+    }
+  ]
+}

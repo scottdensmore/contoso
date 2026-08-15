@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ebee29931be9",
+  "strategy": "manual-commit",
+  "branch": "fix/230-defer-offscreen-listing-images",
+  "checkpoints_count": 17,
+  "files_touched": [
+    "apps/web/e2e/image-deferral.spec.ts",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/components/listing-image.test.tsx",
+    "apps/web/src/components/listing-image.tsx",
+    "apps/web/src/test/setup.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/eb/ee29931be9/0/metadata.json",
+      "transcript": "/eb/ee29931be9/0/full.jsonl",
+      "compact_transcript": "/eb/ee29931be9/0/transcript.jsonl",
+      "content_hash": "/eb/ee29931be9/0/content_hash.txt",
+      "prompt": "/eb/ee29931be9/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 362,
+    "cache_creation_tokens": 436346,
+    "cache_read_tokens": 50807913,
+    "output_tokens": 127599,
+    "api_call_count": 181,
+    "subagent_tokens": {
+      "input_tokens": 330,
+      "cache_creation_tokens": 683677,
+      "cache_read_tokens": 10853644,
+      "output_tokens": 146341,
+      "api_call_count": 165
+    }
+  }
+}
