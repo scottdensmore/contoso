@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "694224f77a2e",
+  "strategy": "manual-commit",
+  "branch": "chore/move-published-ports-off-defaults",
+  "checkpoints_count": 10,
+  "files_touched": [
+    ".env.example",
+    ".github/workflows/ci.yml",
+    ".vscode/launch.json",
+    "AGENTS.md",
+    "Makefile",
+    "README.md",
+    "apps/web/package.json",
+    "apps/web/playwright.config.ts",
+    "docker-compose.yml",
+    "docs/INTEGRATION.md",
+    "scripts/agent_doctor.py",
+    "scripts/e2e_smoke.py",
+    "services/chat/.env.example",
+    "services/chat/AGENTS.md",
+    "services/chat/Makefile",
+    "services/chat/README.md",
+    "services/chat/src/api/main.py",
+    "tests/scripts/AGENTS.md",
+    "tests/scripts/test_agent_doctor.py",
+    "tests/scripts/test_published_ports.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/69/4224f77a2e/0/metadata.json",
+      "transcript": "/69/4224f77a2e/0/full.jsonl",
+      "compact_transcript": "/69/4224f77a2e/0/transcript.jsonl",
+      "content_hash": "/69/4224f77a2e/0/content_hash.txt",
+      "prompt": "/69/4224f77a2e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 748,
+    "cache_creation_tokens": 754744,
+    "cache_read_tokens": 108643269,
+    "output_tokens": 275155,
+    "api_call_count": 374,
+    "subagent_tokens": {
+      "input_tokens": 300,
+      "cache_creation_tokens": 1314221,
+      "cache_read_tokens": 13872017,
+      "output_tokens": 148124,
+      "api_call_count": 150
+    }
+  }
+}
