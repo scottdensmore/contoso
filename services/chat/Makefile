@@ -78,8 +78,8 @@ diagnose-chat-local: ## Print local-provider diagnostics (checks + health endpoi
 	@echo ""
 	@echo "-- /health/dependencies snapshot --"
 	@if command -v curl >/dev/null 2>&1; then \
-		curl --silent --show-error --max-time 8 "http://127.0.0.1:8000/health/dependencies" || \
-		echo "Chat service not reachable at http://127.0.0.1:8000"; \
+		curl --silent --show-error --max-time 8 "http://127.0.0.1:8100/health/dependencies" || \
+		echo "Chat service not reachable at http://127.0.0.1:8100 (the composed stack). A locally run \`make dev\` serves 8000 instead."; \
 	else \
 		echo "curl not found; skipping endpoint snapshot."; \
 	fi

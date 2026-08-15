@@ -191,8 +191,8 @@ Follow these steps in order for every change.
    the last step that needs it, not after this one.
 
    Say the ports if they are not the defaults. `make test-e2e` follows
-   `E2E_BASE_URL` anywhere; `make e2e-smoke` probes `127.0.0.1:3000` and
-   `:8000` literally and cannot be aimed elsewhere, so it and a remapped stack
+   `E2E_BASE_URL` anywhere; `make e2e-smoke` probes `127.0.0.1:3100` and
+   `:8100` literally and cannot be aimed elsewhere, so it and a remapped stack
    do not mix. One of the ways they fail is a green smoke run against an
    unrelated project's containers, which is worse than a failure because
    nothing looks wrong. Exactly which way you get depends on which compose
@@ -254,7 +254,7 @@ Follow these steps in order for every change.
       `docker compose down --volumes` to drop the seeded database with it. Step
       7 hands its stack forward under `KEEP_STACK=1`, which disables the only
       teardown the workflow otherwise performs — so without this the containers
-      outlive the change and hold ports 3000, 5432, and 8000 against the next
+      outlive the change and hold ports 3100, 55432, and 8100 against the next
       one.
     - Push and create the pull request only after local verification and any
       required code review are complete.

@@ -64,11 +64,25 @@ This runs the Web App, AI Chat Service, and Database in containers. The default 
     ```bash
     docker-compose up
     ```
-    - Web App: [http://localhost:3000](http://localhost:3000)
-    - Chat Service: [http://localhost:8000](http://localhost:8000)
+    - Web App: [http://localhost:3100](http://localhost:3100)
+    - Chat Service: [http://localhost:8100](http://localhost:8100)
 
 ### Option 2: Local Development (Hybrid)
 **Best for:** developing the Next.js application with hot-reloading.
+
+> **Updating existing env files.** The published host ports moved off the
+> contended defaults — web `3100`, chat `8100`, database `55432`. Neither
+> `.env` nor `services/chat/.env` is tracked, so older ones still name `3000`,
+> `8000` and `5432`, and every one of those fails by *reaching something else*
+> rather than by erroring: `CHAT_ENDPOINT` posts your `CHAT_API_KEY` to
+> whatever now owns the old port, and the chat service's `DATABASE_URL` runs
+> raw SQL against whatever owns `5432`.
+>
+> Re-copy both from their `.env.example`, or update `NEXTAUTH_URL`,
+> `CHAT_ENDPOINT`, `DATABASE_URL` and `ALLOWED_ORIGINS` by hand.
+> `make agent-doctor` names every drifted key, and `make bootstrap` runs it —
+> worth one of the two if you set this up before the ports moved.
+
 
 1.  **Start Database & Chat Service:**
     ```bash
@@ -97,6 +111,12 @@ This runs the Web App, AI Chat Service, and Database in containers. The default 
     ```bash
     npm run dev:web
     ```
+    - Web App: [http://localhost:3100](http://localhost:3100)
+
+    The dev server uses the same 3100 the composed `web` service publishes, so
+    `NEXTAUTH_URL` in `.env` is correct for both options. Running this *and*
+    the full `docker-compose up` at once is the one case where they collide —
+    Option 2 expects only `db` and `chat` in Docker.
 
 For a fresh Docker DB volume (schema + seed + chat reindex) use:
 

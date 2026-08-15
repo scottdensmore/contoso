@@ -81,7 +81,7 @@ Most common local values:
 
 - `LLM_PROVIDER=local`
 - `OLLAMA_BASE_URL=http://localhost:11434`
-- `ALLOWED_ORIGINS=http://localhost:3000`
+- `ALLOWED_ORIGINS=http://localhost:3100`
 
 ## Database access
 

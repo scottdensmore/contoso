@@ -1,8 +1,24 @@
+# Published host ports are deliberately off the defaults: 3100, 8100 and 55432
+# rather than 3000, 8000 and 5432. Those three are the most contended ports a
+# developer machine has -- every other Next app wants 3000, every other Python
+# service 8000, every other Postgres 5432.
+#
+# This is not a tidiness preference. A collision on `db` is silent and
+# destructive rather than loud: contoso's own container cannot bind, so it
+# never starts, and every host-side Prisma command then resolves
+# `localhost:5432` to the *other* project's server. Measured on a developer
+# machine, a single `make migrate-deploy` created a full contoso schema inside
+# an unrelated project's Postgres, and `make docker-init-fresh` would have
+# seeded data into it. See #245.
+#
+# The left-hand number is the host's and is the only one that moved. Container
+# ports stay at the defaults, so `CHAT_ENDPOINT=http://chat:8000` and the
+# `db:5432` URLs below are unaffected -- they never leave the compose network.
 services:
   web:
     build: .
     ports:
-      - "3000:3000"
+      - "3100:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -12,7 +28,21 @@ services:
       # a bare `docker compose up` have no secret, and every sign-in fails at
       # /api/auth/error rather than rejecting a credential.
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-local-development-only-not-a-real-secret}
-      - NEXTAUTH_URL=http://localhost:3000
+      # Follows the published host port, not the container's, because NextAuth
+      # builds absolute redirect URLs from it. `signOut()` in the header
+      # assigns `window.location.href` to a URL the server derives from this
+      # value, and the default redirect callback returns `baseUrl` whenever the
+      # requested origin does not match — origin includes the port. Leave this
+      # at 3000 while the stack answers on 3100 and signing out lands the user
+      # on a dead port, or on whatever else holds 3000.
+      #
+      # Not sign-in: `login/page.tsx` calls `signIn(..., { redirect: false })`
+      # and navigates itself, so that path never reads this. And not a cookie
+      # problem: cookies are not isolated by port (RFC 6265 section 8.5), so a
+      # mismatch cannot strip the session. `.claude/agents/verifier.md` records
+      # the measurement — a remapped stack still signs in and runs the
+      # journeys, which is exactly why sign-out is the flow to name here.
+      - NEXTAUTH_URL=http://localhost:3100
       - CHAT_ENDPOINT=http://chat:8000/api/create_response
       - CHAT_API_KEY=${CHAT_API_KEY:-dummy}
   db:
@@ -37,7 +67,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: contoso-db
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
   chat:
@@ -50,7 +80,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "8100:8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/contoso-db
       - PROJECT_ID=${PROJECT_ID}

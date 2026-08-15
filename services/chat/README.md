@@ -42,9 +42,17 @@ make local-provider-check # preflight for LLM_PROVIDER=local
 make diagnose-chat-local # full local diagnostics from repo root
 ```
 
-Service endpoint: `http://localhost:8000`
+Service endpoint: `http://localhost:8100`
 
 ### Option 2: Run directly with Python
+
+> **If you set this up before the published ports moved:** `services/chat/.env`
+> is not tracked, so an older one still points `DATABASE_URL` at `5432` and
+> `ALLOWED_ORIGINS` at `3000`. The service runs hand-written asyncpg queries,
+> so a stale port runs them against whatever else owns it rather than failing.
+> Re-copy from `.env.example`, or run `make agent-doctor` from the repository
+> root to see which keys drifted.
+
 
 1. Install pinned tool versions (from repository root):
 

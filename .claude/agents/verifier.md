@@ -58,7 +58,7 @@ Run them in that order, smoke then journeys, and pass `KEEP_STACK=1`. The smoke 
 
 `KEEP_STACK=1` is what makes a handover survive. Without it an `EXIT` trap runs `docker compose down --volumes`, taking the caller's stack and its seeded database with it — ordering does not save it, because the trap fires either way.
 
-Ports are where the two commands differ. `make test-e2e` goes wherever `E2E_BASE_URL` points, so a remapped stack is fine for it — measured, a stack on 3100 carrying the compose default `NEXTAUTH_URL` signs in and runs the profile journeys. `make e2e-smoke` cannot be aimed anywhere: it probes `http://127.0.0.1:3000` and `http://127.0.0.1:8000` literally.
+Ports are where the two commands differ. `make test-e2e` goes wherever `E2E_BASE_URL` points, so a remapped stack is fine for it — measured, a stack remapped off the published port while `NEXTAUTH_URL` still names the compose default signs in and runs the profile journeys. `make e2e-smoke` cannot be aimed anywhere: it probes `http://127.0.0.1:3100` and `http://127.0.0.1:8100` literally.
 
 So on a remapped handover, run the journeys against the URL you were given and report that the smoke was not run and why. Do not run it anyway. What it would do to the stack you were handed depends on which compose files resolve and which ports are already held, and the outcomes range from dropping the remapping under you to probing an unrelated project's containers and coming back green — so the one thing you cannot do is trust its verdict.
 
@@ -74,7 +74,7 @@ Report each of these explicitly. Say "none" where that is the truth.
 
 **Missing coverage.** Behaviour the change introduces or alters that no test exercises. Be specific about which behaviour, not "needs more tests". Pay attention to gaps this suite is structurally blind to: rendered appearance, container file layout, and anything only reachable through a route with dynamic segments.
 
-**Environment issues.** Missing tools, absent browsers, unset variables, ports already bound, Docker problems. Two known local constraints: host ports 5432 and 3000 may be occupied by unrelated projects, and `LLM_PROVIDER=local` in a local `.env` requires an Ollama that may not be installed — CI runs without `.env`, so compose falls back to `gcp`. Report a collision rather than stopping anyone else's containers.
+**Environment issues.** Missing tools, absent browsers, unset variables, ports already bound, Docker problems. Two known local constraints: host ports 3100, 8100 and 55432 may be occupied by unrelated projects, and `LLM_PROVIDER=local` in a local `.env` requires an Ollama that may not be installed — CI runs without `.env`, so compose falls back to `gcp`. Report a collision rather than stopping anyone else's containers.
 
 ## Output
 

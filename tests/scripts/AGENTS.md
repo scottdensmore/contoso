@@ -35,6 +35,15 @@ constant the demonstrated assertion reaches:
   and `REPO_ROOT`, which it walks for references.
 - `test_page_headings.py` reads `REPO_ROOT` directly for component-supplied headings,
   so rebinding `APP_DIR` alone leaves that assertion pointed at the checkout.
+- `test_published_ports.py` needs both `REPO_ROOT`, which `read()` resolves every
+  coupled file through, and `COMPOSE`, which the port parser opens directly.
+  Rebinding one leaves half the comparison pointed at the checkout, and the halves
+  agreeing is the whole assertion.
+- `test_agent_doctor.py` loads `scripts/agent_doctor.py` as a module, so the
+  constants to rebind are that module's `COMPOSE_FILE`, `ROOT_ENV` and `CHAT_ENV` —
+  not this file's `REPO_ROOT`, which only locates the script to load. Its
+  `stale_port_keys` tests take their inputs as arguments and reach no path at all,
+  which is the reason they are shaped that way.
 
 Confirm the run opened the fixture with a failure that names a fixture path or a
 vacuity guard whose count matches what the fixture contains. The count is the
