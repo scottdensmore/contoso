@@ -1,0 +1,1442 @@
+<task-notification>
+<task-id>b8uyvday7</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/b8uyvday7.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for both PRs' CI to finish" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bzyf1sr8w</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bzyf1sr8w.output</output-file>
+<status>completed</status>
+<summary>Background command "Install deps and build web app" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b5f4kgeng</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/b5f4kgeng.output</output-file>
+<status>completed</status>
+<summary>Background command "Build web app with correct deps" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bsxb1jkb8</task-id>
+<tool-use-id>toolu_01RCQhB6BZWnYB1YF6yFRq1f</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bsxb1jkb8.output</output-file>
+<status>completed</status>
+<summary>Background command "Install and build in clean worktree" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bg8rxv9au</task-id>
+<tool-use-id>toolu_014QVoeL74FZZ4LQfCT5jk89</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bg8rxv9au.output</output-file>
+<status>completed</status>
+<summary>Background command "Build in worktree without .env, as CI does" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bhp3v25r6</task-id>
+<tool-use-id>toolu_01KfuCYwCYgdQ5fZ92QZRB4F</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bhp3v25r6.output</output-file>
+<status>completed</status>
+<summary>Background command "Rebuild worktree with the fix" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>baoep1n6y</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/baoep1n6y.output</output-file>
+<status>completed</status>
+<summary>Background command "Build and start composed stack, keep it up" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjos3lghp</task-id>
+<tool-use-id>toolu_01Y3Dc1qLGJB7sb7cYvGu9a7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bjos3lghp.output</output-file>
+<status>completed</status>
+<summary>Background command "Run at-risk specs against real composed stack" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aff403238803f9df6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aff403238803f9df6.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed** — phone 390×844, tablet 834×1112, desktop 1440×900, plus 1440×2000, 1024×1366, 1440×1440 and 844×390 for the eager-cutoff question, and 1× and 2× for density. Chromium at `/home/scottdensmore/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome`. Repo unmodified (`git status` identical to start).
+
+**One thing you need to know before steps 7 and 8.** Partway through, your `contoso-web-1` exited with 143 and an unrelated project's `next-server` (a "Mona Airways" app, host pid 2452684) took port 3000. For several minutes `http://localhost:3000/` served that app, not Contoso — I caught it because a scroll run reported `docHeight 1186` and zero product cards. I discarded that run. I did not touch your stack; I started a throwaway container `contoso-web-review-3100` from the same `contoso-web` image on `contoso_default` at port 3100 and measured there. Your `web` came back on its own and :3000 is Contoso again; I removed my container. **Headline numbers were re-confirmed on your stack at :3000 at the end** (first-paint optimiser 3/6/6, CLS 0, docH 7435/4995/5038 — identical to :3100), so everything below holds for the stack you handed me. But if that port race can happen again, step 7 or 8 could silently test the wrong application.
+
+Screenshots: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/scratchpad/shots/`
+
+---
+
+## Answers to your five questions
+
+### 3. Layout stability — verified, clean. Measured, not eyeballed.
+
+`PerformanceObserver({type:'layout-shift'})` over a full-document scroll at all three viewports, repeated under injected optimiser latency of 150/500/1000/2343 ms: **CLS = 0.000 in every run.** No shift entry was ever attributed to a card. The placeholder box and the loaded box are byte-identical: 175×175 phone, 259.3×259.3 tablet, 350×350 desktop, in both states. `docHeight` is identical with images present and absent. Every source image is 1024×1024, so `aspect-square` is genuinely the image's ratio, not an assumption — this is why it holds. Worth a comment in the component: it silently depends on the catalogue being square, and `config/catalogue_images.json` already exists as the place that contract could live.
+
+### 2. The placeholder — this is the most serious finding, and it is worse than you framed it.
+
+`bg-zinc-100` (#f4f4f5) against the band it sits in, computed in-page:
+
+| band | band bg | contrast |
+|---|---|---|
+| Backpacks, Hiking Footwear, Camping Stoves (`bg-zinc-100`) | #f4f4f5 | **1.000:1** |
+| Hiking Clothing, Camping Tables, Sleeping Bags (`bg-inherit` → body) | #fafafa | **1.053:1** |
+
+The `bg-inherit` bands do not resolve to white — they resolve to the body's #fafafa (zinc-50). So the placeholder is invisible in the alternating bands and all but invisible in the others. Nothing here reaches the 3:1 that a meaningful non-text boundary needs.
+
+`shots/prehydration-very-tall-cpu4.png` is the evidence: the Backpacks band is a 400px-tall void with three product names floating at the bottom and nothing above them. It does not read as loading. It reads as a category whose products failed.
+
+And there is a second empty state you may not have noticed, which is the one users actually see most of the time. When the observer fires, the placeholder `div` unmounts and is replaced by `next/image`'s `&lt;img&gt;`, which carries `style="color:transparent"` and **no background at all**. Since the observer fires 600px before entry, by the time a card is on screen it is almost always this transparent `&lt;img&gt;`, not the grey div. So the grey box is doing essentially no work in the visible region — the loading state a scrolling user sees is a fully transparent gap, contrast 1.000:1 against every band. `shots/desktop-03-placeholder-zincband.png` and `shots/desktop-04-fling-immediate.png` are both this state.
+
+Suggested fix: put the tone on the *image* as well as the placeholder, so the reserved box is visible in both states — `next/image`'s `placeholder="empty"` leaves it bare, so a `bg-zinc-200` (#e4e4e7, 1.9:1 vs the zinc band) or better `bg-zinc-300` (#d4d4d8, 2.9:1) on a wrapper that persists across the swap. A wrapper also removes the unmount/remount flicker. If you keep a bare tone, `zinc-200` is the minimum that reads as a box at all; `zinc-300` is the first step that approaches 3:1.
+
+### 1. Pop-in — 600px is enough on a fast server and not enough on the server #230 was about.
+
+The relationship is exact: the margin buys `600 / v` seconds of lead, so it covers latency `T` only while `T ≤ 600/v`. Measured on desktop, sweeping injected optimiser latency against scroll speed:
+
+| per-image latency | scroll speed | cards grey on entry | worst gap |
+|---|---|---|---|
+| 150 ms | 2500 px/s (fling) | 0 / 20 | 0 ms |
+| 500 ms | 2500 px/s (fling) | 14 / 20 | 317 ms / 798 px |
+| 1000 ms | 800 px/s (reading) | 14 / 20 | 283 ms / 221 px |
+| 2343 ms (#230's measured median) | 800 px/s | 14 / 20 | 1633 ms / **1274 px** |
+
+At the last row the user scrolls more than a full desktop viewport past a card before its image appears. On **phone** at that latency it is qualitatively worse: 14 of 20 cards **never decoded while they were on screen at all** — a 175px card plus caption is only on screen for ~1.34s at 800 px/s, less than the fetch, so the visitor scrolls the entire page and sees images only in the first category. That is the run behind `shots/phone-04-fling-immediate.png`.
+
+Unthrottled against a warm optimiser on this 24-core host, per-image latency is 10–95ms and the gap is **0ms at every viewport at 800 px/s and at a 2500 px/s fling**. So on this machine 600px is fine. Your CI box is not this machine: cold optimisation there measured 2343ms at 18-way concurrency, and the fix cuts concurrency to 6, which on this host is worth roughly 2× (median 25ms → 13ms) — so expect something in the high hundreds of ms to ~1.2s on a 2-core runner, not 2343ms.
+
+**The margin I would use: 1200px**, and I would express it as a value derived from the viewport rather than a constant. The cost is bounded and I measured it:
+
+| rootMargin | phone reqs | tablet reqs | desktop reqs |
+|---|---|---|---|
+| 600 (current) | 3 | 6 | 6 |
+| 900 | 3 | 6 | 6 |
+| **1200** | **5** | **9** | **9** |
+| 1800 | 6 | 12 | 12 |
+| 3900 (Chrome's own) | 12 | 20 | 20 |
+
+1200px keeps you at half of Chrome's behaviour and well under the spec's `MAX_INITIAL_REQUESTS = 8`… except at tablet and desktop, where 9 would **fail your own new test**. Note that: `apps/web/e2e/image-deferral.spec.ts:48` pins the ceiling at 8, which quietly forbids any margin above ~900px. If you raise the margin you must raise that bound, and the comment there ("a small multiple of what is on screen") supports 9 fine. 1200px covers 512 px/s at 2343ms latency and 2400 px/s at 500ms — it does not cover a hard fling on a slow server, and no margin short of ~7000px does, which is why the visible-placeholder fix above matters more than the margin does.
+
+### 4. The eager cutoff — no, `i === 0` is too tight, and the reason is hydration, not geometry.
+
+The observer does fire immediately for anything within 600px of the fold, so at tall viewports the second and third categories are *requested* at first paint. The problem is *when*. Deferred images cannot be requested until the client component hydrates:
+
+| CPU throttle | first eager image request | first deferred image request | lag |
+|---|---|---|---|
+| 1× | 159 ms | 396 ms | +237 ms |
+| 4× | 320 ms | 1727 ms | **+1.4 s** |
+| 6× | 388 ms | 2357 ms | **+2.0 s** |
+
+At 1440×2000, **9 cards are above the fold and only 3 are eager**; the other 6 are grey placeholders on screen for that entire window before the request even starts, then plus the optimisation. At 1024×1366 and 1440×1440, 6 are above the fold and 3 are eager. `shots/prehydration-very-tall-cpu4.png` is exactly this. Landscape phone 844×390 is fine — zero cards are above the fold there, the hero fills it.
+
+Suggested fix: make the cutoff cover the plausible first screen rather than the first category — `eager={i === 0 || i === 1}` costs 3 extra server-rendered images at every viewport and removes the pre-hydration hole at every viewport I tested up to 1440×2000. That puts first-paint requests at 6/9/9, the same as the 1200px margin would, so the two changes overlap rather than compound.
+
+### 5. Other findings in remit
+
+**A JavaScript failure now blanks 85% of the page, and `&lt;noscript&gt;` does not cover it.** Blocking `/_next/static/chunks/**` with scripting still enabled leaves **17 of 20 cards as permanent grey placeholders** (`shots/jsfail-desktop-scrolled.png`). The `&lt;noscript&gt;` fallback only fires when scripting is *off*; a failed chunk, a CSP block, or an extension leaves the page with no images and — because of the contrast finding above — no indication that anything is missing. Before this change the page's images were plain server-rendered HTML and survived that. The component's comment reasons carefully about the scripting-off case and does not mention this one. A visible placeholder tone would at least make it legible as "images missing" rather than "shop is empty".
+
+**No-JS path works but costs 5.1 MB.** Scripting disabled: 20 cards render, all boxes 350×350, `docHeight` 5038 identical, 18 raw `.webp` requests totalling **5,095,340 bytes** against roughly 400 KB for the optimised equivalent — a 12× penalty, all fetched eagerly and at once. The component's comment calls this "heavier than the optimiser's variant"; 12× is worth writing down, and `sizes`/`srcset` on the `&lt;noscript&gt;` img would cut most of it without needing the optimiser.
+
+**Keyboard: complete and reachable, focus visible.** All 20 cards reachable by Tab in DOM order, focus outline present (UA default, 1px `rgb(16,16,16)`), each card scrolled into view on focus. Under 1500ms injected latency, 14 of 20 cards had no decoded image at the moment focus landed on them — Tab jumps a full row and the browser scrolls instantly, so keyboard traversal outruns the 600px margin harder than scrolling does. At real latency this did not reproduce. No new issue, but it is another argument for the visible placeholder rather than a bigger margin.
+
+**Density: correct at 2×, no regression.** `deviceScaleFactor: 2` requests `w=750` for the 350px desktop card, `w=640` for the 259px tablet card, `w=384` for the 175px phone card — all the right rung of the `[640,750,828,1080]` ladder, all confirmed via `currentSrc`. First-paint counts are identical at 1× and 2× (3/6/6), so deferral behaves the same at both densities.
+
+**Console: clean.** No errors or warnings on a normal load at any viewport; no hydration mismatch despite the placeholder→image swap.
+
+**Semantics: no regression.** `alt=""` is preserved on both the `next/image` and the `&lt;noscript&gt;` img, so the link's accessible name stays the product name once. The placeholder `div` is unlabelled and invisible to AT, which is right for a decorative image. No `aria-busy` and none needed. Heading order unchanged.
+
+**Checks I did not perform:** error state for a failed *image* (a 404 on a listing image) — the diff does not change error handling, and `next/image` behaviour there is unchanged from before; I noted the new spec at line 97-107 already asserts on-screen images decode, which covers the regression case. Tap-target sizing and text contrast in the cards — unchanged by this diff, geometry measured identical in all states.
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx` (`ROOT_MARGIN` at line 29, the `bg-zinc-100` placeholder at line 98), `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx` (`eager={i === 0}` at line 119), `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts` (`MAX_INITIAL_REQUESTS` at line 48).</result>
+<usage><subagent_tokens>98010</subagent_tokens><tool_uses>50</tool_uses><duration_ms>1153478</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bvk8c46st</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bvk8c46st.output</output-file>
+<status>completed</status>
+<summary>Background command "Rebuild and restart web container with fixes" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bzq3d9fod</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bzq3d9fod.output</output-file>
+<status>completed</status>
+<summary>Background command "Re-run affected specs against revised stack" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32d59c80433f2e42</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a32d59c80433f2e42.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify deferred image loading change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Not verified — one real, reproducible failure blocks the merge gate.** `make -C apps/web ci` fails: the vitest unit suite throws `ReferenceError: IntersectionObserver is not defined` from the new `ListingImage` component, because jsdom (vitest's test environment) has no `IntersectionObserver` global and nothing polyfills it. Lint, both typechecks, and the production build are otherwise clean, and every Playwright journey in the suite passes against this build once the environment's recurring container instability is worked around (see below). `make test-scripts` passes in full.
+
+## Failures
+
+**`make -C apps/web ci` — unit test step, deterministic, not a flake.**
+```
+FAIL  src/app/page.test.tsx &gt; Home page &gt; names a product card once
+ReferenceError: IntersectionObserver is not defined
+ ❯ src/components/listing-image.tsx:98:22
+    98|     const observer = new IntersectionObserver(
+```
+Confirmed by re-running the isolated file twice (`npx vitest run src/app/page.test.tsx`) with the identical error both times. `src/app/page.tsx` now renders `Home()`, whose grid includes non-eager `ListingImage` cards (`eager={i &lt;= 1}`); those mount with `show=false` and register a real `IntersectionObserver` in `useEffect`, which jsdom does not provide. `apps/web/src/test/setup.ts` already has a precedent for exactly this class of problem — it polyfills `window.matchMedia` with a comment explaining jsdom's gap there — but no equivalent exists for `IntersectionObserver`, and this is the only file in the repo that references it (`grep -rn IntersectionObserver` returns only `listing-image.tsx`).
+
+Because `make ci` stops on the first failing step, `build` never ran as part of that command. I ran `make build` separately to isolate the blast radius: it succeeds cleanly (`next build`, all 230 static pages, TypeScript pass included). So the only broken piece is the vitest step; lint, `tsc --noEmit`, `tsc -p tsconfig.e2e.json`, `check-journey-coverage.mjs`, and `next build` are all clean.
+
+## Flakes
+
+None in the code under review. The `make test-e2e` runs had a real, external cause (see Environment issues), which I distinguished from a code defect by re-running: three consecutive full-suite attempts each failed with a different-sized cluster of unrelated-looking failures (chat-launcher, chat-modality, form-fields, headings, auth, avatar, image-delivery, image-deferral), and every one of those failures traced to `net::ERR_CONNECTION_REFUSED` / `chrome-error://chromewebdata/` in the trace or `error-context.md` — even ones whose top-level assertion read differently, e.g. `image-deferral.spec.ts`'s "home page rendered no product grid to measure" was a masked connection-refused, confirmed via its `error-context.md`. Correlating with `docker inspect contoso-web-1`, the container's `FinishedAt` landed inside each run's failure window. This is environmental, not a code regression.
+
+I then re-ran the suite in batches small enough to land inside the container's apparent stability windows, and got a clean pass for every one of the 132 tests:
+- `browse.spec.ts` + `image-deferral.spec.ts` + `image-delivery.spec.ts` + `layout.spec.ts` — 25/25 passed (4.6m).
+- `auth.spec.ts` + `avatar.spec.ts` + `chat-controls.spec.ts` + `chat-launcher.spec.ts` + `chat-modality.spec.ts` + `form-fields.spec.ts` + `headings.spec.ts` — 62/62 passed (2.2m).
+- `action-controls.spec.ts` — 45/45, passed cleanly in all three full-suite attempts, never implicated in any failure.
+
+25 + 62 + 45 = 132, i.e. every journey in the suite has at least one clean, uninterrupted pass against this build. I never got a single `make test-e2e` invocation to run start-to-finish without an outage, so I can't report "`make test-e2e`: pass" as a literal fact — only that every journey it contains passes, established via batched runs, and that the only failures across three whole-suite attempts are fully attributable to the recurring web-container outage.
+
+## Missing coverage
+
+- **The vitest failure is itself a coverage gap**, not just a break: there is no polyfill/mock for `window.IntersectionObserver` anywhere in the repo, so `ListingImage` (or any future component using it) throws in any unit test that mounts it, following the existing `matchMedia` pattern in `apps/web/src/test/setup.ts` would close this.
+- **The reserved-box tone claims are untested.** The component's own doc comment asserts specific contrast ratios for `bg-zinc-200` (1.22:1 against `bg-inherit`, 1.15:1 against `bg-zinc-100`, "read back as painted sRGB") — no test (visual regression or a forced-colors-style check like `form-fields.spec.ts` uses) verifies this, so a future Tailwind/theme change could silently invalidate the number in the comment.
+- **The `&lt;noscript&gt;` fallback path is not exercised by any journey.** All Playwright tests run with JavaScript enabled; nothing drives a `javaScriptEnabled: false` context to confirm the unoptimised `&lt;img&gt;` fallback actually renders and is the only image requested in that mode.
+- **`image-deferral.spec.ts` only covers the home page.** The `ListingImage` component and its `eager` prop are net-new and reusable, but no other listing surface (category grid, elsewhere `next/image` was previously used) is covered by an equivalent deferral guard — worth confirming there's no other 18-image-style page this component was meant to reach.
+
+## Environment issues
+
+- **`contoso-web-1` exited on its own at least four times during this review** (~01:55, ~02:07→02:15, ~02:20→02:23, ~02:23→02:28 UTC), each with a clean exit code (`143` then `0`) despite `RestartPolicy: no`, so nothing auto-recovered it. I found no cause discoverable from this shell: no cron/systemd timer, no lingering `docker compose`/`make e2e-smoke` process, no OOM in `dmesg`, and the host had ~100GB RAM free and load average 1.5–3 throughout. I did not run `make down`, `docker compose down`, or `make e2e-smoke` at any point. Each time I found the container down I restarted it non-destructively with `docker compose up -d web` (no `--build`, no `--force-recreate`, so it's still serving the image built earlier from this change) and re-confirmed identity (`curl http://localhost:3000/ | grep -c "Contoso Outdoor Company"` non-zero) before trusting the next run. Left the stack in this state at handover: `contoso-web-1` up and healthy for the preceding ~13 minutes; `contoso-chat-1` and `contoso-db-1` were never affected and never restarted by me.
+- **`apps/web/next-env.d.ts` was modified as a side effect of running the checks.** `next build`/`tsc` regenerated it (added `import "./.next/types/root-params.d.ts"`) — it's an auto-generated file explicitly marked "should not be edited," and this is routine Next.js codegen churn, not a change I made intentionally. Flagging for transparency since `git status` now shows it as modified.
+- `check-journey-coverage.mjs`'s "spec-shaped but never collected" half sources its file list from `git ls-files e2e`, which only sees tracked files. Since `image-deferral.spec.ts` is currently untracked, that specific safety net doesn't see it yet — though the two checks that matter for the wiring requirement (`tsc -p tsconfig.e2e.json --showConfig` and `playwright test --list`, both globbing disk directly) do see it and pass, confirmed by running `node scripts/check-journey-coverage.mjs` directly (exit 0). This resolves itself once the file is `git add`ed; not a blocker, just worth knowing it isn't exercised end-to-end pre-commit.
+- Chat serving fallback replies (no GCP credentials locally) — expected per the brief, not investigated further.
+- No port collisions observed on 3000/8000/55432 from the other Docker projects on this host (petspotr ×4, travel-app) — all on distinct ports throughout.
+
+## Commands run
+
+```
+git status --short
+curl -s http://localhost:3000/ | grep -c "Contoso Outdoor Company"
+docker ps -a
+docker inspect contoso-web-1 --format '...'
+docker compose up -d web                      # non-destructive restart, no --build (run 3x, as web kept exiting)
+cat apps/web/e2e/image-deferral.spec.ts
+cat apps/web/src/components/listing-image.tsx
+git diff apps/web/src/app/page.tsx
+cd apps/web &amp;&amp; make ci                         # FAILS at `make test`; lint/typecheck/build clean in isolation
+cd apps/web &amp;&amp; make build                      # isolated confirmation: production build succeeds
+cd apps/web &amp;&amp; npx vitest run src/app/page.test.tsx   # x2, confirms deterministic failure
+make test-scripts                              # 157/157 pass
+cd apps/web &amp;&amp; node scripts/check-journey-coverage.mjs   # exit 0
+E2E_BASE_URL=http://localhost:3000 make test-e2e         # x3 full runs, 40/85/20 failed each time, all traced to container outages
+cd apps/web &amp;&amp; npx playwright test e2e/browse.spec.ts e2e/image-deferral.spec.ts e2e/image-delivery.spec.ts e2e/layout.spec.ts   # 25/25 clean
+cd apps/web &amp;&amp; npx playwright test e2e/auth.spec.ts e2e/avatar.spec.ts e2e/chat-controls.spec.ts e2e/chat-launcher.spec.ts e2e/chat-modality.spec.ts e2e/form-fields.spec.ts e2e/headings.spec.ts   # 62/62 clean
+```
+
+## What I did not run, and why
+
+- **`make ci` (repo-wide)** — judged unnecessary: this change touches only `apps/web` (a new component, a modified page, a new Playwright spec); no `services/chat` files or Markdown changed. `make ci` would additionally run chat's `quick-ci` and `docs-check`, neither of which this diff can affect. `make -C apps/web ci` plus `make test-scripts` already cover everything relevant.
+- **`make e2e-smoke`** — explicitly forbidden by the handover (rebuilds and would recreate the containers I was told to preserve).
+- **`make down` / `docker compose down`** — explicitly forbidden.
+- I did not attempt to root-cause the `contoso-web-1` outages beyond what's reportable from this shell (checked `dmesg`, cron, systemd timers, lingering compose processes, `docker events`, host memory/load — all inconclusive or clean). Whatever is cycling that container is outside what I can observe or safely intervene in further.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/setup.ts`.</result>
+<usage><subagent_tokens>133068</subagent_tokens><tool_uses>87</tool_uses><duration_ms>2848685</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>brit7ghsk</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/brit7ghsk.output</output-file>
+<status>completed</status>
+<summary>Background command "Run full web merge gate" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32d59c80433f2e42</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a32d59c80433f2e42.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify deferred image loading change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The blocker is fixed. `make -C apps/web ci` is green — confirmed independently, twice, not on the coordinator's word. `make test-scripts` is unaffected and green. I'm skipping a fresh journey run, with reasons below, since I can show the browser-facing code is unchanged from the build I already fully verified.
+
+## Independent re-verification
+
+- `cd apps/web &amp;&amp; HUSKY=0 make ci` — **exit 0**, run twice for certainty. Lint clean, both typechecks clean (app + `tsconfig.e2e.json` + `check-journey-coverage.mjs`), `npm run test` → **154/154 passed** (up from 149; +5 for `listing-image.test.tsx`, and the previously-throwing `page.test.tsx &gt; Home page &gt; names a product card once` now passes), production build succeeds (all 230 pages).
+- `make test-scripts` — **157/157 pass, exit 0**, unchanged from before. Confirmed specifically that `test_journey_specs_exist` and `test_vitest_does_not_also_collect_the_journeys` still pass: the former only globs `apps/web/e2e/*.spec.ts`, so `listing-image.test.tsx` (in `src/components/`) is outside its scope; the latter just checks `vitest.config.ts` excludes `e2e/**`, unaffected by a new unit test. No root guard inventories vitest test files, so nothing chokes on the new file.
+- Stack: identity confirmed (`curl .../ | grep -c "Contoso Outdoor Company"` → 2), `contoso-web-1` up 17+ minutes at time of check, stable throughout this pass.
+
+## Journeys — skipped, and why
+
+I agree the suite cannot be affected, on direct evidence rather than the coordinator's assertion:
+- `git diff apps/web/src/app/page.tsx` is byte-identical to the diff I already ran 132/132 journeys against.
+- `apps/web/src/components/listing-image.tsx` is untracked, so `git diff` shows nothing for it either way — I re-read the full file directly and compared it against what I transcribed in my first pass. It is identical, including the `#261` contrast paragraph, which was already present when I first read it. There is no functional (or textual) change to this file since my 132/132 result.
+- `setup.ts` and `listing-image.test.tsx` are both vitest-only: `setup.ts` is wired through `vitest.config.ts`'s `setupFiles`, and Playwright's config has no dependency on it; the `.test.tsx` file is excluded from Playwright's `testMatch` by extension. Neither ships to the browser or is reachable from anything the 132 journeys execute.
+
+Given that, re-running the full suite would only re-fight the container instability from my last pass for zero incremental signal. I'm not spending the ~13+ minutes (and risk of another outage) on a re-run whose outcome is already determined by evidence already in hand. If you want the cheap insurance anyway, `browse` + `image-deferral` is a 5-minute pair I can still run on request.
+
+## Judgement: "observe, never fire" as the polyfill default
+
+**I agree with the choice.** The reasoning that would make me push back — "a component that genuinely needs the observer to fire silently renders its empty state and nobody notices" — doesn't hold here, because the failure mode is loud, not silent: any test that expects the *visible* state (an `&lt;img&gt;` with a `/_next/image` src, a queryable `role="img"`, etc.) gets nothing in the DOM and its assertion fails outright. That's the opposite of a trap. The actual trap would be the reverse default — firing on construction — which is the one that makes deferral itself untestable and would let a regression that deleted the deferral entirely (i.e., un-fixing #230) pass every unit test silently, since "always visible" would be indistinguishable from "correctly deferred, then arrived." `listing-image.test.tsx` already demonstrates the correct escape hatch (`vi.stubGlobal` + `afterEach: vi.unstubAllGlobals()` to drive `arrive()` locally), so it's a discoverable pattern, not a one-off.
+
+One real but different edge worth watching, not a defect in this choice: the risk this default does create is a *vacuous pass*, not a silent one — a future test that walks a full rendered page asserting something generic across "every image" (e.g., "every image has valid dimensions") would see zero images for any deferred card and pass trivially, because nothing rendered, not because the property held. Neither `page.test.tsx` nor `listing-image.test.tsx` falls into this today; flagging it only as the shape of trap to watch for as broader/whole-page unit tests are added later — any such test needs to either render eagerly or drive the observer itself, same as `listing-image.test.tsx` already does.
+
+## Missing coverage — updated
+
+The gap I flagged last round (no unit coverage of the deferral itself) is closed by `listing-image.test.tsx`. Remaining, unchanged from before, still worth noting:
+- The `bg-zinc-200` contrast ratios asserted in the doc comment (1.22:1, 1.15:1) are still untested by any check — no test verifies the claim, only documents it.
+- The `&lt;noscript&gt;` fallback path (JS disabled) is still not exercised by any journey.
+
+## Environment
+
+Unchanged from the prior report and not re-litigated: `contoso-web-1`'s earlier instability was environmental, not code-related, and is not implicated in this verification since I didn't need to run journeys against it this round. `apps/web/next-env.d.ts` churn is confirmed reverted (`git status` no longer shows it; filed as #260 per the coordinator).
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/setup.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx`.</result>
+<usage><subagent_tokens>146054</subagent_tokens><tool_uses>9</tool_uses><duration_ms>231375</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a236084e9b8a3502b</task-id>
+<tool-use-id>toolu_01UuGQPVaJZgcJVoTC4D5T6N</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a236084e9b8a3502b.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/230-defer-offscreen-listing-images`
+
+Branch carries no commits (`git log main..HEAD` is empty); everything is in the working tree. Reviewed all of it, plus the surrounding code the change leans on.
+
+---
+
+## Findings
+
+### 1. The decode assertion waits a fixed 3s that the file's own measurements say is too short — **defect** (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:95`
+
+```ts
+await page.evaluate(() =&gt; window.scrollTo(0, document.body.scrollHeight))
+await page.waitForTimeout(3000)
+```
+
+The `requested.size &gt; initial` assertion only needs requests *issued*, and 3s is ample for that. The `broken === 0` check at line 114 needs them **decoded**, and the same file records (line 68) that "the slowest optimisation measured on a constrained server was 3253ms" with a median of 2343ms on two cores — and explicitly notes that a request "is issued long before it completes". The second wait reuses a number that was justified for the weaker property.
+
+Concrete failure: CI runs a fresh composed stack, so `.next/cache/images` is cold. `image-deferral.spec.ts` sorts before `image-delivery.spec.ts`, so nothing has warmed the below-fold variants. Scrolling to the bottom of a 5038px document brings the remaining deferred cards inside the 1200px margin at once — I measured 9 optimiser requests before scrolling and 20 after, so ~11 `sharp` jobs queue on two shared cores. The last row's three on-screen images are somewhere in that queue; at a 2343ms median they routinely will not have `naturalWidth &gt; 0` at 3000ms. `playwright.config.ts` sets `retries: 0`, so that is a hard red on a page that is behaving correctly — the same class of CI failure #230 exists to remove.
+
+Fix: keep the 3s wait for the request-count assertion, and poll the decode predicate instead of timing it. `await expect.poll(() =&gt; page.evaluate(...), { timeout: 15_000 }).toBe(0)` fits inside the 30s test budget (3s + 3s + 15s) and fails with the same message when deferral genuinely breaks.
+
+---
+
+### 2. The component doc comment asserts a contract that no guard holds, and names the wrong sibling surface — **refinement** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx:57` and `:61-66`
+
+Two claims in the doc block do not hold:
+
+**a. The squareness contract.** Line 61: *"`aspect-square` is a claim about the catalogue, not a guess: every source under `public/images` is 1024x1024, held there by `config/catalogue_images.json` and `tests/scripts/test_image_encoding.py`."* Neither file holds that. `catalogue_images.json` carries `maxDimension` only, and `test_image_encoding.py:196` and `:220` both test `if max(width, height) &gt; MAX_DIMENSION` — a long-edge ceiling. A 1024x600 WebP passes every guard in the repository.
+
+This matters because the change *introduces* the dependency. The old markup was `width={350} height={350}` plus `h-auto`, which took its box from the source's own ratio; the new wrapper hard-codes `aspect-square` and the image is `w-full h-auto`, so a non-square source letterboxes with a `bg-zinc-200` strip under it and nothing turns red. Measured the current state: all 853 catalogue WebPs are 1024x1024 (the single 1024x450 is the hero background, which is on the full-bleed allowlist and never reaches this component), so nothing renders wrong today. The comment is what a future maintainer would rely on when adding an image.
+
+Fix: either state it as an observation ("every source is 1024x1024 today; nothing enforces the ratio") or add the assertion to `test_image_encoding.py`, which already reads both dimensions and would need `width == height`.
+
+**b. The tone precedent.** Line 57: *"It is the same tone the category grid already uses."* The category grid at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:47` uses `bg-gray-200`, not `bg-zinc-200`. The `bg-zinc-200` precedent is `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/about/page.tsx:29`. The contrast ratios quoted just above it are yours and measured; only the attribution is wrong.
+
+---
+
+### 3. `ROOT_MARGIN` is the tuning knob nothing measures — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx:104`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx:32`
+
+The unit test's fake observer takes only the callback:
+
+```ts
+constructor(callback: IntersectionObserverCallback) {
+  callbacks.push(callback)
+}
+```
+
+The options argument is discarded, so nothing anywhere observes that `{ rootMargin: ROOT_MARGIN }` is passed at all. Delete that second argument — or set it to `0px` — and every unit test still passes, and `image-deferral.spec.ts` gets *better*: fewer initial requests, comfortably under the bound. The user-visible result is the pop-in the 1200px value was measured against (your own note: at 1000ms optimiser latency, 14 of 20 cards grey as they enter). The one regression the constant exists to prevent is the one direction no guard can see, in a file whose sibling comment says the knobs are "tuned against pop-in rather than against this bound".
+
+Fix: capture the second constructor argument in the stub and assert `rootMargin` is `'1200px'` on the deferred-render test. One line each, and it makes the constant's value a fact rather than a comment.
+
+---
+
+## Your four questions
+
+**`eager={i &lt;= 1}`** — acceptable as written. Expressing it as a card count means threading a cumulative index across categories (`categories.slice(0, i).reduce(...)`), which is more machinery producing the same unguarded number, and the real invariant genuinely is per-category: the grid restarts at each `Block` with an `h2` and a description between, so "the first two categories" is the unit the layout actually has. What is worth knowing is that nothing fails if it becomes wrong in the *shrinking* direction — a taller hero or a fourth product per category leaves above-fold cards deferred again, and `MAX_INITIAL_REQUESTS` is an upper bound only. Not a finding; the comment already states the measurement.
+
+**`bg-zinc-200` contrast** — the reasoning is sound, not self-serving. 1.4.11 scopes to UI components and graphical objects required to understand the content; this is the transient loading state of an `alt=""` image whose card takes its accessible name entirely from the link text, so neither clause reaches it. The case where the argument stops holding is the permanent one, which is exactly what #261 is. Only the attribution in the comment is wrong (finding 2b).
+
+**Can the polyfill produce vacuous passes?** Bounded today, and I agree with `verifier`. `ListingImage` is the only `IntersectionObserver` consumer in `src/` (grepped), and `listing-image.test.tsx` stubs its own via `vi.stubGlobal`, so it never touches the polyfill. The one place the polyfill actually applies is `src/app/page.test.tsx`, which renders `await Home()` and therefore renders 14 of the 20 cards as empty boxes. Its single assertion targets `catalogue[0].products[0]`, which is eager, so it is not vacuous now. The exposure is a *future* jsdom assertion phrased over "every card's image", which would silently measure 6 of 20. That is worth one sentence in the setup comment; it is not a defect in this change.
+
+**`MAX_INITIAL_REQUESTS = 12`** — right for what this spec runs. It only measures at 1440x900, where I re-measured 9 against your 9, so there are 3 of headroom, and the regressions it must catch all land at 20 (lazy-only, observer dropped, `eager` widened to every category). Tripping it accidentally needs three more above-fold cards at desktop, which is a deliberate layout change. The 1440x2000 measurement of exactly 12 does not constrain it, because the spec never visits that viewport — if you want the bound to survive there, the honest move is a second viewport in the spec rather than a looser number.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx:41-105` has the same defect #230 describes, untouched: `priority={i &lt; 3}` and everything else lazy, on a grid `browse.spec.ts:153` documents as running 18 to 47 cards. At 1440 that document is inside Chrome's ~3900px lazy threshold, so a category landing fires ~21 concurrent optimisations. The new journey's header says "The listing pages request images for cards the visitor can reach" but only guards `/`. No open issue covers it (checked; #180 is the tablet priority-cutoff row split, #169 is closed). Worth filing before this merges, so the header's scope and the guard's scope are reconciled deliberately rather than by omission.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_image_encoding.py:196,220` — nothing enforces a square aspect ratio, which two rendering surfaces now depend on (`category/[slug]/page.tsx:47` via `object-cover`, and now `listing-image.tsx:113`). The `object-cover` one crops silently; the new one letterboxes. Same root cause as finding 2a, but the guard gap itself is pre-existing.
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty, no commits on the branch.
+- Unstaged: `apps/web/src/app/page.tsx`, `apps/web/src/test/setup.ts`, `apps/web/next-env.d.ts` (skipped per #260). Staged: nothing.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`.
+- Context: root and `apps/web` `AGENTS.md`; `e2e/browse.spec.ts`, `e2e/image-delivery.spec.ts`, `src/app/page.test.tsx`, `src/app/products/category/[slug]/page.tsx`, `playwright.config.ts`, `vitest.config.ts`, `tests/scripts/test_image_encoding.py`, `config/catalogue_images.json`.
+- Against your running stack (confirmed identity, not touched, not torn down): 9 initial optimiser requests and 20 after scrolling at 1440x900; document height 5038px; **zero console errors or warnings**, so React's `shouldSetTextContent` handling of `&lt;noscript&gt;` produces no hydration mismatch — the SSR HTML carries 20 `&lt;img&gt;` (6 eager + 14 inert in `noscript`) and the live DOM 9; first card measures a 350x350 box with a 350x350 image, `border-radius: 24px`, `overflow: hidden`, zero gap. Catalogue dimensions read with `.venv/bin/python`: 853 files at 1024x1024, one at 1024x450 (hero background).
+- Not assessed: the 2x-density and phone/tablet measurements, the mutation demonstrations, and the red phase — taken as reported per your instruction not to redo verification. `next-env.d.ts` is generated; excluded per #260.
+
+Two of the three findings are refinements. The one defect is finding 1, and it is confined to the new journey spec — no product code changes, so a fix for it does not reopen step 6.</result>
+<usage><subagent_tokens>77722</subagent_tokens><tool_uses>29</tool_uses><duration_ms>479627</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bamnf1u0w</task-id>
+<tool-use-id>toolu_017cY4K4tyneDTW1MgEraDtF</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bamnf1u0w.output</output-file>
+<status>completed</status>
+<summary>Background command "Verify stack and run web merge gate" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a236084e9b8a3502b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a236084e9b8a3502b.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review deferred image loading" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Re-review: fresh round
+
+All three prior findings are fixed and the fixes are correct. `next-env.d.ts` is clean, `page.tsx` and `setup.ts` are unchanged from the last round. Two new refinements, no defects.
+
+---
+
+## Findings
+
+### 1. The #263 deferral justification misstates why the category grid is out of scope — **refinement** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:31-32`
+
+&gt; *"It is left out here rather than overlooked: it needs a database to render, so it cannot be measured the way every number above was."*
+
+The first half is true — `getProductsByCategory` at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/products.ts:6` is a `prisma.category.findUnique`. The inference is not. These journeys run against the composed stack, which *has* the seeded database, and the category grid is already measured on it by two files in this directory: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:101-108` resolves the slug from `/categories.json` and measures that surface across 21 widths at two densities, and `browse.spec.ts:172` navigates to `/products/category/tents` directly.
+
+I measured it against your running stack with the same method as the header's home-page numbers, at 1440x900:
+
+```
+status 200
+category cards: 21
+optimiser requests before scrolling: 21
+doc height: 3965
+```
+
+Twenty-one of twenty-one, on a document short enough that Chrome's ~3900px threshold swallows the whole page — the identical shape of finding to the home page's 18 of 20, obtained the same way. So the sentence claims an obstacle that does not exist, and it is the sentence a future reader will use to decide whether #263 is cheap.
+
+The two honest reasons are already in the same paragraph and are sufficient on their own: the slice boundary, and the `priority={i &lt; 3}` cutoff being an open question in #180. Fix: drop the database clause, or replace it with the measurement above — which would also give #263 a starting number it does not currently have.
+
+---
+
+### 2. The 30s budget arithmetic omits `page.goto`, which is the largest term on a cold cache — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:120`
+
+&gt; *"15s keeps the whole journey inside the 30s budget."*
+
+The budget is 3s + 3s + 15s **+ `page.goto('/')`**. `goto` defaults to `waitUntil: 'load'`, and the `load` event waits on the six server-rendered images plus the three the observer inserts during hydration — nine optimisations, which is exactly what I measure on your stack.
+
+That term is near zero warm and large cold. Measured just now on this 24-core machine, nine concurrent cold optimisations: 815ms wall, 527-800ms each. Scaled to the runner this change is about, #230's own body is the better number — *"still-pending after 21s: 20 x /\_next/image"*, i.e. roughly one image per second at two cores, so ~9s for `goto` to return. Add 3 + 3 and a poll that in the passing case still has to wait out the last row's share of eleven queued optimisations, and the test sits around 25s with about 5s of headroom. When it goes over, the failure is `Test timeout of 30000ms exceeded`, which says less than the assertion it replaced.
+
+The full-suite CI path is safe, but only by accident: `browse.spec.ts` sorts before `image-deferral.spec.ts` under `workers: 1`, and its first test scrolls the entire home page. The home card box is 350px at both 1280 (browse's default viewport) and 1440, so it warms the exact `w=384` variants this spec needs. Nothing states that dependency, and it breaks on a rename. The exposed path is the one AGENTS.md step 4 prescribes — `npx playwright test e2e/image-deferral.spec.ts` against a freshly composed stack.
+
+Fix: `test.setTimeout(60_000)` on the scrolling test, with the cold-cache reason. There is precedent three files over — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-delivery.spec.ts:180` raises its own for the same reason and explains it. Then correct the comment to name `goto` as the term that dominates.
+
+---
+
+## Your three questions
+
+**Is `expect.poll` at 15s now soft?** No. Waiting longer cannot turn a wrong result into a right one here — the predicate is `naturalWidth === 0`, and an image that 404s or never decodes stays at 0 forever, so a broken deferral still fails, just 12s later. What a fixed 3s bought that the poll does not is an implicit latency ceiling, and this file explicitly disclaims that property in its own header (*"the defect is the count, not the cost per image"*), so nothing that was being asserted stopped being asserted. The shape is right.
+
+One thing worth knowing rather than acting on: the predicate returns 0 both when everything decoded and when there is nothing on screen to measure, so if the `PRODUCT_CARD img` selector ever stops matching — the image moving outside the `&lt;a&gt;`, say — the assertion passes on zero samples. That was equally true of the fixed wait, so the fix did not introduce it, and the `requested.size &gt; initial` assertion above catches the failure mode that actually produces it (deferral that never resolves). I score it below the reporting bar and am not filing it; if you want the file's third vacuity guard for symmetry with the other two, polling the on-screen image count to be `&gt; 0` is the one-liner.
+
+**Literal `'1200px'` versus importing `ROOT_MARGIN`.** Keep the literal. Importing it would make the assertion tautological in the direction that matters: `expect(options[0]?.rootMargin).toBe(ROOT_MARGIN)` passes for `'0px'`, for `'50px'`, for any value someone edits the constant to — it would catch only the dropped-argument mutation, not the retuned-margin one, and the retuned one is the whole reason the assertion exists. That is the "measure what was produced, not what was asked for" rule in root `AGENTS.md`, and an imported constant measures the request. It would also mean exporting a constant purely for a test. I checked the failure path: with the options argument dropped, `options[0]` is `undefined`, `undefined?.rootMargin` is `undefined`, and `toBe('1200px')` fails rather than short-circuiting — so the optional chaining does not soften it. Your demonstration matches.
+
+**Do the issue framings misstate the code?** #262's does not — I re-verified every claim in it. `test_image_encoding.py:196` and `:220` are both `max(width, height) &gt; MAX_DIMENSION`, so a 1024x600 does pass everything. The count is exact: 853 catalogue WebPs at 1024x1024, with the 1024x450 hero being the full-bleed allowlist entry and outside `catalogue_images()`. "The markup it replaces took its box from the source's own ratio" is right for the loaded state — `width`/`height` give the UA an `aspect-ratio: auto 350 / 350`, whose `auto` keyword defers to the natural ratio once loaded, and `h-auto` lets it through. The category grid's `object-cover` crop at `products/category/[slug]/page.tsx:104` is stated correctly. 2b is correct in both directions: `about/page.tsx:29` is `bg-zinc-200`, `products/category/[slug]/page.tsx:47` is `bg-gray-200`. #263's framing is finding 1 above.
+
+---
+
+## What I reviewed this round
+
+- `git status --short`: `apps/web/src/app/page.tsx` and `apps/web/src/test/setup.ts` modified (both byte-identical to the last round), three untracked files. `next-env.d.ts` no longer listed. Still no commits on the branch.
+- Re-read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.test.tsx`.
+- Re-verified against source: `test_image_encoding.py:176-232`, `catalogue_images.json`, `src/lib/products.ts`, `about/page.tsx`, `products/category/[slug]/page.tsx`, `next.config.js:14-31`, `browse.spec.ts`, `image-delivery.spec.ts`, `playwright.config.ts`.
+- Measured against your stack (not torn down, nothing written to it): nine concurrent cold `w=828` optimisations at 815ms wall / 527-800ms each on 24 cores; `/products/category/tents` at 21 cards, 21 optimiser requests, 3965px document.
+- Not re-assessed: `make -C apps/web ci`, the 7/7 journey run, and the mutation demo — taken as reported.
+
+**This round returns no defects — both findings are refinements.** Per step 8 the loop has closed; applying these does not earn another review round, and neither touches rendered output, so step 6 stays closed too.</result>
+<usage><subagent_tokens>105042</subagent_tokens><tool_uses>10</tool_uses><duration_ms>254154</duration_ms></usage>
+</task-notification>
+
+---
+
+Ok we are also testing another app on this machine that has the same port.. so we should change the port for this app.
+
+---
+
+<task-notification>
+<task-id>bhhmkxiwh</task-id>
+<tool-use-id>toolu_01SstnU2LnNLWd6jtTS5gqVD</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bhhmkxiwh.output</output-file>
+<status>completed</status>
+<summary>Background command "Build and smoke the stack on the new ports" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+The branch is **verified for the docker/compose path, not fully verified for the hybrid local-dev path** — I found what looks like a real, unflagged regression in Option 2 ("Local Development (Hybrid)") that none of the requested checks exercise. Everything else requested passed clean. I also caused (and recovered) a live incident on your handed-over stack while validating `make docker-init-fresh`; details below, stack is now back to the state you left it in.
+
+**Important disclosure first:** running `make docker-init-fresh` recreated `contoso-chat-1` using your repo-root `.env` (`LLM_PROVIDER=local`), which does **not** match how you started the stack (`LLM_PROVIDER=gcp` passed inline, never persisted to `.env`). The recreated container failed local-provider preflight (no Ollama, no local packages) and exited. I brought it back with `export LLM_PROVIDER=gcp; docker compose up -d chat`, confirmed `contoso-chat-1` is healthy again and `/health/dependencies` reports `"provider":"gcp","ready":true"` — matching your original handover. Nothing else in the stack was touched (`db` and `web` were never recreated; seed data is untouched — see idempotency note below). I did not run `make e2e-smoke` myself; the one you already ran stands.
+
+## Failures
+
+None in the requested checks. `make ci`, `make test-e2e`, and the port sweep all came back clean.
+
+One likely bug found by inspection, not by any existing check (see Missing coverage): **`.env.example`'s `NEXTAUTH_URL=http://localhost:3100` is wrong for Option 2 (hybrid dev).** `README.md` Option 2 runs `make dev-web` / `npm run dev:web` → `apps/web/Makefile:dev` → plain `next dev` (`apps/web/package.json:"dev": "next dev"`), with no `PORT` env set anywhere in `.env.example`, `package.json`, or the Makefiles. That serves on Next's default `3000`, not `3100`. `3100` is only where `NEXTAUTH_URL` needs to point when `web` itself is the containerized service (Option 1). Before this branch, `NEXTAUTH_URL=http://localhost:3000` happened to be correct for *both* flows because compose and `next dev` shared one number; the branch split them (compose web → `3100`) but left the single shared `.env.example` value following the docker port only. Per the docker-compose.yml's own new comment on this exact failure mode: "leave it at 3000 while the stack answers on 3100 and sign-in succeeds, then every authenticated request arrives without the cookie" — that is exactly what a developer following Option 2 verbatim would now hit. I did not reproduce this live (didn't want to start a second `next dev` against the shared `.env`/ports while your stack was up), so this is a static-analysis finding, not a run failure — flag it as high-confidence but please confirm.
+
+## Flakes
+
+None observed. `make ci` and `make test-e2e` each ran once and passed; I did not need a re-run to distinguish signal from noise.
+
+## Missing coverage
+
+- **Option 2 hybrid dev flow is untested by any suite mentioned in AGENTS.md.** `test-e2e`/`auth.spec.ts` only exercises the docker-composed path (web in a container on 3100), so the `NEXTAUTH_URL` mismatch above has no check that would catch it.
+- `tests/scripts/test_published_ports.py` (the new guard) reads ports out of compose and cross-checks the files you listed, but — by design — doesn't cross-check `.env.example`'s `NEXTAUTH_URL` against what `next dev` actually binds to in hybrid mode, since that's not a value compose defines. That's a structural gap this suite can't reach, worth naming explicitly since the guard's whole job is "every other file agrees" and this is a file where "agreement" isn't the same as "correctness for this flow."
+
+## Environment issues
+
+- **`.env` (`LLM_PROVIDER=local`) silently diverges from the running stack (`LLM_PROVIDER=gcp`) whenever compose recreates `chat` without the override repeated.** This isn't caused by this branch — it's ordinary compose behavior (inline shell env vars for one invocation aren't persisted to `.env`) — but it is a live trap: `make docker-init-fresh`, or any bare `docker compose up -d chat`/`up -d` run after the initial `LLM_PROVIDER=gcp make e2e-smoke`, will flip the provider back and the container will exit if local packages/Ollama aren't present. Worth a one-line callout in the runbook (`docs/INTEGRATION.md` or the agent AGENTS.md files already talk about `KEEP_STACK`/ports; this is the same class of "handover state isn't in a file" hazard).
+- Host ports 3100/8100/55432 were free and matched exactly what this branch's new defaults expect — no collision. (For reference, port 5432 *is* held by an unrelated `travel-app-db-1` container on this machine, which is precisely the collision class #245/this PR addresses — the new default port 55432 avoided it cleanly.)
+- No missing tools, browsers, or unset variables encountered.
+
+## Port sweep judgment (`grep -rn "3000\|8000\|5432"` across tracked files)
+
+Beyond your four confirmed exemptions, everything else I found is correct to leave alone:
+
+1. `.vscode/launch.json:14` `"url": "http://localhost:3000"` (Next.js debug client-side) — **correct, a fifth exemption.** It attaches to the hybrid `next dev` session (Option 2's `make dev-web`), which serves on 3000 regardless of the compose change (see the `NEXTAUTH_URL` finding above — same root cause, different symptom).
+2. `Dockerfile:107,110,111` (`PORT=3000`, `EXPOSE 3000`), `services/chat/Dockerfile:65,68,72`, `services/chat/src/api/chat-entrypoint.sh:31` — container-internal ports, unaffected by design (matches your "only the host side moved" statement).
+3. `infrastructure/terraform/main.tf:346` `container_port = 8000` — Cloud Run container port, unrelated to local compose entirely.
+4. `docs/DATABASE.md:36,42`, `infrastructure/scripts/dev_db_proxy.sh` — Cloud SQL Auth Proxy, exemption #3, confirmed.
+5. `services/chat/tests/unit/test_db.py`, `tests/scripts/test_check_env_contract.py` — exemption #4, confirmed.
+6. `tests/scripts/test_e2e_smoke.py:261,270,283` (`http://localhost:3000`/`:8000` passed into `check_web_chat_proxy`/`check_chat_dependencies`) — same category as exemption #4: arbitrary string inputs to unit-tested helper functions, not real defaults.
+7. `tests/scripts/test_compose_startup_ordering.py:92,109` — prose about the `db` healthcheck racing the container's *internal* 5432 (pg_isready vs Unix socket), not a host port literal.
+8. `Makefile:31,120`, `docker-compose.yml` comments — explanatory prose describing the old-vs-new numbers, correctly left as history/rationale.
+
+No other tracked-file hits found. Nothing looks like a genuine miss in this sweep.
+
+## `make docker-init-fresh`
+
+Works correctly on the new ports: `docker compose port db 5432` returns `0.0.0.0:55432`, the derived URL (`REDACTED`) is what `prisma migrate deploy` and `prisma db seed` both used, and both ran clean against the real handed-over `db`. The seed script (`apps/web/prisma/seed.ts`) is fully upsert/find-or-create idempotent (categories, brands, products, users, orders, and order items all guard against duplication), so re-running it did not duplicate data. The only side effect was the `chat` provider flip described above, which is orthogonal to the port logic and has been reverted.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD          # empty — all 16+1 changes are uncommitted
+git diff --stat                       # confirms the 16 modified files
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets   # empty, since detector only sees committed refs
+docker compose ps
+git ls-files | xargs grep -nE '\b(3000|8000|5432)\b'
+make ci                               # PASS (quick-ci-web + quick-ci-chat + test-scripts + build + docs-check)
+cd apps/web &amp;&amp; E2E_BASE_URL=http://localhost:3100 npx playwright test   # 130 passed (8.1m)
+docker compose port db 5432           # -&gt; 0.0.0.0:55432
+make docker-init-fresh                # PASS; caused the chat-provider incident above
+export LLM_PROVIDER=gcp; docker compose up -d chat   # recovery
+docker compose ps / curl health checks # confirmed stack restored
+```
+
+## What I did not run, and why
+
+- **`make e2e-smoke` myself** — you already ran it (`KEEP_STACK=1`) on this exact branch and it passed; re-running would rebuild and briefly interrupt the very stack I was asked to verify against, for no new information. I relied on your run.
+- **Hybrid `make dev-web` end-to-end reproduction** of the `NEXTAUTH_URL`/3000-vs-3100 issue — didn't want to start a second, competing `next dev`/`.env` consumer against the shared `.env` and ports while your stack was live. The finding above is from static analysis (package.json, Makefiles, README, `.env.example`) rather than an observed failure; please treat it as high-confidence but unverified live.
+- **`make e2e-smoke-lite` / `make e2e-smoke-full`** — not applicable; this change doesn't touch `CHAT_INSTALL_LOCAL_STACK` or the chat dependency profile.
+- **`make release-dry-run`** — out of scope; no `.github/workflows/release.yml` or release-guardrail changes in this diff.
+
+Files most relevant to the findings above: `/home/scottdensmore/Developer/scottdensmore/contoso/.env.example`, `/home/scottdensmore/Developer/scottdensmore/contoso/README.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/package.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/Makefile`, `/home/scottdensmore/Developer/scottdensmore/contoso/.vscode/launch.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/docker-compose.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/prisma/seed.ts`.</result>
+<usage><subagent_tokens>111369</subagent_tokens><tool_uses>63</tool_uses><duration_ms>642288</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Stack is intact and unchanged: gcp provider, healthy, untouched by this round of checks (I did not run `docker-init-fresh` again). Ready to report.
+
+## Verdict
+
+Verified. On the updated diff (`apps/web/package.json`, `.vscode/launch.json`, `README.md`, and the 8-assertion guard), every requested check passes clean, and your live check holds up under a second, independent look — I found no remaining consumer of port 3000 outside the container-internal ones already exempted.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. `make ci` and the full journey suite (`test-e2e`) each ran once and passed.
+
+## Results
+
+- `make ci` — **PASS** (exit 0). Web: lint clean, typecheck clean, `next build` succeeded (same 230-page/route output as before), 149/149 vitest tests. Chat: deps-check, ruff, mypy clean, 60/60 pytest tests. `docs-check` clean (`verify_docs.py`, `agent-docs-check`, 8 agent-definition tests).
+- `make test-scripts` — **PASS**, 165/165 (up from 164; the guard is now 8 tests, confirmed by name: `test_the_dev_server_uses_the_same_port_as_the_composed_web_service` is present and passing alongside the other 7).
+- Full journey suite (`E2E_BASE_URL=http://localhost:3100 npx playwright test`, equivalent to `make test-e2e`) — **PASS**, 130/130 in 8.7m, against the stack you handed back (gcp provider, healthy).
+
+## Confirming your live check — port 3000 sweep, redone
+
+```
+git ls-files | xargs grep -nE '\b3000\b'
+```
+
+Remaining hits, all previously-judged exemptions, none new:
+- `.devcontainer/devcontainer.json:10,13` — `forwardPorts: [3000]`, the container-internal port of the compose `web` service (exemption #1).
+- `Dockerfile:107,110,111` — `ENV PORT=3000` / `EXPOSE 3000`, container-internal.
+- `docker-compose.yml:2,3,33` — explanatory prose (the "used to be 3000" comments), not a live reference.
+- `tests/scripts/test_e2e_smoke.py:261,270` — arbitrary string inputs to a mocked unit test, not a real port.
+
+`.vscode/launch.json` and `apps/web/package.json` no longer appear — confirmed fixed. `README.md` no longer appears — confirmed fixed.
+
+Live confirmation, independent of your test: `curl http://127.0.0.1:3100/` → `200`; `curl -m 3 http://127.0.0.1:3000/` → connection refused (no listener). Nothing answers on 3000 right now. Combined with the grep sweep, I agree with your conclusion: **no consumer of port 3000 remains outside container-internal ports.**
+
+One thing worth naming, not a miss: `next start` inside the Docker image (`apps/web/package.json`'s `"start"` script, run by the container's entrypoint) still binds 3000 internally — untouched by your `dev` script edit, correctly so, since `EXPOSE 3000`/`docker-compose.yml`'s `"3100:3000"` mapping depend on it staying there. I checked this explicitly since it's the one other script in that file that starts a server; it's fine.
+
+## Missing coverage
+
+None new. The guard's 8th assertion (`test_the_dev_server_uses_the_same_port_as_the_composed_web_service`) closes the gap I flagged last round — I confirmed by reading it that it does what its docstring claims (parses `next dev -p 3100` out of `package.json`, fails on bare `next dev`), and separately confirmed by unittest run that it's green now, not just present.
+
+## Environment issues
+
+None new. The `.env` `LLM_PROVIDER=local` vs. running `gcp` trap from last round is unchanged and untouched — I did not run `docker-init-fresh` or anything else that recreates `chat` this round, so it did not fire again. Stack right now: `web` 3100 (up 16m, recreated once by your live check, healthy), `chat` 8100 (up 21m, still `gcp`/healthy, untouched since I restored it), `db` 55432 (up 30m, healthy, untouched). Left exactly as instructed — did not tear it down, did not touch `chat`.
+
+## Commands run
+
+```
+git status --short
+git diff --stat
+docker compose ps
+git diff -- apps/web/package.json .vscode/launch.json README.md
+cat tests/scripts/test_published_ports.py
+make ci                                                          # PASS
+.venv/bin/python -m unittest discover -s tests/scripts -p "test_*.py" -v   # 165/165
+git ls-files | xargs grep -nE '\b3000\b'
+curl checks on 3100 (200) and 3000 (refused)
+cd apps/web &amp;&amp; E2E_BASE_URL=http://localhost:3100 npx playwright test    # 130/130
+docker compose ps / curl health checks (final confirmation)
+```
+
+## What I did not run, and why
+
+Same as last round — `make e2e-smoke` (would rebuild/interrupt the stack I was told to preserve; not needed given the targeted commands above cover the changed surface), `make docker-init-fresh` (already validated last round; re-running it now would just re-trigger the known `LLM_PROVIDER` trap for no new information — did not touch it), `make e2e-smoke-lite/-full` and `make release-dry-run` (out of scope, unchanged from last round's reasoning).
+
+Files most relevant to this round: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/package.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/.vscode/launch.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/README.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_published_ports.py`.</result>
+<usage><subagent_tokens>134446</subagent_tokens><tool_uses>19</tool_uses><duration_ms>899845</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a3acbd99bc09000ff</task-id>
+<tool-use-id>toolu_01LoMQjhsDV4NFHoNTmUbf4b</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a3acbd99bc09000ff.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I have what I need. One note on scope before the findings: the branch has **no commits ahead of `main`** (`git diff main...HEAD` is empty) and nothing staged — the entire change is unstaged plus one untracked file.
+
+---
+
+# Code review — `chore/move-published-ports-off-defaults`
+
+## Findings
+
+### 1. Existing `.env` files are not migrated, and nothing detects the drift — **defect** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/.env.example` (all four moved lines) and `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/.env.example`.
+
+Templates moved; live `.env` files did not, and no check compares them. Measured on this machine right now:
+
+```
+NEXTAUTH_URL=http://localhost:3000
+CHAT_ENDPOINT=http://localhost:8000
+ALLOWED_ORIGINS=http://localhost:3000
+DATABASE_URL=...@localhost:55432   # already moved by the earlier hand workaround
+```
+
+Concrete scenario, the hybrid flow the change deliberately fixed: `make dev-web` → `apps/web/Makefile`'s `sync-env` copies root `.env` over `apps/web/.env` → `next dev -p 3100` serves 3100 while the app carries `CHAT_ENDPOINT=http://localhost:8000`. `apps/web/src/app/api/chat/service/route.ts:3` is `const api_endpoint = process.env.CHAT_ENDPOINT!` with no fallback, so every chat send is posted, with `CHAT_API_KEY`, to whatever now owns host 8000 — the exact contended port, on the exact machine where #245 was measured. Before this change that same `.env` was correct. This is a new instance of the failure class the change exists to remove: it keeps working while pointing at the wrong thing. `NEXTAUTH_URL=3000` compounds it — post-sign-in redirects leave 3100 for a port serving nothing, or another project's app.
+
+Nothing warns: `scripts/check_env_contract.py` compares key *names* only, `scripts/agent_doctor.py` checks required-key presence only, and the new guard reads `.env.example`, never `.env`.
+
+Fix: state the migration where a developer will meet it — the README's Option 2 note added at line 100 is the natural place ("an existing `.env` must be updated: `NEXTAUTH_URL`, `CHAT_ENDPOINT`, `DATABASE_URL`, `ALLOWED_ORIGINS`") — and in the commit/PR body. Better, since `agent_doctor.py` already parses `.env` (line 141) and the compose ports are trivially parseable (the new guard proves it), add a check there that flags a `.env` host port that disagrees with what compose publishes.
+
+### 2. The guard leaves `CHAT_ENDPOINT` unasserted — **refinement** (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_published_ports.py`.
+
+I copied the eight files it reads into a scratchpad fixture, rebound both `REPO_ROOT` and `COMPOSE`, and ran nine drift mutations. Seven fail loudly and specifically. Two pass green:
+
+| mutation | result |
+| --- | --- |
+| `.env.example` `CHAT_ENDPOINT` 8100 → 8000 | **no failure** |
+| `.env.example` + chat `.env.example` `ALLOWED_ORIGINS` 3100 → 3000 | **no failure** |
+
+`ALLOWED_ORIGINS` is defensible (see below). `CHAT_ENDPOINT` is not: it is the third host-side coupling, in the same silent class as the two the module does assert, and it is the one that carries a credential to the wrong server (finding 1). The module's own docstring promises "at least six other places". Fix: parse `CHAT_ENDPOINT=http://localhost:(\d+)` out of `.env.example` and compare against `self.ports["chat"]` host port.
+
+### 3. The new `NEXTAUTH_URL` rationale describes a mechanism that is not real, and contradicts `verifier.md` in the same diff — **refinement** (confidence 80)
+
+`docker-compose.yml:31-35` and `tests/scripts/test_published_ports.py:7-9` and `:149-151`.
+
+&gt; "This is the origin the browser is on, so it is what the session cookie is scoped to: leave it at 3000 while the stack answers on 3100 and sign-in succeeds, then every authenticated request arrives without the cookie."
+
+Cookies are not port-scoped — RFC 6265 §8.5, "cookies do not provide isolation by port". A cookie set by 3100 is sent to `localhost:3000` and vice versa, so a mismatched `NEXTAUTH_URL` cannot strip it. `.claude/agents/verifier.md:61`, edited in this same diff, records the measurement that says so: a stack remapped off the published port while `NEXTAUTH_URL` names the compose default "signs in and runs the profile journeys". Two files in one commit tell the next agent opposite things about the same variable.
+
+The assertion is still worth keeping — the real coupling is that NextAuth v4 derives absolute callback/redirect URLs and its trusted-origin check from `NEXTAUTH_URL`, so a mismatch sends the browser off the served port after sign-in (to nothing, or to whatever else holds 3000). Fix the explanation in both places rather than the assertion; `auth.spec.ts` 5/5 on the new ports is consistent with either story, so it does not adjudicate this.
+
+---
+
+## Your four questions
+
+**Is the guard measuring the right thing?** Yes, and the split is honest. Deriving the ports from compose is what makes six of the eight assertions measure agreement rather than restate a number — mutating compose alone lit up five of them at once in the fixture run. Two assertions are pins rather than agreement (`off_the_contended_defaults`, `container_ports_stay_on_the_defaults`), and both earn it: the first is the claim the change was made for and is not derivable from anything else; the second guards the direction of drift that leaves every host-side check green while breaking `chat:8000` and `db:5432` inside the network. Nothing here is a declaration checking itself. The one real gap is finding 2.
+
+**`diagnose-chat-local` curling 8100.** Right call as made. Deriving it would mean `docker compose port chat 8000` from `services/chat/`, which needs `-f ../../docker-compose.yml` and puts compose knowledge in a Makefile whose sibling `dev` target deliberately has none. The message naming both ports is the honest resolution for an ambiguous target. If you want it derived later, the place is the root wrapper (`Makefile:102-113`), which already knows compose — pass `CHAT_HEALTH_URL` down. Not worth doing now.
+
+**Is `ALLOWED_ORIGINS` theatre?** In the composed stack, effectively yes. The chat panel calls `/api/chat/service`, and `route.ts` forwards server-side over the compose network, so no browser ever makes a cross-origin request to chat and the CORS middleware at `services/chat/src/api/main.py:75-79` is never exercised by any journey or by the smoke. It is not dead configuration though: it is a required key in `config/env_contract.json` / `docs/ENV_CONTRACT.md`, and it is the only thing standing between a browser-side caller and chat if one is ever added. Moving it for consistency was correct; leaving it unguarded (finding 2's second green mutation) is also correct, because there is no behaviour to protect.
+
+**Missed couplings that fail silently.** One, and it is the important one: finding 1. Everything in the repository that names a port is covered — I grepped for `3000`, `8000` and `5432` as bare numbers and as URLs across every tracked file type and found no stale reference outside the deliberately-unchanged set you listed. The gap is not in the repository, it is in the developer state the repository writes into.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/.devcontainer/devcontainer.json` — vestigial and already broken independent of ports: it composes the production `web` service with no source bind mount, so `workspaceFolder: /app` is the built standalone tree and `postCreateCommand: npm run setup:web` has no root `package.json` to run there. Related: `forwardPorts: [3000]` and `portsAttributes."3000"` are correct only for the image's server; a devcontainer user running `npm run dev` now binds 3100 in-container, which nothing forwards. Worth an issue to fix or delete the file.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/.github/workflows/ci.yml:325-326` — the comment above `E2E_BASE_URL` carries the same incorrect cookie-scoping claim as finding 3. The line is untouched by this diff (only the value on 327 moved), so it is not scored here, but it should be corrected with the other two.
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; the branch carries no commits.
+- `git diff --cached` — empty.
+- `git diff` — all 18 modified files read in full diff context, plus the surrounding code for each: `docker-compose.yml`, `Dockerfile`, both `.env.example`s, `Makefile`, `apps/web/Makefile`, `services/chat/Makefile`, `.github/workflows/ci.yml`, `apps/web/package.json`, `apps/web/playwright.config.ts`, `apps/web/next.config.js`, `apps/web/src/app/api/chat/service/route.ts`, `services/chat/src/api/main.py`, `scripts/e2e_smoke.py`, `scripts/check_env_contract.py`, `scripts/agent_doctor.py`, the four `AGENTS.md` runbooks and their `Code Review Rules`, both agent definitions, and the README/docs edits.
+- Untracked: `tests/scripts/test_published_ports.py`, read in full, run (8/8 pass), and exercised against nine drift mutations in a scratchpad fixture copy with `REPO_ROOT` and `COMPOSE` both rebound. The repository was not modified.
+- `apps/web/next-env.d.ts` — the `root-params.d.ts` line only; not assessed per your instruction (#260).
+
+Not assessed: anything requiring the running stack. I did not touch your containers, and did not run `make down`, `make e2e-smoke`, or any compose command.</result>
+<usage><subagent_tokens>97495</subagent_tokens><tool_uses>41</tool_uses><duration_ms>568376</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Stack unchanged: gcp provider, healthy, untouched. Ready to report.
+
+## Verdict
+
+Verified. `make ci` passes clean on the updated diff, `agent_doctor.py`'s new drift-detection code is robust against every edge-case shape checked (no crashes, no false warnings), and the ruff findings are confirmed pre-existing. I agree the journeys don't need a re-run and skipped them — reasoning below.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. `make ci` ran once and passed.
+
+## Results
+
+- `make ci` — **PASS** (exit 0). Web: lint clean, typecheck clean, `next build` succeeded (same route table), 149/149 vitest. Chat: deps-check, ruff, mypy clean, 60/60 pytest. `test-scripts`: **166/166**, matching your count — I independently confirmed the new 9th assertion exists (`test_host_side_chat_endpoint_names_the_published_chat_port`, guarding `CHAT_ENDPOINT` against `.env.example`) and ran it. `docs-check`: clean, 8/8 agent-definition tests.
+- **Ruff on `scripts/agent_doctor.py`** — confirmed both errors (`EXE001` shebang-not-executable, `TRY004` on the `RuntimeError` at the contract-parsing site) are pre-existing: `git stash` reverted the file to its committed (== `main`) state and ruff reported the identical two errors at the corresponding pre-diff line numbers (59 vs. 111, same delta as the lines your change added above them). Confirmed you didn't touch either flagged construct. Stash/pop completed cleanly; working tree and stack were undisturbed by the check.
+
+## Journeys — skipped, and I agree with your reasoning
+
+Diffed the full changed-file list again: the only executable code that changed anywhere in the tree is `scripts/agent_doctor.py`, which is not imported or executed by any `apps/web` or `services/chat` runtime path — it's a standalone CLI diagnostic invoked by `make agent-doctor`/`make bootstrap`. Everything else touching web/chat behavior (`docker-compose.yml`, `.env.example`, `.github/workflows/ci.yml`) is comments, an env default, or a CI env var — none of it executes inside the running containers you handed me. No `apps/web/src` or `services/chat/src` file is in the diff. Agreed: no runtime code changed, so a second 8-9 minute journey run would re-verify a stack that is provably identical to the one that already passed 130/130 last round. Skipped.
+
+## `agent_doctor.py` robustness — probed directly, not just read
+
+Called `published_ports()` and `stale_port_keys()` in isolation against the shapes you asked about:
+
+| Shape | Result |
+|---|---|
+| Missing `.env` | Never reaches `stale_port_keys` at all — `main()`'s `if not ROOT_ENV.exists()` branch reports the existing "Missing root .env file" failure and skips the port check entirely. No crash. |
+| `.env` with none of the four keys | `stale_port_keys({"FOO": "bar"}, {...})` → `[]`. No warning, no crash. |
+| `DATABASE_URL` with no port (`REDACTED`) | `[]`. The regex `://[^/,\s]*?:(\d+)` simply doesn't match a portless host, so it's silently skipped rather than raising. |
+| Missing `docker-compose.yml` | `published_ports()` returns `{}` (explicit `if not COMPOSE_FILE.exists(): return {}` guard); every `expected is None` check downstream then skips, so `stale_port_keys` returns `[]`. |
+| Unparseable/garbage compose content | Same — the line-regex parser finds no service headers, returns `{}`, same safe no-op path. |
+| Empty compose file | Same, `{}`. |
+| A value whose port *does* disagree (sanity check) | `stale_port_keys({"CHAT_ENDPOINT": "http://chat:8000/api/x"}, {"chat": 8100})` → correctly flags it. |
+
+No exceptions anywhere in this matrix. **On the warning-vs-failure question: I'd keep it a warning**, for the same reason `NEXTAUTH_SECRET appears to be a template value` next to it is a warning — `agent-doctor`'s failures are reserved for "the environment cannot function" (missing venv, missing deps, missing *required* keys), while a stale port is "may still work, may silently reach the wrong place." Making it a hard failure would also block a developer who deliberately runs a *different*, internally-consistent set of ports (their own remap) — the guard has no way to distinguish "stale template" from "intentional alternate config," and only the former is actually wrong. Escalating a heuristic like that to `exit 1` risks false-positive failures the warning form doesn't.
+
+## `scripts/*.py` outside every lint gate — confirmed, worth its own issue
+
+Checked directly rather than taking it on faith: root `Makefile`'s `lint`/`typecheck` targets delegate only to `apps/web` (`$(WEB_MAKE) lint`); `services/chat/Makefile`'s `lint`/`typecheck` scope is `src/api tests scripts` — that's `services/chat/scripts`, a different directory. `.github/workflows/ci.yml` has no `ruff`/`mypy` step anywhere that names the top-level `scripts/` directory. So every file in `/scripts` (`agent_doctor.py`, `check_toolchain.py`, `check_env_contract.py`, `verify_docs.py`, `check_agent_docs.py`, `e2e_smoke.py`, `release_dry_run.py`, `detect_changed_surfaces.py`) is exercised by `test-scripts` (behavioral unit tests) but never by a style/type gate — which is exactly how two ruff errors have sat unnoticed in `agent_doctor.py` since before this branch. Worth filing.
+
+## Missing coverage / Environment issues
+
+None new this round.
+
+## Commands run
+
+```
+git status --short / git diff --stat
+git diff -- apps/web/next-env.d.ts docker-compose.yml .github/workflows/ci.yml .claude/agents/verifier.md README.md
+grep -n "def test_\|CHAT_ENDPOINT" tests/scripts/test_published_ports.py
+.venv/bin/python -m ruff check scripts/agent_doctor.py
+git stash &amp;&amp; .venv/bin/python -m ruff check scripts/agent_doctor.py &amp;&amp; git stash pop
+make ci                                                        # PASS, exit 0
+grep -n "ruff\|mypy\|lint" Makefile
+grep -rn "ruff\|mypy" .github/workflows/ci.yml
+python -c edge-case probes against agent_doctor.published_ports() / stale_port_keys()
+docker compose ps / curl health checks (final confirmation)
+```
+
+One loose end, not a new finding: `apps/web/next-env.d.ts` still shows as modified (the `root-params.d.ts` import line) — this is the generated-file churn you already filed as #265 last round from running `next dev` live. Flagging only so it isn't mistaken for new, unexplained drift.
+
+## What I did not run, and why
+
+`make test-e2e` / the journey suite — explicitly skipped per your ask, since no runtime code changed (justified above). `make e2e-smoke`, `make docker-init-fresh` — not re-run, same reasoning as prior rounds (would rebuild/recreate containers on a stack I was told to preserve, and nothing in this round's diff touches what either of them exercises). `make release-dry-run` — out of scope, unchanged.</result>
+<usage><subagent_tokens>160555</subagent_tokens><tool_uses>38</tool_uses><duration_ms>1845408</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a3acbd99bc09000ff</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a3acbd99bc09000ff.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Code review — round 2
+
+**This round returns one defect and three refinements, so step 8's loop does not close yet.** Finding A is the defect. Findings B–D are refinements.
+
+Findings 1–3 from the last round are genuinely fixed: I re-ran the fixture mutations and `CHAT_ENDPOINT` 8100→8000 now fails `test_host_side_chat_endpoint_names_the_published_chat_port`, where it drifted green before; the cookie-scoping claim is gone from all three places; and `stale_port_keys` fires correctly on live `.env` state. The ruff pair on `agent_doctor.py` is confirmed pre-existing and byte-identical against `HEAD` — the new code adds none, so #266 is scoped right.
+
+---
+
+## A. The fix covers `.env` but not `services/chat/.env` — **defect** (confidence 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/agent_doctor.py:207-215` and `/home/scottdensmore/Developer/scottdensmore/contoso/README.md:104-114`.
+
+The new check is inside the root-`.env` branch. `chat_env` is parsed twelve lines below (`agent_doctor.py:224`) and never passed to `stale_port_keys`. The README note names `.env` only. But this diff also moved `services/chat/.env.example`'s `DATABASE_URL` from `5432` to `55432`, so every existing `services/chat/.env` is now stale with nothing detecting it and nothing telling anyone.
+
+It is read: `services/chat/src/api/main.py:22` calls `load_dotenv()`, which walks up from `src/api/` and finds `services/chat/.env`. `make dev-chat` runs uvicorn from that directory, so a stale `DATABASE_URL` sends the locally-run chat service — which issues hand-written `asyncpg` queries, not Prisma — at whatever owns host 5432. On the machine that produced #245 that is another project's Postgres, and if the earlier accident already created a contoso schema in it, the queries succeed against the wrong database. That is the same silent-wrong-target scenario as finding 1, one file over, and it is the one where the reads are raw SQL.
+
+Fix: call `stale_port_keys(chat_env, published_ports())` in the chat branch too — `PORT_BEARING_KEYS` needs no change, since absent keys are skipped by the `if not value: continue` guard, so the chat file is simply checked for `DATABASE_URL` and `ALLOWED_ORIGINS`. Name `services/chat/.env` in the README note alongside `.env`. `services/chat/README.md`'s "Option 2: Run directly with Python" is the other place a reader of that flow would look.
+
+## B. The corrected `NEXTAUTH_URL` rationale names the one flow that is provably unaffected — **refinement** (confidence 85)
+
+`docker-compose.yml:31-40`, `tests/scripts/test_published_ports.py:7-10`, `:119-122`, `:151-152`.
+
+All four now say some form of "sign-in succeeds, then the browser is sent off the served port". Sign-in is exactly the flow this app opts out of:
+
+- `apps/web/src/app/login/page.tsx:18-22` — `signIn("credentials", { redirect: false, ... })`, then `router.push("/")`. With `redirect: false` the client returns `{ok, error, url}` and performs no navigation, so `NEXTAUTH_URL` never steers the browser. This is also why `.claude/agents/verifier.md` measured a remapped stack signing in and running the journeys — the comment cites that measurement two lines after making a claim the measurement contradicts.
+
+The flow that actually breaks is **sign-out**:
+
+- `apps/web/src/components/header.tsx:62` — `signOut()` with defaults. In `apps/web/node_modules/next-auth/react/index.js:341-342`, `signOut` unconditionally does `window.location.href = data.url`.
+- `data.url` comes from `core/lib/callback-url.js` → the default `redirect` callback in `core/lib/default-callbacks.js:11-16`: `else if (new URL(url).origin === baseUrl) return url; return baseUrl`. Origin includes the port, and `baseUrl` is derived from `NEXTAUTH_URL`. `apps/web/src/lib/auth.ts:41` overrides only `jwt` and `session`, so the default applies.
+
+So with `NEXTAUTH_URL` left at 3000 and the stack on 3100, the callback URL origin mismatches, the server hands back `http://localhost:3000`, and signing out lands the user on a dead port — or on whatever else holds 3000. (`useSession()` is called without `{ required: true }` in all four call sites, so the client's other `window.location` path is not reachable here.)
+
+The assertion stays justified; only the flow named is wrong. Say sign-out, or "any NextAuth-driven redirect", in those four places. I supplied the imprecise version last round — this is me correcting my own finding, not a new requirement.
+
+## C. `stale_port_keys`'s regex mis-parses DSNs and is order-dependent — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/agent_doctor.py:74`, the `r"://[^/,\s]*?:(\d+)"` search. Measured against the live function:
+
+| value | result |
+| --- | --- |
+| `REDACTED` | `DATABASE_URL names :5, compose publishes :55432` |
+| `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3100` | warns, though the published port is present |
+
+The first is the real bug: non-greedy matching stops at the *password's* leading digits, so a correct DSN warns, and the message names a port that appears nowhere. Passwords beginning with a digit are ordinary. The second is your question — see below. A third, smaller case: a `.env` pointed at the Cloud SQL proxy (`docs/DATABASE.md:36`, `infrastructure/scripts/dev_db_proxy.sh:60`) legitimately names `localhost:5432`, and the warning would tell that developer to "update .env against .env.example", which is wrong advice for them.
+
+Fix, measured against all of the above: `urllib.parse.urlsplit(value).port` per comma-separated element. It returns `55432` for the digit-password DSN, `3100` for the chat endpoint URL, and `None` for both a portless DSN and a portless `https://` origin, so the existing skip behaviour is preserved without a regex.
+
+## D. None of the new `agent_doctor` code is covered, and it fails open — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/agent_doctor.py:32-79`.
+
+`make test-scripts` went 165 → 166: the only new test is the `CHAT_ENDPOINT` assertion. Roughly fifty lines of new parsing logic arrived with none. `tests/scripts/` has a guard module for every comparable root script — `test_check_env_contract.py`, `test_check_agent_docs.py`, `test_verify_docs.py`, `test_release_dry_run.py`, `test_detect_changed_surfaces.py`, `test_e2e_smoke.py` — and `agent_doctor.py` has never had one, so the convention was already thin here, but this change is what put logic worth testing in it.
+
+It also is not executed by any gate. `make ci` is `quick-ci` + `test-scripts` + `build` + `docs-check`; none of those import or run this file, no workflow calls `make agent-doctor`, and `detect_changed_surfaces.py:29` maps the file to the tooling surface, whose target is `make test-scripts`. The merge gate for this change runs nothing that executes the code the change added.
+
+Two concrete consequences rather than a coverage complaint:
+
+- `stale_port_keys(env, ports)` is a pure function over two dicts. A six-line table test is exactly what surfaced finding C — I found both false positives in a single run.
+- `published_ports()` is now a second copy of the parser in `test_published_ports.py:44-66`. When compose formatting changes, the guard copy fails loudly (`test_every_service_publishes_a_port`) while this copy returns `{}`, `stale_port_keys` skips every key, and the warning silently stops existing. Failing open is the class this whole change is about.
+
+Fix: `tests/scripts/test_agent_doctor.py` covering `stale_port_keys` for stale, clean, missing-key, portless and multi-origin values, plus one vacuity assertion that `published_ports()` parses the real `docker-compose.yml` non-empty — that last one is what catches the fail-open drift. If those tests point at a fixture tree, add the module to the fixture-isolation registry in `tests/scripts/AGENTS.md`, which lists per-module constants to rebind and does not yet mention either new module.
+
+---
+
+## Your questions
+
+**Is the regex right for `ALLOWED_ORIGINS`?** Not quite, and for a reason better than the list-order one. Checking only the first origin makes the warning order-dependent: `http://localhost:5173,http://localhost:3100` warns even though the published port is right there. I agree that "first origin only" is acceptable slack for a warning — but the rule that removes the slack costs nothing and is strictly better: warn only when *no* element names the published port. It still catches the case the check exists for (a stale template with a single `:3000` origin), and it stops being sensitive to the order someone happened to add a second origin in. The bigger problem in that regex is the DSN truncation in finding C, and both disappear with `urlsplit(...).port` over comma-split elements.
+
+**Does the README note land in the right place?** The placement is right; the scope is not. An Option 1 reader mostly does not need it — compose sets `NEXTAUTH_URL`, `CHAT_ENDPOINT` and the container's `DATABASE_URL` explicitly, and `make docker-init-fresh` derives the host port from `docker compose port`. The host-side commands that read `.env` are `make migrate-deploy` and `make dev-web`, both documented under Option 2, so that is where the reader who will hit it is standing. What is missing is not Option 1 coverage but `services/chat/.env` (finding A) and the chat README's "Run directly with Python" flow. One caveat on the discovery path you point at: `make agent-doctor` is only reached deliberately or through `make bootstrap`, so someone who set up months ago and just pulls will not see the warning unless they run it — worth naming `make bootstrap` in the note as well.
+
+**Is the `.devcontainer` evidence strong enough to file?** Yes, if you file the checkable claim rather than the conclusion. What is verifiable without opening it: `dockerComposeFile: ../docker-compose.yml` with `service: web`, and that service has no bind mount of the repository (`docker-compose.yml:18-37`); `workspaceFolder: /app`, which in that image is the traced standalone tree copied at `Dockerfile:80`; and `postCreateCommand: npm run setup:web`, which needs the root `package.json` that image does not contain. Add the new fact this change contributes — `forwardPorts: [3000]` and `portsAttributes."3000"` matched `npm run dev` before and no longer do, since the dev script now binds 3100 inside the container. File it as "does the devcontainer still work? evidence suggests the workspace is never mounted — verify, then fix or delete", found while moving the published ports. That is a question with evidence attached, not an assertion about the user's setup, and AGENTS.md's *file at the moment of finding* is satisfied by exactly that.
+
+---
+
+## One factual note, not a finding
+
+`make agent-doctor` still warns on this machine right now:
+
+```
+[WARN] .env host ports disagree with docker-compose.yml — NEXTAUTH_URL names :3000, compose publishes :3100; CHAT_ENDPOINT names :8000, compose publishes :8100; ALLOWED_ORIGINS names :3000, compose publishes :3100.
+```
+
+So the local `.env` is still stale — good evidence the check works, but `make dev-web` here would still reproduce finding 1's scenario. It does not affect your verification: the composed stack sets its own environment explicitly, and `make ci` does not read `.env`.
+
+## What I reviewed
+
+`git diff` across all 19 modified files (`scripts/agent_doctor.py` and `README.md` read in full context, not just the hunks), `git diff --cached` (empty), `git log main..HEAD` (empty — still all uncommitted), and the untracked `tests/scripts/test_published_ports.py` re-read in full. Ran: the guard suite (166/166), the nine fixture mutations from last round plus the new `CHAT_ENDPOINT` one, `stale_port_keys` against ten realistic env values, `urlsplit` against the same, `agent_doctor.py` live, and ruff against both the working and committed copies. Read for finding B: `login/page.tsx`, `header.tsx`, `lib/auth.ts`, and next-auth's `react/index.js`, `core/lib/callback-url.js`, `core/lib/default-callbacks.js`.
+
+Not assessed, and unchanged from last round: anything needing the stack. I ran no compose command and left your containers alone.</result>
+<usage><subagent_tokens>139288</subagent_tokens><tool_uses>19</tool_uses><duration_ms>344723</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Stack unchanged: gcp provider, healthy, untouched.
+
+## Verdict
+
+Verified. `make ci` passes clean on the updated diff, the fix for the `services/chat/.env` gap is correct and I reproduced its exact live behavior, `ports_in`'s `urlsplit` replacement is genuinely more correct than the regex (not differently wrong) and its exception wrapper is load-bearing, and I agree the journeys don't need a re-run.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. `make ci` ran once and passed.
+
+## Results
+
+- `make ci` — **PASS** (exit 0). Web 149/149, chat 60/60, `next build` succeeded, `test-scripts` **177/177** (matches your count exactly — 166 + the new 11-test `test_agent_doctor.py`), `docs-check` 8/8.
+- **Ran `test_agent_doctor.py` standalone too**: 11/11, including `test_reads_the_port_not_a_digit_leading_password` and the fail-open vacuity guard `test_the_real_compose_file_parses_non_empty`.
+- Ruff on `scripts/agent_doctor.py`: still exactly the same 2 pre-existing errors (`EXE001`, `TRY004`), now at line 139 — the line-number shift matches the lines you added above it, confirming nothing new was introduced. Mypy: clean.
+- **Ran `agent_doctor.py` live against this machine's actual `.env` files** rather than trusting the report: it reproduced your finding exactly —
+
+```
+[WARN] .env host ports disagree with docker-compose.yml — NEXTAUTH_URL names :3000, compose publishes :3100; CHAT_ENDPOINT names :8000, compose publishes :8100; ALLOWED_ORIGINS names :3000, compose publishes :3100. ...
+[WARN] services/chat/.env host ports disagree with docker-compose.yml — ALLOWED_ORIGINS names :3000, compose publishes :3100; DATABASE_URL names :5432, compose publishes :55432. ...
+```
+
+  `DATABASE_URL` correctly absent from the root warning (already 55432) and correctly present in the chat one. Exit code 0 (warning, not failure), as designed.
+
+## Widened edge-case probe — chat branch, done directly, not inferred
+
+You're right that last round's matrix tested the function but not the file it's now also wired to. Re-ran the full matrix against `stale_port_keys`/`ports_in` with chat-shaped inputs:
+
+| Shape | Result |
+|---|---|
+| `stale_port_keys({}, PORTS)` (empty chat env) | `[]`, no crash |
+| Chat env with none of the four keys (`ENVIRONMENT`, `LLM_PROVIDER` only) | `[]`, no crash |
+| Digit-leading-password DSN, stale port (`REDACTED`) | Correctly reports `:5432` (not `:5`), flagged as stale against `:55432` |
+| Same DSN shape, current port (`...@localhost:55432/...`) | `[]` — correctly not flagged |
+| Missing `services/chat/.env` on disk | Confirmed by reading `main()`: this is structurally identical to the root branch — `if not CHAT_ENV.exists(): failures.append(...); chat_env = {}`, and `stale_port_keys` is only called in the paired `else`. A missing file never reaches the function at all, so there's no crash surface to test there beyond the guard itself, which was already exercised (this machine's chat `.env` does exist). |
+
+`stale_port_keys` is confirmed to be exactly the same pure function on both branches, as you expected — no divergent behavior found.
+
+## `ports_in` — confirmed genuinely better, and the wrapper is load-bearing
+
+Tested `urlsplit(...).port` directly to find what it actually raises on, rather than assuming the regex's failure mode was the only one:
+
+```
+urlsplit("http://localhost:99999").port   -&gt; ValueError: Port out of range 0-65535
+urlsplit("http://localhost:port").port    -&gt; ValueError: Port could not be cast to integer value as 'port'
+urlsplit("http://localhost:-1").port      -&gt; ValueError: Port could not be cast to integer value as '-1'
+```
+
+Then called `agent_doctor.ports_in()` directly on those same values plus a mixed comma-list containing one: all returned `[]` (or, for the mixed list, correctly recovered the one valid port and dropped the garbage element) — the `try/except ValueError: continue` in `ports_in` is not decorative, it's catching a real, reachable exception. Without it, a `.env` with an out-of-range or malformed port in `ALLOWED_ORIGINS`/`CHAT_ENDPOINT` would turn `agent-doctor` from a warning into a crash — exactly the regression you were checking for. It doesn't exist here. Also independently confirmed the digit-leading-password case resolves to `[55432]`, not `[5]` — the bug the regex had is gone, not relocated.
+
+## Journeys — skipped, and I agree with your reasoning
+
+Confirmed by diff again: the only executable code that changed is `scripts/agent_doctor.py`, still a standalone CLI never imported by `apps/web` or `services/chat` runtime. Everything else (`docker-compose.yml`, `ci.yml`, `README.md`, `services/chat/README.md`, `tests/scripts/AGENTS.md`) is comments, docs, or a new test file. No `apps/web/src` or `services/chat/src` file is in the diff. Agreed — skipped.
+
+## Missing coverage / Environment issues
+
+None new.
+
+## Commands run
+
+```
+git status --short / git diff --stat
+git diff -- docker-compose.yml .github/workflows/ci.yml tests/scripts/AGENTS.md services/chat/README.md .claude/agents/verifier.md
+cat scripts/agent_doctor.py
+cat tests/scripts/test_agent_doctor.py
+make ci                                                                    # PASS, exit 0
+.venv/bin/python -m unittest discover -s tests/scripts -p "test_agent_doctor.py" -v   # 11/11
+.venv/bin/python -m ruff check scripts/agent_doctor.py                     # same 2 pre-existing
+.venv/bin/python -m mypy --config-file services/chat/mypy.ini scripts/agent_doctor.py  # clean
+.venv/bin/python scripts/agent_doctor.py                                   # live run, reproduced both warnings
+python probes: urlsplit(...).port ValueError triggers; agent_doctor.ports_in() against same + mixed-list
+python probes: stale_port_keys against chat-shaped empty/no-key/digit-password-DSN inputs
+docker compose ps / curl health checks (final confirmation)
+```
+
+## What I did not run, and why
+
+Same reasoning as prior rounds, unchanged: `make test-e2e` skipped per your call, confirmed agreed above (no runtime code changed). `make e2e-smoke`, `make docker-init-fresh`, `make release-dry-run` — not re-run; nothing in this round's diff touches what they exercise, and re-running would risk disturbing the stack for no new information.</result>
+<usage><subagent_tokens>184905</subagent_tokens><tool_uses>53</tool_uses><duration_ms>2589624</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a3acbd99bc09000ff</task-id>
+<tool-use-id>toolu_01Ga7Kd6exfyxuHdDobyBwc4</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a3acbd99bc09000ff.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Code review — round 3
+
+**No defects this round. Two refinements.** Per AGENTS.md step 8, that closes the loop: apply these, rerun the focused tests and the `verifier`, record what was applied, and no fresh review round is owed — here or at step 10.
+
+Findings A–D are properly fixed, and I verified rather than took them on trust:
+
+- **A** — `stale_port_keys(chat_env, ...)` is in the chat branch at `scripts/agent_doctor.py:270-280`, and `PORT_BEARING_KEYS`' skip-on-absent guard means the chat file is checked for exactly the two keys it carries.
+- **B** — all four sites now name sign-out, cite `signOut()` assigning `window.location.href`, and say why sign-in is exempt. The `ci.yml` addition that no journey exercises sign-out is correct and is the thing that reconciles the comment with the #240 measurement.
+- **C** — `ports_in()` returns `[55432]` for the digit-password DSN and treats a multi-origin value as stale only when no element matches.
+- **D** — I mutation-tested the new module rather than reading it. Every mutation goes red on the assertion that names it:
+
+| mutation | assertions that failed |
+| --- | --- |
+| `ports_in` reverted to the old non-greedy regex | the digit-password, comma-list, and list-order tests |
+| `published_ports()` forced to return `{}` | `test_the_real_compose_file_parses_non_empty` |
+| `stale_port_keys` stubbed to report nothing | both stale-file tests |
+| `ALLOWED_ORIGINS` remapped to the chat port | `test_a_current_file_reports_nothing`, `test_a_list_containing_the_published_port_is_not_stale` |
+
+That last row also answers your `chat_origin` question empirically — see below. Suite is 177/177, and ruff on the two new modules is clean with `agent_doctor.py` still carrying exactly the two pre-existing errors, line-shifted.
+
+---
+
+## 1. `agent_doctor.py` still carries the retracted sign-in claim — **refinement** (confidence 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/agent_doctor.py:56`, in the `PORT_BEARING_KEYS` comment:
+
+```
+# to whatever now owns the old port, and NEXTAUTH_URL sends the browser off the
+# served port after sign-in. See #245.
+```
+
+This is the fifth site of the claim, written in the same round that corrected the other four. `docker-compose.yml`, both guard docstrings, the assertion message and `ci.yml` now say sign-out; this one still says sign-in, and it sits in the file whose whole job is explaining which keys matter and why. Fix: "…sends the browser off the served port on sign-out", or defer to the compose comment rather than restating it. One line.
+
+## 2. Both migration callouts sit outside the flow that hits the problem — **refinement** (confidence 78)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/README.md:104-118` and `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/README.md:47-52`.
+
+**Root README.** The callout follows Option 2's step 4, but the command that reproduces #245 from a stale `.env` is **step 3**, `make migrate-deploy` — which sources `.env` at `Makefile:163-171` and hands the port straight to `prisma migrate deploy`. A reader with an existing `.env` skips step 2 (`cp .env.example .env` — theirs already exists, so there is nothing to prompt them), runs step 3, and meets the warning afterwards. Move it above the numbered list, under the "**Best for:** developing the Next.js application…" line.
+
+**Chat README.** The callout is at lines 47-52, which is inside `### Option 1: Run with Docker` (heading at line 13; the next heading is at line 54). The Docker flow never reads `services/chat/.env`: the compose `chat` service sets its environment explicitly with no `env_file`, and `.dockerignore` excludes `.env` from the image, so `load_dotenv()` in the container finds nothing. As placed it warns the reader for whom the file is irrelevant and misses the reader of `### Option 2: Run directly with Python` at line 54 — the flow that actually loads it, which is the reason you added the note. Move it below that heading.
+
+---
+
+## Your questions
+
+**Is `chat_origin` better as an explicit `"web"`?** Yes, drop the sentinel. Three reasons, in order of weight:
+
+1. `PORT_BEARING_KEYS` is typed and named as `{key: service}`, and `"chat_origin"` is not a service. The dict stops meaning what it says, and the reader has to find the translation ten lines downstream to recover it.
+2. With `"ALLOWED_ORIGINS": "web"`, the body reduces to `expected = ports.get(service)` — the conditional disappears entirely. Less machinery, and nothing that can be got wrong when a fourth key is added.
+3. The behaviour is already pinned. My fourth mutation remapped `ALLOWED_ORIGINS` to `"chat"` and two tests went red, so the refactor is covered before you make it: if `"web"` is wrong, `test_a_current_file_reports_nothing` says so immediately.
+
+What you lose is the one genuinely surprising fact — that a key configuring the chat service names the *web* origin. That belongs in a comment on the entry, not encoded in a fake service name: `"ALLOWED_ORIGINS": "web",  # chat's key, but it names the origin the browser is on`. You were right to be unhappy with it; it is a special case pretending to be data, and the comment carries it better.
+
+**Does the root README callout read as part of step 4?** No — structurally you got what you wanted. It starts at column 0 after a blank line, which terminates the indented ordered list, so GitHub renders it flush-left as a section-level callout rather than inside step 4's indentation. The problem is ordering, not nesting: it is correctly a standalone callout, standing after the step it needed to precede. See finding 2.
+
+---
+
+## Housekeeping
+
+`apps/web/next-env.d.ts` is modified in the working tree again — it was absent from the tree at round 2 and came back with the build. Not re-raised, per your instruction; flagging only because it decides what lands in the commit. #260 covers it.
+
+I did not re-check `.env` / `services/chat/.env` state this round beyond what `agent-doctor` reports; both are yours and untracked, and neither affects the composed stack's environment or `make ci`.
+
+## What I reviewed
+
+`git diff` across all 21 modified files, with `scripts/agent_doctor.py`, both READMEs, `docker-compose.yml`, `.github/workflows/ci.yml` and `tests/scripts/AGENTS.md` read in full context; `git diff --cached` (empty); `git log main..HEAD` (empty — still all uncommitted); and both untracked guard modules read in full. Ran: the full guard suite (177/177), four mutations against `test_agent_doctor.py` through a scratchpad harness that patches the loaded module rather than the repository, ruff on the three changed/new Python files, and a grep of the whole tree for the sign-in/sign-out rationale text that produced finding 1. Verified the chat README heading boundaries and the compose/`.dockerignore` facts behind finding 2. No compose command was run; your stack was not touched.</result>
+<usage><subagent_tokens>164894</subagent_tokens><tool_uses>9</tool_uses><duration_ms>163042</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All confirmed: `make ci` exit 0, web 149/149, chat 60/60, test-scripts 177/177, docs-check 8/8, ruff still exactly the 2 pre-existing errors (now shifted one line, consistent with the removed conditional), stack still healthy and untouched by me. This is my final report before the coordinator tears the stack down.
+
+## Verdict
+
+Verified. `make ci` passes clean on the final diff, the sentinel refactor is confirmed behavior-preserving by direct comparison of live output (not just test counts), and I independently reproduced the mutation-testing claim without touching the repository. No blockers. This diff is ready to commit and open as a PR from my side.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. `make ci` ran once and passed.
+
+## Results
+
+- `make ci` — **PASS** (exit 0). Web 149/149, chat 60/60, `next build` succeeded, `test-scripts` 177/177, `docs-check` 8/8. Same totals as last round, as expected for a behavior-preserving refactor plus doc reordering.
+- Ruff on `scripts/agent_doctor.py` — still exactly the 2 pre-existing errors (`EXE001`, `TRY004`), now at line 138 (shifted by one, consistent with the conditional line that was deleted). Nothing new.
+
+## Sentinel refactor — confirmed behavior-preserving, from the live run, not just the diff
+
+Ran `scripts/agent_doctor.py` live against this machine's actual `.env` files and diffed the output character-for-character against last round's:
+
+```
+[WARN] .env host ports disagree with docker-compose.yml — NEXTAUTH_URL names :3000, compose publishes :3100; CHAT_ENDPOINT names :8000, compose publishes :8100; ALLOWED_ORIGINS names :3000, compose publishes :3100. Update .env against .env.example; a stale port reaches whatever else owns it rather than failing.
+[WARN] services/chat/.env host ports disagree with docker-compose.yml — ALLOWED_ORIGINS names :3000, compose publishes :3100; DATABASE_URL names :5432, compose publishes :55432. Update it against services/chat/.env.example.
+```
+
+Identical to the prior round in both content and wording — `ALLOWED_ORIGINS` is still being compared against the **web** port (`:3100`) in both warnings, not chat's (`:8100`). Exit 0, unchanged.
+
+Also reproduced the `code-review` mutation claim independently, without modifying the repo: wrote a standalone comparison in a throwaway Python snippet that maps `ALLOWED_ORIGINS` to `"chat"` instead of `"web"` and ran it against a correct value (`ALLOWED_ORIGINS=http://localhost:3100`). The real code correctly reports no drift; the mutated mapping falsely flags it (`ALLOWED_ORIGINS names [3100], compose publishes :8100`) — confirming the sentinel removal didn't just pass by coincidence, the comparison is genuinely pinned to the web port and a regression there is test-visible.
+
+## Doc reordering — confirmed correct
+
+- `README.md`: the migration callout now sits directly under the "Option 2" heading, before the numbered steps — so it's read before step 3 (`make migrate-deploy`, which sources `.env` and is where a stale `DATABASE_URL` would actually run against the wrong database). Previously it followed step 4.
+- `services/chat/README.md`: the note is now under "Option 2: Run directly with Python" rather than "Option 1" — correct, since I confirmed by reading `docker-compose.yml`'s `chat` service definition that it sets environment explicitly with no `env_file:` directive, and the note itself now correctly states `.dockerignore` excludes `.env` from the image, so Option 1 (Docker) genuinely never reads `services/chat/.env`.
+- Fifth "after sign-in" site: grepped all sign-in/sign-out mentions across the changed files — the one remaining "sign-in fails" in `docker-compose.yml` (line 28) is about a missing `NEXTAUTH_SECRET`, an unrelated claim about a different variable, not the retracted port-mismatch claim. All five sites of the retracted claim (`docker-compose.yml`, `ci.yml`, `test_published_ports.py` ×2, `agent_doctor.py`) now consistently say sign-out.
+
+## Journeys — skipped, and I agree with your reasoning
+
+Same conclusion as the last two rounds, reconfirmed: the sentinel refactor and README moves touch no `apps/web/src` or `services/chat/src` file. `scripts/agent_doctor.py` remains a standalone CLI never imported by runtime code. No behavior surface a journey could exercise changed. Skipped.
+
+## Missing coverage / Environment issues
+
+None new. The full history stands: the `.env` LLM_PROVIDER=local vs. gcp trap from round 1 is environmental and pre-existing, not part of this diff, and the stack remains in the `gcp`/healthy state I restored it to after round 1's incident — untouched by every round since.
+
+## Commands run
+
+```
+git status --short / git diff --stat
+git diff -- scripts/agent_doctor.py README.md services/chat/README.md
+grep -rn "sign-in\|sign-out\|signOut" across the changed files
+make ci                                                         # PASS, exit 0
+.venv/bin/python scripts/agent_doctor.py                        # live run, diffed against prior round's output
+.venv/bin/python -m ruff check scripts/agent_doctor.py          # same 2 pre-existing
+python probe reproducing the ALLOWED_ORIGINS-&gt;chat mutation independently
+docker compose ps (final confirmation before handover)
+```
+
+## What I did not run, and why
+
+`make test-e2e` — skipped per your call, agreed above (no runtime behavior changed). `make e2e-smoke`, `make docker-init-fresh`, `make release-dry-run` — not run this round or last, unchanged reasoning: nothing in these last two rounds' diffs touches what they exercise, and this is explicitly the final gate before you tear the stack down yourself, so there's no reason to touch it further.
+
+This is my last action against the stack — I'm making no more calls against it. Go ahead and commit and open the PR; from my side this branch is clean across all five verification rounds (cross-surface `make ci`, the full 130-journey suite, `docker-init-fresh`, and now the drift-detection tooling with live, reproduced confirmation).</result>
+<usage><subagent_tokens>199823</subagent_tokens><tool_uses>64</tool_uses><duration_ms>2985157</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>by9da2huu</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/by9da2huu.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for PR 268 CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>This is a stale notification from an earlier background task (round 2's `make ci` wait-loop, ID `bxpqvlfwp`) that has now been cleaned up/killed — it's not new information and doesn't affect anything. That check already completed successfully at the time (confirmed via the log file directly, exit code 0), and all subsequent rounds, including the final one just reported, have their own independently-verified `make ci` PASS results.
+
+No action needed. My final verification report for this branch stands as delivered: `make ci` passed on the final diff (exit 0, web 149/149, chat 60/60, test-scripts 177/177, docs-check 8/8), the sentinel refactor was confirmed behavior-preserving via live output comparison and an independent mutation probe, doc reordering was confirmed correct, and journeys were skipped by agreement since no runtime code changed. I made no further calls against the stack after that report, as stated.</result>
+<usage><subagent_tokens>201348</subagent_tokens><tool_uses>64</tool_uses><duration_ms>3954251</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeb9db636bc6207ed</task-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeb9db636bc6207ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify published port move" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Another stale notification, this time from round 2's Playwright wait-loop (ID `bj2voszvj`). Same situation as the last one: this is cleanup of an old background wait-command, not new information. That Playwright run already completed successfully at the time — I confirmed it directly via the output file (`130 passed (8.7m)`, exit code 0) before reporting it.
+
+No action needed. This doesn't change anything in my final verification report. All findings, test results, and the final "verified, ready to commit and open the PR" verdict from my last substantive report stand.</result>
+<usage><subagent_tokens>202008</subagent_tokens><tool_uses>64</tool_uses><duration_ms>3984368</duration_ms></usage>
+</task-notification>
+
+---
+
+Ok do that nex
+
+---
+
+<task-notification>
+<task-id>bu32awtg4</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bu32awtg4.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait then re-check rebase and CI state" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bf5skwc4a</task-id>
+<tool-use-id>toolu_01FK5whp4r6h9xpt7itGJ5c7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bf5skwc4a.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for fresh CI on all three rebased PRs" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bczxejpr2</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bczxejpr2.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for 258 rebase and CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+what is next to work on
+
+---
+
+<task-notification>
+<task-id>aa2edeffd8a6f697e</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aa2edeffd8a6f697e.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify local dev surface fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** All three claims in the PR description hold up under independent check, and the requested merge-gate commands pass cleanly. No code changes needed on my end.
+
+## Commands run and results
+
+```
+git status --short
+git diff --stat main...HEAD          # empty: HEAD == main, only working-tree changes
+git status --short                    # used per instructions since detector saw nothing committed
+make -C apps/web ci                   # lint, typecheck, test, build
+make test-scripts
+make docs-check
+```
+
+- `make -C apps/web ci` — pass. `eslint .` clean, `tsc --noEmit` (both app and Playwright configs) clean, journey-coverage check clean, Vitest 154/154 passed (36 files), `next build` succeeded with **no** unsupported/unrecognized-key warning and no distinct ESLint pass reported.
+- `make test-scripts` — pass, 181/181, including the new `tests/scripts/test_local_dev_surface.py` (4 tests: vacuity guard, `sync-env` path resolution, `git check-ignore` on the override, and the fenced-block `--name` scan across all tracked docs).
+- `make docs-check` — pass (`verify_docs.py`, `agent-docs-check`, `test_agent_definitions.py`).
+
+## Judgement on scope: is repo-wide `make ci` warranted?
+
+No, I agree with your assessment. `make ci` = `quick-ci` (web + **chat**) + `test-scripts` + `build` + `docs-check`. The chat surface (`services/chat`) is untouched by any of the five changed files, and none of them (`.gitignore`, `apps/web/Makefile`, `apps/web/next.config.js`, `docs/DATABASE.md`) reach into it. I also confirmed `env-contract-check` (the one root-level check outside the web/docs/test-scripts trio) has its logic exercised via `tests/scripts/test_check_env_contract.py`, which is part of the `test-scripts` run that already passed. Web CI + test-scripts + docs-check is the correct, complete set here; chat's `quick-ci` would be pure overhead.
+
+## Independent verification: does removing the `eslint` block change lint enforcement?
+
+Confirmed it does not — and more strongly than "it never enforced anything." I checked the vendored Next.js docs shipped in `node_modules/next/dist/docs/01-app/03-api-reference/05-config/03-eslint.md`:
+
+&gt; "Starting with Next.js 16, `next lint` is removed. As part of the removal, the `eslint` option in your Next config file is no longer needed and can be safely removed."
+&gt; `v16.0.0` changelog row: "`next lint` and the `eslint` next.config.js option were removed in favor of the ESLint CLI."
+
+I also grepped `node_modules/next/dist/build/index.js` for any ESLint-invocation logic and found none (the only hit was a `// eslint-disable-next-line` comment). So in Next 16 the `eslint` key isn't just inert-by-value, it's not read at all — there is no code path left that would consume it. My own `next build` run above produced no distinct lint step and no config warning, and `npm run lint` (`eslint .`, wired as its own step in `apps/web/Makefile`'s `lint` target and in root `Makefile` line 185) ran and passed independently. Lint enforcement is unchanged by this diff.
+
+## Judgement on `sync-env`: is copying the whole root `.env` into `apps/web/.env` sound?
+
+Sound, with one thing worth flagging. After the `apps/web/ci` run above (which invokes `sync-env` from `lint`, `typecheck`, `test`, and `build`):
+
+- `apps/web/.env` exists and is byte-identical to root `.env` (`diff` empty).
+- It is gitignored by the existing bare `.env` pattern (`.gitignore:49`), independent of the new `/docker-compose.override.yml` line — so it cannot land in a commit.
+- The root `.env` already interleaves web and chat secrets in one file by design (`NEXTAUTH_SECRET`, `DATABASE_URL` alongside `CHAT_API_KEY`, `GEMINI_MODEL_NAME`, `OLLAMA_BASE_URL`, etc. — see `.env.example`), so duplicating it into `apps/web/.env` doesn't create new secret material, only a second gitignored copy of material that was already all in one place. The Docker path is unaffected: `apps/web/Dockerfile` and `docker-compose.yml` don't reference `sync-env` or `apps/web/.env` at all — containers get env vars directly — so this target is purely for the local hybrid `next dev`/`next build` workflow, consistent with the "nothing here touches runtime code" framing.
+
+I don't see a soundness problem. The thing worth flagging (as requested) is that this fix is what makes `apps/web/.env` actually start existing on every contributor's and every agent's machine going forward, whereas before it silently never did — that's a real behavioral change in footprint, not just a bug fix, even though the file itself is correctly ignored.
+
+## Side effect observed (not part of your diff)
+
+Running the merge gate modified a tracked file: `apps/web/next-env.d.ts` gained one line —
+```
++import "./.next/types/root-params.d.ts";
+```
+This is Next's auto-regenerated type-reference file (marked "should not be edited") reacting to the installed Next 16 / Turbopack version; it's unrelated to any of the four fixes and would happen to anyone running `next build` for the first time since the Next 16 upgrade on a checkout where this file wasn't yet regenerated. Per my instructions I did not revert it (`git checkout -- apps/web/next-env.d.ts` would be a destructive op I wasn't asked to perform) — it's currently sitting as an uncommitted modification in your working tree from this verification run. Flagging so you don't mistake it for something I changed on purpose, or commit it thinking it's related to this branch.
+
+## Flakes
+
+None. Everything ran clean on the first pass; no re-runs were needed.
+
+## Missing coverage
+
+- `next.config.js`'s dropped `eslint` block has no automated regression guard (correctly disclaimed in the new test file's docstring) — acceptable, since it's a declaration-only change and `next build`/CI would surface a reintroduction as an unrecognized-key warning if `eslint.ignoreDuringBuilds` were ever added back in error, and lint itself is covered by the separate `npm run lint` step.
+- `SyncEnvTests` is a static parse of the Makefile recipe text (regex over the tab-indented body), not an execution of `make sync-env` against a real filesystem. It correctly catches the `../.env` vs `../../.env` class of bug, but wouldn't catch, say, a `make`-variable-substitution or quoting bug in the same line. Minor; not something I'd block on.
+
+## Environment issues
+
+None encountered. No stack was started (correctly — nothing in this diff touches runtime code, Dockerfiles, or compose), so the port/`LLM_PROVIDER` local constraints noted in memory didn't come into play.
+
+## Not run, and why
+
+- `make ci` (repo-wide) — deliberately not run; see judgement above (chat surface untouched, and its logic that matters here is already covered by `test-scripts`).
+- `make -C services/chat ci` — not run; no chat files changed.
+- `make e2e-smoke` / `make test-e2e` — not run; no runtime code, Dockerfile, or `docker-compose.yml` changed, and no stack was requested or needed. `sync-env` is confirmed unreferenced by the Docker/compose path.
+- `make release-dry-run` — not run; nothing here touches release workflow or `.github/workflows/release.yml`.
+- I did not stash and rebuild on `main` myself to re-derive the "1 warning vs 0" comparison you already measured — I instead verified the stronger, version-level claim directly from Next's vendored docs and build source, which confirms your finding and explains *why* it holds (the option is unread in Next 16, not merely unused by this project).</result>
+<usage><subagent_tokens>51981</subagent_tokens><tool_uses>34</tool_uses><duration_ms>261814</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ae7b0d6c4925cdaa7</task-id>
+<tool-use-id>toolu_019BnmAoggtzKsKj9k7oYFf5</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ae7b0d6c4925cdaa7.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review local dev surface fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/local-dev-surface`
+
+All work is uncommitted — `git log main..HEAD` is empty, so the branch diff is the working tree: 4 modified files plus 1 untracked test module.
+
+### Findings
+
+**1. `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_local_dev_surface.py:190-197` — the fence-only scope misses a runnable command that exists today, and the module docstring claims otherwise. Refinement. Confidence 78.**
+
+Line 22-23 of the docstring states "every `prisma migrate dev` in tracked documentation is checked, not the one file that happened to be wrong." That is not what the code does, and the gap is not hypothetical:
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/CONTRIBUTING.md:44` documents a runnable invocation in an inline code span, outside any fence:
+
+```
+2.  Run `make migrate NAME=&lt;migration-name&gt;` (or `cd apps/web &amp;&amp; npx prisma migrate dev --schema prisma/schema.prisma --name &lt;migration-name&gt;`).
+```
+
+The guard never inspects it. `seen` is 2 today (`README.md:321`, `docs/DATABASE.md:37`); this third one is invisible. Concrete scenario: someone edits that CONTRIBUTING line and drops `--name`, the guard stays green, and the reader gets exactly the interactive-prompt failure #246 was filed for. Root `AGENTS.md` step 4 asks that you write down which mistakes nothing catches — the docstring records the `next.config.js` omission but asserts full coverage on this one.
+
+Suggested fix, which I checked against all four occurrences: key on the invocation form rather than the fence. Match lines containing `npx prisma migrate dev` regardless of fenced state. That admits `CONTRIBUTING.md:44`, `README.md:321` and `docs/DATABASE.md:37` (all three carry `--name`, so it stays green at `seen == 3`), and still excludes the prose mention at `docs/DATABASE.md:21` — "Seeding occurs automatically after `npm install` or during `prisma migrate dev`" — which has no `npx`. That is the case your fence rule was introduced to exclude, and it gets excluded on the property that actually distinguishes it. Then correct the docstring claim to match whichever rule you land on.
+
+Classifying as a refinement: what shipped is correct, the guard does catch the mistake that was there, and the change is strictly additive coverage. **No defects in this round** — the loop can close after applying this, without another review.
+
+### Answers to what you asked challenged
+
+**One branch for four issues.** Keep it, with the commit body naming all four. `#212`, `#246`, `#247` are one slice by any reading. `#207` is the odd one, but the precedent in your own history — `819e420` closing three workflow gaps, `55ffa20` covering the documented-command surface — is that a coherent theme beats one-issue-per-commit here. The rollback argument does not bite either: reverting a five-line removal of a key Next 16 does not read is free. Not worth the split.
+
+**Copying the real Makefile into a fixture tree.** Reasonable, and better than the alternative. `apps/web/Makefile` has no `include`, and `sync-env`'s recipe references no variable — it is a literal `if`/`cp`. If someone adds an `include` later, the failure is loud and immediate (`make` errors on a missing include and the test fails on `returncode == 0` with the include path in `result.stderr`), not silent. A trap is a dependency that breaks quietly; this one names itself.
+
+**`#207` without a guard.** Agreed, and the evidence is stronger than "declaration check". I confirmed `apps/web/node_modules/next@16.3.0` has no `eslint` key in `dist/server/config-schema.js`, no `ignoreDuringBuilds` anywhere in `dist/`, and no `next-lint.js` in `dist/cli/`. Nothing reads the key, and `npm run lint` is a bare `eslint .`, so removing it cannot disable a build-time lint gate. A regression would be re-adding a key that does nothing — which `next build` already reports, in CI, as the warning you measured.
+
+**Skipping repo-wide `make ci`.** Agreed. Every changed surface's gate ran: web (`make -C apps/web ci`), scripts (`make test-scripts`), docs (`make docs-check`). The only piece `make ci` adds is `make -C services/chat ci`, and no chat input moved.
+
+I re-ran `tests/scripts/test_local_dev_surface` myself: 6/6 in 0.03s.
+
+One thing I verified that you may have assumed rather than checked, and it is in your favour: `ComposeOverrideTests` is stronger than its docstring claims. `git check-ignore` returns **1** for a tracked path even when a matching pattern exists — I confirmed this in a scratch repo — so a force-added `docker-compose.override.yml` fails the test rather than passing it. The guard covers the committed case, not just the pattern.
+
+### Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/README.md:321` — uses `--name your_migration_name` while `CONTRIBUTING.md:44` and `docs/DATABASE.md:37` now both use `&lt;migration-name&gt;`, and the canonical example in `AGENTS.md` is `add-order-status`. Three spellings of the same placeholder across three docs.
+
+### What I reviewed
+
+`git diff` (`.gitignore`, `apps/web/Makefile`, `apps/web/next.config.js`, `docs/DATABASE.md`); `git diff --cached` (empty); `git diff main...HEAD` (empty); untracked `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_local_dev_surface.py` read in full. Context read: root and `apps/web` Makefiles, root `AGENTS.md`, `apps/web/AGENTS.md`, `tests/scripts/AGENTS.md`, `.env.example`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/ci.yml` (`web-ci`, `full-ci-main`, `onboarding-smoke`), root and web `package.json`, `.husky/pre-commit`, and Next 16's installed config schema and CLI.
+
+I confirmed no CI job creates a root `.env` before `make -C apps/web ci` or `make ci`, so the now-working `sync-env` stays a no-op in CI, and the Docker build calls `npm run build` directly without going through the Makefile. Nothing here needed a running stack. I did not assess `node_modules` contents beyond the two schema and CLI checks above.</result>
+<usage><subagent_tokens>68236</subagent_tokens><tool_uses>35</tool_uses><duration_ms>387958</duration_ms></usage>
+</task-notification>
