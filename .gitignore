@@ -139,3 +139,10 @@ docs/workshop/site
 # apps/web/package-lock.json. Anchored so that one, which the exception above
 # deliberately keeps, stays tracked.
 /package-lock.json
+
+# Machine-local compose overrides. `docker compose` auto-loads this file without
+# being asked, so a committed one applies to everyone and to CI silently — which
+# is worse than no override at all. It is the standard way to carry a port remap
+# around a collision on a shared machine, so it wants ignoring rather than
+# discouraging. Anchored to the root, where compose looks for it. See #247.
+/docker-compose.override.yml

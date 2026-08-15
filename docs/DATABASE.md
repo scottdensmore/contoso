@@ -34,7 +34,7 @@ Access the private database locally using the **Cloud SQL Proxy**.
 With the proxy running, set your `DATABASE_URL` and execute:
 ```bash
 export DATABASE_URL="postgresql://prismauser:<password>@localhost:5432/contoso-db"
-cd apps/web && npx prisma migrate dev --schema prisma/schema.prisma
+cd apps/web && npx prisma migrate dev --name <migration-name> --schema prisma/schema.prisma
 ```
 
 ### 3. Database Tools (psql, pgAdmin)
