@@ -13,8 +13,14 @@ setup: ## Install web dependencies and generate Prisma client
 	$(NPM) ci --workspaces=false --include=dev --no-audit --no-fund
 	$(MAKE) prisma-generate
 
+# `../../.env`, not `../.env`. The recipe runs with apps/web as its working
+# directory, so `../.env` is `apps/.env` — a file that has never existed,
+# because `apps/` holds only `web/`. The `-f` guard then made it silent: the
+# whole body sat behind a condition that was always false, so it exited 0 and
+# printed nothing on every run, and a missing root .env looked identical to a
+# wrong path. See #212.
 sync-env: ## Sync repo root .env into apps/web/.env when present
-	@if [ -f ../.env ]; then cp ../.env .env; fi
+	@if [ -f ../../.env ]; then cp ../../.env .env; fi
 
 dev: ## Run web app locally with hot reload
 	$(MAKE) sync-env
