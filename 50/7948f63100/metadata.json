@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "507948f63100",
+  "strategy": "manual-commit",
+  "branch": "docs/275-260-issue-refs",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/web/next-dev-origins.test.ts",
+    "apps/web/next.config.js"
+  ],
+  "sessions": [
+    {
+      "metadata": "/50/7948f63100/0/metadata.json",
+      "transcript": "/50/7948f63100/0/full.jsonl",
+      "compact_transcript": "/50/7948f63100/0/transcript.jsonl",
+      "content_hash": "/50/7948f63100/0/content_hash.txt",
+      "prompt": "/50/7948f63100/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 394,
+    "cache_creation_tokens": 263946,
+    "cache_read_tokens": 34345380,
+    "output_tokens": 138776,
+    "api_call_count": 197,
+    "subagent_tokens": {
+      "input_tokens": 22,
+      "cache_creation_tokens": 28710,
+      "cache_read_tokens": 118112,
+      "output_tokens": 4936,
+      "api_call_count": 11
+    }
+  }
+}
