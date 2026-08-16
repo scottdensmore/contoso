@@ -2392,3 +2392,66 @@ None. Host ports 3100/8100/55432 were exactly the ones in use by the handed-off 
 - deleted: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/deferred-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/deferred-image.test.tsx`</result>
 <usage><subagent_tokens>71340</subagent_tokens><tool_uses>44</tool_uses><duration_ms>801419</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a8a4aecfeb454fa39</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a8a4aecfeb454fa39.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review content-visibility migration" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I've completed the review. Here is what I found.
+
+## Verdict
+
+**Approved — no defects.** One refinement.
+
+I independently confirmed the mechanism actually works rather than taking the class name on trust. Against your running stack on `:3100`:
+
+- The compiled stylesheet (`/_next/static/chunks/1l7s86i7di20k.css`) contains `.\[content-visibility\:auto\]{content-visibility:auto}`, so the Tailwind arbitrary property really does emit a rule — the class name is not inert.
+- `/products/category/tents` serves 21 boxes carrying the class; `/` serves 20 `&lt;img&gt;` elements, all `loading="lazy"`, all in the server HTML. That is the `6 -&gt; 20` / `12 -&gt; 21` column of your table, verified from the served bytes.
+
+## Finding 1 — unrelated generated-file change in the diff
+
+**Refinement.** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`, line 4:
+
+```
++import "./.next/types/root-params.d.ts";
+```
+
+This has nothing to do with content-visibility deferral. `next` is pinned at `16.3.0` on `main` and this branch does not touch `apps/web/package.json`, so the checked-in `next-env.d.ts` was simply stale relative to the pinned Next version — any `next build` on `main` regenerates this same line. It landed here because you ran `make -C apps/web ci`.
+
+Scenario in which it produces a wrong result: it rides into a `refactor(web): ...` commit as unexplained content, and the next person bisecting a typegen problem finds it attributed to an image-deferral change. Step 5 asks you to remove accidental or unrelated changes; step 9 says do not combine unrelated work; *Change boundaries* says prefer keeping generated artifacts out of commits.
+
+Suggested fix: either drop it from this commit, or — since reverting it means the worktree re-dirties on every build — file it per *Unrelated findings become issues* (checked-in `next-env.d.ts` is stale for Next 16.3.0) and land it as its own one-line chore. Do not silently fold it in.
+
+Confidence: **80**.
+
+## Answers to what you asked to be challenged
+
+**Is deleting this much justified?** Yes. The deletion is not the point — the seam is. I traced every consumer: `grep` for `DeferredImage`, `deferred-image`, `ROOT_MARGIN`, `IntersectionObserver`, `noscript`, `eager` across `src/`, `e2e/`, `docs/`, `tests/`, `scripts/` turns up only prose references in the new docstrings. The one thing the old mechanism bought that CV does not is the 1200px `rootMargin` lead, and your fling column is the measurement that covers it (3/3, 6/6, 2 vs 3, 9 vs 7). Two PRs unwound on that evidence is fine.
+
+**Is the conditional the right shape?** Yes, and it should stay a conditional rather than moving the empty state out of the box. The box carries `aspect-square w-full overflow-hidden rounded-3xl bg-gray-200`; the empty state's `flex h-full w-full items-center justify-center` depends on that box for its height. Hoisting it would duplicate the box or lose the centring. `product.image` is `string | null`, so the `&amp;&amp;` yields `null`/`""`/the class, all of which `clsx` handles, and it uses exactly the same truthiness as the ternary below it — the two cannot drift apart. `page.test.tsx:95` pins both directions, which is the right place for it since no seeded product lacks an image.
+
+**Was `contain-intrinsic-size` lucky?** Not lucky — correct, and for the reason stated. `content-visibility: auto` adds size containment only while skipped, and size containment zeroes the *intrinsic* size. The used size here never comes from intrinsic sizing: `w-full` resolves against a definite grid track, and `aspect-square` gives `aspect-ratio: 1/1`, so the height is computed from a definite width in both states. That is why document height is identical and why `window.scrollTo(0, document.body.scrollHeight)` in `image-deferral.spec.ts:221` is not a flake. A `contain-intrinsic-size` here would be dead weight.
+
+**Is the class-name assertion in `listing-image.test.tsx` too convenient?** It is redundant, not a hole, so I am not raising it. I checked the thing that would have made it a hole: whether the effective behaviour is gated anywhere CI actually runs. `.github/workflows/ci.yml` line 233 fires `integration-e2e` on any PR touching web, and line 322 runs `make test-e2e` — so `image-deferral.spec.ts` is a required check, and its home-page bound of `&lt;= 12` against a pre-fix 18 fails loudly if the declaration ever stops producing CSS. The unit assertion cannot fail for the right reason, but nothing depends on it doing so, and the docstring says as much. Different from the two you had corrected today, where the declaration check was the *only* check.
+
+On test quality generally: the new e2e test at `image-deferral.spec.ts:136` genuinely fails against the old implementation (6–12 images in HTML vs. 21), so it is a real regression guard rather than a rename. `page.test.tsx:95` asserts both branches. Neither is vacuous.
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts` — the checked-in file is stale for the pinned `next@16.3.0`; every build on `main` dirties the worktree. Root cause of Finding 1.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/image-deferral.spec.ts:175` — `expect(withImage).toBe(cards)` compares a count of image-bearing boxes against a count of card links. If the seed ever gives a `tents` product a null image, this fails with "cards whose image is not in the server-rendered HTML" for a reason that is not that. Pre-existing in kind (the prior `withoutImage === 0` had the same coupling), and not worth changing now.
+
+## What I reviewed
+
+Branch `refactor/273-content-visibility-deferral` has no commits ahead of `main`, so `git diff main...HEAD` is empty and the entire change is in the working tree. Nothing staged, nothing untracked. Reviewed all 10 unstaged paths: `apps/web/e2e/image-deferral.spec.ts`, `next-env.d.ts`, `src/app/page.tsx`, `src/app/products/category/[slug]/page.{tsx,test.tsx}`, `src/components/listing-image.{tsx,test.tsx}`, `src/test/setup.ts`, and the two deletions `src/components/deferred-image.{tsx,test.tsx}` (read from `HEAD` to judge what was lost). Also read for context, unchanged: `apps/web/e2e/image-delivery.spec.ts` (the `LCP_SURFACES` table and the overfetch collector both key off the *first* optimised image, which is always on screen, so content-visibility does not weaken them), `apps/web/package.json` (`clsx@^2.1.1` is a declared dependency), and `.github/workflows/ci.yml`.
+
+Governing runbooks applied: root `AGENTS.md` and `apps/web/AGENTS.md`. `services/chat/AGENTS.md` and `tests/scripts/AGENTS.md` do not cover any changed path — no chat payload, Prisma schema, SQL, container input, or requirement manifest is touched, so the seam rules have no second side to check here.
+
+I did not re-run any verification, per your instruction, and I did not touch the stack on `:3100` beyond read-only HTTP GETs.</result>
+<usage><subagent_tokens>85204</subagent_tokens><tool_uses>33</tool_uses><duration_ms>438876</duration_ms></usage>
+</task-notification>
