@@ -67,15 +67,27 @@ updates:
         update-types:
           - "version-update:semver-major"
     groups:
+      # `eslint-config-next` matches `eslint-*` but is published from the
+      # Next.js repository and carries Next's version numbers, so it moves with
+      # `next` rather than with ESLint. Grouped by the pattern alone it was held
+      # hostage by an unrelated blocker: while the ESLint 10 major above was
+      # unmergeable, #223 bundled the two together and neither could land, and
+      # `main` sat with `next` at 16.3.0 against `eslint-config-next` 16.2.12.
+      #
+      # Excluded here rather than reordered, because a dependency joins the
+      # first group whose patterns match it and `eslint` is declared first.
       eslint:
         patterns:
           - "eslint"
           - "eslint-*"
           - "@typescript-eslint/*"
+        exclude-patterns:
+          - "eslint-config-next"
       next:
         patterns:
           - "next"
           - "@next/*"
+          - "eslint-config-next"
       react:
         patterns:
           - "react"
