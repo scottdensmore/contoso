@@ -542,3 +542,60 @@ git status --short   # post-build check
 - `make docs-check` — not run; the two changed files are TypeScript/JS source files, not Markdown, so this isn't the applicable gate for this scope.</result>
 <usage><subagent_tokens>15630</subagent_tokens><tool_uses>5</tool_uses><duration_ms>100036</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a757a1b9a237ea889</task-id>
+<tool-use-id>toolu_01V161Kt8ybu9As3qqpVJSdd</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a757a1b9a237ea889.output</output-file>
+<status>completed</status>
+<summary>Agent "Review issue-reference correction" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Approved — no defects.** Nothing scored at or above 75. The change is a four-line comment edit; the references it introduces are correct against the live state of the issues.
+
+## Question 1 — are the references accurate?
+
+Checked against GitHub, not against your description.
+
+**`next-env.d.ts` → #260: correct.** #260 is OPEN, titled "next-env.d.ts is stale after Next 16.3.0, so every build dirties the worktree". Its filed body covers only the `next build` rewrite, so on the body alone the attribution would be too narrow for a comment that says "rewrites on boot" — but your comment of 2026-08-16T02:47:04Z on that issue moves the dev half in explicitly, with the measured dev-path diff (`.next/dev/types/routes.d.ts` plus the `root-params` line) and the generator (`writeAppTypeDeclarations.js`). #260 is the right home for the dev-boot rewrite of that file as the issue stands today.
+
+**`tsconfig.json` → #275: correct.** #275 is OPEN and its body is re-scoped exactly as you describe — title and content are now the doubled `.next/dev/dev/types/**/*.ts` include and nothing else.
+
+**#265 correctly absent.** CLOSED as COMPLETED, and `grep` finds no `nextjs-agent-rules` marker block anywhere in the tracked tree, so the `agentRules: false` fix held and the comment is right not to name it.
+
+**No stale references left elsewhere.** `#260`, `#265` and `#275` appear in exactly three places in the repository — the two lines you changed and the test docblock's continuation line. There is no fourth site that the re-scope silently invalidated.
+
+## Question 2 — is naming two issue numbers the right call?
+
+Yes, naming them is right. Both comments exist to explain why the change stops where it does; "the rest is not fixed here" without a pointer is unactionable, and the alternative — describing the churn instead — is what the surrounding paragraphs already do at length, so a number is the only thing a reader cannot reconstruct.
+
+The drift protection is not anonymity, it is naming the **file** beside the number. `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts:36-37` now does this, and that is precisely what makes it survive another re-scope: if #275 moves again, `tsconfig.json` still identifies what was meant. `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:70` does not — "is #260 and #275" names neither file, so it carries the same fragility the old single-reference version had, just doubled. Worth a few words there (`... rewrites on boot is #260 (\`next-env.d.ts\`) and #275 (\`tsconfig.json\`)`). **Refinement**, below the reporting bar, offered because you asked.
+
+## Question 3 — surrounding comments after the split
+
+No content inconsistency. The `agentRules` paragraph above still scopes itself to `AGENTS.md` and `CLAUDE.md`, so "the rest" resolves cleanly to the two remaining files; the test docblock's "two tracked files" count is unchanged and matches the two now named.
+
+One cosmetic artifact: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:70-73` is no longer filled to width — `// fixed here.` ends with roughly 60 columns unused, and the next sentence starts a fresh line rather than continuing it. Every other comment block in the file wraps flush. Refilling the three lines fixes it. **Refinement**, below the reporting bar, no rule in any `AGENTS.md` covers it.
+
+## Worktree state before you commit
+
+`apps/web/next-env.d.ts` is currently modified in the working tree (`+import "./.next/types/root-params.d.ts";`), which is in scope for this review. It is the #260 build-shaped churn, it matches #260's recorded diff exactly, and you have already said it will be restored — so it is not scored. It is the same file that the #282 review had to catch as a defect, and #260's own comment argues committing either variant leaves the other dirty, so restore rather than commit it.
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:70` and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts:35` — both say the dev server rewrites these files "on boot". #275's body says the `tsconfig.json` append happens once a dev server **has served a page**, not at boot. A reader who boots a dev server, sees `tsconfig.json` unchanged and concludes #275 is fixed would be wrong. Pre-existing: the same "on boot" phrasing covered the same tsconfig claim before this change, on lines the change did not touch.
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; the branch `docs/275-260-issue-refs` sits at `c1b506d` with no commits ahead of `main`. All work is unstaged.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`.
+- `git diff --cached` — empty. No untracked files.
+- Surrounding context: both changed files in full, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/tsconfig.json` (no doubled include present), root `AGENTS.md` and `apps/web/AGENTS.md` including both `## Code Review Rules` sections, and a repository-wide grep for the three issue numbers.
+- Live GitHub state of #260, #265, #275, #228, #282 including issue comments.
+
+Could not assess: nothing. There are no generated or binary artifacts in this diff, and I did not re-run the verifier's `make -C apps/web ci` — a comment-only change cannot invalidate it, though note that running it is what produced the `next-env.d.ts` churn above.</result>
+<usage><subagent_tokens>43220</subagent_tokens><tool_uses>13</tool_uses><duration_ms>148044</duration_ms></usage>
+</task-notification>
