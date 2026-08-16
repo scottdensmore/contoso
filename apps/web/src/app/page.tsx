@@ -111,19 +111,6 @@ export default async function Home() {
               >
                 <div className="items-center">
                   <ListingImage
-                    // The first two categories, not just the first. A deferred
-                    // image cannot be requested until this component hydrates,
-                    // and that wait grows with the device: measured at +237ms
-                    // unthrottled but +2.0s at 6x CPU throttle. At 1440x2000
-                    // nine cards are above the fold, so covering only the
-                    // first category left six of them as empty boxes for that
-                    // whole window before the request even started.
-                    //
-                    // Two categories covers the first screen at every viewport
-                    // measured up to 1440x2000, for three extra server-rendered
-                    // images. Everything below is one to four viewports down --
-                    // see #230 for the measured positions.
-                    eager={i <= 1}
                     src={product.images[0]}
                     // Decorative, because the link already says it. The card
                     // is one link whose text is the product's name, so

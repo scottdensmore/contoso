@@ -5,33 +5,30 @@ import { test, expect, type Page } from '@playwright/test'
  * every card on the page.
  *
  * `loading="lazy"` is not a viewport test. Chrome fetches lazy images within a
- * threshold that is far larger than the viewport, measured here at roughly
- * 3900px: at 1440x900 the home page's document is 5038px tall and it fetched
- * 18 of its 20 product images before any scrolling, the deepest one 4.3
- * viewports down. Only about three are on screen.
+ * threshold measured at roughly 3900px: at 1440x900 the home page's document
+ * is 5038px tall and it fetched 18 of its 20 product images before any
+ * scrolling, and the category grid's document is 3965px, so it fetched all 21.
  *
- * Each of those is a separate `sharp` decode-and-resize of a 1024px source. On
- * a two-core runner they measured a median of 2343ms each, and an unrelated
+ * Each is a separate `sharp` decode-and-resize of a 1024px source. On a
+ * two-core runner they measured a median of 2343ms each, and an unrelated
  * navigation issued while they were in flight went from 78ms to 500ms. In CI,
  * where the browser, database and chat service share those two cores, the same
  * contention aborted a navigation outright and failed `browse.spec.ts` (#230).
  *
- * So the defect is the count, not the cost per image: most of that work is for
- * cards nobody has scrolled to. These journeys pin the count down.
+ * So the defect is the count, not the cost per image. `content-visibility:
+ * auto` on each card's box is what bounds it: the browser skips rendering an
+ * off-screen subtree and does not fetch images inside one (#273).
  *
- * They deliberately measure requests to `/_next/image` rather than `<img>`
- * elements or `loading` attributes. The attribute is already correct and has
- * been throughout — asserting on it would pass on today's tree and prove
- * nothing. What went wrong is only visible in what the browser actually asked
- * the server for.
+ * These journeys measure requests to `/_next/image` rather than `<img>`
+ * elements, `loading` attributes or the CSS declaration itself. The attribute
+ * was already correct throughout and the declaration is a declaration —
+ * asserting on either would pass on a tree where nothing works. What went
+ * wrong is only visible in what the browser actually asked the server for.
  *
- * **Both listing surfaces.** The category grid was worse than the home page,
- * not merely similar: at 1440x900 `/products/category/tents` requested **21 of
- * its 21** images before any scrolling, on a 3965px document that Chrome's
- * threshold swallows whole. The two surfaces share `DeferredImage` but not
- * their bounds, because they differ in card count and in what is preloaded —
- * the category grid keeps `priority={i < 3}`, whose cutoff is measured against
- * largest-contentful-paint rather than against anything here. See #263.
+ * **Both surfaces, different bounds.** They differ in card count, document
+ * height and what is preloaded: the category grid keeps `priority={i < 3}`,
+ * whose cutoff is argued from largest-contentful-paint rather than from
+ * anything here (#180).
  */
 
 /** Distinct optimiser URLs requested, recorded from navigation onward. */
@@ -53,12 +50,10 @@ const PRODUCT_CARD =
  * matters is "a small multiple of what is on screen", and tying it to one
  * integer would make an unrelated layout change look like this regression.
  *
- * 12 rather than 8, because the two knobs that set the real count are tuned
- * against pop-in rather than against this bound, and 8 silently forbade both.
- * At a 1200px margin with the first two categories eager, the count measured 9
- * at desktop and tablet and 5 at phone; Chrome unaided fetches 20. A bound at
- * 8 would have made either knob look like a regression while the page was
- * getting better.
+ * 12 rather than 8: with `content-visibility` the count measured 9 at desktop,
+ * 12 at tablet and 5 at phone, against the 18 Chrome fetches unaided. A bound
+ * at 8 would call the tablet figure a regression while the page is doing a
+ * third of the work it used to.
  */
 const MAX_INITIAL_REQUESTS = 12
 
@@ -66,11 +61,14 @@ const MAX_INITIAL_REQUESTS = 12
 const CATEGORY_PATH = '/products/category/tents'
 
 /**
- * The category grid's `priority={i < 3}` cutoff, named because two assertions
- * below depend on it meaning the same thing: the preload count *is* this
- * number, and the first-screen journey only asserts anything once a card
- * beyond it is visible. Those cards carry an image whatever `eager` is set to,
- * since `priority` implies eager, so a floor at or below this measures nothing.
+ * The category grid's `priority={i < 3}` cutoff, named because the preload
+ * count *is* this number and the assertion below should say so rather than
+ * repeat the literal.
+ *
+ * It used to carry a second job — a vacuity floor for a journey that only
+ * measured cards on the first screen — and that journey is gone with the
+ * mechanism it guarded. What replaced it asserts about every card on the page,
+ * so it needs no floor tied to this cutoff.
  */
 const CATEGORY_PRIORITY_CARDS = 3
 
@@ -78,20 +76,12 @@ const CATEGORY_PRIORITY_CARDS = 3
  * The category grid's own bound. Higher than the home page's because the grid
  * is denser and the document shorter — 21 cards in 3965px against 20 in 5038 —
  * so a margin measured for one surface reaches proportionally more of the
- * other. Measured after the fix: 12 at desktop, 8 at tablet, 6 at phone,
- * against 21, 16 and 7 before it. Phone is 6 rather than 4 because
- * `eager={i < 6}` covers two cards outside the margin at that width — the
- * price of a whole first screen, paid where the grid is a single column.
+ * other. Measured with `content-visibility`: 12 at desktop, 10 at tablet and 4
+ * at phone, against 21, 16 and 7 before it.
  *
  * 15 leaves room for the grid gaining a row without this reading as the
  * regression it is meant to catch, which is the whole page being fetched at
  * once. Anything at or near 21 is that regression.
- *
- * This bounds the count from *above* only, which is deliberately not enough on
- * its own: narrowing `eager` makes every number here smaller and every
- * assertion greener while putting first-screen cards back behind hydration.
- * That direction is held by the first-screen journey below, not by this
- * constant.
  */
 const MAX_INITIAL_CATEGORY_REQUESTS = 15
 
@@ -143,29 +133,17 @@ test.describe('listing image deferral', () => {
     ).toBeLessThanOrEqual(MAX_INITIAL_CATEGORY_REQUESTS)
   })
 
-  test('every card on the first screen is server-rendered, not waiting on hydration', async ({
+  test('every card ships its image in the HTML, so a blocked script cannot empty the grid', async ({
     page,
   }) => {
-    // 834x1112, because that is where the hole was: the grid is
-    // `sm:grid-cols-2` here, so card 3 opens the second row and sits 251px on
-    // screen -- the same 251px #180 records. At 1440x900 the equivalent cards
-    // are only 63px down, which is why this asserts at the tablet width.
-    await page.setViewportSize({ width: 834, height: 1112 })
+    await page.setViewportSize({ width: 1440, height: 900 })
 
-    // Hydration is blocked, not JavaScript. `javaScriptEnabled: false` would
-    // be the obvious way and is worse than useless here: with scripting off,
-    // `<noscript>` content becomes live DOM, so `DeferredImage`'s fallback
-    // makes every card report an image and this passes on 21 of 21 whether or
-    // not anything was server-rendered -- it passes with `eager` deleted.
-    // Blocking the chunks instead leaves scripting on and the observer never
-    // running, so nothing can heal the state before it is read. Measured, the
-    // two approaches differ 6 against 21.
-    //
-    // The `*.js` suffix is deliberate, not decoration: Next 16.3 with Turbopack
-    // serves the stylesheet out of `_next/static/chunks/` alongside the script
-    // chunks, so the obvious `**/_next/static/chunks/**` blocks the CSS and
-    // collapses the grid to one column -- which would trip the floor below
-    // with a message about cards while the real cause was the stylesheet.
+    // Scripting stays on and the chunks are blocked, which is the state this
+    // asserts about: a chunk that 404s after a deploy, a content blocker, a
+    // CSP rejection, a dropped request. `javaScriptEnabled: false` would be
+    // the wrong tool — with scripting off, `<noscript>` content becomes live
+    // DOM, so a page could pass this while shipping nothing usable to the
+    // state that actually occurs.
     let aborted = 0
     await page.route('**/_next/static/**/*.js', (route) => {
       aborted += 1
@@ -174,45 +152,27 @@ test.describe('listing image deferral', () => {
 
     await page.goto(CATEGORY_PATH)
 
-    // The abort is this journey's precondition, and a glob that stops matching
-    // fails open: measured, pointing it at `**/*.mjs` or at `_next/chunks/**`
-    // leaves `aborted` at 0 and every assertion below still passes, because on
-    // a fast machine the read beats hydration anyway. That would quietly turn a
-    // deterministic check into a race -- green here, and green-while-broken on
-    // the two-core runner this file keeps citing. Measured at 10 aborts.
-    expect(aborted, 'blocked no script chunks, so hydration was not prevented').toBeGreaterThan(0)
+    // The abort is the precondition, and a glob that stops matching fails
+    // open: pointing it at a path Next does not use leaves every assertion
+    // below passing, because nothing here needs hydration to succeed.
+    expect(aborted, 'blocked no script chunks, so this proves nothing').toBeGreaterThan(0)
 
-    const naked = await page.evaluate((selector) => {
+    const cards = await page.locator(PRODUCT_CARD).count()
+    const withImage = await page.evaluate((selector) => {
       const boxes = [...document.querySelectorAll(`${selector} div.aspect-square`)]
-      const onScreen = boxes.filter((box) => {
-        const rect = box.getBoundingClientRect()
-        return rect.top < window.innerHeight && rect.bottom > 0
-      })
-      return {
-        onScreen: onScreen.length,
-        withoutImage: onScreen.filter((box) => !box.querySelector('img')).length,
-      }
+      return boxes.filter((box) => box.querySelector('img')).length
     }, PRODUCT_CARD)
 
-    // Vacuity, and the literal is the `priority` cutoff rather than a round
-    // number: cards below it carry an image whatever `eager` is, so unless a
-    // card *beyond* it is on screen this journey asserts nothing about the
-    // thing it exists for. Relaxing this to `> 0` would look like loosening a
-    // brittle constant and would silently restore that vacuity.
-    expect(
-      naked.onScreen,
-      `only ${naked.onScreen} cards on the first screen, so this asserts ` +
-        `nothing past the priority cutoff of ${CATEGORY_PRIORITY_CARDS}`,
-    ).toBeGreaterThan(CATEGORY_PRIORITY_CARDS)
+    expect(cards, `${CATEGORY_PATH} rendered no product grid to measure`).toBeGreaterThan(
+      MAX_INITIAL_CATEGORY_REQUESTS,
+    )
 
-    // What this catches that the request-count journeys cannot: they bound the
-    // count from above, so narrowing `eager` back makes every one of them
-    // greener while returning a visitor to a grey box for up to 2.4s on a
-    // throttled device. That asymmetry is how the hole got in once already.
-    expect(
-      naked.withoutImage,
-      'cards on the first screen with no server-rendered image',
-    ).toBe(0)
+    // Every one, not just the first screen. This is what #273 bought over the
+    // IntersectionObserver it replaced: that mechanism put 6 to 12 images in
+    // the HTML and left the rest as empty boxes with no `<noscript>` recourse
+    // when a chunk failed (#261). Deferral here costs the browser nothing to
+    // undo, because it never needed JavaScript to begin with.
+    expect(withImage, 'cards whose image is not in the server-rendered HTML').toBe(cards)
   })
 
   test('the category grid still preloads its first row', async ({ page }) => {

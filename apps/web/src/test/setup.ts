@@ -22,33 +22,6 @@ if (!window.matchMedia) {
   })) as unknown as typeof window.matchMedia
 }
 
-// jsdom implements no intersection logic either, so `IntersectionObserver` is
-// absent and any component that defers work until an element is near the
-// viewport throws on mount rather than failing an assertion.
-//
-// This one observes and never fires, which for a deferred image means the
-// not-yet-visible case — the same choice as `matchMedia` above, where the
-// default is the state a component starts in rather than the one it reaches. A
-// test that cares about what happens when the element does arrive drives the
-// callback itself; `listing-image.test.tsx` does, and that is the only way the
-// visible case should ever be reached, since a default that fired immediately
-// would make every deferral test pass without deferring anything.
-if (!window.IntersectionObserver) {
-  window.IntersectionObserver = class {
-    readonly root = null
-    readonly rootMargin = ''
-    readonly thresholds: readonly number[] = []
-    observe = vi.fn()
-    unobserve = vi.fn()
-    disconnect = vi.fn()
-    takeRecords = () => []
-    constructor(
-      _callback: IntersectionObserverCallback,
-      _options?: IntersectionObserverInit,
-    ) {}
-  } as unknown as typeof window.IntersectionObserver
-}
-
 // Mock next/router
 vi.mock('next/router', () => ({
   useRouter: () => ({
