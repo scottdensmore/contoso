@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ff313a18e7f7",
+  "strategy": "manual-commit",
+  "branch": "fix/253-dependabot-surface-routing",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ff/313a18e7f7/0/metadata.json",
+      "transcript": "/ff/313a18e7f7/0/full.jsonl",
+      "compact_transcript": "/ff/313a18e7f7/0/transcript.jsonl",
+      "content_hash": "/ff/313a18e7f7/0/content_hash.txt",
+      "prompt": "/ff/313a18e7f7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 845,
+    "cache_creation_tokens": 1060308,
+    "cache_read_tokens": 137810982,
+    "output_tokens": 340288,
+    "api_call_count": 424,
+    "subagent_tokens": {
+      "input_tokens": 102,
+      "cache_creation_tokens": 124803,
+      "cache_read_tokens": 1087608,
+      "output_tokens": 39563,
+      "api_call_count": 51
+    }
+  }
+}
