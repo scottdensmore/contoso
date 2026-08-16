@@ -92,6 +92,38 @@ describe('Category Page', () => {
     ).toBeDefined()
   })
 
+  it('marks the card box skippable only when it holds an image', async () => {
+    // The two branches of the card share one box, and they are not alike.
+    // `content-visibility: auto` keeps skipped content findable by in-page
+    // search but *absent from the accessibility tree* until it renders --
+    // measured against an on-screen control. The image is `alt=""` and
+    // contributes nothing there either way, so skipping it costs nothing. The
+    // empty state is text, and skipping it would leave a screen reader nothing
+    // at all for the one card that has something to say.
+    //
+    // The journeys cannot cover this: every seeded product has an image, so the
+    // false branch is unreachable from real data. That is the same gap the
+    // no-image test above exists to fill.
+    const boxOf = (container: HTMLElement) =>
+      container.querySelector('a[href^="/products/"] div.aspect-square')?.className ?? ''
+
+    vi.mocked(getProductsByCategory).mockResolvedValue(
+      categoryOf({ name: 'Trail Boots', image: '/images/boots.webp' }) as any,
+    )
+    const withImage = render(
+      await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }),
+    )
+    expect(boxOf(withImage.container)).toContain('[content-visibility:auto]')
+
+    vi.mocked(getProductsByCategory).mockResolvedValue(
+      categoryOf({ name: 'Trail Boots', image: null }) as any,
+    )
+    const withoutImage = render(
+      await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }),
+    )
+    expect(boxOf(withoutImage.container)).not.toContain('[content-visibility:auto]')
+  })
+
   it('calls notFound if category does not exist', async () => {
     vi.mocked(getProductsByCategory).mockResolvedValue(null)
 
