@@ -73,6 +73,58 @@ const nextConfig = {
   // generated one.
   agentRules: false,
 
+  // The dev-tools indicator is a focusable element sitting after the chat
+  // widget in the document, and that makes dev disagree with production about
+  // keyboard behaviour the widget was deliberately designed for. Measured at
+  // 1440x900 with the panel open, tabbing forward from the message input:
+  //
+  //   indicator on                     indicator off
+  //   1. Send message     dialog=1     1. Send message  dialog=1
+  //   2. Close chat       dialog=1     2. Close chat    dialog=1
+  //   3. NEXTJS-PORTAL    dialog=0     3. BODY          dialog=1
+  //                                    4. #name         dialog=0
+  //
+  // `chat.tsx` argues at length that Tab forward off the launcher should leave
+  // the page entirely, fire no `focusin`, and leave the panel up -- closing it
+  // for the address bar would be closing it for something that is not a page
+  // interaction. The indicator is a page interaction, so the panel closes a
+  // keystroke early. The right-hand column is what production does.
+  //
+  // So a chat keyboard journey reviewed on a dev server answered a question
+  // about the dev server. That mattered more after #282, which made the panel
+  // reachable under `next dev` at the loopback address rather than at
+  // `localhost` alone.
+  //
+  // It also covers the message input at 390x844, where the sheet is full width
+  // -- which is what #277 was filed for, and is the smaller half.
+  //
+  // Three things go with it, all separately gated on the same flag: the Dev
+  // Tools menu and its trigger (route info, bundler, preferences, segment
+  // explorer), the cache badge, and the build-activity pill -- so there is no
+  // "compiling" or "rendering" feedback in dev either. For the route's
+  // static/dynamic verdict, which `apps/web/AGENTS.md` does care about, plain
+  // `next build` prints `○` and `ƒ` per route and CI produces it on every run.
+  //
+  // Errors still surface with this off. That is Next's separate issues badge,
+  // and it is also the boundary on everything above: the issues badge is the
+  // same portal in the same place, is focusable in the same way, and appears on
+  // the first logged error -- which this application produces itself, from the
+  // `catch` in `sendChatMessage` (`src/lib/messaging.ts`), on any stack with no
+  // chat service.
+  //
+  // With one edge worth knowing, because it is specific to turning the
+  // indicator off: collapsing the issues badge sets a flag that nothing resets,
+  // so one click on its X hides it for the rest of the page session, later
+  // errors included. On the default path the same click is resynced by the
+  // error count.
+  //
+  // Measured after one failed send, the left-hand column returns with two dev
+  // stops rather than one, and at 390 the badge covers the input's left third.
+  // So this narrows when dev disagrees with production; it does not end it. A
+  // keyboard journey that has to match production belongs on a production
+  // build -- #290. See #277.
+  devIndicators: false,
+
   images: {
     deviceSizes,
   },
