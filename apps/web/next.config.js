@@ -67,8 +67,9 @@ const nextConfig = {
   // and carries no marker block -- measured, and the branch that decides it is
   // in `generate-agent-files.js`.
   //
-  // The rest of what `next dev` rewrites on boot is #275 and is not fixed here.
-  // This one is, because it lands in an instruction file rather than a
+  // The rest of what a dev server rewrites is #260 (`next-env.d.ts`, on boot)
+  // and #275 (`tsconfig.json`, once it has served a page), and is not fixed
+  // here. This one is, because it lands in an instruction file rather than a
   // generated one.
   agentRules: false,
 
