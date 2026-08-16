@@ -1205,3 +1205,50 @@ Refinement rather than defect: it misstates a guarantee but instructs no wrong a
 - Could not assess: the behaviour of the MCP server as your client actually launches it (I read `@playwright/mcp@0.0.79` from the npx cache at `/home/scottdensmore/.npm/_npx/9833c18b2d85bc59/` and drove its bundled `playwright-core` directly). If your client pins a different `@playwright/mcp` version, the `1237` figure and the `chrome-for-testing` mapping are version-specific — both are stated as "measured here", which is the right hedge for that.</result>
 <usage><subagent_tokens>50260</subagent_tokens><tool_uses>49</tool_uses><duration_ms>381840</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a63ca1a633736e53b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a63ca1a633736e53b.output</output-file>
+<status>completed</status>
+<summary>Agent "Final verify before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Verified — ready to commit
+
+The branch `fix/279-ui-review-browser-fallback` passes all three applicable gates on the final state, and the worktree contains exactly the two expected files with no surprises.
+
+### Worktree check
+Matches expectation exactly:
+```
+ M .claude/agents/ui-review.md
+ M AGENTS.md
+```
+No other files touched, staged, or untracked. Nothing extra appeared.
+
+### Failures
+None.
+
+### Flakes
+None. Each check ran once and passed cleanly; no re-runs were needed to distinguish signal from noise.
+
+### Missing coverage
+None applicable — this is a documentation-only change to two prose files (`.claude/agents/ui-review.md`, `AGENTS.md`), no code or config paths were touched, and `test-scripts`/`docs-check`/`agent-docs-check` are the correct and complete gates for that surface. `make -C apps/web ci` correctly does not apply since nothing under `apps/web/` changed.
+
+### Environment issues
+None. No port conflicts, no missing tools, `.venv` was already present and usable.
+
+### Commands run and results
+- `make docs-check` → `Documentation validation passed.` plus embedded `agent-docs-check` run (`Agent doc validation passed.`) plus embedded 8-test agent-definition run (`OK`). Exit 0.
+- `make test-scripts` → `Ran 183 tests in 1.709s / OK`. Exit 0.
+- `make agent-docs-check` → `Agent doc validation passed.` Exit 0.
+- `git status --short` / `git diff --stat` run before and after the checks to confirm the worktree was untouched and matched the expected two-file diff throughout.
+
+### Not run, and why
+- `make -C apps/web ci` — correctly out of scope, no changes under `apps/web/`.
+- `make -C services/chat ci`, `make ci`, `make e2e-smoke`, `make test-e2e`, `make release-dry-run` — none apply; this change is prose-only in two agent/doc files, not runtime code, containers, or release workflow.
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/ui-review.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`</result>
+<usage><subagent_tokens>14394</subagent_tokens><tool_uses>6</tool_uses><duration_ms>28112</duration_ms></usage>
+</task-notification>
