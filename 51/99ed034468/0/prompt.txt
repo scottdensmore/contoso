@@ -1,0 +1,398 @@
+Read AGENTS.md and issue #148, then pick up #228.
+
+---
+
+<task-notification>
+<task-id>a0db8e8f02128da20</task-id>
+<tool-use-id>toolu_017yjPgTmAmKnEVbrmXt3nYt</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a0db8e8f02128da20.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of chat panel on dev server" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Rendered review completed
+
+Rendered with the bundled Chromium at **390×844**, **834×1112**, and **1440×900**, against the running dev server at both `http://127.0.0.1:3178` and `http://localhost:3178`. I did not start or stop anything — your server was used as handed over.
+
+One environment note up front: the Playwright **MCP server is unusable** here. It is pinned to branded Chrome at `/opt/google/chrome/chrome`, which is not installed, and every call fails with `Chromium distribution 'chrome' is not found`. The bundled Chromium at `~/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome` is present and working, so I drove it through `Bash` instead. All evidence below is real rendering.
+
+## The fix does what it claims
+
+| | 127.0.0.1:3178 | localhost:3178 |
+|---|---|---|
+| 403s on `/_next/*` | **0** | **0** |
+| Hydration / page errors | **0** | **0** |
+| Chat launcher opens dialog | yes | yes |
+| Nav drawer hydrates (0 → 28 links) | yes | yes |
+
+Every client surface you asked about is live at the loopback address: chat panel, header nav drawer, contact form (all 5 fields labelled and accepting input), and the sidebar sections. Panel contracts hold exactly as designed — `aria-modal="true"` with 1/1 siblings `inert` and `body overflow:hidden` below `lg`; at 1440 `aria-modal` absent, no inert, panel 650×788 at 40% of viewport. No horizontal overflow at any viewport.
+
+Keyboard, phone sheet: tab cycle is `Message → Send message → Clear conversation → Close chat → Message` (wraps both directions), focus contained after 6 tabs, Escape closes and returns focus to the launcher while clearing `inert` and `overflow`, Enter reopens with focus on the input, and a message can be composed and sent without a mouse. Desktop: Escape closes and returns focus to the launcher; Shift+Tab within the widget stays inside; turns persist across close/reopen (3 turns before and after); Clear resets to 1 turn and returns focus to the input.
+
+## Findings
+
+**1 — Low, dev-only, actionable. Next's dev-tools indicator sits on top of the chat input at phone width.**
+At 390×844 the badge occupies `[20, 788, 36, 36]` and the chat input occupies `[12, 788, 310, 44]` — a complete overlap of the field's left interior. The placeholder renders as "bout a product…" with "Ask a" hidden behind the disc (visible in `phone-open.png`). It also injects a `NEXTJS-PORTAL` stop into the tab order between "Close chat" and the page, which at desktop trips the panel's focus-out close one Tab earlier than production would.
+
+This is not a defect in the component, and it does not ship. But it is squarely in scope for a change whose whole purpose is making `next dev` usable, and the remedy is one line in the file already being edited: `devIndicators: false`, next to the existing `agentRules: false`, on the same dev-only reasoning that comment already sets out. Anyone doing chat-panel work at phone width in dev is currently looking at an obscured input.
+
+**2 — Low, pre-existing, not introduced by this change. Header icon buttons are 36×36 on the phone sheet.**
+`Clear conversation` and `Close chat` measure 36×36; the adjacent `Send message` measures 44×44. The 36×36 pair clears WCAG 2.5.8 AA (24×24) but misses the 44×44 in 2.5.5 and in Apple's and Android's guidance. Worth flagging because `chat.tsx` lines 626-628 argue explicitly for 44 on the send button as "the primary action of a full-screen sheet at phone width" — and on that same sheet, Close is the only dismissal control. Not caused by this diff; raise separately if it is worth raising.
+
+**3 — Informational, already documented. Non-modal card overlaps content at desktop.**
+Measured 4 of 22 links behind the panel at 1440. This matches the analysis already written into `chat.tsx` lines 187-201 and tracked as #187. No action here.
+
+## Contrast — all measured values pass
+
+Measured on rendered pixels with canvas-resolved sRGB, because Tailwind emits `lab()` here and a naive numeric parse silently drops the minus signs. That trap is called out in `chat.tsx` lines 676-682, and it caught my first two probes — they reported nonsense (1.19:1 for near-black bold on white) until I fixed the alpha handling in the background walk. The corrected pass reproduces the value documented in the source exactly (desktop send fill 5.86:1), which is what gives me confidence in the rest.
+
+Panel title 17.72:1 · assistant bubble text 6.08:1 · input typed text 10.44:1 · placeholder 4.83:1 · send fill vs panel 5.86:1 · white glyph on sky-700 5.86:1 · header icon stroke (zinc-500) 4.83:1. Semantics are clean: dialog named "Chat with Jane Doe", log named "Conversation", all three button SVGs `aria-hidden="true"`, no unlabelled images, and the sheet's `h2` joins the heading outline without breaking order.
+
+I could not cleanly isolate the input's resting ring, because `FIELD_BOUNDARY` draws it as an inset box-shadow and the input was focused whenever the panel was open, so the focus outline was mixed into the same property. The constant specifies `ring-zinc-500`, which my independent zinc-500 measurement puts at 4.83:1 against the white panel, and `e2e/support/boundary.ts` covers it per-pixel already.
+
+## Checks not performed
+
+**2× density** — not applicable. The diff touches no image, no `srcset`, and no source dimensions; nothing changes what the browser requests.
+
+**Message round-trip** — deliberately out of scope per your brief. The error path did render and is legible: "Sorry, something went wrong. Please try again." at 6.08:1 (`desktop-error-state.png`). The 500s on `/api/categories`, the error turn, and the empty SHOP section in the nav drawer are all the absent database and chat service, exactly as you said, and I am not reporting them as findings.
+
+## One correction to the task description
+
+The change is **three** files in the working tree, not two. `apps/web/next-env.d.ts` is also modified:
+
+```
+-import "./.next/types/routes.d.ts";
++import "./.next/dev/types/routes.d.ts";
++import "./.next/dev/types/root-params.d.ts";
+```
+
+That is Next regenerating the file on dev boot — the same class of churn the new test's docblock attributes to #275. It is uncommitted and unmentioned; decide deliberately whether it belongs in this commit.
+
+Screenshots (12, all absolute paths under `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32326432-9961-4c06-ab5c-44ff606dccde/scratchpad/shots/`): `phone-closed.png`, `phone-open.png`, `phone-sent.png`, `phone-nav-open.png`, `tablet-closed.png`, `tablet-open.png`, `desktop-closed.png`, `desktop-open.png`, `desktop-error-state.png`, `contact-desktop.png`, `127.0.0.1-nav-open.png`, `localhost-nav-open.png`.
+
+No repository files were modified, and your server on 3178 is still up.</result>
+<usage><subagent_tokens>73822</subagent_tokens><tool_uses>34</tool_uses><duration_ms>560928</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a5c15c5163b02ac83</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a5c15c5163b02ac83.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify chat dev-origin fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All checks complete. Final summary below.
+
+## Verdict
+
+**Verified.** The change on `fix/228-chat-panel-under-next-dev` passes its merge gate (`make -C apps/web ci`: lint, typecheck, test, build), and I directly reproduced the underlying bug and fix against a live `next dev` server. One pre-existing structural gap is worth flagging (not a regression from this diff, but relevant to a question this task asked me to check), plus two non-blocking lint warnings.
+
+## Failures
+
+None. `make -C apps/web ci` completed cleanly: 37 test files / 157 tests passed (including the 4 new assertions), `tsc --noEmit` (app + e2e configs) reported nothing, and `next build` produced the standalone output with all 230+ routes, no config-schema warnings for the two new keys (`allowedDevOrigins`, `agentRules`).
+
+## Flakes
+
+None observed. Ran once; no re-run was needed since nothing failed.
+
+## Missing coverage
+
+1. **The new guard file is never type-checked by `make typecheck`.** `apps/web/tsconfig.json`'s `include` is `next-env.d.ts`, `src/**/*.ts(x)`, `prisma/**/*.ts`, and `.next` generated types only — it does not cover root-level files. I confirmed this directly: `tsc --noEmit --listFilesOnly` produces zero matches for `next-dev-origins.test.ts` (and none either for the pre-existing sibling `next.config.test.ts`, so this is a structural gap in the project, not something this branch introduced). `vitest.config.ts` has no `typecheck` block, so vitest's esbuild transform strips types without checking them. Net effect: the `require(...)` calls, the `blockCrossSiteDEV(...)` call signature, and the rest of the file's TypeScript are exercised at runtime by vitest but never statically type-checked anywhere in the merge gate. This matters directly to one of the things I was asked to confirm — "type-check happy with the two require calls" is true only in the sense that type-check never looks at the file, not that it validated it.
+2. No test exercises the dev server as an actual HTTP process reachable at these origins (by design — the file's own docstring explains why a real-server guard was rejected, due to Next 16's single-dev-server-per-`distDir` lock). I closed this gap manually (see below) rather than adding it as a permanent finding, since it was already reasoned through and documented by the author.
+
+## Environment issues
+
+None. Ports 3100, 8100, 55432 were free throughout. No `.env` present, `LLM_PROVIDER` not a factor for this change. No Docker involved.
+
+## Additional verification performed (beyond the requested checks)
+
+To close the gap between "the unit test asks Next's own decision function" and "the dev server actually behaves this way," I started `next dev -p 3100` (unbound host, matching `npm run dev`), waited for readiness, and probed a real client chunk with `curl`, replicating what a browser does:
+
+```
+Origin: http://127.0.0.1:3100  → 200   (previously 403 per #228 — now fixed)
+Origin: http://[::1]:3100      → 200
+Origin: http://localhost:3100  → 200
+Origin: http://evil.example    → 403   (control: still blocked)
+```
+
+This confirms the fix at the actual dev-server boundary, not just at the exported function. I then killed the server tree (verified via `ps aux` that no `next dev`/`next-server` processes remain) and confirmed ports 3100/8100/55432 are free again.
+
+The Next-internal module the guard requires resolves and exports the expected function: `node_modules/next/dist/server/lib/router-utils/block-cross-site-dev.js` exists and `require(...).blockCrossSiteDEV` is a function.
+
+Two ESLint warnings appeared (non-blocking, exit code 0, no `--max-warnings` gate): `Unused eslint-disable directive` on the two `require()` lines in `apps/web/next-dev-origins.test.ts` — `@typescript-eslint/no-require-imports` doesn't actually fire in this project's flat config (`apps/web/eslint.config.mjs` is `next/core-web-vitals` + `jsx-a11y`, no such rule active), so the disable comments are inert. Cosmetic, not a merge-gate failure.
+
+`git status` after the full build shows only the pre-existing #275 churn (`apps/web/next-env.d.ts` modified) plus the two files under test — nothing unexpected.
+
+## Commands run
+
+```bash
+git checkout fix/228-chat-panel-under-next-dev
+git status --short
+git diff apps/web/next.config.js
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets   # no commits ahead of main; empty output, confirmed change is uncommitted/untracked-only, web-only by inspection
+git log main..HEAD --oneline; git rev-list --count main..HEAD
+make -C apps/web ci
+npm run lint   # re-run standalone to capture exit code (0)
+./node_modules/.bin/tsc --noEmit --listFilesOnly | grep -i "next-dev-origins\|next.config.test"
+node -e "require('next/dist/server/lib/router-utils/block-cross-site-dev.js')"
+npm run dev    # started manually, backgrounded, on port 3100
+curl -H "Origin: http://127.0.0.1:3100" ...   # and [::1], localhost, evil.example variants
+kill &lt;next dev process tree&gt;
+git status --short   # final check
+```
+
+## Checks not run, and why
+
+- **`make e2e-smoke` / `make test-e2e`**: skipped by judgment. This diff changes only two dev-only Next config keys (`allowedDevOrigins`, `agentRules`) that the code's own comments and the `next build` output confirm are not consulted outside `next dev`. The composed Docker stack runs `next start` against a production build, which cannot be affected by this change — running the containerized smoke/journey suite would exercise code paths this diff cannot touch and wouldn't add signal beyond the `next build` step already run in `make -C apps/web ci`. I substituted a targeted manual check against a real `next dev` process instead, which directly exercises the actual mechanism being fixed.
+- **`make docs-check`**: not run — no Markdown changed in this diff.
+- **`make ci` (cross-surface)**: not run — change is confined to `apps/web/`, no chat/schema/payload touched, confirmed by inspection.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/tsconfig.json`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/eslint.config.mjs`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.ts`.</result>
+<usage><subagent_tokens>38751</subagent_tokens><tool_uses>35</tool_uses><duration_ms>276588</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a5e726199e26bb20f</task-id>
+<tool-use-id>toolu_0111wo1Qjh3yB6SRLQQCpKKd</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a5e726199e26bb20f.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review chat dev-origin fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Two findings. **One defect** (an unrelated file in the reviewed worktree), **one refinement** (an inaccurate claim in a comment). Neither is in the logic of the fix or the guard — I could not break either of those.
+
+---
+
+## Findings
+
+### 1. Defect — `apps/web/next-env.d.ts` is a modified tracked file in the reviewed state
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`, lines 3-4. Unstaged:
+
+```
+-import "./.next/types/routes.d.ts";
++import "./.next/dev/types/routes.d.ts";
++import "./.next/dev/types/root-params.d.ts";
+```
+
+This is not in the two-file diff you described, and it is `next dev` output (#275), not authored work. `git status --short` reports it alongside `next.config.js` and the new test, so `git commit -a` or `git add -A` lands it.
+
+**Scenario:** the commit carries a generated dev-server artifact. Root `AGENTS.md` step 5 requires removing accidental changes before committing, step 9 says "do not combine unrelated work", and *Change boundaries* says "Prefer keeping generated artifacts and local runtime outputs out of commits."
+
+I checked whether it also breaks anything and it does not — `apps/web/tsconfig.json` sets `skipLibCheck: true`, which suppresses the unresolved-import error inside a `.d.ts`. I confirmed that directly:
+
+```
+skipLibCheck=true  exit=0
+skipLibCheck=false exit=2   (TS2688 on an unrelated ref, i.e. the file is being checked)
+```
+
+So this is hygiene, not breakage, but it is a documented commit-blocking rule.
+
+**Fix:** `git checkout -- apps/web/next-env.d.ts`, or commit by explicit path. No code impact; nothing to re-verify beyond `git status --short` showing only `apps/web/next.config.js` and `apps/web/next-dev-origins.test.ts`.
+
+**Confidence: 85.**
+
+### 2. Refinement — the `make e2e-smoke` justification in the config comment names a case the key cannot affect
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, in the `allowedDevOrigins` comment:
+
+&gt; Worth adding rather than telling people to type `localhost`, because the tooling here does not: `make e2e-smoke` probes `127.0.0.1:3100` literally
+
+`make e2e-smoke` (root `Makefile:250`) probes the compose stack, whose `web` service is `build: .` against the root `Dockerfile` — `ENV NODE_ENV=production`, no `next dev`. `allowedDevOrigins` is never consulted on that path, and `blockCrossSiteDEV` is called only from the `development` branch of `router-server.js`. The general point behind it is sound (this repo's tooling habitually types `127.0.0.1`, and browser drivers do too), but the one concrete example given is the one place the gate does not run.
+
+**Scenario:** a future reader concludes `make e2e-smoke` depends on this key, and either preserves it for the wrong reason or debugs a smoke failure against it.
+
+**Fix:** cite something that actually runs `next dev` — `make dev` / `make dev-web` on port 3100 — or drop the example and keep "a browser driver pointed at the same address is the ordinary case."
+
+**Confidence: 75.**
+
+---
+
+## On the five questions you raised
+
+**1. Does the guard measure what it claims?** Yes, and it is on the right side of the rule. It is not a config check — it calls `blockCrossSiteDEV` from the installed Next and takes the verdict. I demonstrated the red phase myself by feeding the real gate mutated allowlists:
+
+```
+allowlist            127.0.0.1   [::1]    localhost   evil.example
+undefined            blocked     blocked  allowed     blocked
+[]                   blocked     blocked  allowed     blocked
+['127.0.0.1']        allowed     blocked  allowed     blocked
+['127.0.0.1','[::1]'] allowed    allowed  allowed     blocked
+```
+
+Reverting the fix fails assertion 1 and 2; dropping only `[::1]` fails assertion 2 alone. The control is load-bearing, not decoration: with a non-internal URL (`/foo`), `isInternalEndpoint` short-circuits and *every* origin returns `false`, so the three positive assertions pass vacuously and only the `evil.example` assertion catches it. I verified that too.
+
+The stated non-coverage — that the config key reaches the gate — is honestly declared and the manual before/after measurement is the right compensation for it. The residual is that the compensation is one-time rather than re-running; I scored that ~35 and am not reporting it, because the uncovered link is Next's own plumbing rather than repo code.
+
+**2. The rejected alternative.** Abandoning it was right, and the stated reason is accurate. `setup-dev-bundler.js:162` calls `Lockfile.acquireWithRetriesOrExit(path.join(distDir, 'lock'), 'next dev', ...)` — one dev server per `distDir`, exit on contention. A guard that started its own server would fail `make test-web` for anyone with `make dev` up, and pass in CI. A test that is green exactly where nobody is working is worse than the weaker one.
+
+**3. `agentRules: false` in a bug-fix PR.** Defensible, and stronger than your framing. `start-server.js:419` gates `ensureAgentRulesForDev(dir)` on `agentRules !== false`, and the result object it inspects has both `agentsMd` and `claudeMd` — so the default also writes `apps/web/CLAUDE.md`. That file is a pointer, root `AGENTS.md` forbids instructions in it, and `make agent-docs-check` is gated in CI. So leaving the default on means every `make dev` arms a CI failure on a file the repo has an explicit rule about. Root `AGENTS.md` permits fixing in-change when "leaving it would make that change wrong or unverifiable" — a dev-server fix whose own verification loop rewrites the runbook qualifies. State the reason in the commit body, as that rule requires.
+
+**4. The Next internal path.** Agreed. `next` is pinned exactly (`"next": "16.3.0"`) and Dependabot proposes upgrades as their own PRs, so a moved or retired module fails inside the PR that caused it, which is where the question "did the protection move?" belongs. The failure modes are all loud: a missing file throws at `require`, a renamed export throws `TypeError` on call, a changed third parameter blocks everything and fails three assertions.
+
+**5. Scope and IPv6 spelling.** Both correct. `parseUrl` from `next/dist/lib/url` yields `[::1]` with brackets, and I confirmed it normalises `http://[0:0:0:0:0:0:0:1]` to `[::1]` as well, so the bracketed entry is durable across spellings. `isCsrfOriginAllowed` does exact-string then `matchWildcardDomain`, and a bare `::1` matches neither. On widening: nothing new is exposed — a page on a real site sends its own `Origin`, so DNS rebinding to 127.0.0.1 still presents `evil.example` and is blocked, and the port dimension was already open via `localhost`. `0.0.0.0` and LAN addresses are correctly left out; the latter is machine-specific and belongs in a developer's own override.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.ts` line 1 — every `make test-web` run prints a Vite forward-compat warning: ESM syntax in a file loaded as CommonJS, unsupported by `configLoader: 'native'`, which becomes the Vite default in a future major. Fix is a `.mjs` extension or `"type": "module"`. Pre-existing, unrelated to this branch, and it will become a hard failure on a Vite major.
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; all work is uncommitted.
+- `git diff` — `apps/web/next.config.js` (intended) and `apps/web/next-env.d.ts` (finding 1).
+- `git diff --cached` — empty.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts`.
+- Runbooks applied: root `AGENTS.md` and `apps/web/AGENTS.md`. `services/chat/AGENTS.md` and `tests/scripts/AGENTS.md` cover no changed path.
+- Context read to judge the diff: Next 16.3.0's `block-cross-site-dev.js`, `csrf-protection.js`, `router-server.js`, `start-server.js`, `setup-dev-bundler.js`, `config-schema.js`; `apps/web/next.config.test.ts` (the `require` prior art); `apps/web/vitest.config.ts`, `tsconfig.json`, `Makefile`, `package.json`; root `Makefile`, `Dockerfile`, `docker-compose.yml`, `.github/dependabot.yml`; `apps/web/CLAUDE.md` and `apps/web/AGENTS.md` (both clean of any generated block).
+- Ran independently: the guard (4/4), the full web suite (157/157, 37 files), `eslint --max-warnings=0` on both changed files (clean), gate-behaviour probes under six mutated allowlists, and a standalone `tsc` probe for the `skipLibCheck` claim.
+
+Not assessed: I did not start a `next dev` server, so the end-to-end 403→200 and hydration measurements in your report are taken as given rather than reproduced. Everything I could check about them statically — which call sites reach the gate, what `hostname` is without `-H` (undefined; `next-dev.js:216` passes the raw option through), and what `parseUrl` produces for each loopback spelling — is consistent with them.</result>
+<usage><subagent_tokens>55158</subagent_tokens><tool_uses>32</tool_uses><duration_ms>353936</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a23f2f427239a4c67</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a23f2f427239a4c67.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after review fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>That matches the described #275 churn — an auto-generated typeref line added by the build, not a code change.
+
+## Verdict: Verified — the change on `fix/228-chat-panel-under-next-dev` passes the web merge gate cleanly.
+
+**Failures:** None. Lint, typecheck, tests, and build all passed.
+
+**Flakes:** None observed. Single clean run of `make -C apps/web ci`; no re-runs were needed.
+
+**Missing coverage:** None beyond what was already noted in the prior run. The two new `next.config.js` keys (`allowedDevOrigins`, `agentRules: false`) are dev-server-only behavior; `next-dev-origins.test.ts` exercises Next's own `blockCrossSiteDEV` gate directly against this repo's config, which is the right level — a real `next dev`/`next start` end-to-end check isn't reachable from `e2e-smoke` or `test-e2e` since those run against a production build (`next start`) where these keys aren't consulted. As instructed, I did not repeat the manual `next dev` loopback probe from the prior run — skipping it per your note that scope judgement still stands.
+
+**Environment issues:** None. No ports, browsers, or `.env`/Ollama dependencies were needed for this gate.
+
+**Worktree observations:**
+- Before running: exactly the expected two entries — `M apps/web/next.config.js`, `?? apps/web/next-dev-origins.test.ts`.
+- Confirmed no `eslint-disable` directives remain in the new test file (replaced with a plain comment on the `require` line), and `next.config.js`'s `allowedDevOrigins` comment now cites `make dev` / `make dev-web` and explicitly excludes `e2e-smoke`.
+- After the build: `apps/web/next-env.d.ts` reappeared as modified (added `import "./.next/types/root-params.d.ts";`). This is the pre-flagged #275 churn, not a regression — reporting it per your instructions so it can be cleaned up before committing.
+
+**Commands run** (from `/home/scottdensmore/Developer/scottdensmore/contoso` unless noted):
+```
+git branch --show-current
+git status --short
+git diff --stat main...HEAD
+git log --oneline main..HEAD
+git diff apps/web/next.config.js
+cat apps/web/next-dev-origins.test.ts
+make -C apps/web ci
+npx eslint . --max-warnings=0   # run from apps/web
+grep -n "allowedDevOrigins\|agentRules" apps/web/next.config.js
+git status --short
+git diff apps/web/next-env.d.ts
+```
+
+Relevant files: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-dev-origins.test.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`.
+
+**Checks not run:** `make e2e-smoke` and `make test-e2e` — not run, per your explicit instruction that the scope judgement from the prior run stands (dev-only config keys unreachable from the production stack these exercise). `make ci` (cross-surface) was not run since nothing outside `apps/web` changed. `make docs-check` was not run since no Markdown changed in this diff.</result>
+<usage><subagent_tokens>19101</subagent_tokens><tool_uses>7</tool_uses><duration_ms>115672</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a2e535fcb1a75473b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a2e535fcb1a75473b.output</output-file>
+<status>completed</status>
+<summary>Agent "Fresh review round after fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>No churn from my run — the tree is exactly as handed over. Here is the review.
+
+## Your pushback: you are right, I was wrong
+
+Your measurement stands, and I can now show the mechanism rather than just concede it. `apps/web/node_modules/next/dist/server/lib/generate-agent-files.js`, `writeAgentFiles`:
+
+```js
+if (agentsMdExists &amp;&amp; (agentsMdHostsBlock || !claudeMdHostsBlock)) {
+    return { agentsMd: upsertFile(agentsMdPath, block), claudeMd: 'skipped' }
+}
+```
+
+`apps/web/AGENTS.md` exists, and `apps/web/CLAUDE.md` exists but contains no `&lt;!-- BEGIN:nextjs-agent-rules --&gt;` marker, so `claudeMdHostsBlock` is `false` and this first branch is always taken. `CLAUDE.md` is explicitly `'skipped'`. The `claudeMdExists` branch below it is reachable only when `AGENTS.md` is absent, and the scaffold-both branch only when neither exists. Neither applies here.
+
+So `make agent-docs-check` would never have fired, and the justification rests on the `AGENTS.md` write exactly as you wrote it. Correct the commit body toward your version, not mine. To re-test if you want it recorded: `node -e` against `writeAgentFiles` with the real `apps/web` dir, or simply observe that `apps/web/CLAUDE.md` has no marker — that single fact decides the branch.
+
+## Findings
+
+No defects. Two refinements.
+
+### 1. Refinement — `apps/web/next.config.js:66-67`, the "every machine" claim is not what the code does
+
+The comment reads:
+
+&gt; `next dev` otherwise appends a block of its own to `apps/web/AGENTS.md` on every boot -- so every `make dev`, on every machine.
+
+The write is gated on agent detection. `apps/web/node_modules/next/dist/server/lib/app-info-log.js`:
+
+```js
+async function ensureAgentRulesForDev(dir) {
+    if (await getAgentName() === null) return null;
+    if (hasCurrentAgentRules(dir)) return null;
+    return writeAgentFiles(dir);
+}
+```
+
+`getAgentName()` resolves non-null only when one of `AI_AGENT`, `CURSOR_TRACE_ID`, `CURSOR_AGENT`, `GEMINI_CLI`, `CODEX_SANDBOX`/`CODEX_CI`/`CODEX_THREAD_ID`, `ANTIGRAVITY_AGENT`, `AUGMENT_AGENT`, `OPENCODE_CLIENT`, `CLAUDECODE`/`CLAUDE_CODE`, `REPL_ID`, or a `COPILOT_*` variable is set, or `/opt/.devin` exists (`node_modules/next/dist/compiled/@vercel/detect-agent/index.js`). A developer running `make dev` from a plain shell gets no write at all.
+
+Scenario where this bites: someone reads the comment, cannot reproduce the append in their own terminal, and concludes the key is unnecessary or the comment is stale. The same overstatement carried into the commit body is the kind of claim your own `AGENTS.md` asks to be auditable.
+
+Suggested wording: "on every boot under a coding agent — which is every `make dev` in this repository's workflow." The conclusion is unchanged; only the scope of "every machine" is wrong. Confidence: 90.
+
+### 2. Refinement — `apps/web/next-dev-origins.test.ts:80-84`, the `localhost` case cannot fail for the stated reason
+
+The comment justifies the assertion as:
+
+&gt; Next's default, asserted so that a change to `allowedDevOrigins` which replaced the defaults rather than adding to them is visible here.
+
+That scenario is unreachable. `blockCrossSiteDEV` builds its allowlist as `['**.localhost', 'localhost', ...allowedDevOrigins ?? []]` — the defaults are prepended unconditionally and no config value can replace them. I probed the real gate across four allowlist variants:
+
+```
+undefined                  =&gt; 127.0.0.1 blocked: true  | [::1] blocked: true  | localhost blocked: false
+["127.0.0.1","[::1]"]      =&gt; 127.0.0.1 blocked: false | [::1] blocked: false | localhost blocked: false
+["127.0.0.1"]              =&gt; 127.0.0.1 blocked: false | [::1] blocked: true  | localhost blocked: false
+["127.0.0.1","::1"]        =&gt; 127.0.0.1 blocked: false | [::1] blocked: true  | localhost blocked: false
+```
+
+`localhost` is unblocked in every row, including with `allowedDevOrigins` entirely absent. The assertion passes against the old config and the new one, which is the pattern worth naming. It is not worthless — it would catch Next dropping `localhost` from its own hardcoded defaults — but that is a different guarantee from the one written down. Restate the comment as pinning Next's built-in default, not as a guard on this repository's config. Confidence: 88.
+
+Incidentally the same probe confirms the two claims the config comment does make correctly: the bare `::1` spelling matches nothing (row 4), and both loopback forms were genuinely blocked before the change (row 1). The `[::1]` bracketing is right.
+
+## What I verified
+
+- The fix is correct and load-bearing. Real call site is `node_modules/next/dist/server/lib/router-server.js:207,336,669`, passing `development.config.allowedDevOrigins` and `opts.hostname`. `apps/web/package.json` runs `next dev -p 3100` with no `-H`, so `opts.hostname` is `undefined` — the test's `undefined` argument models the real call faithfully rather than conveniently.
+- The two loopback assertions and the `evil.example` control all have a real red phase (row 1 and row 3 above).
+- The `e2e-smoke` correction is accurate. `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile:80` copies `.next/standalone` and the compose `web` service runs that production server, so `allowedDevOrigins` is never consulted on the path `make e2e-smoke` probes.
+- Both `agentRules` and `allowedDevOrigins` are typed keys in Next 16.3.0 (`config-shared.d.ts:1208,1574`) and schema-valid (`config-schema.js:496`), so the `@type {import('next').NextConfig}` annotation holds.
+- `npx vitest run next-dev-origins.test.ts` — 4 passed. `git status --short` byte-identical before and after; **no churn, and `next-env.d.ts` / `tsconfig.json` were not modified by anything.** The tree is clean as you described it.
+
+## Outside this change
+
+Nothing new. I did not re-examine the #275 churn beyond confirming it is absent.
+
+## Scope reviewed
+
+`git diff main...HEAD` is empty — the branch has no commits ahead of `main`, so all work is uncommitted. Reviewed `git diff` (`apps/web/next.config.js`, +39), an empty `git diff --cached`, and the untracked `apps/web/next-dev-origins.test.ts` read in full. Context read: `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.test.ts`, the root and web Makefiles, `docker-compose.yml`, `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile`, and the four Next internals the change and its test depend on.
+
+Not assessed: the claim that the dev server answers 200 on `http://[::1]:&lt;port&gt;/contact`, which needs a live `next dev` I did not start. It is not load-bearing — the `[::1]` entry is correct and harmless whether or not that address is bound.
+
+**This round returns no defects.** Both findings above are refinements; per step 8 of the root `AGENTS.md`, applying them does not earn another review round.</result>
+<usage><subagent_tokens>49400</subagent_tokens><tool_uses>28</tool_uses><duration_ms>212643</duration_ms></usage>
+</task-notification>
