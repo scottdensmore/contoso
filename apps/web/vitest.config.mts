@@ -14,7 +14,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      // `__dirname` is unavailable under `configLoader: 'native'`, which is
+      // planned to become Vite's default. Vite still bundles this file today
+      // and defines both, so this is forward compatibility rather than a fix
+      // for anything currently broken.
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
 })

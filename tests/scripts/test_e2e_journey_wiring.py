@@ -180,8 +180,27 @@ class JourneyWiringTests(unittest.TestCase):
 
         Collected by vitest they fail on `@playwright/test` imports it cannot
         run, which reads as a broken unit suite rather than a config problem.
+
+        The config is located rather than named. This read `vitest.config.ts`
+        by hand until #281 renamed it to `.mts`, at which point it raised
+        `FileNotFoundError` -- a stack trace about a missing path, rather than
+        the exclusion being gone.
+
+        Extensions are enumerated rather than globbed because the list is then
+        exactly the set vitest will load: no sibling -- an editor backup, an
+        `.orig` left by a conflict, a stray bundled artifact -- can be counted
+        as the config.
         """
-        self.assertIn("e2e/**", read("apps/web/vitest.config.ts"))
+        candidates = [
+            path
+            for extension in ("ts", "mts", "cts", "js", "mjs", "cjs")
+            if (path := REPO_ROOT / f"apps/web/vitest.config.{extension}").exists()
+        ]
+        # Vacuity guard: `assertIn` against a missing file cannot run at all,
+        # and against two configs would pass on whichever came first while
+        # vitest read the other.
+        self.assertEqual(len(candidates), 1, f"expected one vitest config, found {candidates}")
+        self.assertIn("e2e/**", candidates[0].read_text(encoding="utf-8"))
 
     def test_retries_are_not_enabled(self):
         """A retried failure is a failure that gets ignored.
