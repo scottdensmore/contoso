@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "87c824bc8eed",
+  "strategy": "manual-commit",
+  "branch": "fix/281-vitest-config-esm",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "apps/web/vitest.config.mts",
+    "apps/web/vitest.config.ts",
+    "tests/scripts/test_e2e_journey_wiring.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/87/c824bc8eed/0/metadata.json",
+      "transcript": "/87/c824bc8eed/0/full.jsonl",
+      "compact_transcript": "/87/c824bc8eed/0/transcript.jsonl",
+      "content_hash": "/87/c824bc8eed/0/content_hash.txt",
+      "prompt": "/87/c824bc8eed/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 777,
+    "cache_creation_tokens": 1011140,
+    "cache_read_tokens": 117252270,
+    "output_tokens": 312236,
+    "api_call_count": 390,
+    "subagent_tokens": {
+      "input_tokens": 254,
+      "cache_creation_tokens": 275102,
+      "cache_read_tokens": 3443817,
+      "output_tokens": 102423,
+      "api_call_count": 127
+    }
+  }
+}
