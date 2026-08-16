@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "5771ef51fd8f",
+  "strategy": "manual-commit",
+  "branch": "fix/287-browser-probe-launches",
+  "checkpoints_count": 7,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/57/71ef51fd8f/0/metadata.json",
+      "transcript": "/57/71ef51fd8f/0/full.jsonl",
+      "compact_transcript": "/57/71ef51fd8f/0/transcript.jsonl",
+      "content_hash": "/57/71ef51fd8f/0/content_hash.txt",
+      "prompt": "/57/71ef51fd8f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 941,
+    "cache_creation_tokens": 1136177,
+    "cache_read_tokens": 170008356,
+    "output_tokens": 378384,
+    "api_call_count": 472
+  }
+}
