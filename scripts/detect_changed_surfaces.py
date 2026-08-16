@@ -19,6 +19,13 @@ RUNTIME_PATTERNS = (
     ".github/CODEOWNERS",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/**",
+    # Reached runtime through the unknown fallback before this, so the routing
+    # was right by accident and indistinguishable from an oversight -- which is
+    # how #253 was found. Runtime for the same reason as the three entries above
+    # it: repository metadata that changes no runtime code, gated as runtime
+    # anyway. It also keeps the effective routing byte-identical to the fallback
+    # it replaces, so this narrows `unknown` without changing what CI runs.
+    ".github/dependabot.yml",
     "Makefile",
     "mise.toml",
     "package.json",

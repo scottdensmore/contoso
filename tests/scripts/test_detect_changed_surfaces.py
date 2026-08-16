@@ -228,6 +228,29 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         self.assertFalse(flags["unknown"], "should match a pattern, not fall through")
         self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
 
+    def test_dependabot_config_is_runtime(self):
+        """The Dependabot config is repo tooling, not an unclassified path.
+
+        Same shape as the agent definitions above, and the same reason: it
+        reaches runtime through the unknown fallback, so the routing has always
+        been right by accident. `unknown` is the catch-all for paths nobody has
+        classified, and every known file that leans on it makes the flag mean
+        less -- it cannot then be tightened without silently reclassifying
+        whatever else was sheltering there.
+
+        Runtime rather than something narrower for two reasons, neither of
+        which is about the guards that read the file: `test-scripts` runs for
+        every non-empty change regardless of surface, so those run either way.
+        It is the same class of repository metadata as `.github/CODEOWNERS` and
+        the templates beside it, which are already runtime; and runtime is the
+        one option that leaves the effective routing identical to the fallback
+        it replaces, so `unknown` narrows with no change to what CI runs.
+        """
+        flags = detect_changed.classify([".github/dependabot.yml"])
+        self.assertTrue(flags["runtime"])
+        self.assertFalse(flags["unknown"], "should match a pattern, not fall through")
+        self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
+
     def test_changed_files_from_range_includes_deletions(self):
         """A deletion-only change must still classify its surface.
 
