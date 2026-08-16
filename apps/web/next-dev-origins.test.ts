@@ -32,8 +32,9 @@ import { describe, expect, it } from 'vitest'
  * and a second one exits 1 with "Another next dev server is already running".
  * So `make test-web` failed for anyone who had `make dev` up -- green in CI,
  * where nothing else is running, and broken on exactly the machines doing the
- * development. It also had to snapshot and restore two tracked files the dev
- * server rewrites on boot, which is #275.
+ * development. It also had to snapshot and restore two tracked files a dev
+ * server rewrites: `next-env.d.ts` on boot, which is #260, and `tsconfig.json`
+ * once it has served a page, which is #275.
  */
 
 // `require` rather than `import`, matching `next.config.test.ts` beside it:
