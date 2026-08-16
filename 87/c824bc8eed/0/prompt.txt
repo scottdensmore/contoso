@@ -1841,3 +1841,58 @@ make docs-check
 - Every other merge-gate target (`make ci`, `make e2e-smoke`, `make test-e2e`, `make -C services/chat ci`, `make release-dry-run`) — out of scope; the change is confined to `.github/dependabot.yml` and a scripts test, which `make test-scripts` and `make docs-check` fully cover per `AGENTS.md`'s table.</result>
 <usage><subagent_tokens>26439</subagent_tokens><tool_uses>10</tool_uses><duration_ms>64143</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>afbfd3f6161db90b4</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/afbfd3f6161db90b4.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify 281 after refinements" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>The scratchpad worktree (`fix/252-eslint-config-next-group`) is separate and untouched — confirmed unrelated as instructed. Only the expected build artifact (`next-env.d.ts`) reappeared, exactly as the user predicted; no other unexpected files.
+
+## Verdict: Verified — both requested gates pass, worktree matches expectations exactly, nothing unexpected appeared.
+
+**Failures:** None.
+
+**Flakes:** None. Both gates ran once each and passed cleanly; no re-run was needed.
+
+**Missing coverage:** None relevant to this change. The diff since the last verification is comment-text only (a rewritten docstring in `tests/scripts/test_e2e_journey_wiring.py` and a rewritten inline comment in `apps/web/vitest.config.mts`) — no behavioral code changed, so no new coverage gap was introduced. The behavioral logic (extension enumeration, `import.meta.dirname` usage) was already exercised by the passing test suite in the prior run and remains exercised now.
+
+**Environment issues:** None. No ports needed, no Docker involved, no `.env`/LLM_PROVIDER concerns for these two gates.
+
+### Details
+
+- `apps/web/next-env.d.ts`: confirmed clean (no diff from HEAD) before the build, then reappeared with the expected `root-params.d.ts` reference line after `make -C apps/web ci` ran `next build` — exactly the pre-announced, build-generated churn, not something to flag as a new defect.
+- Diffed both changed files directly and confirmed they match the description: `vitest.config.mts` gained a 4-line comment (forward-compatibility framing, no `configLoader` "live mechanism" claim), and `test_e2e_journey_wiring.py` gained a docstring explaining the enumeration in terms of "the list vitest will load" rather than the Vite-sibling-file claim. No logic lines changed in either file beyond what was already verified.
+- Staged/unstaged split still present as the user described: the `git mv` rename is staged (`RM apps/web/vitest.config.ts -&gt; apps/web/vitest.config.mts`), the `import.meta.dirname` edit is unstaged — confirming this is still the state the user intends to stage explicitly before commit, not yet committed.
+- `make -C apps/web ci`: lint clean, `tsc --noEmit` clean (both tsconfig and tsconfig.e2e.json), `check-journey-coverage.mjs` clean, vitest 157/157 across 37 files, `next build` succeeded (230 static pages, no errors). No `configLoader` warning appeared anywhere in the log — matches the user's claim of 0.
+- `make test-scripts`: 183/183 Python tests passed, including all 8 `test_e2e_journey_wiring.JourneyWiringTests` tests (the module the user called out).
+
+### Commands run
+
+```
+cd /home/scottdensmore/Developer/scottdensmore/contoso
+git status --short
+git branch --show-current
+git diff --stat
+git diff --stat --staged
+git diff --staged
+git diff apps/web/vitest.config.mts
+git diff tests/scripts/test_e2e_journey_wiring.py
+git diff apps/web/next-env.d.ts
+git check-ignore -v apps/web/next-env.d.ts
+make -C apps/web ci
+git status --short
+git diff apps/web/next-env.d.ts
+make test-scripts
+git worktree list
+```
+
+### Not run
+
+Nothing outside the user's requested scope (`make -C apps/web ci`, `make test-scripts`) was run — that's the correct scope for this change (a vitest config rename/ESM fix plus a Python test-script docstring), and the user didn't ask for `make ci`, `make e2e-smoke`, or `make test-e2e` here. No environment or repository changes were made.</result>
+<usage><subagent_tokens>22040</subagent_tokens><tool_uses>11</tool_uses><duration_ms>127397</duration_ms></usage>
+</task-notification>
