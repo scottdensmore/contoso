@@ -339,6 +339,15 @@ was unavailable, rather than skipping the step or reporting it as done.
 Where none is installed it falls back to reviewing source and must say so; a
 review that claims viewports it never rendered is worse than none.
 
+A browser being installed and the *tools* reaching one are different questions,
+and only the first is what "none is installed" describes. The Playwright MCP
+server drives branded Chrome by default and fails every call on a machine that
+has only Playwright's own Chromium — so the tools can be present, and broken,
+while a browser sits there working. That is not a fallback-to-source case:
+`Bash` still drives the installed browser. `ui-review` carries the detail; what
+belongs here is that a rendered review remains required in that state, and that
+the writeup says which path rendered it.
+
 ## Repo map
 
 - `apps/web/src/app/`: Next.js pages and API routes.
