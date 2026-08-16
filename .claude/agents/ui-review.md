@@ -41,7 +41,25 @@ cd apps/web && node -e 'const p = require("@playwright/test").chromium.executabl
 
 Ask Playwright where its browser is and then check that the file exists. Two ways of answering this question look right and are not: `npx playwright install --dry-run` prints an "Install location:" line for browsers that are *not* installed and exits 0 either way, so it cannot distinguish the cases at all; and a hardcoded cache path is platform-specific — browsers live under `~/.cache/ms-playwright` on Linux and `~/Library/Caches/ms-playwright` on macOS, so a Linux-shaped glob reports "no browser" on every Mac. A probe built on the first of those reported "no browser" on a machine with a working Chromium, and every UI change got a source review that claimed to be the real thing.
 
-Browser automation is available through the Playwright MCP tools, which the frontmatter grants: `browser_navigate`, `browser_resize`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_press_key`, `browser_hover`, `browser_evaluate`, `browser_console_messages`. Load their schemas with `ToolSearch` before the first call. Where the MCP server is not connected, `Bash` still reaches the same browser — `npx playwright screenshot --viewport-size "390, 844" <url> <file>` for stills, or a short script in a scratch directory outside the repository for anything interactive.
+Browser automation is available through the Playwright MCP tools, which the frontmatter grants: `browser_navigate`, `browser_resize`, `browser_snapshot`, `browser_take_screenshot`, `browser_click`, `browser_press_key`, `browser_hover`, `browser_evaluate`, `browser_console_messages`. Load their schemas with `ToolSearch` before the first call.
+
+Those tools failing is not the same question as the probe above, and a green probe does not predict them. **The probe is about whether `Bash` can render**, though not as directly as it looks: it resolves `@playwright/test`'s full Chromium, while a headless run opens the `chrome-headless-shell` sitting beside it. `make -C apps/web install-e2e-browsers` fetches the pair, so on a machine set up that way the one vouches for the other. The MCP server drives a browser of its own, and there are two ways it comes up empty:
+
+- **Not connected**, in which case the tools are simply absent.
+- **Connected, and every call fails** with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`. `@playwright/mcp` drives branded Google Chrome by default — it sets `channel: "chrome"` whenever no browser is named. Any machine with a working Chromium and no Google Chrome hits this on the first call. See #279.
+
+  Not unfixable, and do not report it as such — but the two settings that address it are not interchangeable, so name the right one. `--executable-path`, or `PLAYWRIGHT_MCP_EXECUTABLE_PATH`, points the server at a binary you name, and so at the one the probe just found. `--browser chromium` does not: it selects the server's *own* bundled Chromium, whose revision the server pins independently of this repository's, and measured here that is 1237 against the 1234 `apps/web` installed — one missing browser traded for another.
+
+  Either way it is the server's configuration and not a review's to set. Say what it needs and carry on rendering through `Bash`. Whether this repository should configure a server of its own is #279's question to settle.
+
+Neither is a reason to fall back to reviewing source, and the second is the more dangerous one, because the tools appear to be available right up until they are used. `Bash` renders in both cases, provided it reaches the same Playwright the probe used — which takes one deliberate step in each direction:
+
+- **Stills:** `cd apps/web && npx playwright screenshot --viewport-size "390, 844" <url> <file>`. The `cd` is load bearing. `npx` from elsewhere resolves an install of its own choosing, pinning a Chromium revision that need not be present — the same class of mismatch as `--browser chromium` above, arriving by a different route.
+- **Anything interactive:** a short script in a scratch directory outside the repository, requiring Playwright by absolute path — `require('<repo>/apps/web/node_modules/playwright')`. `cd` does not help here, because Node resolves a script's imports from the script's own directory rather than the working one, so a bare `require('playwright')` from a scratch directory fails whatever you `cd` to. Measured both ways.
+
+Keep the script outside the repository either way. Moving it inside to fix the import would be modifying the tree you were asked to assess.
+
+Say in the writeup which path you rendered through. "The MCP tools were unavailable so I drove Chromium through `Bash`" is a complete answer; silence reads as though the tools worked.
 
 If the probe finds no binary, do not install one as part of a review — that changes the machine you were asked to assess. Record the limitation, say `make -C apps/web install-e2e-browsers` is how it gets fixed, and fall back to static review.
 
