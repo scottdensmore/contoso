@@ -1466,3 +1466,131 @@ Nothing new. `apps/web/next-env.d.ts` carries the generated `root-params.d.ts` i
 One defect and one refinement — this is not a refinement-only round, so it wants another pass after the comment is corrected.</result>
 <usage><subagent_tokens>93591</subagent_tokens><tool_uses>47</tool_uses><duration_ms>462248</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a4dfee30c73066108</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a4dfee30c73066108.output</output-file>
+<status>completed</status>
+<summary>Agent "Round two on devIndicators" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Code review — `fix/277-disable-dev-indicator`
+
+**No defects.** This round returns refinements only. Per step 8's rule, the loop can close on this round; apply what you want of the three below, rerun the focused tests and the verifier, and go to commit without another review round.
+
+The `settleWithError` correction from last round is right, and I re-derived it independently rather than taking your word: `sendChatMessage` wraps its whole body in `try`/`catch` (`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/messaging.ts:159-171`), so it cannot reject, and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/chat.tsx:444` is the only call site. I also confirmed the log reaches the badge end to end: `next/dist/next-devtools/userspace/app/errors/intercept-console-error.js` takes `args[1]` as the error when `args[0]` is a string, which is exactly this call's shape, and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/api/chat/service/route.ts:35-36` returns 500 when the upstream fetch throws, so the client `!response.ok` branch fires on a stack with no chat service.
+
+---
+
+## Refinement 1 — the "what is given up" list is missing the build-activity and cache indicators
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:100-102`
+
+The comment enumerates what `devIndicators: false` costs as "the Dev Tools menu behind that badge — route info, bundler, preferences, segment explorer — because the trigger it hangs off is the thing this suppresses." That is the enumeration a future maintainer will read to decide whether reverting is warranted, and it is short by two items that are not behind the trigger at all.
+
+In `node_modules/next/dist/compiled/next-devtools/index.js`, three siblings sit inside the same badge container, each independently gated:
+
+```js
+s = !h.disableDevIndicator &amp;&amp; jsx("button",{id:"next-logo", ...})           // trigger + menu
+q &amp;&amp; !j &amp;&amp; !h.disableDevIndicator &amp;&amp; jsx(ts,{kind:q, ...})                  // cache badge
+H &amp;&amp; !j &amp;&amp; !h.disableDevIndicator &amp;&amp; jsx(e3,{status:Z, onClick:r})          // compiling/rendering pill
+```
+
+`e3` is the build-activity pill — `Z` comes from the `buildingIndicator`/`renderingIndicator` reducer, and the logo itself carries `style:{display: H &amp;&amp; !j ? "none" : "flex"}`, i.e. the logo hides *so that* the status pill can take its place. So `devIndicators: false` also removes the "compiling" and "rendering" feedback in dev, and the cache badge, neither of which is reachable from the Dev Tools menu.
+
+Concrete scenario: someone hits a slow rebuild after this lands, sees no compiling indicator, reads this comment to find out what was suppressed, and concludes it cannot be this line — because the comment says only the menu was given up.
+
+Suggested fix: extend the list to name the build-activity pill and the cache badge as suppressed alongside the trigger, and drop "behind that badge", which is no longer accurate for two of the three.
+
+Confidence: **85**. Refinement.
+
+## Refinement 2 — "Errors still surface with this off" is unconditional, and the dismiss path makes it conditional
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:106-113`
+
+You asked whether dropping the dismiss clause was right, and how to observe it. Here is the observation, so the decision is no longer between silence and an unverified assertion.
+
+Same bundle, same component:
+
+```js
+let [O, M] = useState(!1)
+...
+let Y = h.disableDevIndicator &amp;&amp; (!j || O) ? "none" : "block"
+...
+!h.buildError &amp;&amp; jsx("button", {"data-issues-collapse":!0, "aria-label":"Collapse issues badge",
+  onClick: () =&gt; { h.disableDevIndicator ? M(!0) : I(!1), w.current?.focus() }})
+```
+
+`j` is `totalErrorCount &gt; 0`. `O` is the dismissed flag, set by the collapse button *only* on the `disableDevIndicator` branch. The only state resync in the component is `R !== j &amp;&amp; (P(j), I(j))`, which touches `N`/`R` and never `O`. So `O` is one-way for the life of the mounted component: once the X is clicked, `Y` stays `"none"` for every subsequent error until a full reload.
+
+That matters more than a footnote, because "Errors still surface with this off" is the load-bearing safety claim the rest of the block rests on ("it is also the boundary on everything above"). The claim holds until a developer clicks the X once — after which errors are silent for the rest of the session, and the boundary the comment draws is not there. On the non-disabled path the same click calls `I(!1)`, which *does* get resynced by `R !== j`, so this one-way behaviour is specific to the configuration this change introduces.
+
+Suggested fix: one clause on the "appears on the first logged error" sentence — that collapsing it hides it for the rest of the page session, unlike the default path. Reverting my last round's position: this is worth the line, and it is now verified rather than reported.
+
+(Incidental, and not worth writing down: `w.current?.focus()` in that handler targets the `next-logo` ref, which is unrendered under this config, so focus drops to `&lt;body&gt;`. Optional chaining, no crash.)
+
+Confidence: **80**. Refinement.
+
+## Refinement 3 — `--debug` is not the command CI runs, in a sentence asserting CI runs it
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next.config.js:103-105`
+
+&gt; "`next build --debug` prints `○` and `ƒ` per route and CI produces it on every run."
+
+`make -C apps/web ci` → `make build` → `npm run build` → `next build`, with no `--debug` (`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/Makefile:53-56`, `package.json:7`). And `--debug` is not what produces the table: in `node_modules/next/dist/build/index.js`, `printTreeView` is called at line 2834, outside the `if (debugOutput)` block that ends at 2826. Plain `next build` emits the `○ (Static)` / `ƒ (Dynamic)` legend.
+
+Both halves of the sentence are individually true, which is why it reads clean; the conjunction is what asserts CI passes `--debug`. This is the one claim in the block where the named command and the measured one come apart — the pattern you asked me to go looking for.
+
+Suggested fix: delete `--debug`.
+
+Confidence: **75**. Refinement.
+
+---
+
+## Your three questions
+
+**1. Every claim re-derived.** What holds, with where I checked it:
+
+- Focus order and the portal's document position — consistent with `chat.tsx`. At 1440 `isCompact` is false, so the launcher *is* rendered (`!(isCompact &amp;&amp; showChat)`) and is last in the widget, and its label is `"Close chat"` when open. So "Tab forward off the launcher" names the right control and the table's stop 2 is that control, not the sheet header's button. This is the detail I expected to find wrong and did not.
+- `!h.disableDevIndicator &amp;&amp; &lt;button id="next-logo"&gt;` — confirmed, as you said.
+- Both `aria-label` strings present, and `!h.buildError` gates the second, so "two dev stops rather than one" after an error is right.
+- The issues badge is the same portal and the same container — confirmed; the `display` switch is on the shared `[data-next-badge]` wrapper, so `display:none` takes it out of the tab order and the accessibility tree rather than merely hiding it.
+- `console.error` from `messaging.ts` reaches `totalErrorCount` — confirmed through `intercept-console-error.js` → `handleConsoleError`.
+- `devIndicators: false` is valid for Next 16.3.0 — `config-schema.js:598` is `z.union([z.object({position}), z.literal(false)])`, and the `@type {import('next').NextConfig}` annotation accepts it (`config-shared.d.ts:1349`).
+- Deleting the "wrong environment / no database" paragraph was right, and the replacement's substance is right too (modulo refinement 3).
+
+One claim I could not settle either way and am not scoring: "#282 made the panel reachable under `next dev` at all." #282's own commit body measures `localhost hydrated=true dialogAfterClick=1` before the fix, so the panel was reachable under `next dev` — just not at the loopback IP. As written the "at all" overshoots that. I am leaving it below the threshold because the `allowedDevOrigins` block twenty lines above spells the IP-only scope out, so a reader arriving here has the qualifier already. Tighten it if you are editing the block for the refinements above anyway.
+
+**2. Was dropping the dismiss clause right?** No — but your reasoning for dropping it was. Refusing to assert a behaviour you had only read in a review report is the correct default, and it is what produced the right outcome here: you handed the question back instead of laundering my claim into the file. Now that it is verified from the bundle, add it. The evidence is in refinement 2.
+
+**3. Is the comment carrying more than a config file should?** It is at the edge, and the strongest evidence is that all three of my findings this round are in it — a comment large enough to have its own defect surface is telling you something. But length is not the problem; two of the three paragraphs I would cut are the ones that answer questions a reviewer asked rather than questions a reader will:
+
+- The `settleWithError` disclaimer duplicates a rationale that already exists at `chat.tsx:423-424` ("sendChatMessage resolves with an error turn rather than rejecting"). Two copies in two files, with no pointer between them, is what drifts. Naming `sendChatMessage` as the log that lights the badge is the high-value half and should stay; "Not `settleWithError` ... because that function resolves with an error turn rather than rejecting" can go, since the file it is about already says it.
+- The 1440x900 tab table earns its space. It is the measurement the whole change rests on, and nothing else in the repository records it.
+
+That is roughly eight lines out. With the dismiss clause in and the duplicate out, the block ends up about where it is now, and every line in it answers a question a future reader will actually have. Against the root `AGENTS.md` comments policy, this is a judgement call rather than a rule violation, which is why it is not a scored finding.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts:4` — the working tree carries `import "./.next/types/root-params.d.ts";` from the build run. Generated churn, already tracked as #260, and you have said it will be cleaned before the commit. Not scored, listed so it is not lost if the cleanup slips.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/api/chat/service/route.ts:26` — `await response.text()` on the error path runs unguarded inside the outer `try`; a body read that throws converts a specific upstream status into a generic 500 and loses the real one. Pre-existing, untouched here.
+
+---
+
+## What I reviewed
+
+- `git diff main...HEAD` — empty; the branch has no commits, all work is uncommitted.
+- `git diff` — `apps/web/next.config.js` (the change) and `apps/web/next-env.d.ts` (generated churn).
+- `git diff --cached` — empty.
+- `git status --short --untracked-files=all` — no untracked files.
+- Context read: `AGENTS.md` (root) and `apps/web/AGENTS.md` in full; `src/components/chat.tsx` focus-management effects and render; `src/lib/messaging.ts`; `src/app/api/chat/service/route.ts`; `apps/web/Makefile`; `apps/web/package.json`; `next.config.test.ts` (the `require('./next.config.js')` there reads `images.deviceSizes` and is unaffected by the new key).
+- Verified in `node_modules`: `next` 16.3.0 config schema, `dist/build/index.js` `printTreeView` call site, `dist/next-devtools/userspace/app/errors/intercept-console-error.js`, and the badge component in `dist/compiled/next-devtools/index.js`.
+- Nothing else in the repository references the dev indicator, so there is no test or journey selector to keep in step with this key.
+
+Could not assess: the pixel measurements (1440x900 tab stops, the 390x844 overlap, "covers the input's left third"). Those need a running dev server and a rendered pass, which is `ui-review`'s and the verifier's ground, not mine. The bundle-level gating that *explains* those measurements checks out.</result>
+<usage><subagent_tokens>62329</subagent_tokens><tool_uses>35</tool_uses><duration_ms>372154</duration_ms></usage>
+</task-notification>
