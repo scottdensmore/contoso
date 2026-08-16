@@ -1,0 +1,146 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "55a60d5a4400",
+  "session_id": "32326432-9961-4c06-ab5c-44ff606dccde",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-16T04:43:17.001067885Z",
+  "branch": "fix/279-ui-review-browser-fallback",
+  "checkpoints_count": 10,
+  "save_step_count": 8,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "b5ffd82e08d0",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 540,
+    "cache_creation_tokens": 379677,
+    "cache_read_tokens": 59510963,
+    "output_tokens": 203493,
+    "api_call_count": 271,
+    "subagent_tokens": {
+      "input_tokens": 570,
+      "cache_creation_tokens": 509117,
+      "cache_read_tokens": 9089506,
+      "output_tokens": 216013,
+      "api_call_count": 285
+    }
+  },
+  "session_metrics": {
+    "turn_count": 20
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-16T04:43:15.718378031Z",
+    "agent_lines": 2,
+    "agent_removed": 0,
+    "human_added": 100,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 109,
+    "total_lines_changed": 110,
+    "agent_percentage": 1.8181818181818181,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 10,
+      "user_lines_removed": 1,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 10
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 12,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 12
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 14,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 14
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 14,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 14
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 19,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 19
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 19,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 19
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    },
+    {
+      "checkpoint_number": 9,
+      "user_lines_added": 19,
+      "user_lines_removed": 1,
+      "agent_lines_added": 9,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/agents/ui-review.md": 19
+      },
+      "user_removed_per_file": {
+        ".claude/agents/ui-review.md": 1
+      }
+    }
+  ]
+}

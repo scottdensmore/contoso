@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "55a60d5a4400",
+  "strategy": "manual-commit",
+  "branch": "fix/279-ui-review-browser-fallback",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/55/a60d5a4400/0/metadata.json",
+      "transcript": "/55/a60d5a4400/0/full.jsonl",
+      "compact_transcript": "/55/a60d5a4400/0/transcript.jsonl",
+      "content_hash": "/55/a60d5a4400/0/content_hash.txt",
+      "prompt": "/55/a60d5a4400/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 540,
+    "cache_creation_tokens": 379677,
+    "cache_read_tokens": 59510963,
+    "output_tokens": 203493,
+    "api_call_count": 271,
+    "subagent_tokens": {
+      "input_tokens": 570,
+      "cache_creation_tokens": 509117,
+      "cache_read_tokens": 9089506,
+      "output_tokens": 216013,
+      "api_call_count": 285
+    }
+  }
+}
