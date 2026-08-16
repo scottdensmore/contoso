@@ -396,3 +396,67 @@ Not assessed: the claim that the dev server answers 200 on `http://[::1]:&lt;por
 **This round returns no defects.** Both findings above are refinements; per step 8 of the root `AGENTS.md`, applying them does not earn another review round.</result>
 <usage><subagent_tokens>49400</subagent_tokens><tool_uses>28</tool_uses><duration_ms>212643</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a139a93e322c5423b</task-id>
+<tool-use-id>toolu_01KoLwNtBHA4ntKQNMLTwCkj</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a139a93e322c5423b.output</output-file>
+<status>completed</status>
+<summary>Agent "Final verify after refinements" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Both refinements match the description: comment 1 in `next.config.js` now correctly scopes the `AGENTS.md` write to agent-detected boots and notes `CLAUDE.md` is untouched; comment 2 in the `localhost` test now states it pins Next's own hardcoded default rather than claiming to guard a reachable config-override path. Both are text-only — no diff to logic, `allowedDevOrigins`/`agentRules` values, or assertions.
+
+## Verdict
+
+**Verified.** `make -C apps/web ci` (the full web merge gate, including `next build`) passed cleanly on branch `fix/228-chat-panel-under-next-dev`.
+
+## Failures
+
+None. Lint (`eslint .`), typecheck (`tsc --noEmit` for both app and e2e configs), journey-coverage check, `vitest run` (37 files / 157 tests passed), and `next build` (Turbopack, 230 static pages generated, all routes compiled) all completed without error.
+
+## Flakes
+
+None observed — single run, no retries needed.
+
+## Missing coverage
+
+None beyond what you already scoped out. These are comment-only edits with no behavioral surface to test; the existing 8/8 focused tests (`next.config.test.ts` + `next-dev-origins.test.ts`) already cover the actual logic these comments describe, and this run reconfirmed all of them passing as part of the full suite.
+
+## Environment issues
+
+None. No port conflicts, no missing tools, no `.env` complications encountered (this build ran `next build`, not the compose stack, so the LLM_PROVIDER/Ollama constraint doesn't apply here).
+
+## Worktree check (the thing you asked me to confirm)
+
+After the build, status is:
+
+```
+ M apps/web/next-env.d.ts
+ M apps/web/next.config.js
+?? apps/web/next-dev-origins.test.ts
+```
+
+**Nothing other than the expected #275 churn reappeared.** `apps/web/tsconfig.json` did not reappear this time (you flagged it as only "possibly" reappearing, and it didn't). The `next-env.d.ts` diff is exactly the one-line `root-params.d.ts` reference addition consistent with #275, nothing else. The `next.config.js` diff is the two documented comment blocks (`allowedDevOrigins` and `agentRules`) — no config value or logic changed. I did not revert or touch `next-env.d.ts`, per the no-modification rule; that cleanup is yours to do before committing as you said.
+
+## Commands run
+
+```bash
+git branch --show-current
+git status --short
+make -C apps/web ci
+git status --short
+git diff apps/web/next-env.d.ts
+git diff apps/web/next.config.js
+cat apps/web/next-dev-origins.test.ts
+```
+
+## Checks not run, and why
+
+- `make e2e-smoke` / `make test-e2e` — not run, per your explicit scope judgement: these two keys are dev-only (`next dev`) and unreachable from the production `next start` stack those checks exercise. I did not re-derive this independently; I'm taking it on your stated authority as the requester, consistent with what `AGENTS.md`'s guidance would also conclude for a change this narrow.
+- Manual `next dev` probe — not repeated, per your note that it need not be repeated (you already measured before/after hydration behavior at both loopback addresses).
+- `make docs-check` — not run. No Markdown files changed in this diff (only `.js` and `.test.ts`), so it's out of scope per the changed-surfaces table.
+- `make test-scripts`, `make release-dry-run` — not applicable; no scripts/tooling or release-workflow files touched.</result>
+<usage><subagent_tokens>18352</subagent_tokens><tool_uses>5</tool_uses><duration_ms>99907</duration_ms></usage>
+</task-notification>
