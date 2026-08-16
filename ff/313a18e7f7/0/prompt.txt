@@ -2125,3 +2125,73 @@ Pre-existing, not introduced here, offered so it can be filed rather than lost:
 Nothing in this change is generated or binary; everything asserted above was executed rather than inferred.</result>
 <usage><subagent_tokens>42575</subagent_tokens><tool_uses>29</tool_uses><duration_ms>266408</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ab1c1472d3bb35a11</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ab1c1472d3bb35a11.output</output-file>
+<status>completed</status>
+<summary>Agent "Final verify 253" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>`test_dependabot_config_is_runtime` ran and passed; the run is stable across two invocations (191 tests, OK both times). Worktree matches exactly the expected two files, nothing else present.
+
+## Verdict
+
+**Verified.** The change is a comment/docstring-only rewrite with no logic moved, `make test-scripts` passes at 191 tests (up from 190, as expected), and the worktree matches exactly what was declared.
+
+### Failures
+None.
+
+### Flakes
+None observed. `make test-scripts` was run twice (once standalone, once with output captured) with identical results (191 tests, OK) — no re-run needed to disambiguate anything since both runs were clean.
+
+### Missing coverage
+None for this change. It is comment/docstring text only, plus one new test (`test_dependabot_config_is_runtime`) that exercises the actual behavior (classifying `.github/dependabot.yml` as runtime, non-unknown, and `test-scripts`-recommending). No logic changed, so no new behavior needs covering beyond what that test already asserts.
+
+### Environment issues
+None. `.venv` present and usable; no ports, browsers, or Docker involved in this check.
+
+### Verification of the diff itself
+`git diff -- scripts/detect_changed_surfaces.py tests/scripts/test_detect_changed_surfaces.py` shows only:
+- A new comment block above `".github/dependabot.yml"` in `RUNTIME_PATTERNS`, replacing the old (false) "guards live in tests/scripts" rationale with the one described: same class of repo metadata as `.github/CODEOWNERS`/templates, and routing stays byte-identical to the `unknown` fallback it replaces.
+- A new docstring on `test_dependabot_config_is_runtime` making the same argument, plus explicitly noting `test-scripts` runs for every non-empty change regardless of surface (so that reason doesn't hold up as the rationale).
+
+No pattern lists, no classification logic, no `recommended_targets` changed — matches the "comment and docstring text only" claim.
+
+### Web/docs applicability check
+Ran the detector against the actual uncommitted diff (had to use worktree mode — `git status --porcelain` — rather than `--base main --head HEAD`, since that range is empty with nothing committed yet on this branch):
+
+```
+runtime=true
+web=false
+chat=false
+docs=false
+unknown=false
+none=false
+```
+
+Confirms `web=false` and `docs=false`. No Markdown changed (`git status --porcelain | grep -i '\.md$'` and `git diff --stat main...HEAD -- '*.md'` both empty). So per the routing table, `make -C apps/web ci` and `make docs-check` correctly do not apply — agreed, not run. (Note: the target list the detector printed, `... quick-ci-web quick-ci-chat`, comes from the `runtime=true` branch of `recommended_targets`, which always appends those two regardless of the `web`/`chat` flags — that's the "unknown/runtime" safety net, not evidence that web or chat surfaces changed. The underlying flags are what govern applicability, and both are false.)
+
+### Commands run
+```
+git status --short
+git branch --show-current
+git diff --stat main...HEAD
+git diff -- scripts/detect_changed_surfaces.py tests/scripts/test_detect_changed_surfaces.py
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+.venv/bin/python scripts/detect_changed_surfaces.py --help
+.venv/bin/python scripts/detect_changed_surfaces.py --print-targets
+.venv/bin/python scripts/detect_changed_surfaces.py --github-output &lt;scratchpad&gt;/gh_output.txt
+git status --porcelain | grep -i '\.md$'
+git diff --stat main...HEAD -- '*.md'
+make test-scripts   (run twice)
+```
+
+### Not run, and why
+- `make -C apps/web ci` — not applicable; detector reports `web=false` for this diff, confirmed no `apps/web` files changed.
+- `make docs-check` — not applicable; detector reports `docs=false`, and no Markdown files are in the diff.
+- `make -C services/chat ci`, `make ci`, `make e2e-smoke`, `make test-e2e`, `make release-dry-run` — out of scope; nothing in this diff touches chat, cross-surface schema, runtime containers, journeys, or release workflows.</result>
+<usage><subagent_tokens>22371</subagent_tokens><tool_uses>13</tool_uses><duration_ms>76921</duration_ms></usage>
+</task-notification>
