@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "65bdc47d2f3c",
+  "strategy": "manual-commit",
+  "branch": "refactor/273-content-visibility-deferral",
+  "checkpoints_count": 14,
+  "files_touched": [
+    "apps/web/e2e/image-deferral.spec.ts",
+    "apps/web/src/app/page.tsx",
+    "apps/web/src/app/products/category/[slug]/page.test.tsx",
+    "apps/web/src/app/products/category/[slug]/page.tsx",
+    "apps/web/src/components/deferred-image.test.tsx",
+    "apps/web/src/components/deferred-image.tsx",
+    "apps/web/src/components/listing-image.test.tsx",
+    "apps/web/src/components/listing-image.tsx",
+    "apps/web/src/test/setup.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/65/bdc47d2f3c/0/metadata.json",
+      "transcript": "/65/bdc47d2f3c/0/full.jsonl",
+      "compact_transcript": "/65/bdc47d2f3c/0/transcript.jsonl",
+      "content_hash": "/65/bdc47d2f3c/0/content_hash.txt",
+      "prompt": "/65/bdc47d2f3c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1299,
+    "cache_creation_tokens": 2433524,
+    "cache_read_tokens": 306940029,
+    "output_tokens": 488439,
+    "api_call_count": 653,
+    "subagent_tokens": {
+      "input_tokens": 154,
+      "cache_creation_tokens": 231508,
+      "cache_read_tokens": 3668370,
+      "output_tokens": 62591,
+      "api_call_count": 77
+    }
+  }
+}
