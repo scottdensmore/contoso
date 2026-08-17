@@ -335,6 +335,73 @@ If one is unavailable — a different assistant, or a session started before the
 definitions landed — carry out that step's intent directly and say which agent
 was unavailable, rather than skipping the step or reporting it as done.
 
+**Changing a definition: check it landed rather than guessing how long to wait.**
+An edit under `.claude/agents/` does not reach the agents immediately. Measured
+by putting a marker string in a definition and asking spawned agents whether
+they had it, with file reads forbidden so the answer describes what they were
+given:
+
+```text
+~1 min after the edit    absent
+~2.5 min                 absent
+~6 min                   present
+```
+
+Nothing changed between the second and third — no edit, no commit, no restart.
+So a commit is not required to publish an edit, and neither is a new session.
+Whether either would *force* a reload was not tested, and nothing between 2.5
+and 6 minutes was probed, so the interval is unbounded at both ends of that gap.
+
+Which is why the instruction is a check rather than a duration. Put a marker in
+the definition and ask the spawned agent to quote it back **from its own
+instructions, without reading any file**, saying so if it cannot tell the two
+apart. Only then trust the run — "a few minutes" is exactly the guess the
+numbers above do not support.
+
+That prohibition is the whole check, not a caveat on it. A spawned agent has
+`Read`, and `code-review`'s own definition tells it to read both sides
+whenever a change touches `.claude/agents/` — which is exactly the situation
+this check runs in. Without it the agent reads the marker off disk and quotes it
+back while running the previous text, and the check confirms the thing it was
+added to catch. The prohibition has to go in the spawn prompt every time,
+because no definition mentions markers.
+
+Take the marker out once the run is trusted, before step 9 commits — nothing
+guards against one being left in. The removal is itself an edit under
+`.claude/agents/`, so a spawn shortly after it can still quote a marker that is
+gone; that is the stale-copy case below, not a failed removal.
+
+Both directions of a stale copy mislead. A spawn too soon runs the old text and
+reports on it, which reads exactly like the new text failing. And the copy
+outlives the file: an agent still returned a marker a minute after it had been
+deleted from disk, so a rollback looks like it did not take either.
+
+An agent change is therefore testable in the session that writes it. Step 8's
+loop is where forgetting that costs most: take a finding, edit, spawn straight
+away, and the run meant to confirm the fix is testing the version before it.
+
+This paragraph is the product of getting the mechanism wrong twice, in opposite
+directions — once as "read at session start", once as "read from `HEAD`" — each
+time from a single observation treated as decisive. So prefer the marker check
+over any theory about what triggers a reload, including the one above. And where
+an agent seems to be missing a definition entirely, that is the *If one is
+unavailable* paragraph above; a wait is worth trying first, since these two look
+alike from the caller's side.
+
+**A requirement this file places on a step has to be described in the agent that
+executes it.** Nothing checks that. The guard suite reads names, tool lists,
+step numbers, and the instructions it matches by regex in a definition's body
+— that an agent is told not to modify the repository, and that `code-review`
+still carries the bullet below — never whether an
+obligation on a step appears in the agent that runs it. So an obligation added
+to step 6, 7 or 8 can name something the executing agent was never told to do,
+and the agent does not refuse: it omits it and reports the step complete, which
+reads as a clean result. That makes it `code-review`'s to catch whenever a
+change touches the numbered steps, this section, or a file under
+`.claude/agents/`, and its definition says so. The instance that found the gap
+was an edit to step 6 alone, so dropping the steps from that list would disarm
+the check for the case that motivated it.
+
 `ui-review` needs a browser to satisfy step 6's rendered-journey requirement.
 Where none is installed it falls back to reviewing source and must say so; a
 review that claims viewports it never rendered is worse than none.

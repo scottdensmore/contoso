@@ -195,6 +195,35 @@ class AgentDefinitionTests(unittest.TestCase):
                     "are instructed not to",
                 )
 
+    def test_code_review_carries_the_obligation_check_agents_md_claims(self):
+        """AGENTS.md says `code-review` catches step-versus-definition drift.
+
+        That is a claim about another file's body, which is the class this
+        module exists for — the docstring above records the same shape being
+        caught once already, in the "instructed rather than sandboxed" wording.
+
+        Left unguarded it closes on itself: delete the instruction from
+        `code-review.md` and AGENTS.md still says the check happens, while the
+        only thing that would have noticed is the deleted instruction. Every
+        other assertion here stays green, because none of them reads for it.
+
+        Asserted as one match rather than as separate words. Two presence
+        checks pass on a bullet that keeps the vocabulary and drops the
+        instruction — and, worse, on one narrowed to the `.claude/agents/`
+        trigger alone. AGENTS.md says in the same breath that dropping the
+        numbered steps would disarm the check for the edit that motivated it,
+        so a guard blind to that narrowing measures less than the prose claims.
+        """
+        self.assertRegex(
+            body_of(AGENTS_DIR / "code-review.md"),
+            r"(?is)numbered steps.{0,300}?\.claude/agents/.{0,120}?read both sides",
+            "code-review.md no longer carries the obligation check as AGENTS.md "
+            "describes it: the trigger list must still name the numbered steps "
+            "and .claude/agents/, and still require reading both sides. Dropping "
+            "the steps disarms it for a step-only edit, which is the case that "
+            "produced #160",
+        )
+
     def test_agent_description_matches_the_step_that_invokes_it(self):
         """The step number is read from AGENTS.md, not hardcoded.
 
