@@ -14,21 +14,14 @@
       "transcript": "/5b/8c147c66e3/0/full.jsonl",
       "compact_transcript": "/5b/8c147c66e3/0/transcript.jsonl",
       "content_hash": "/5b/8c147c66e3/0/content_hash.txt",
-      "prompt": "/5b/8c147c66e3/0/prompt.txt"
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 148,
-    "cache_creation_tokens": 141943,
-    "cache_read_tokens": 8229439,
-    "output_tokens": 62356,
-    "api_call_count": 74,
-    "subagent_tokens": {
-      "input_tokens": 122,
-      "cache_creation_tokens": 107311,
-      "cache_read_tokens": 1743140,
-      "output_tokens": 33383,
-      "api_call_count": 61
-    }
+    "input_tokens": 6,
+    "cache_creation_tokens": 2256,
+    "cache_read_tokens": 495774,
+    "output_tokens": 937,
+    "api_call_count": 3
   }
 }
