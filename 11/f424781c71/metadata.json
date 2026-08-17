@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "11f424781c71",
+  "strategy": "manual-commit",
+  "branch": "fix/285-160-agent-definition-integrity",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/11/f424781c71/0/metadata.json",
+      "transcript": "/11/f424781c71/0/full.jsonl",
+      "compact_transcript": "/11/f424781c71/0/transcript.jsonl",
+      "content_hash": "/11/f424781c71/0/content_hash.txt",
+      "prompt": "/11/f424781c71/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1055,
+    "cache_creation_tokens": 2622343,
+    "cache_read_tokens": 210982010,
+    "output_tokens": 428360,
+    "api_call_count": 529
+  }
+}
