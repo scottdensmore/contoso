@@ -2879,3 +2879,16 @@ Three defects. This needs another round.</result>
 Workflow obligations: PRESENT</result>
 <usage><subagent_tokens>5809</subagent_tokens><tool_uses>0</tool_uses><duration_ms>1617</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ad228bc2ce3d1c555</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ad228bc2ce3d1c555.output</output-file>
+<status>completed</status>
+<summary>Agent "Recheck marker after delay" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>PRESENT</result>
+<usage><subagent_tokens>5736</subagent_tokens><tool_uses>0</tool_uses><duration_ms>1470</duration_ms></usage>
+</task-notification>
