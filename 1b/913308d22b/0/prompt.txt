@@ -1451,3 +1451,71 @@ Not scored, not introduced here, filed by you per *Unrelated findings become iss
 - Could not assess directly: the rendered-browser claims (scroll positions, focus traces, the 43px bound, the `:focus-visible` outline). I took those as reported and checked only that the code and comments are consistent with them.</result>
 <usage><subagent_tokens>75691</subagent_tokens><tool_uses>28</tool_uses><duration_ms>535946</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>aca37b42f9615a766</task-id>
+<tool-use-id>toolu_01JvyC9pa3eWytc6ZBeW3WVc</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aca37b42f9615a766.output</output-file>
+<status>completed</status>
+<summary>Agent "Final verify after refinements" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — no blockers.** `make -C apps/web ci` (lint, typecheck, journey-coverage guard, 171/171 vitest tests, `next build`) and `make test-scripts` (192/192) both passed clean. The working tree is exactly the four files claimed, nothing staged, nothing untracked, `next-env.d.ts` is not part of the diff. The comment-only claim is confirmed for `sidebar.tsx` and `header.tsx` with certainty (byte-level diff against pre-edit snapshots); for `sidebar.test.tsx` I can corroborate it structurally but not prove it line-for-line, and I'm flagging that gap explicitly below rather than rounding it up.
+
+## Comment-only confirmation (the part you asked me to check, not just take)
+
+I found that this same session's scratchpad still held pre-edit snapshots of the two component files from my prior pass (`sidebar.v4.tsx` at 16:11, `header.v2.tsx` at 15:45), taken before this round's edits (files rewritten 16:32–16:33). I diffed those against the current working files directly:
+
+- **`sidebar.tsx`**: `diff` against `sidebar.v4.tsx` shows exactly one hunk, entirely inside the scroll-lock comment block. Every code line — imports, both `useEffect` calls, the JSX — is byte-identical. The reworded text matches your description precisely (drops the "two components saving/restoring the same property interleave" framing, adds the "chat's `inert` covers the header below `lg`, the `z-50` backdrop covers the launcher, and chat's focus-out closes it at `lg` and up... not fixing a live collision" language).
+- **`header.tsx`**: `diff` against `header.v2.tsx` shows two hunks, both inside comments — the focus-return effect's leading comment (trimmed, and the "Left alone... ordering coincidence" and measured-scroll paragraphs removed) and the trigger's JSX comment (now says the label is what reports state, given `aria-modal` confines AT to the dialog). No code line — `triggerRef`, `wasOpen`, the effect body, `onClick`, `aria-expanded`, `aria-controls` — differs at all.
+
+- **`header.test.tsx`**: not on your list of three, and I can explain why it isn't: its mtime (16:10:58) predates the entire edit round that touched the other three files (16:32:31–16:33:01) and even predates my own last snapshot capture (16:11:13). It simply wasn't touched this round — consistent with your omission, not a gap in it.
+- **`sidebar.test.tsx`**: **this is the one I can't fully back up.** No pre-edit snapshot of either test file survived from the prior pass (only the two `.tsx` component files were saved). Its mtime (16:33:01) is the last of the four, i.e. edited in this round. I reviewed the current diff against `origin/main` and it's structurally consistent with your description — the trailing docblock reads as already-trimmed analytical content (mutation table, coverage-gap notes) with no first-person retrospective language, and every `it`/`expect` block is complete and self-consistent — but that is not the same guarantee as the byte-diff I have for the other two files. I cannot rule out a code-line moving under prose editing in this specific file from evidence alone.
+
+## Failures
+None.
+
+## Flakes
+None observed; nothing was re-run.
+
+## Missing coverage
+None new — this pass is comment-only by the evidence above, so no behavior changed that would need new coverage. (Not re-litigating prior-pass coverage findings, per scope.)
+
+## Environment issues
+None. Ports 3100/8100/55432 free, no unrelated containers on them. Your `next start` on port 3201 (pid 31947) was left running and untouched; verified it's still up and returning HTTP 200 after my `next build` ran (which regenerates `.next` in place) — it did not get torn down or knocked over. I agree with your assessment that it being stale doesn't matter here, since the confirmed delta touches no rendered output.
+
+## Commands run
+```
+git status --short
+git diff --stat origin/main...HEAD
+git rev-parse HEAD origin/main
+git log -1 --oneline origin/main
+git status --short --untracked-files=all
+git diff -- apps/web/src/components/sidebar.tsx
+git diff -- apps/web/src/components/header.tsx
+git diff -- apps/web/src/components/header.test.tsx
+git diff -- apps/web/src/components/sidebar.test.tsx
+diff -u &lt;scratchpad&gt;/sidebar.v4.tsx apps/web/src/components/sidebar.tsx
+diff -u &lt;scratchpad&gt;/header.v2.tsx apps/web/src/components/header.tsx
+stat -c '%Y %y %n' apps/web/src/components/{header.test.tsx,header.tsx,sidebar.test.tsx,sidebar.tsx}
+git diff --cached --stat
+git status --porcelain=v1 -- apps/web/next-env.d.ts
+git diff --stat -- apps/web/next-env.d.ts
+ss -ltnp | grep -E ':3100|:8100|:55432|:3201'
+docker ps
+make -C apps/web ci
+make test-scripts
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3201/
+```
+
+## Not run, and why
+- `make ci` (cross-surface), `make e2e-smoke`, `make test-e2e` — not requested and out of scope; this is a comment-only web change with no route/behavior/schema impact.
+- `make docs-check` — no Markdown changed.
+- No stack was started or torn down; the pre-existing `next start` on 3201 was left as found.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.test.tsx`.</result>
+<usage><subagent_tokens>59223</subagent_tokens><tool_uses>21</tool_uses><duration_ms>275564</duration_ms></usage>
+</task-notification>
