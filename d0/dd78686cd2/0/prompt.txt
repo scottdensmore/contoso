@@ -266,3 +266,76 @@ tsc --noEmit -p tsconfig-skiplib.json / tsconfig-noskiplib.json / tsconfig-ts.js
 Relevant file: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`</result>
 <usage><subagent_tokens>30830</subagent_tokens><tool_uses>21</tool_uses><duration_ms>277159</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ae9f791d2ac9c85ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ae9f791d2ac9c85ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the next-env fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/260-next-env-drift` — approved, no defects, no refinements
+
+**Defect count: 0. Refinement count: 0.** Nothing scored at or above 75, so there is nothing to apply and no reason to come back for another round. This round is clean in the sense step 8 requires.
+
+### What I verified
+
+**The diff is exactly what you described and nothing else.** One file, one line. `git diff --cached` against `origin/main` at b475853 shows `apps/web/next-env.d.ts | 1 +`. No unstaged changes, no untracked files (checked with `--untracked-files=all`). Nothing crept in — your question 4 is clean.
+
+**The added line is byte-exact with what the pinned Next emits.** I did not take this on trust. `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/next/dist/lib/typescript/writeAppTypeDeclarations.js:55-56` pushes `root-params.d.ts` unconditionally — no feature gate, unlike the `strictRouteTypes` block below it that gates `cache-life`/`validator`/`link`. I reconstructed the emitter's full output for this config and MD5'd it against the staged blob: identical, including LF endings and the trailing newline. So the fix tracks the artifact rather than approximating it.
+
+**The fresh-checkout safety claim holds, but not for the reason the verifier gave.** This is the one place I'd correct the record. I reproduced it in isolation and tested all four cells:
+
+| | `skipLibCheck: true` | `skipLibCheck: false` |
+|---|---|---|
+| side-effect-only import | exit 0 | exit 0 |
+| named import | exit 0 | **TS2307** |
+
+The verifier's operative conclusion is correct — a side-effect-only import of a missing module produces no error regardless of `skipLibCheck`, which is the cell your change actually occupies, and Next always emits this form. But its contrast case is wrong: a named import does *not* "error immediately" under this repo's config, because `skipLibCheck: true` suppresses diagnostics inside `.d.ts` files, and `next-env.d.ts` is one. Only with `skipLibCheck: false` does the named import fail. The conclusion survives; the stated mechanism was over-attributed to import form when `skipLibCheck` is doing part of the work. Worth knowing if anyone later reasons from that sentence rather than re-measuring. I also confirmed my harness could fail before trusting it pass — the `skipLibCheck: false` named-import cell is that negative control.
+
+Live confirmation: `tsc --noEmit` exits 0, `--listFiles` shows `next-env.d.ts`, `.next/types/root-params.d.ts` and `.next/types/routes.d.ts` all in the program, and the run left the worktree untouched.
+
+### Your four questions
+
+**1. Committing generated output — tracking is right, and it is not a close call.** The root `.gitignore` ignores `next-env.d.ts` at line 19, then explicitly re-includes it at line 134 under a heading that reads `# Exceptions (Do NOT ignore these)`:
+
+```
+!apps/web/next-env.d.ts
+```
+
+That negation landed in `b9f9dbc` alongside the quick-CI/git-hook work. So tracking is not drift or an accident of history — it is a deliberate, recorded decision, and the pre-commit path depends on it: `lint-staged` runs bare `tsc --noEmit`, and `tsconfig.json` names `next-env.d.ts` first in `include`. Gitignoring it would mean reverting that negation, and would be a scope-widening change to a decision this issue never asked you to revisit. Root `AGENTS.md`'s "Prefer keeping generated artifacts out of commits" is the weaker, more general statement; the explicit per-file exception is the more specific one and wins. You made the right call, and #260's framing matches the repo.
+
+**2. Someone on a different Next.** `next` is pinned exact at `16.3.1` and `eslint-config-next` matches it. The realistic bad path is a stale `node_modules` from before #225 — and there the failure is benign in the direction that matters: `tsc` stays green (proven above, the import form does not error on a missing target), and an older `next build` would rewrite the file *without* the line, producing the same dirty-worktree symptom in reverse. That is inherent to tracking a generated file at all, is cured by `npm ci`, and is not something this line introduces. No path where this breaks a build.
+
+**3. No comment — your reasoning is correct, and the emitter proves it.** Lines 69-74 of `writeAppTypeDeclarations.js` build the content and then:
+
+```js
+if (currentContent === content) {
+  return;
+}
+await _fs.promises.writeFile(appTypeDeclarations, content);
+```
+
+The comparison is whole-file string equality. Any comment you add makes `currentContent !== content` on every single build, so the next `next build` overwrites it — reintroducing precisely the drift this change fixes, and silently discarding the explanation at the same time. A comment here is not merely erased, it is actively harmful. The commit body is the right surface for the "why", per step 9.
+
+**4. Nothing crept in.** Confirmed above.
+
+### Collateral I checked and found clean
+
+`eslint.config.mjs` ignores `next-env.d.ts` by name, so lint is unaffected. `tsconfig.e2e.json` overrides `include` to `e2e/**`, so the second typecheck pass never opens the file. The `Dockerfile` copies `src`, `public`, `next.config.js`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`, `eslint.config.mjs`, `prisma` and `prisma.config.ts` — not `next-env.d.ts` — confirming the container regenerates it and this seam was never reachable from the image path.
+
+### Outside this change
+
+Nothing new to file. The one gap I would have raised — no check that a build leaves the worktree clean, which is why this survived from #225 — you have already filed as #309, and correctly kept out of this diff.
+
+### Scope and limits
+
+Reviewed: `git diff --cached` (the sole staged change), `git diff` (empty), `git status --short --untracked-files=all` (no untracked files), against base `origin/main` at b475853. Read for context: root and `apps/web` `AGENTS.md`, root `.gitignore`, `apps/web/tsconfig.json`, `tsconfig.e2e.json`, `Makefile`, `package.json`, `eslint.config.mjs`, `next.config.js`, root `Dockerfile`, and Next's `writeAppTypeDeclarations.js`.
+
+The workflow-obligation check does not apply here: the change touches no numbered step in `AGENTS.md`, no *Sub-agents this workflow depends on* text, and no file under `.claude/agents/`.
+
+One thing I could not assess directly: I did not delete `.next` to reproduce the fresh-checkout typecheck in situ, because that would modify your working tree. I established the same result out-of-tree with a matching `tsconfig`, including a demonstrated failing case, which I consider equivalent evidence for the resolution question.</result>
+<usage><subagent_tokens>44471</subagent_tokens><tool_uses>30</tool_uses><duration_ms>264190</duration_ms></usage>
+</task-notification>
