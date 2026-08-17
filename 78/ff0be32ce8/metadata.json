@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "78ff0be32ce8",
+  "strategy": "manual-commit",
+  "branch": "test/302-accessible-name-query-cost",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/web/src/app/page.test.tsx",
+    "apps/web/src/app/products/category/[slug]/page.test.tsx",
+    "apps/web/vitest.config.mts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/78/ff0be32ce8/0/metadata.json",
+      "transcript": "/78/ff0be32ce8/0/full.jsonl",
+      "compact_transcript": "/78/ff0be32ce8/0/transcript.jsonl",
+      "content_hash": "/78/ff0be32ce8/0/content_hash.txt",
+      "prompt": "/78/ff0be32ce8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 152,
+    "cache_creation_tokens": 162254,
+    "cache_read_tokens": 9227833,
+    "output_tokens": 62479,
+    "api_call_count": 76,
+    "subagent_tokens": {
+      "input_tokens": 148,
+      "cache_creation_tokens": 167563,
+      "cache_read_tokens": 2052654,
+      "output_tokens": 59512,
+      "api_call_count": 74
+    }
+  }
+}

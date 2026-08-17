@@ -1,0 +1,244 @@
+Lets figure out the next best work to pick up and use @AGENTS.md
+
+---
+
+<task-notification>
+<task-id>a06836623511df896</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a06836623511df896.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify web test change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The change is a pure test-file diff (no application/runtime code touched), and it passes its applicable merge gate cleanly and reproducibly across three runs. No flakes, no type-check gaps, no guard-that-cannot-fail found.
+
+## What I ran and found
+
+**Scope confirmation (independent of the detector).** `detect_changed_surfaces.py --base origin/main --head HEAD` printed nothing, because HEAD is identical to `origin/main` (0f9f69b) — the change is entirely uncommitted working-tree modifications, which the detector cannot see (as documented). I confirmed scope directly via `git status --short` and `git diff`: only `apps/web/src/app/page.test.tsx` and `apps/web/src/app/products/category/[slug]/page.test.tsx` are modified. `apps/web/src/app/page.tsx` and `apps/web/src/app/products/category/[slug]/page.tsx` are untouched — verified by the diff, not just by the task description.
+
+**Merge gate — `make -C apps/web ci`:** passed clean, 61s wall clock.
+- `lint` (eslint): no errors.
+- `typecheck` (`tsc --noEmit`, `tsc --noEmit -p tsconfig.e2e.json`, `check-journey-coverage.mjs`): no `error TS` output anywhere — `toHaveRole`/`toHaveAccessibleName` type-checked against the changed files.
+- `test` (`vitest run`): 159 passed / 159, 38 files.
+- `build` (`next build`, real production build including its own `Finished TypeScript in 7.6s` pass and static generation of 230 pages): succeeded.
+
+**`make test-scripts`:** 192 tests, OK, 1.3s.
+
+**Flakiness check — three consecutive full `npx vitest run --reporter=verbose` runs:** 159/159 passed every time, 38/38 files. Per-test durations for the two changed specs' "one card" tests, across the three runs:
+- Home page "names a product card once": 722ms / 732ms / 784ms
+- Category "…has an image": 508ms / 516ms / 532ms
+- Category "…has no image": 95ms / 108ms / 118ms
+
+The slowest test in the entire suite across all three runs peaked at 838ms — roughly 24x under the 20s `testTimeout` budget, so no test is anywhere near the race condition #283/#304 addressed. No flake observed (all three runs identical pass count, no retry-triggered pass-after-fail).
+
+**Matcher registration — checked, not assumed.** `apps/web/src/test/setup.ts` does `import '@testing-library/jest-dom'`, which per that package's `exports` map resolves to `types/index.d.ts` → `jest.d.ts` (a `declare global { namespace jest {...} }` augmentation gated behind `/// &lt;reference types="jest" /&gt;`). Neither `jest` nor `@types/jest` is installed in `apps/web` (confirmed via `node_modules/@types` and `package.json`), and nothing in the repo imports the `@testing-library/jest-dom/vitest` subpath that carries the `declare module 'vitest' { interface Assertion ... }` augmentation (`types/vitest.d.ts`) that actually types `expect(x).toHaveRole(...)` for vitest's `Assertion` interface. This looked like it should fail type-checking. It does not: `tsc --noEmit` (both the app config and `tsconfig.e2e.json`) and `next build`'s own TypeScript pass all completed with zero errors on the changed files, so in this project's actual module-resolution graph the matchers do resolve and type-check for vitest's `expect`. I did not trace the exact resolution path further since the ground-truth compiler run is authoritative and unambiguous, but flag this as a fragile chain worth being aware of (it depends on `jest-dom`'s package-level `types: "types/index.d.ts"` picking up something that ends up including the vitest augmentation transitively — I did not fully pin down which file bridges it).
+
+**Guard-that-cannot-fail review.** Read the diff in full plus the current `page.tsx` / `[slug]/page.tsx` source it targets. Each of the three assertions (`toHaveLength(1)`, `toHaveRole('link')`, `toHaveAccessibleName(name)`) corresponds to a distinct, independently-breakable property, consistent with the mutation table documented in the diff's own comments (`alt=""` reversion doubles the name; `role="button"` changes the role; doubled rendering changes the length; the category page's reworded empty state and restored `role="img"`/`aria-label` pair both change the no-image accessible name). I did not re-execute these mutations myself — my first attempt to do so (a temporary `sed -i` on `page.tsx`, intending to revert immediately) was blocked by the auto-mode permission classifier before it touched the file, which is correct: my remit here is verification without modifying the repository, even transiently. I instead cross-checked the mutation claims structurally against the current source (confirmed `alt=""` on both image components, confirmed no `role="img"`/`aria-label` pair on the empty-state `div`, confirmed the anchor has no explicit `role`) and found them plausible and consistent with the claimed failure modes. Found no assertion in the diff that is vacuously true by construction.
+
+## Flakes
+
+None. Three consecutive full-suite runs all green with identical counts; no test failed-then-passed.
+
+## Missing coverage
+
+None introduced by this change — it alters *how* an existing guarantee is checked, not *what* is guaranteed. One disclosed (not hidden) narrowing worth restating in my own words: `getByRole('link', { name })` failed on any two links sharing an accessible name anywhere in the rendered document; locating by `a[href=...]` only asserts uniqueness of *that* href. The diff's own comment in `page.test.tsx` states this explicitly and reasons that two differently-slugged products sharing a display name is a catalogue-data condition, not a rendering defect this test is responsible for. I agree that's a reasonable, disclosed trade rather than a silent regression, but it is a real change in what the test would catch, so I'm naming it rather than letting the author's framing stand unchecked.
+
+## Environment issues
+
+None. Ports 3100/8100/55432 were not needed for these checks. Per the task's own note and my independent read of the diff (no `page.tsx`, no Dockerfile, no `docker-compose.yml` touched), I agree `make e2e-smoke` and `make test-e2e` do not apply to this change — nothing rendered by a journey or served by a container changed. I did not run either, and no stack was started or needed.
+
+## Commands run
+
+```
+git fetch origin main --quiet
+git status --short
+git diff --stat origin/main...test/302-accessible-name-query-cost
+git rev-parse HEAD; git rev-parse origin/main
+git diff --stat; git diff
+.venv/bin/python scripts/detect_changed_surfaces.py --base origin/main --head HEAD --print-targets
+cat apps/web/src/test/setup.ts
+grep -i jest-dom apps/web/package.json
+cat apps/web/vitest.config.ts
+cat apps/web/tsconfig.json
+grep -n "toHaveRole|toHaveAccessibleName" apps/web/node_modules/@testing-library/jest-dom/types/*.d.ts
+make -C apps/web ci
+make test-scripts
+cd apps/web &amp;&amp; npx vitest run --reporter=verbose   # x3
+```
+
+## Not run, and why
+
+- `make docs-check` — no Markdown changed in this diff.
+- `make e2e-smoke`, `make test-e2e` — change touches no runtime code, Dockerfile, or `docker-compose.yml`, and no route/journey rendering changed; agreed with the author's assessment rather than skipping silently.
+- `make ci` (top-level, cross-surface) — change is web-only, no chat or schema surface touched, so the narrower `make -C apps/web ci` is the correct gate per the table.
+- Independent re-execution of the mutation demonstrations — blocked by the auto-mode permission classifier when I attempted a temporary, self-reverting source edit; correctly out of scope for a non-modifying verifier. Verified the claims structurally against source instead.</result>
+<usage><subagent_tokens>42923</subagent_tokens><tool_uses>29</tool_uses><duration_ms>323997</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>adc8121bcab904b32</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/adc8121bcab904b32.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the #302 change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Findings
+
+### 1. `apps/web/vitest.config.mts` lines 14–29 — the timeout rationale now describes a state this change deletes — **defect**, confidence 90
+
+The change touches one side of a documented pair and leaves the other. `vitest.config.mts` justifies `testTimeout: 20_000` with:
+
+```
+// slowest test here is `src/app/page.test.tsx` at 1.6-2.0s idle, with nine
+// more between 0.6s and 1.2s, so the default left under 3x of headroom
+...
+// from. #302 carries the cost itself -- the slowest test spends 793ms of its
+// ~2000ms inside one `getByRole` call, against 120ms to render the page it
+// queries.
+```
+
+After this change none of that is true. `src/app/page.test.tsx` no longer contains a `getByRole` call, and it is no longer the slowest test. Measured here on a full `npx vitest run --reporter=verbose`:
+
+```
+758ms  src/components/chat.test.tsx &gt; ... reply is fast
+741ms  src/lib/user.test.ts &gt; ... hashed password
+724ms  src/app/page.test.tsx &gt; Home page &gt; names a product card once
+714ms  src/app/login/page.test.tsx &gt; renders the login form
+```
+
+Concrete way it produces a wrong result: the next person asked whether the 20s budget is still the right number reads "under 3x of headroom" against the 5000ms default and concludes the margin is tight. It is now roughly 6.6x, and the change's whole stated benefit — margin against that timeout — is invisible in the file that records the budget. The `#302 carries the cost itself` sentence also reads as open work that this change closes.
+
+Fix: update that comment block in the same commit — restate the post-change slowest test and its figure, and change the `#302` sentence to record that the cost was removed rather than that it is outstanding.
+
+This is not a pre-existing issue. That comment was accurate at `0f9f69b`; this diff is what falsifies it.
+
+### 2. `apps/web/src/app/page.test.tsx` lines 54–56 — the stated mechanism for the win is false — **defect**, confidence 85
+
+```
+// Located by href rather than by `getByRole('link', { name })`, which
+// resolved a role and an accessible name for every element in the
+// document to find one card.
+```
+
+Verified against the installed `@testing-library/dom` (`node_modules/@testing-library/dom/dist/queries/role.js`). `queryAllByRole` starts from `container.querySelectorAll(makeRoleSelector(role))`, and `makeRoleSelector('link')` returns `*[role~="link"],a,area,link`. So it visits link candidates, not every element, and the `computeAccessibleName` filter runs only over the elements that already matched the role — the ~20 card anchors, not the document. The `isInaccessible` pass runs last, on what survived the name filter.
+
+Why it matters rather than being pedantry: this is the per-element model you told me `#302` got wrong and said you had corrected in the comments. The corrected model (a fixed one-time jsdom charge plus a document-proportional part) appears only in the category file. The home file — the one carrying the actual 723ms — still states the superseded one, and it is the sentence a reader uses to decide whether `getByRole` is worth replacing anywhere else. Applied to a page with two links it predicts a win that does not exist, which is exactly what the category conversion measured.
+
+Fix: say what it actually does — resolves an accessible name for every link on the page, each of which walks that card's subtree through `getComputedStyle` — and carry the corrected two-charge diagnosis into this file rather than leaving it only in the sibling.
+
+Related, same sentence group: line 56's "This test is the suite's slowest" is present tense and no longer holds (third, per the run above). Folding that into the same edit is enough.
+
+## Your five challenges, answered
+
+**1. Is `toHaveRole('link')` vacuous?** No, and your reasoning is stronger than you argued it. I probed the mutation directly rather than taking the table on trust: with `role="button"` on the anchor, `querySelectorAll('a[href=...]')` still returns 1 and `computeAccessibleName` still returns `"Trail Boots"`. Both other assertions pass. `toHaveRole` is the only one that moves. That is an exclusive catch, not a redundant one.
+
+**2. The disclosed narrowing.** Right call. Two different products sharing an accessible name is a `categories.json` condition, and it would have failed the old test as a rendering assertion for a reason that is not a rendering fact. Worth noting that the narrowing is smaller than you documented: I checked whether the `hidden: false` filter was lost too, since `querySelectorAll` does not apply it. It is not — `computeAccessibleName` returns `""` for an element under `aria-hidden="true"` or `display:none`, so `toHaveAccessibleName(name)` still fails on both. The enumeration "the three properties that query was making" holds except for the uniqueness subject, which you already disclose.
+
+**3. Keeping the category conversion.** Keep it. It costs nothing measurable (514ms in my run, inside your stated spread), and the alternative leaves two tests that a comment calls a pair asserting the same property two different ways. The comment says it bought no time rather than claiming a win, which is the part that matters.
+
+**4. Comments overstating.** Two claims fail, both in finding 2 above. Everything else checks out: the mutation tables are consistent with the code (`role="img"` + `aria-label` restored does reintroduce `for X` into the link name, per `page.tsx`'s own measured block); the category file's mechanism sentence — small document, fixed jsdom cost the accessible name still pays — is consistent with the observed per-test profile in that file (107ms, then 354ms on the first name computation, then 64ms).
+
+**5. Hardcoded `a[href="/products/trail-boots"]`.** Acceptable. `categoryOf` spreads `...product` after `slug`, so a caller could override it — but the failure mode is `toHaveLength(1)` seeing 0, which is loud. No silent pass is reachable. Below the reporting threshold; take it or leave it.
+
+## Outside this change
+
+Nothing I would ask you to file. The pre-existing comment density in these files is house style and step 4 requires the mutation tables, so it is not a comments-policy violation.
+
+## What I reviewed
+
+- `git diff` against the worktree on `test/302-accessible-name-query-cost` (base `origin/main` at `0f9f69b`): `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx` and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.test.tsx`. `git diff --cached` and `git status --short` are otherwise clean — no staged and no untracked files.
+- Surrounding context: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/listing-image.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/setup.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.mts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/public/categories.json`.
+- Runbooks: root `AGENTS.md` and `apps/web/AGENTS.md`. No `.claude/agents/` file and no numbered workflow step is touched, so the agent-obligation cross-check does not apply here.
+- Ran read-only: the two changed specs and the full `npx vitest run --reporter=verbose` (all green, 6/6 and full suite), `npx tsc --noEmit` (clean), `npx eslint` on both files (clean), plus a jsdom probe in the scratchpad against `apps/web/node_modules` to check the role/name/hidden behaviour claims without touching the repo.
+
+Not assessed: the specific millisecond figures in the new comments for the *pre-change* state (1692ms, 462ms, 951ms, 274ms). Reproducing those needs the old code in the tree, which would mean modifying the repository. I checked them for internal consistency and against post-change measurements only.</result>
+<usage><subagent_tokens>64632</subagent_tokens><tool_uses>24</tool_uses><duration_ms>378960</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a3bf7fb5ee2772b89</task-id>
+<tool-use-id>toolu_01Xu2UhAzPBBoFCqqNjoNDLQ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a3bf7fb5ee2772b89.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after review fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified for the stated merge gate** — `make -C apps/web ci` passes (159/159 tests, `next build` succeeds), `make test-scripts` passes (192/192), and `testTimeout`/`retry` resolve to 20000/0. But one of the review claims does not check out as stated: **I cannot confirm the "comment-only since last pass" claim for the two test files**, and the load-bearing prose in `vitest.config.mts` has a specific factual weak spot (`seed-password`'s timing). Details below.
+
+## Failures
+
+None. `make -C apps/web ci` (lint, typecheck, journey-coverage, 159 vitest tests across 38 files, `next build`) completed cleanly. `make test-scripts` (192 unittest cases) completed cleanly.
+
+## Flakes
+
+None observed. I ran the vitest suite 6 times total (once inside `make ci`, five more with `--reporter=verbose`) — every run was 38/38 files, 159/159 tests, no retries triggered, nothing near the 20s budget (worst single test observed: 1.237s).
+
+## Item 3 — is the diff really comment-only? (checked, not taken on your word)
+
+**`apps/web/vitest.config.mts`**: confirmed comment-only. `git diff` shows only comment lines changed; `testTimeout: 20_000,` and `retry: 0,` are unchanged context lines, and both still appear verbatim in the file at lines 36 and 42.
+
+**`apps/web/src/app/page.test.tsx`** and **`apps/web/src/app/products/category/[slug]/page.test.tsx`**: I cannot confirm "comment-only since your last pass" for either file, for a concrete reason — **there is no record in this repository of a prior pass to diff against.** This branch (`test/302-accessible-name-query-cost`) has zero commits over `main` (`git log main..HEAD` is empty); every change is an uncommitted working-tree edit, and there's no stash, tag, or other artifact marking an earlier state. The only diff I can compute is working-tree vs. `main`, and that diff is **not** comment-only for either test file — it also contains a real assertion/import change: `getByRole('link', { name })` was replaced with `container.querySelectorAll('a[href=...]')` + `toHaveRole('link')` + `toHaveAccessibleName(...)`, and the `screen` import was dropped from `page.test.tsx`. A `expectOneCardNamed` helper was added in the category test.
+
+I can't tell you whether that refactor predates the "last pass" you're describing (i.e., was already reviewed) or is new — I have no way to separate "old" from "new" content within this single uncommitted diff. What I can say is: **the whole-file diff against `main` is not comment-only**, so if "comment-only" was meant to describe that diff rather than an unrecorded delta, it's inaccurate. If you want this genuinely re-verifiable next time, committing between passes (even to a WIP ref) would let me isolate the actual delta instead of trusting a description of it.
+
+## Item 4 — checking the prose against measured numbers
+
+Ran `npx vitest run --reporter=verbose` 5 times from `apps/web`. Durations for the named tests (ms):
+
+| test | run1 | run2 | run3 | run4 | run5 |
+|---|---|---|---|---|---|
+| `page.test.tsx` (Home page) | 960 | 786 | 1237 | 729 | 764 |
+| `user.test.ts` (createUser) | 821 | 842 | 708 | 993 | 886 |
+| `chat.test.tsx` (accessibility case) | 601 | 699 | 675 | 637 | 832 |
+| `seed-password.test.ts` (bcrypt hash verifies) | 389 | 434 | 361 | 448 | 833 |
+
+Which test topped a run: page.test.tsx (run1, run3), user.test.ts (run2, run4, run5). So **"no single test is a reliable standout" and "which of them tops a given run varies" both hold** — the top spot alternated between two different tests across 5 runs, and in run 5 three tests (user.test.ts 886, seed-password 833, chat-accessibility 832) all landed within 6% of each other. No test exceeded 1.24s in any of my 5 runs, so I have no evidence against the "1.6s worst observed" ceiling either — if anything my data gives the 20s budget even more headroom than the comment claims (&gt;16x, not &gt;12x, in what I measured).
+
+One place the comment overstates precision: **`seed-password`'s bcrypt test was below the stated 0.6-1.6s floor in 4 of my 5 runs** (361, 389, 434, 448ms — all under 600ms), only landing in the band once (833ms in run5). As written ("`user.test.ts` and `seed-password` (both real bcrypt) ... share a 0.6-1.6s band"), this reads as a steady-state characterization, but on this machine `seed-password` usually runs well under that floor and only occasionally spikes into it. I'd call this an overstatement of `seed-password`'s typical cost, not a wrong ceiling.
+
+One thing the comment doesn't mention that's worth your attention: `chat.test.tsx &gt; Chat placeholder timing &gt; keeps the user message and shows no stuck placeholder when the reply is fast` was **remarkably consistent** across all 5 runs (729, 802, 734, 722, 736ms — a ~80ms spread) and was at or above the named "chat accessibility" case's time in 4 of 5 runs. It's not a standout (never topped a run) but it's arguably a more reliable member of that contended band than some of the tests you did name. Not a defect in the comment, just a gap you may want to fold in if you're naming examples.
+
+## Missing coverage
+
+None introduced by this change — no assertion, application code, or test logic changed (setting aside the item-3 caveat above about the pre-existing querySelectorAll refactor, which I cannot attribute to before/after an unrecorded prior pass). The comment/prose changes don't alter what's exercised.
+
+## Environment issues
+
+- **`apps/web/next-env.d.ts` appeared as modified** after `make -C apps/web ci` ran `next build`, exactly as you anticipated (issue #260 — the `import "./.next/types/root-params.d.ts"` line gets appended). I left it untouched since I don't modify the repository; it is currently sitting in your working tree as `M apps/web/next-env.d.ts` and should be reverted before this is committed.
+- No port or Docker conflicts encountered — I did not run anything that touches ports 3100/8100/55432.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets   # empty: no committed diff over main
+git diff -- apps/web/vitest.config.mts
+git diff -- apps/web/src/app/page.test.tsx
+git diff -- "apps/web/src/app/products/category/[slug]/page.test.tsx"
+make -C apps/web ci
+git status --short   # to catch next-env.d.ts
+git diff -- apps/web/next-env.d.ts
+make test-scripts
+git diff --stat -- src/test/runner-budget.test.ts   # (from apps/web) unmodified
+grep -n "20000\|20_000\|retry" src/test/runner-budget.test.ts
+grep -n "testTimeout\|retry" apps/web/vitest.config.mts
+npx vitest run --reporter=verbose   # x5, from apps/web
+```
+
+## What I did not run, and why
+
+- `make e2e-smoke` / `make test-e2e` — not run. The change is comment-only in test/config files with no runtime, Dockerfile, or route-rendering impact per the change description, and the user's request scoped this to `make -C apps/web ci` and `make test-scripts` specifically.
+- `make docs-check` — not run. No Markdown changed in this diff.
+- `make release-dry-run` — not applicable; no release workflow files touched.
+- Anything against other in-flight scratchpad session directories under `/tmp/claude-1000/...` — I found several from unrelated sessions while searching for a possible saved "previous pass" artifact, but did not open or rely on them; they belong to other tasks and using them to backfill a missing record here would not be a trustworthy substitute for an actual commit boundary.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.mts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/page.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/products/category/[slug]/page.test.tsx`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/runner-budget.test.ts`.</result>
+<usage><subagent_tokens>57057</subagent_tokens><tool_uses>25</tool_uses><duration_ms>402728</duration_ms></usage>
+</task-notification>
