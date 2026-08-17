@@ -1,0 +1,156 @@
+Read AGENTS.md and issue #148, then add today's third entry to #148 and pick up #283.
+
+---
+
+<task-notification>
+<task-id>a3bea0d2f91560af6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a3bea0d2f91560af6.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the vitest budget change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — the change is safe to merge**, with one caveat: my own gate execution (running `next build` as part of `make -C apps/web ci`) regenerated the tracked file `apps/web/next-env.d.ts` (Next.js appended a `root-params.d.ts` type reference), and I was blocked by the permission classifier from reverting it. That diff is unrelated to this change and should be discarded before push (`git checkout -- apps/web/next-env.d.ts`). It is not something I introduced by editing anything — it's Next's own codegen reacting to the current Next.js version, and it would reproduce on any developer's machine running the same build.
+
+## Scope determination
+
+- `git status --short` (only signal, since HEAD == main and nothing is committed): `M apps/web/vitest.config.mts`, `?? apps/web/src/test/runner-budget.test.ts`.
+- `.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets` printed nothing, as expected — it only sees committed work and there's no commit here yet. Both changed paths match `WEB_PATTERNS` (`apps/web/**`) in `scripts/detect_changed_surfaces.py`, so this is web-scoped by the tool's own rules had it seen the diff.
+- Confirmed the stated coupling by reading `tests/scripts/test_e2e_journey_wiring.py::test_vitest_does_not_also_collect_the_journeys` — it does load `apps/web/vitest.config.mts` verbatim and assert `e2e/**` is present in it, in the same `test:` block that was edited. This edit only appends lines after the existing `exclude` entry, so the assertion still holds, but the coupling justifies exercising `make test-scripts` per your reasoning.
+- No chat, schema, or docs files touched — `make ci` (repo-wide) and `make docs-check` are not required by AGENTS.md's matrix for this change, and I did not run them.
+
+**Gates run:** `make -C apps/web ci`, `make test-scripts` (plus extra bare `vitest run` invocations for flake-checking).
+
+## Failures
+
+None.
+
+## Flakes
+
+None observed. Ran the web unit suite five times total:
+- Once inside `make -C apps/web ci` (full merge gate, run 1): `Test Files 38 passed (38)`, `Tests 159 passed (159)`, Duration 10.07s.
+- Three standalone `npx vitest run` passes: 9.61s, 10.09s, 9.65s — all `38 passed / 159 passed`.
+- Once more with `--reporter=verbose` to confirm `runner-budget.test.ts` specifically: both its assertions passed (`gives a test more room than the implicit 5s default`, `retries nothing`), 6ms and 1ms respectively.
+- A second full `make -C apps/web ci` (run 2, including lint/typecheck/build again): all green, `next build` completed successfully (230 static paths generated).
+
+`make test-scripts`: 192 tests, 1.394s, all `OK`. Also ran the specific coupled test module directly (`python -m unittest tests.scripts.test_e2e_journey_wiring -v`): all 8 tests pass, including `test_vitest_does_not_also_collect_the_journeys`.
+
+No re-runs were needed to distinguish flake from real failure, since nothing failed.
+
+## Missing coverage
+
+None specific to this change. It's test-infrastructure-only (a config value plus a guard reading the resolved runtime values), and the new guard already covers what it should: floor on `task.timeout` (≥20000ms) and exact `task.retry` (0), read from the resolved runner state rather than regexed from the config file — which is exactly the thing #281 needed and #283 needed the timeout raise for. I did not attempt to mutate the config to reproduce the guard's own failure-mode table (that would modify the working tree), but the logic in `runner-budget.test.ts` (`retryCount` handling both numeric and `{count}` object forms of `retry`) is correct by inspection and passes against the actual resolved config.
+
+## Environment issues
+
+- `apps/web/next-env.d.ts` was modified by my own `next build` run as an unrelated codegen side effect (added `import "./.next/types/root-params.d.ts";`). I attempted `git checkout -- apps/web/next-env.d.ts` to restore it and was denied by the Claude Code auto-mode classifier (git-checkout is treated as a destructive/write action regardless of intent). **This file is currently left modified in your working tree** — please run `git checkout -- apps/web/next-env.d.ts` yourself, or leave it if you want the updated codegen (it's harmless either way, but it's not part of this change).
+- Ports 3100, 8100, 55432: not touched, no stack was started or needed — this change excludes `e2e/**` from vitest and doesn't touch `playwright.config.ts`, matching your assessment. I did not start a stack.
+- No other environment problems: `.venv`, `npm`, Prisma generate, and `next build` all worked cleanly with no missing tools or timeouts.
+
+## Specific checks you asked about
+
+1. **Runner correctly loads `vitest.config.mts` from `apps/web`.** Verified by tracing the Makefile chain: `make -C apps/web ci` → `quick-ci` → `test` → `npm run test` (`vitest run`), all executed with cwd `apps/web` via `make -C`. Root `make test-web` maps through `WEB_MAKE := $(MAKE) -C $(WEB_DIR)` to the same `apps/web` invocation. Both resolve the config correctly — confirmed by the `runner-budget.test.ts` assertions passing (if the config had failed to load, `task.timeout` would report 5000 and the test would fail, per the guard's own documented failure table).
+2. **Suite wall-clock.** ~9.6–10.3s across five runs, matching the ~10s idle baseline you cited — the new file adds negligible measured cost (its own two tests ran in 6ms + 1ms).
+3. **Flakes.** Five vitest runs, two full `make -C apps/web ci` runs, all green, no reruns needed.
+4. **No working-tree edits made** to the two files under review. The only unintended diff is the auto-regenerated `apps/web/next-env.d.ts`, flagged above, which I could not revert due to a permission denial.
+
+## Commands run (for reproduction)
+
+```bash
+git status --short
+git diff --stat main...HEAD
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+git diff apps/web/vitest.config.mts
+make -C apps/web ci        # run 1 and run 2
+make test-scripts
+.venv/bin/python -m unittest tests.scripts.test_e2e_journey_wiring -v
+cd apps/web &amp;&amp; npx vitest run --reporter=verbose
+cd apps/web &amp;&amp; npx vitest run   # x3 more, for flake-checking
+```
+
+## Not run, and why
+
+- `make ci` (repo-wide): not applicable — no chat, schema, or cross-surface files changed; the coupling to `tests/scripts` is already covered by `make test-scripts`.
+- `make docs-check`: no Markdown changed.
+- `make e2e-smoke` / `make test-e2e`: correctly out of scope per your reasoning — `e2e/**` stays excluded from vitest and `playwright.config.ts` is untouched, so no stack was built or needed.
+- `make release-dry-run`: not applicable, no release workflow files touched.</result>
+<usage><subagent_tokens>35836</subagent_tokens><tool_uses>28</tool_uses><duration_ms>348300</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab3fc8b4b9dee032b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ab3fc8b4b9dee032b.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the vitest budget change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I verified the change independently rather than relying on the summary. Everything I ran was read-only.
+
+## Verification I performed
+
+- **Default reporter claim (your question 1) — the corrected comment is true.** `npx vitest run` on this tree prints only the `Test Files 38 passed / Tests 159 passed` summary: no per-file line, no per-test line, no duration. Same under `CI=true` and same when piped (non-TTY), so it holds in `npm run ci:web` too. Forcing a failure (`npx vitest run src/app/page.test.tsx --testTimeout=1`) is what makes the reporter print a test line with a duration. `--reporter=verbose` printed exactly 159 `✓` lines with durations; 20 of them are over 300ms, the slowest is `src/app/page.test.tsx &gt; Home page &gt; names a product card once` at 1782ms, and the next nine run 953ms down to 591ms. The numbers in the comment reproduce.
+- **The guard measures the effective value (your question 2) — yes, not a second declaration.** In `node_modules/@vitest/runner/dist/chunk-artifact.js`, line 1734 computes `const timeout = options.timeout ?? runner.config.testTimeout`, line 1758 stores it on the task, and line 1787 passes *that same variable* to `withTimeout`. `task.timeout` is the number the runner enforces, not a copy of the config. Same for retry: line 1759 `retry: options.retry ?? runner.config.retry`, and line 2933 `const retry = getRetryCount(test.retry)` drives the retry loop.
+- **`retryCount()` is right, and matches the runner exactly.** The runner's own `getRetryCount` (line 2522) is `undefined → 0`, `number → number`, `object → retry.count ?? 0` — character for character your helper's behaviour. The object form is real config in Vitest 4 (`SerializableRetry = number | {count?, delay?, condition?}`), so handling it is not speculative. `retry: config.retry` in config resolution (`cli-api.BK8pd4xc.js:9186`) leaves it `undefined` when unset, which `getRetryCount` reads as 0 — so "it is also vitest's default" checks out.
+- **Guard sensitivity, re-demonstrated from the CLI without touching the repo.** `--testTimeout=5000` → `AssertionError: expected 5000 to be greater than or equal to 20000`, other test still passing. `--retry=2` → `× retries nothing 14ms (retry x2)`, `expected 2 to be +0`. Both assertions fail independently and for the named reason.
+- Hook claim in the docblock holds: every `beforeEach` in the suite is `vi.clearAllMocks()`/mock wiring, and `src/test/setup.ts` is `matchMedia` plus `vi.mock` — no hook does the work, so leaving `hookTimeout` at 10s is correct.
+- `npx eslint src/test/runner-budget.test.ts` clean, `npx tsc --noEmit` clean, `git status --short` shows only the two intended paths (no stray `next-env.d.ts`).
+- Seam check: `tests/scripts/test_e2e_journey_wiring.py::test_vitest_does_not_also_collect_the_journeys` locates the config by extension and asserts `"e2e/**" in text` by substring — your added keys cannot break it. `apps/web/playwright.config.ts` really does state `retries: 0` unconditionally (no `process.env.CI ? 2 : 0`), so the "same policy" comparison is accurate.
+
+**No defects.** Two refinements follow; neither needs another review round.
+
+## Findings
+
+### 1. The config comment answers #283's question in the wrong direction — refinement, 75
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.mts:21-23`
+
+```
+// #283 asked whether raising this hides the signal that a test is slow, and
+// it does: `npm test` here is `vitest run` with the default reporter, which
+// prints per-test durations for failures only, so on a green run the 20
+// tests over 300ms are invisible at any timeout.
+```
+
+Every factual claim after the colon is true — I confirmed all of them above. The problem is `and it does`. The question is whether *raising the timeout* hides the signal, and the evidence you then give ("invisible at any timeout") establishes that raising it changes nothing: the signal was never emitted at 5000ms either. So the comment states the causal conclusion the rest of the sentence refutes.
+
+The scenario where that bites: someone reading this line in six months to decide whether to raise the timeout again — or to justify lowering it — takes away "raising the timeout cost us the slow-test signal", which is the false premise the first version of this comment carried and which you already corrected once. This is the same overstatement class, surviving in the connective rather than in the claim.
+
+Suggested fix: `and it does not — the signal is absent either way:` (or `and it was never there:`), leaving the rest of the sentence untouched.
+
+### 2. The docblock's "what nothing here catches" list omits deletion of `retry: 0` — refinement, 75
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/runner-budget.test.ts:16-29`
+
+The mutation table records the timeout deletion case (`testTimeout` line deleted → fails, reporting 5000) but for retry lists only value changes. Deletion behaves differently for the two keys: unset `testTimeout` falls back to 5000 and the budget assertion fails, whereas unset `retry` resolves to `undefined`, `getRetryCount(undefined)` returns 0, and `retries nothing` **passes**. So if someone removes the `retry: 0` line, this guard stays green.
+
+That is not wrong as an assertion — the effective policy is still zero retries, which is what the test claims. But it is the one thing the sibling `tests/scripts/test_e2e_journey_wiring.py::test_retries_are_not_enabled` does catch for the journeys, and the config comment's stated purpose for the line ("so that turning it on is a visible decision rather than a line nobody wrote") depends on the line being there. The root `AGENTS.md` step 4 requires writing down which mistakes nothing catches, and the docblock has that section, so the omission is a gap in exactly the list the rule asks for.
+
+Suggested fix: add a line to the *What nothing here catches* paragraph — removal of `retry: 0` itself, since vitest's default resolves to the same zero and the assertion is on effective policy rather than on the declaration.
+
+## Answers to your other questions
+
+**3. Is 20_000 right, and is a floor the right shape?** Yes to both. The slowest test measured 1782ms here, so 20s is ~11x headroom against a suite whose worst case is 1.8s, and it sits below `playwright.config.ts`'s 30s per-journey timeout, which keeps the two budgets ordered the way the work they cover is. A floor is the correct shape given the comment you wrote: the config carries the measurement, and an equality assertion would turn any future re-measurement into a two-file edit for no gain. The floor's one weakness — it cannot catch a raise to 120s that papers over a real regression — is not something an equality assertion catches either, since the raiser would edit both.
+
+**4. Coupling / a `tests/scripts` guard for symmetry.** The runner-read guard supersedes a regex one, and adding both would be a step backwards in the terms of the root `AGENTS.md` code-review rule ("require guards to measure effective behavior, not a nearby declaration"). The only thing a `tests/scripts` regex would add over what you have is finding 2's deletion case, and paying a second guard for that is worse than documenting it. Do not add one.
+
+**5. Policy in `apps/web/AGENTS.md`.** I agree with your decision. The journeys' identical policy is stated in `playwright.config.ts`'s docblock and enforced by a guard, with nothing in any `AGENTS.md`; matching that is consistency, not an omission, and an `AGENTS.md` sentence would be a third copy of a fact two files already carry — the kind that goes stale first.
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_e2e_journey_wiring.py:205-212` — `test_retries_are_not_enabled` asserts `re.search(r"retries:\s*0", config)` against the *text* of `playwright.config.ts`. It would pass on a `retries: 0` sitting in a comment or in a dead object literal while the live value was `2`, and it is the declaration-reading shape the root `AGENTS.md` code-review rules tell reviewers to reject. Your vitest guard now has no equivalent weakness, which makes the journeys the weaker half of the pair. Worth an issue for a runner-read replacement (a journey spec asserting `testInfo.project.retries === 0` would measure the resolved value).
+- `#260` (`apps/web/next-env.d.ts` regenerated by `next build`) is already filed and the tree is clean of it, so nothing further from me there.
+
+## Scope reviewed
+
+- `git diff main...HEAD` — empty; the branch carries no commits, so all work is in the worktree.
+- `git diff` — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/vitest.config.mts` (23 lines added: `testTimeout: 20_000`, `retry: 0`, and their comments).
+- `git diff --cached` — empty.
+- Untracked, read in full: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/test/runner-budget.test.ts`.
+- Context read to judge them: root `AGENTS.md`, `apps/web/AGENTS.md`, `apps/web/playwright.config.ts`, `apps/web/package.json`, `apps/web/Makefile`, root `Makefile`, `.github/workflows/ci.yml`, `tests/scripts/test_e2e_journey_wiring.py`, `apps/web/src/app/page.test.tsx`, `apps/web/src/lib/user.test.ts`, `apps/web/src/test/setup.ts`, `apps/web/next.config.test.ts`, and the vitest 4.1.10 runner and config-resolution sources in `node_modules`.
+
+Nothing under `.claude/agents/` or in `AGENTS.md`'s numbered steps is touched, so the step-versus-agent obligation check has nothing to compare. I could not assess how the 20s budget behaves on CI's runner hardware — my measurements are from this machine, and the failure #283 describes is load-dependent by nature.</result>
+<usage><subagent_tokens>61003</subagent_tokens><tool_uses>34</tool_uses><duration_ms>493371</duration_ms></usage>
+</task-notification>
