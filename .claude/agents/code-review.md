@@ -39,6 +39,12 @@ Read untracked files directly — they carry no diff. Also read enough surroundi
 
 **Test quality.** Whether new tests would fail if the behaviour regressed. A test that passes against both the old and new implementation verifies nothing. Say so when you see one.
 
+**Workflow obligations against the agent that carries them out.** When a change touches `AGENTS.md`'s numbered steps or its *Sub-agents this workflow depends on* section, or any file under `.claude/agents/`, read both sides. A requirement placed on step 6, 7 or 8 has to be described in the definition of the agent executing that step, and has to be something the tools that agent is granted can actually do.
+
+This is your remit because no test covers it. The guard suite reads names, tool lists, step numbers, and the instructions it matches by regex in the body (that the agent is told not to modify the repository, and that this bullet is still here) — never whether an obligation placed on a step appears in the agent that runs it. It has already happened — a step 6 addition required exercising changes at 2× device pixel ratio, while the executing definition specified three viewports and no notion of density, and none of its granted tools set `deviceScaleFactor`, that being a browser-context property rather than a resize argument. The failure is quiet: the agent does not refuse an obligation it was never given, it omits it and reports the step complete, and the caller reads a green report as the requirement met.
+
+The reverse direction counts too — a definition promising something the step never asked for is drift in the other direction, and the same read catches it.
+
 ## Scoring and filtering
 
 Score each candidate finding 0-100 for confidence that it is real and worth acting on:
