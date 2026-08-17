@@ -3,8 +3,10 @@
   "checkpoint_id": "925f6a041500",
   "strategy": "manual-commit",
   "branch": "fix/285-160-agent-definition-integrity",
-  "checkpoints_count": 1,
-  "files_touched": null,
+  "checkpoints_count": 7,
+  "files_touched": [
+    "tests/scripts/test_agent_definitions.py"
+  ],
   "sessions": [
     {
       "metadata": "/92/5f6a041500/0/metadata.json",
@@ -12,13 +14,27 @@
       "compact_transcript": "/92/5f6a041500/0/transcript.jsonl",
       "content_hash": "/92/5f6a041500/0/content_hash.txt",
       "prompt": "/92/5f6a041500/0/prompt.txt"
+    },
+    {
+      "metadata": "/92/5f6a041500/1/metadata.json",
+      "transcript": "/92/5f6a041500/1/full.jsonl",
+      "compact_transcript": "/92/5f6a041500/1/transcript.jsonl",
+      "content_hash": "/92/5f6a041500/1/content_hash.txt",
+      "prompt": "/92/5f6a041500/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1068,
-    "cache_creation_tokens": 2635737,
-    "cache_read_tokens": 216569657,
-    "output_tokens": 434571,
-    "api_call_count": 536
+    "input_tokens": 1869,
+    "cache_creation_tokens": 3394189,
+    "cache_read_tokens": 273288376,
+    "output_tokens": 622944,
+    "api_call_count": 761,
+    "subagent_tokens": {
+      "input_tokens": 68,
+      "cache_creation_tokens": 46338,
+      "cache_read_tokens": 939161,
+      "output_tokens": 25516,
+      "api_call_count": 34
+    }
   }
 }
