@@ -2892,3 +2892,87 @@ Workflow obligations: PRESENT</result>
 <result>PRESENT</result>
 <usage><subagent_tokens>5736</subagent_tokens><tool_uses>0</tool_uses><duration_ms>1470</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a6a20d44d7580c54b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a6a20d44d7580c54b.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify agent definition change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Working tree is clean again. Final report below.
+
+## Verdict
+
+**Verified.** The change on `fix/285-160-agent-definition-integrity` (commit `76fddbc`) is prose-only, adds no stray token to the sub-agent scanner, its factual claim about the guard suite is accurate, and no leftover marker string exists in the branch, its history, or the tracked working tree. `make test-scripts` (191), `make docs-check`/`make agent-docs-check` (including the 8-test `test_agent_definitions.py` suite), and — because the change touches `.claude/agents/**`, which this repo's own surface detector deliberately classifies as `runtime` rather than `unknown` — the full `make ci` cross-surface merge gate all passed.
+
+## Failures
+
+None.
+
+## Flakes
+
+None observed; nothing needed a re-run.
+
+## Findings on the three specific asks
+
+**1. `agent_names_claimed_by_docs()` / the sub-agent scanner.** Ran the actual function from `tests/scripts/test_agent_definitions.py` against `AGENTS.md`'s `### Sub-agents this workflow depends on` section (lines 307–381, up to the next `## Repo map`). Result: `{'ui-review', 'code-review', 'verifier'}` — exactly matches `EXPECTED_STEP`. All backtick spans in the new block are `` `ui-review` ``, `` `verifier` ``, `` `code-review` ``, `` `.claude/agents/` `` and `` `Bash` `` (twice each in places) — the path and the capitalized tool name don't match the scanner's `` `([a-z][a-z-]*[a-z])` `` pattern, so they're correctly ignored. I also confirmed the guard is not vacuous: injecting a synthetic stray token (`` `docs-check` ``, mirroring #154) into a copy of the text in memory (no file written) made the returned set diverge from `EXPECTED_STEP`, i.e. the assertion would fail as intended. `make docs-check`'s embedded `test_agent_definitions.py` run (8/8 tests) confirms this on the real file.
+
+**2. The re-derived factual claim.** Read `tests/scripts/test_agent_definitions.py` directly: `body_of()` (lines 87–98) splits on `---` and returns `parts[2]` — "everything after the frontmatter" — and `test_agents_are_told_not_to_modify_and_could` (lines 169–196) calls `self.assertRegex(body_of(...), r"(?i)(?:do(?:es)? not|never) modify", ...)`. This matches what you believed almost exactly. One small imprecision worth flagging: the corrected sentence calls it "one fixed phrase," but the regex actually has alternation (`do not` / `does not` / `never`, case-insensitive) — so it's one fixed *pattern* checking for one instruction-concept, not a single literal string. I don't think this rises to "still wrong" — the substantive correction (the suite *does* read the body, for exactly this one thing, and reads nothing else about obligations-per-step) is accurate and is what both files now say.
+
+**3. Leftover marker strings.** `git log --all -S"MARKER-ZQX7"` and `-S"MARKER-KTW9"` turned up nothing in the fix branch's own history (`git log fix/285-160-agent-definition-integrity -p -S... -- .` was empty), and `git merge-base --is-ancestor` confirmed `entire/checkpoints/v1` (which does contain those strings in its own commits) is neither an ancestor nor descendant of this branch — it's an unrelated side-channel ref, not part of this branch's history. A generic `git grep MARKER` across every commit reachable from the fix branch and the tracked working tree found only pre-existing, unrelated `MARKER=from-repo-root` fixture text in `tests/scripts/test_local_dev_surface.py` (present in every commit back through the branch, not part of this change). The only hits for the literal marker strings anywhere on disk were in `.entire/metadata/.../full.jsonl` and `prompt.txt`, which is gitignored session/agent-tooling metadata (confirmed via `git check-ignore -v`) and contains them only because this verification task's own prompt text quotes the markers — not something committed to the repository.
+
+## Missing coverage
+
+None specific to this change — it's prose that either matches an existing regex-based guard (confirmed above) or documents a review responsibility that is, by its own text, deliberately outside what any test can check (comparing a step's obligation against an agent definition's stated capability is exactly the kind of judgment call `code-review` exists for because "no test covers it," as the new bullet itself says). Nothing about this change introduces behavior that a test should have but doesn't.
+
+## Environment issues
+
+None. `apps/web/node_modules` and `.venv` were already present; `make ci` ran end-to-end without any missing-tool, port, or Docker problems. No Docker/e2e-smoke stack was needed or started for this change (scope is docs/agent-definition prose, not runtime code, Dockerfiles, or compose).
+
+## Side effect noted and reverted
+
+Running `next build` as part of `make ci` regenerated `apps/web/next-env.d.ts` (a Next.js-managed file whose own header says "This file should not be edited") with one added `import` line. This is expected build-tool behavior, not a change I made to the repository; I restored it via `git checkout -- apps/web/next-env.d.ts` so the working tree is back to clean, matching how I found it.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD
+git branch --show-current
+git log --oneline -5
+git show --stat 76fddbc
+git show 76fddbc -- AGENTS.md .claude/agents/code-review.md
+git branch -a
+git merge-base --is-ancestor entire/checkpoints/v1 fix/285-160-agent-definition-integrity
+git merge-base --is-ancestor fix/285-160-agent-definition-integrity entire/checkpoints/v1
+git log fix/285-160-agent-definition-integrity -p -S"MARKER-ZQX7" -- .
+git log fix/285-160-agent-definition-integrity -p -S"MARKER-KTW9" -- .
+git log --all --source --oneline -S"MARKER-ZQX7"
+git log --all --source --oneline -S"MARKER-KTW9"
+grep -rl "MARKER-ZQX7\|MARKER-KTW9" --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.venv .
+git grep -n "MARKER" $(git rev-list fix/285-160-agent-definition-integrity) --
+git grep -n "MARKER" -- .
+git check-ignore -v .entire/metadata/.../full.jsonl
+grep -n "^### Sub-agents this workflow depends on\|^## " AGENTS.md
+python3 &lt;inline script re-running agent_names_claimed_by_docs() logic against AGENTS.md, and against an in-memory copy with an injected stray token&gt;
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+make test-scripts
+make docs-check
+make agent-docs-check
+make ci        # background; exit 0, log reviewed in full
+git status --short   # before/after cleanup
+git checkout -- apps/web/next-env.d.ts
+```
+
+## What I did not run and why
+
+- `make e2e-smoke` / `make test-e2e` — not run. This change touches neither runtime code, Dockerfiles, `docker-compose.yml`, nor anything a journey renders; it's prose in `AGENTS.md` and an agent definition's markdown body. No container image or served route is affected.
+- `make release-dry-run` — not applicable; nothing under `.github/workflows/release.yml` or release guardrails changed.
+- `make e2e-smoke-lite` / `-full` — not applicable; no chat dependency profile changed.
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_agent_definitions.py`.</result>
+<usage><subagent_tokens>58685</subagent_tokens><tool_uses>34</tool_uses><duration_ms>557784</duration_ms></usage>
+</task-notification>
