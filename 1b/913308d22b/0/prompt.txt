@@ -1,0 +1,1453 @@
+<task-notification>
+<task-id>bgowc8u2o</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bgowc8u2o.output</output-file>
+<status>completed</status>
+<summary>Background command "Check CI status after delay" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bou8gai01</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bou8gai01.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI to finish" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets do that
+
+---
+
+<task-notification>
+<task-id>ac879384649a97704</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ac879384649a97704.output</output-file>
+<status>completed</status>
+<summary>Agent "Rendered pass for next bump" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Rendered review completed
+
+Rendered through **`Bash` driving Playwright's Chromium directly**. The MCP tools were unavailable — `browser_navigate` failed with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, the exact #279 failure `AGENTS.md` records. The `Bash` probe launched fine (`browser: ok 151.0.7922.34`), so I fell back to it rather than degrading to a source review.
+
+I used your two servers and started/stopped nothing. No repository modification.
+
+### Headline: the bump changes nothing rendered. 145,542,630 pixels compared, 0 differ.
+
+36 combinations — 6 pages x 3 viewports x DPR 1 and 2 — full-page canvas diff, 3201 against 3202:
+
+| | phone 390 | tablet 768 | desktop 1440 |
+|---|---|---|---|
+| `/` | 0 / 2,899,650 (1x) · 0 / 11,598,600 (2x) | 0 / 3,767,040 · 0 / 15,068,160 | 0 / 7,254,720 · 0 / **29,018,880** |
+| `/about` | 0 / 697,320 · 0 / 2,789,280 | 0 / 967,680 · 0 / 3,870,720 | 0 / 1,762,560 · 0 / 7,050,240 |
+| `/faq` | 0 / 822,900 · 0 / 3,291,600 | 0 / 1,319,424 · 0 / 5,277,696 | 0 / 2,266,560 · 0 / 9,066,240 |
+| `/contact` | 0 / 374,400 · 0 / 1,497,600 | 0 / 811,008 · 0 / 3,244,032 | 0 / 1,342,080 · 0 / 5,368,320 |
+| `/login` | 0 / 329,160 · 0 / 1,316,640 | 0 / 786,432 · 0 / 3,145,728 | 0 / 1,296,000 · 0 / 5,184,000 |
+| `/signup` | 0 / 329,160 · 0 / 1,316,640 | 0 / 786,432 · 0 / 3,145,728 | 0 / 1,296,000 · 0 / 5,184,000 |
+
+No canvas size mismatches, so every comparison was made — none skipped.
+
+Three things that make the zero meaningful rather than vacuous:
+
+- **The images actually loaded.** 20/20 decoded with `naturalWidth &gt; 0` on both servers. The zero is not two blank pages agreeing.
+- **The density pass was real.** 2x genuinely moved the ladder: on desktop `/`, a 350px CSS box requested `w=384` at DPR 1 and `w=750` at DPR 2; `/about` at phone went 384 → 750. Distinct rungs requested: 384, 640, 750, 1080.
+- **Image requests are byte-identical.** Across all 12 image-bearing combinations, the `/_next/image` URL sets and full `srcset`/`currentSrc`/CSS-box DOM state match exactly once the origin (`:3201` vs `:3202`) is normalised. 0 mismatches. No silent change in the srcset ladder or optimiser output.
+
+I verified the versions independently rather than trusting the port labels: the PR worktree resolves `next` to **16.3.1**, `/home/scottdensmore/Developer/scottdensmore/.contoso-300-baseline` resolves to **16.3.0**, and both worktrees sit on the same commit `74dad84` — so the source is identical and only the dependency differs. ETags differ, confirming distinct builds.
+
+Screenshots (76 PNGs, 68M): `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/shots/`, `results.json` alongside them.
+
+### One caveat about your stack, not about the PR
+
+The two servers are not perfectly matched environments. `/api/auth/session` returns **200 on 3201 and a reproducible 500 on 3202** (`"There is a problem with the server configuration"`, 3/3 attempts each). The cause is `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/auth.ts:77` — `secret: process.env.NEXTAUTH_SECRET` — so the baseline was started without that variable. It is an env difference, not a 16.3.0 behaviour. It did not affect the comparison (`/login` and `/signup` diffed to 0 pixels), but if you rerun this, matching the env removes the asymmetry. I could not read the process environments to confirm directly — the permission classifier blocked `/proc/&lt;pid&gt;/environ` — so this is inferred from the source and the response bodies.
+
+---
+
+## Findings — all pre-existing, none caused by this PR
+
+The 0-pixel diff is itself the proof: every item below renders identically on 16.3.0. **None of these block this PR**; all are issue candidates.
+
+**1. Mobile drawer has no focus management or focus trap (medium-high, a11y).** All viewports, `/` with menu open. Opening it via keyboard leaves `document.activeElement` on the trigger — focus never enters the drawer. Tabbing onward walks straight out: `Sign In &gt; Sign Up &gt; Close sidebar &gt; Close &gt; Home &gt; … &gt; FAQ &gt; TrailMaster X4 Tent &gt; Alpine Explorer Tent`, i.e. into product links visually obscured by the backdrop. The drawer carries no `role="dialog"` and no `aria-modal`. The chat panel does this correctly — it moves focus to the message input and restores it to the launcher on Escape — so the pattern already exists in the codebase to copy. Fix: `role="dialog" aria-modal="true"`, move focus in on open, trap Tab within, restore on close.
+
+**2. Menu trigger never exposes its state (medium, a11y — WCAG 4.1.2).** `aria-expanded` is `null` before and after opening, `aria-controls` absent, and `aria-label` stays `"Open menu"` while the menu is open. A screen-reader user gets no signal that anything happened. Fix: toggle `aria-expanded` and the label.
+
+**3. `/login` and `/signup` are navigational dead ends (medium, usability).** Both pages contain **zero** `&lt;a href&gt;` elements and no `&lt;header&gt;` at any viewport. There is no link from Sign In to Sign Up, and no way back to the site except browser Back. Tab order on `/login` is exactly `email &gt; password &gt; Sign in &gt; Open chat`. Fix: add the cross-link and a home/logo link.
+
+**4. A failed categories fetch renders as silent emptiness (low-medium, error state).** `/api/categories` 500s (expected — no DB), and the drawer renders `&lt;h3&gt;Shop&lt;/h3&gt;&lt;ul class="mt-4 space-y-4"&gt;&lt;/ul&gt;`: a section heading with nothing under it, no error text, no retry. Visible in `shots/menu-open-phone.png`. The 500 here is your environment, but the silent-failure handling is real and would look the same in production.
+
+**5. Chat dialog modality is inconsistent across viewports (low).** `aria-modal="true"` at 390px, absent at 1440px, same `role="dialog"` both. Possibly deliberate (sheet vs. side panel), but worth making explicit.
+
+**6. The drawer backdrop is a full-viewport `&lt;button&gt;` (low).** `class="fixed inset-0 … w-full h-full"`, `aria-label="Close sidebar"`. Labelled, so not a violation, but it is a screen-sized tab stop.
+
+### What passed
+
+**axe-core: 0 violations** across all 18 page/viewport combinations at wcag2a/2aa/21a/21aa. Worth stressing on contrast specifically: my own first-pass checker reported failures, and they were all artifacts — this app's computed colours come back as `lab(...)` (Tailwind v4), which my regex could not parse, so it silently fell through to a white background and produced ratios of exactly 1.0. axe handles modern colour spaces and finds nothing. I would have reported six false contrast bugs had I trusted the first run.
+
+Also clean: visible focus indicator on **every** tab stop on all six pages at phone and desktop; no horizontal overflow at any viewport (`scrollWidth === innerWidth` throughout); no tap target under 24px; heading order correct with exactly one `h1` per page; chat Escape correctly restores focus to the launcher.
+
+### Checks not performed
+
+- **Loading states** — not exercised. All six pages in scope serve prerendered (`x-nextjs-prerender: 1`, `x-nextjs-cache: HIT`); there is no async loading phase to observe.
+- **Form error/success states** — not exercised. Contact, login and signup submission all need the database, which is deliberately absent per your brief. I observed only the categories-fetch error path.
+- **Products and category pages** — out of scope per your brief (DB-dependent). Noting that these carry the heaviest `next/image` `sizes`/`srcset` logic in the codebase (`apps/web/src/app/products/[slug]/page.tsx`, `apps/web/src/app/products/category/[slug]/page.tsx`), so the image-delivery comparison covered 21 images on `/` and `/about` but not the app's most complex responsive-image code. If you want that surface covered against a Next patch, it needs a DB.
+
+Known issues #286, #289, #176, #217, #218, #219 skipped as instructed — I did incidentally confirm `/contact` still renders two `&lt;main&gt;` elements (#219), still present, not re-reported.</result>
+<usage><subagent_tokens>60344</subagent_tokens><tool_uses>38</tool_uses><duration_ms>747421</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a215d2e3dddbc8c5c</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a215d2e3dddbc8c5c.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the next 16.3.1 bump" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — no blockers.** `make -C apps/web ci` and `make test-scripts` both pass clean on the 16.3.0 → 16.3.1 bump. Changelog review found nothing in the patch that touches a code path this repository actually exercises. On the smoke question below, I disagree with skipping it entirely — see the explicit recommendation.
+
+## Failures
+
+None. `make -C apps/web ci` (lint, `tsc --noEmit` on both `tsconfig.json` and `tsconfig.e2e.json`, journey-coverage check, 159/159 vitest tests, `next build`) and `make test-scripts` (192/192 unittest) all exited clean.
+
+`next build` output confirms 16.3.1, Turbopack, `output: 'standalone'` traced successfully, and the same route shape as before: 230 SSG product paths under `/products/[slug]`, static pages, and the expected dynamic API routes — nothing missing, nothing newly dynamic.
+
+## Flakes
+
+None observed. Each suite ran once and passed; I did not need a re-run to distinguish signal from environment noise.
+
+## Missing coverage
+
+None specific to this bump — a dependency-version-only change with no source diff has no new behavior for a test to miss. One thing worth naming: nothing in this local battery exercises the actual Docker image (`make -C apps/web ci` builds on the host, not in the container), which is exactly what `make e2e-smoke` is for. See the recommendation below.
+
+## Environment issues
+
+None. Ports 3100/8100/55432 were free before and after (only your 3201/3202 baseline servers were listening). `/tmp` scratchpad use was minimal — logs only, no large artifacts. Your two `next start` servers on 3201/3202 were left untouched.
+
+**Side effect worth flagging**: running `make -C apps/web ci` regenerated `apps/web/next-env.d.ts` (issue #260) as an **unstaged** working-tree change — it added back the `import "./.next/types/root-params.d.ts";` line. It is not staged (`git diff --cached --name-only` still shows only `package.json` and `package-lock.json`), so it does not affect what PR #300 will merge. But it is sitting in your working tree now; you'll want to revert it again before your next `git diff` sanity check, since I did not touch git state per my constraints.
+
+## Changelog review (16.3.0 → 16.3.1)
+
+Full list from `https://github.com/vercel/next.js/releases/tag/v16.3.1` (compare: `v16.3.0...v16.3.1`) is almost entirely Turbopack-internal fixes, dev-only HMR/middleware-compile fixes, and cache-internals backports. Checked each category you named against what this repo actually does:
+
+- **Image optimization** — the one directly relevant PR: [#96733](https://github.com/vercel/next.js/pull/96733), "fix(next/image): preserve image response after optimization." Root cause (from the original PR, [#96621](https://github.com/vercel/next.js/pull/96621)): *"An uncached next/image optimization globally blocked Sharp's SVG loader, causing subsequent Node.js ImageResponse rendering to fail."* Fix is one line in `packages/next/src/server/image-optimizer.ts`, adding `'VipsForeignLoadSvg'` back to the sharp loader allowlist. This repo has no `next/og` / `ImageResponse` routes (`grep -rn "next/og|ImageResponse"` returned nothing) and doesn't route SVGs through the optimizer — catalogue images are WebP/PNG per `config/catalogue_images.json`, and `apps/web/src/app/icon.svg` is served directly, not via `&lt;Image&gt;`. The bug this fixes cannot fire on this codebase's request paths. Net effect: irrelevant here, strictly beneficial elsewhere.
+- **`sizes`/`srcset` handling** — no changes in this release touch the device-size ladder, `next.config.js` `images.deviceSizes` handling, or `sizes` resolution. Your rendered comparison (0/145M pixels differing, srcset ladder confirmed moving 384→750 at 2x) is consistent with there being nothing in the diff that could change it.
+- **Dev indicator** — [#97326](https://github.com/vercel/next.js/pull/97326) fixes a Nav Inspector request loop in the dev-tools overlay. Moot here: `next.config.js` sets `devIndicators: false`, and dev tooling never ships into `next build`/`next start` regardless.
+- **`output: 'standalone'`** — no changes in this release touch build tracing or the standalone output layout. `next build` here still produced `output: 'standalone'` cleanly with the same route classification (○/●/ƒ) as expected.
+- **Route prerendering** — [#97314](https://github.com/vercel/next.js/pull/97314) (tag-revalidation cache discard/reuse), [#97313](https://github.com/vercel/next.js/pull/97313) (`unstable_cache` item-name encoding), [#97312](https://github.com/vercel/next.js/pull/97312) (`'use cache'` literal exports), [#97304](https://github.com/vercel/next.js/pull/97304) (stale cache version TTL) — all runtime-cache/ISR internals. This repo uses none of it: no `unstable_cache`, no `'use cache'` directive, no `revalidate` (checked with `grep -rn`, all empty), App Router only (`generateStaticParams` in `products/[slug]/page.tsx` is pure build-time SSG, not the tag-revalidation path these patches touch). [#97330](https://github.com/vercel/next.js/pull/97330) reverts a Pages-Router API i18n change — no `pages/` directory exists in this app, App Router only.
+- **`NEXT_BUILD_SKIP_DB=1` build path** — nothing in the release changelog references this; it's a repo-defined build-time env flag (`apps/web/src/app/api/{brands,products}/route.ts`), not something Next's own release touches.
+- Also checked and ruled out as inert here: [#97311](https://github.com/vercel/next.js/pull/97311) restores live `headers()` view — no `next/headers` usage anywhere in `apps/web/src`. [#97325](https://github.com/vercel/next.js/pull/97325) fixes client-side optimistic-routing prefetch loops — real but purely a robustness fix with no negative-risk direction.
+
+Package-lock diff confirms the bump is exactly what it claims: `next`, `eslint-config-next`, the eight `@next/swc-*` platform binaries, `@next/env`, `@next/eslint-plugin-next`, and `@swc/helpers` (0.5.15→0.5.23, a transitive pull-in). `sharp` (the actual image codec, `^0.35.3`) does not move — its version is untouched by this diff.
+
+## `next-env.d.ts`
+
+Confirmed **not staged**: `git diff --cached --name-only` lists only `apps/web/package-lock.json` and `apps/web/package.json`. It did reappear as an *unstaged* modification after I ran `make -C apps/web ci` (expected, issue #260 — every build regenerates it), but it was never `git add`ed and does not affect what PR #300 will merge.
+
+## e2e-smoke recommendation — explicit disagreement with skipping outright, conditional agreement
+
+You asked me to disagree explicitly rather than let you skip silently, so: **I don't think local `make e2e-smoke` is required here, but I also don't think "CI passed on the pre-rebase head" is by itself sufficient — you need the rebased-head run, not the prior one.**
+
+Reasoning:
+- The changelog review above turned up nothing that touches a runtime path, container layout, or build-time asset resolution this app exercises — the one image-optimizer fix is inert given no SVG-through-optimizer or `ImageResponse` usage.
+- `next build` (`output: 'standalone'`) succeeded locally with the same route shape as before, which is the part `e2e-smoke` would otherwise be the only way to check (`AGENTS.md`: "a missing `COPY` line, an unresolvable module inside the image, a stale build-time asset path"). A version-only bump with no `Dockerfile`/`docker-compose.yml` change and a successful standalone trace makes a container-layout break unlikely, though not logically impossible — `e2e-smoke` is still the only thing that would catch it if the Docker build layer behaved differently for 16.3.1's `node_modules` shape than local tracing did.
+- Given that, the marginal value of *also* running it locally is genuinely low, provided CI's `Integration E2E Smoke` job is confirmed **green on the rebased head specifically** — not the pre-rebase run you mentioned already passed. A rebase can change nothing observable and still be a different commit than what CI graded.
+
+So: don't run it locally on my recommendation *if and only if* you check that the CI smoke run against the rebased head (not the earlier one) comes back green before merging. If you want it settled independently of CI, ports 3100/8100/55432 are free and I can run it in a follow-up — say so and I will.
+
+## Commands run
+
+```bash
+git status --short
+git diff --cached --stat
+git diff --cached -- apps/web/package.json
+git diff --cached --name-only
+git status --porcelain -- apps/web/next-env.d.ts
+git diff -- apps/web/next-env.d.ts
+make -C apps/web ci
+make test-scripts
+```
+
+Plus read-only research: `curl` against the GitHub API for the `v16.3.1` release notes and PRs #96733/#96621/#96733's file diff; repo greps for `next/og`, `ImageResponse`, `next/headers`, `unstable_cache`, `'use cache'`, `revalidate`, `pages/` directory, and `sharp` version in `package-lock.json`.
+
+## Not run, and why
+
+- **`make e2e-smoke`** — not run, per the recommendation above: I judge it low-marginal-value here conditional on you confirming CI's smoke job is green on the rebased head, not skipped outright. Ports were free (3100/8100/55432) had I run it.
+- **`make test-e2e`**, **`make docs-check`**, **`make e2e-smoke-lite`/`-full`**, **`make release-dry-run`** — not requested and out of scope for a dependency-only bump with no docs, journey-affecting, or release-workflow changes.
+- **`make ci` (cross-surface)** — not run; the change is web-only (`services/chat` untouched), so the narrower `apps/web ci` target is the correct merge gate per `AGENTS.md`'s table.</result>
+<usage><subagent_tokens>54407</subagent_tokens><tool_uses>34</tool_uses><duration_ms>295943</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a81724b1d62d2f9a5</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a81724b1d62d2f9a5.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the next-env fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repo state is clean and unaffected by verification work: staged diff is exactly the one line in `apps/web/next-env.d.ts`, unstaged diff is empty.
+
+## Verdict
+
+**Verified.** The fix for issue #260 is correct and safe to merge. All checks pass, the staged diff is exactly the one line described, and I independently re-derived the fresh-checkout typecheck safety with a mechanism explanation, not just a repeat of the same test.
+
+## Failures
+
+None.
+
+## Flakes
+
+None. Every check ran once and passed cleanly; nothing needed a re-run.
+
+## Missing coverage
+
+None applicable — this is a one-line change to a TypeScript ambient declaration file with no runtime behavior, and the existing checks (lint, typecheck, unit tests, `next build`) already exercise the exact code paths this touches. There is no new behavior a test could target.
+
+## Environment issues
+
+None. Ports 3100/8100/55432 were free as you noted, `.next` was populated from your builds, `node -v` is v22.23.1 / `npm -v` 10.9.8. I moved `apps/web/.next` aside for the fresh-checkout test and restored it afterward; `git status` before and after confirms nothing was left behind.
+
+## Detail on each item you asked for
+
+**1. `make -C apps/web ci`** — full pass: `lint` (eslint clean), `typecheck` (`tsc --noEmit` on both `tsconfig.json` and `tsconfig.e2e.json`, plus journey-coverage check), `test` (159 tests, 38 files, all passed), and `build` (`next build` with Turbopack, Next.js 16.3.1, 230 static pages generated, compiled successfully). Exit code 0 throughout.
+
+**2. `make test-scripts`** — 192 tests, all OK, exit code 0.
+
+**3. Fresh-checkout typecheck question, re-derived independently** — I did not run the `git worktree` + `npm ci` reproduction; I judged the `.next`-removed test sufficient and went one step further than repeating it, because the cost/benefit favored explaining the mechanism instead of just re-running the same probe:
+
+- Moved `apps/web/.next` out of the tree entirely (so `.next/types/root-params.d.ts` did not exist), ran `npx tsc --noEmit --listFiles`: exit 0, `next-env.d.ts` confirmed present in the 1172-file program (not a vacuous pass).
+- Ran plain `npx tsc --noEmit` (correctly redirected, `2&gt;&amp;1` after the stdout redirect): exit 0, zero bytes of output.
+- Restored `.next` afterward; `git status`/`git diff` confirm no drift.
+- I then went further than the report asked and identified *why* this is safe, with an isolated repro in the scratchpad (outside the repo): a bare side-effect-only import (`import "./path";` with no bound identifiers) of a module that does not exist on disk produces **no** TS2307 error, regardless of `skipLibCheck` (true or false) and regardless of whether the importing file is `.ts` or `.d.ts`. The moment you import a *named* binding from the same missing path, TS2307 fires immediately. So the reason CI has always been green through the pre-existing `routes.d.ts` import — and stays green with the new `root-params.d.ts` import — isn't `skipLibCheck`, it's that Next always emits side-effect-only imports in this file, and TypeScript's module resolution simply doesn't validate the target of a side-effect import. This is a general TS behavior, not something specific to this repo's config, so I'm confident it generalizes and a `worktree`+`npm ci` run would show the same result. Given that, I judged the added install cost not worth it.
+- Bonus finding, not requested but relevant to your item 5: I checked `/home/scottdensmore/Developer/scottdensmore/contoso/Dockerfile` and it never `COPY`s `apps/web/next-env.d.ts` into the builder image at all — the container's `next build` (`npm run build`, i.e. bare `next build`, not the Makefile's `typecheck` target) regenerates the file from scratch inside the image regardless of what's committed. So the drift this fix addresses was never reachable from the container build path in the first place; it only ever affected local/CI `tsc` runs outside Docker.
+
+**4. Staged diff is exactly one line, one file** — confirmed twice (before and after the full `ci` run): `git diff --cached --stat` shows `apps/web/next-env.d.ts | 1 +`, one file changed, one insertion, matching the diff you pasted verbatim. `git diff --stat` (unstaged) was empty both before and after `make -C apps/web ci`, meaning the `next build` inside that run regenerated the file to exactly the staged content — no residual drift.
+
+**5. `make e2e-smoke`** — I agree with your view; not needed, and I'd go further than "no runtime effect": the Dockerfile evidence above means this file isn't even present in the image build context, so there's no path by which this change could affect a running container. Smoke would exercise infrastructure this change cannot touch.
+
+## Commands run
+
+```
+git status --short
+git diff --stat origin/main...HEAD
+git fetch origin main --quiet
+git log origin/main -1 --oneline
+git diff --cached --stat
+git diff --cached
+git log -1 --format="%H %s"
+ls apps/web/.next
+node -v &amp;&amp; npm -v
+ss -ltn | grep -E ':3100|:8100|:55432'
+make -C apps/web ci
+make test-scripts
+mv apps/web/.next &lt;scratchpad&gt;/next-backup
+npx tsc --noEmit --listFiles   # run from apps/web
+npx tsc --noEmit               # run from apps/web
+mv &lt;scratchpad&gt;/next-backup apps/web/.next
+cat apps/web/tsconfig.json
+grep -n -i "next-env|COPY|RUN.*build" Dockerfile
+grep -n '"build"|"typecheck"|"lint"' apps/web/package.json
+# isolated repro in scratchpad, no repo files touched:
+tsc --noEmit -p tsconfig-skiplib.json / tsconfig-noskiplib.json / tsconfig-ts.json / tsconfig-ts2.json
+```
+
+## What I did not run, and why
+
+- `make -C apps/web ci` and `make test-scripts` are the only merge gates this diff surface calls for (web-only change, no cross-surface, no scripts/tooling change beyond what `test-scripts` already covers). `make ci`, `make -C services/chat ci`, `make docs-check`, `make e2e-smoke`, `make test-e2e`, and `make release-dry-run` were all out of scope for a single-line `.d.ts` change and I did not run them.
+- `git worktree` + `npm ci` fresh-checkout reproduction (item 3's "most faithful" option) — skipped by judgement call, as invited by your instructions, in favor of the `.next`-removed test plus an isolated mechanism-level repro that explains *why* it's safe rather than just repeating the same observation.
+
+Relevant file: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/next-env.d.ts`</result>
+<usage><subagent_tokens>30830</subagent_tokens><tool_uses>21</tool_uses><duration_ms>277159</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ae9f791d2ac9c85ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ae9f791d2ac9c85ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the next-env fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/260-next-env-drift` — approved, no defects, no refinements
+
+**Defect count: 0. Refinement count: 0.** Nothing scored at or above 75, so there is nothing to apply and no reason to come back for another round. This round is clean in the sense step 8 requires.
+
+### What I verified
+
+**The diff is exactly what you described and nothing else.** One file, one line. `git diff --cached` against `origin/main` at b475853 shows `apps/web/next-env.d.ts | 1 +`. No unstaged changes, no untracked files (checked with `--untracked-files=all`). Nothing crept in — your question 4 is clean.
+
+**The added line is byte-exact with what the pinned Next emits.** I did not take this on trust. `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/next/dist/lib/typescript/writeAppTypeDeclarations.js:55-56` pushes `root-params.d.ts` unconditionally — no feature gate, unlike the `strictRouteTypes` block below it that gates `cache-life`/`validator`/`link`. I reconstructed the emitter's full output for this config and MD5'd it against the staged blob: identical, including LF endings and the trailing newline. So the fix tracks the artifact rather than approximating it.
+
+**The fresh-checkout safety claim holds, but not for the reason the verifier gave.** This is the one place I'd correct the record. I reproduced it in isolation and tested all four cells:
+
+| | `skipLibCheck: true` | `skipLibCheck: false` |
+|---|---|---|
+| side-effect-only import | exit 0 | exit 0 |
+| named import | exit 0 | **TS2307** |
+
+The verifier's operative conclusion is correct — a side-effect-only import of a missing module produces no error regardless of `skipLibCheck`, which is the cell your change actually occupies, and Next always emits this form. But its contrast case is wrong: a named import does *not* "error immediately" under this repo's config, because `skipLibCheck: true` suppresses diagnostics inside `.d.ts` files, and `next-env.d.ts` is one. Only with `skipLibCheck: false` does the named import fail. The conclusion survives; the stated mechanism was over-attributed to import form when `skipLibCheck` is doing part of the work. Worth knowing if anyone later reasons from that sentence rather than re-measuring. I also confirmed my harness could fail before trusting it pass — the `skipLibCheck: false` named-import cell is that negative control.
+
+Live confirmation: `tsc --noEmit` exits 0, `--listFiles` shows `next-env.d.ts`, `.next/types/root-params.d.ts` and `.next/types/routes.d.ts` all in the program, and the run left the worktree untouched.
+
+### Your four questions
+
+**1. Committing generated output — tracking is right, and it is not a close call.** The root `.gitignore` ignores `next-env.d.ts` at line 19, then explicitly re-includes it at line 134 under a heading that reads `# Exceptions (Do NOT ignore these)`:
+
+```
+!apps/web/next-env.d.ts
+```
+
+That negation landed in `b9f9dbc` alongside the quick-CI/git-hook work. So tracking is not drift or an accident of history — it is a deliberate, recorded decision, and the pre-commit path depends on it: `lint-staged` runs bare `tsc --noEmit`, and `tsconfig.json` names `next-env.d.ts` first in `include`. Gitignoring it would mean reverting that negation, and would be a scope-widening change to a decision this issue never asked you to revisit. Root `AGENTS.md`'s "Prefer keeping generated artifacts out of commits" is the weaker, more general statement; the explicit per-file exception is the more specific one and wins. You made the right call, and #260's framing matches the repo.
+
+**2. Someone on a different Next.** `next` is pinned exact at `16.3.1` and `eslint-config-next` matches it. The realistic bad path is a stale `node_modules` from before #225 — and there the failure is benign in the direction that matters: `tsc` stays green (proven above, the import form does not error on a missing target), and an older `next build` would rewrite the file *without* the line, producing the same dirty-worktree symptom in reverse. That is inherent to tracking a generated file at all, is cured by `npm ci`, and is not something this line introduces. No path where this breaks a build.
+
+**3. No comment — your reasoning is correct, and the emitter proves it.** Lines 69-74 of `writeAppTypeDeclarations.js` build the content and then:
+
+```js
+if (currentContent === content) {
+  return;
+}
+await _fs.promises.writeFile(appTypeDeclarations, content);
+```
+
+The comparison is whole-file string equality. Any comment you add makes `currentContent !== content` on every single build, so the next `next build` overwrites it — reintroducing precisely the drift this change fixes, and silently discarding the explanation at the same time. A comment here is not merely erased, it is actively harmful. The commit body is the right surface for the "why", per step 9.
+
+**4. Nothing crept in.** Confirmed above.
+
+### Collateral I checked and found clean
+
+`eslint.config.mjs` ignores `next-env.d.ts` by name, so lint is unaffected. `tsconfig.e2e.json` overrides `include` to `e2e/**`, so the second typecheck pass never opens the file. The `Dockerfile` copies `src`, `public`, `next.config.js`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js`, `eslint.config.mjs`, `prisma` and `prisma.config.ts` — not `next-env.d.ts` — confirming the container regenerates it and this seam was never reachable from the image path.
+
+### Outside this change
+
+Nothing new to file. The one gap I would have raised — no check that a build leaves the worktree clean, which is why this survived from #225 — you have already filed as #309, and correctly kept out of this diff.
+
+### Scope and limits
+
+Reviewed: `git diff --cached` (the sole staged change), `git diff` (empty), `git status --short --untracked-files=all` (no untracked files), against base `origin/main` at b475853. Read for context: root and `apps/web` `AGENTS.md`, root `.gitignore`, `apps/web/tsconfig.json`, `tsconfig.e2e.json`, `Makefile`, `package.json`, `eslint.config.mjs`, `next.config.js`, root `Dockerfile`, and Next's `writeAppTypeDeclarations.js`.
+
+The workflow-obligation check does not apply here: the change touches no numbered step in `AGENTS.md`, no *Sub-agents this workflow depends on* text, and no file under `.claude/agents/`.
+
+One thing I could not assess directly: I did not delete `.next` to reproduce the fresh-checkout typecheck in situ, because that would modify your working tree. I established the same result out-of-tree with a matching `tsconfig`, including a demonstrated failing case, which I consider equivalent evidence for the resolution question.</result>
+<usage><subagent_tokens>44471</subagent_tokens><tool_uses>30</tool_uses><duration_ms>264190</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bt22ahaip</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/bt22ahaip.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI on PR 310" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets do 295/294 then 306
+
+---
+
+<task-notification>
+<task-id>a675dd9441782aae7</task-id>
+<tool-use-id>toolu_01AjKzxjm1wjsiQBdTKxCJDx</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a675dd9441782aae7.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify chat constraints bump 295" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — the change is safe to merge.** Both the chat merge gate (`make -C services/chat ci`) and the integration smoke (`make e2e-smoke`) pass on the bumped versions, the staged diff is exactly the two claimed lines, and neither dependency bump touches anything this codebase actually exercises.
+
+## What I ran and found
+
+**`make -C services/chat ci`** (re-run independently, not trusting the disclosed pre-run) — exit 0.
+- `deps-check`: 26 pinned packages validated across 4 requirement files.
+- `ruff check` on 0.16.3: "All checks passed!"
+- `mypy`: no issues, 15 source files.
+- `pytest`: 60 passed, 77% coverage, no change from baseline.
+
+**`make e2e-smoke`** — exit 0, ran with `LLM_PROVIDER=gcp` inline (see Environment issues below for why). Full sequence: `[PASS] chat health`, `[PASS] chat dependency health (db)`, `[PASS] chat root endpoint`, `[PASS] chat rejects a request with no question`, `[PASS] web -&gt; chat proxy call`, `[PASS] web dynamic [slug] page`, then `E2E smoke passed.` This confirms the chat image builds, the container starts under uvicorn 0.52.3 (`chat-entrypoint.sh` runs `exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 --access-log`), and serves through both direct hits and the web proxy. Stack was recreated fresh (`--build --force-recreate`) and torn down automatically afterward (I did not pass `KEEP_STACK=1` — nothing left running, nothing for you to clean up).
+
+**Staged diff, confirmed by `git diff --cached`**: exactly
+```
+-ruff==0.16.2
++ruff==0.16.3
+-uvicorn==0.52.1
++uvicorn==0.52.3
+```
+Nothing else staged or unstaged in the tree; `git status --short` shows only `services/chat/constraints.txt`.
+
+**Judgement items you asked for:**
+
+1. **ruff 0.16.3 rule-set impact**: read the upstream changelog (`astral-sh/ruff` tag `0.16.3`). All rule changes are in `pylint` (S602/S603/S607/S609, PLE1300/1307, PLR6104), `flake8-bandit`, `numpy` (NPY201), and one new *preview* rule (`UP048`, pyupgrade). This repo's `services/chat/.ruff.toml` selects only `["E", "F", "I"]` — none of those categories intersect the changed rules. So "all checks passed" isn't the only evidence here; the config itself rules out any of 0.16.3's changes applying. The bump is inert for this codebase, not just quiet.
+
+2. **uvicorn 0.52.1 → 0.52.3 changelog** (`encode/uvicorn` `docs/release-notes.md`): both point releases (0.52.2, 0.52.3) update the bundled `zttp` HTTP/1.1 backend for parsing-performance and bodyless-request fixes. `zttp` is explicitly opt-in — the changelog itself calls it "still experimental," activated only via `--http zttp`. The chat entrypoint passes no `--http` flag, so it runs uvicorn's default parser, not zttp. Nothing in the 0.52.1→0.52.3 range touches lifespan, ASGI dispatch, or the health-endpoint path outside that opt-in backend. Confirmed empirically too: health, dependency-health, and root-endpoint checks against the running container all passed under 0.52.3.
+
+3. Diff scope confirmed exactly as above — nothing crept in.
+
+## Failures
+None.
+
+## Flakes
+None observed; each check ran once and passed cleanly (no retries needed to get a green result).
+
+## Missing coverage
+None specific to this change. It's a two-line dependency-pin bump; the merge gate plus the smoke's health/dependency/proxy/dynamic-page checks are the right-shaped coverage for "does the service still start and serve," and they exercised the actual runtime path (built image, real uvicorn process, real Postgres). There's no chat-side unit test that pins to a `ruff` or `uvicorn` version, which is correct — that isn't a gap, it's the intended separation between `deps-check` (pin sanity) and `ci`/`e2e-smoke` (behavior).
+
+## Environment issues
+- **`.env` has `LLM_PROVIDER=local`, and Ollama on this host is not actually reachable** — `/bin/ollama serve` (pid 3237685) is running but nothing listens on `127.0.0.1:11434` or `[::1]:11434` (confirmed via `ss -ltn` and a refused `curl`). Per your memory note (`local-e2e-env-constraints.md`) this is a known, pre-existing local-only condition, not something introduced by this PR. Following that note, I ran `make e2e-smoke` with `LLM_PROVIDER=gcp` prefixed inline (not by editing `.env`) to route around the dead local-provider preflight, matching what CI does when `.env` is absent. Under `gcp` mode the chat backend has no `PROJECT_ID`/`DISCOVERY_ENGINE_DATASTORE_ID`, so `check_web_chat_proxy` hit the documented, non-fatal fallback path and the smoke script printed `NOTICE: chat did not answer for real — ... PROJECT_ID, REGION, and DISCOVERY_ENGINE_DATASTORE_ID must be set. This run verified transport and status codes only.` That's expected in this environment and the smoke script treats it as a pass by design (it only fails hard under `E2E_REQUIRE_REAL_CHAT=1`, which is unset here). I did not attempt to give it real GCP credentials to force a real answer — that's outside the scope of validating this dependency bump.
+- Ports 3100, 8100, 55432 were free as you said; confirmed again independently before running.
+- Docker images `contoso-web:latest` and `contoso-chat:latest` were rebuilt in the local Docker cache by `--build --force-recreate`; the stack itself was torn down (`docker compose down --volumes --remove-orphans`) automatically since I didn't request `KEEP_STACK=1`. Nothing is left running that's yours to clean up.
+- `.venv` now reflects `ruff 0.16.3` / `uvicorn 0.52.3`, consistent with what you left it at.
+
+## Commands run (for reproduction)
+```
+git status --short
+git diff --stat main...HEAD
+git diff --cached
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets   # empty: change is staged, not committed, so the detector sees nothing — confirmed scope via git status --short instead
+make -C services/chat ci
+LLM_PROVIDER=gcp make e2e-smoke
+```
+
+Relevant paths: `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/constraints.txt`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/.ruff.toml`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/chat-entrypoint.sh`, `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/e2e_smoke.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/Makefile`.
+
+## What I did not run and why
+- `make -C apps/web ci`, `make ci` (cross-surface), `make test-e2e`, `make docs-check`, `make test-scripts` — out of scope. The change touches only `services/chat/constraints.txt`; no web, docs, or scripting surface changed, and `git status --short` (the authoritative source here, since nothing is committed for the detector to see) confirms that.
+- `E2E_REQUIRE_REAL_CHAT=1` variant of the smoke — would require real GCP credentials I don't have and wasn't asked to obtain; the fallback-path NOTICE is expected and non-fatal by the script's own design.
+- `make release-dry-run` — no release-workflow files changed.</result>
+<usage><subagent_tokens>48192</subagent_tokens><tool_uses>34</tool_uses><duration_ms>921490</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aa82d6515c9f68bcd</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aa82d6515c9f68bcd.output</output-file>
+<status>completed</status>
+<summary>Agent "Review chat constraints bumps" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: PR #295 — pip minor/patch bump (`ruff`, `uvicorn`)
+
+**Approved. No defects. No refinements.** Nothing scored at or above the 75 threshold.
+
+Since you asked for the two "structurally inert" arguments to be attacked rather than repeated, here is what I checked independently and what I found.
+
+### 1. The ruff argument — holds, and I verified it from the resolved config rather than the file
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/.ruff.toml` is five lines: `select = ["E", "F", "I"]`, `ignore = ["E501"]`, no `extend-select`, no `preview`, no `[lint.per-file-ignores]`. Reading the file is the weak version of the check, so I dumped ruff's own resolved settings for the lint target:
+
+```
+linter.preview = disabled
+linter.explicit_preview_rules = false
+linter.per_file_ignores = {}
+formatter.preview = disabled
+```
+
+That closes the preview door from ruff's side, not from the config author's. Config discovery is also unambiguous: `make lint` runs `ruff check src/api tests scripts` with cwd `services/chat`, all three targets are under that directory, and there is no `pyproject.toml`, `setup.cfg`, or second `.ruff.toml` anywhere in the tree that could win the upward walk. The stale root `.ruff_cache/` (newest entry `0.16.1`) is from a manual invocation, not a wired target — no Makefile or workflow runs ruff outside `services/chat/Makefile`.
+
+One narrowing on your phrasing: "the rule changes are all in pylint/bandit/numpy" is a changelog claim I cannot verify offline, and patch releases can also change behaviour *inside* `E`/`F`/`I` — `I` in particular is an ordering implementation, not a fixed rule. That does not weaken the conclusion, because your empirical `ruff check` on 0.16.3 tests exactly that surface directly. I reran it: `All checks passed!`. The structural argument and the run cover different failure modes and together they cover both.
+
+Also worth recording for scope: ruff is not installed into the chat image at all. `services/chat/Dockerfile` installs only `requirements-core.txt` (plus optionally `requirements-local.txt`), never `requirements-dev.txt`. The ruff pin has zero runtime reach.
+
+### 2. The uvicorn argument — holds, and it is stronger than you stated
+
+I did not take "`zttp` is opt-in" on trust, because that is precisely the claim that inverts if `--http auto` prefers the new backend. I read the resolver in the installed 0.52.3:
+
+`.venv/lib/.../uvicorn/protocols/http/auto.py` is a two-branch `try: import httptools / except ImportError: H11Protocol / else: HttpToolsProtocol`. It contains no reference to `zttp` at all. Resolved live:
+
+```
+auto resolves to: &lt;class 'uvicorn.protocols.http.httptools_impl.HttpToolsProtocol'&gt;
+```
+
+So `zttp` is reachable only through an explicit `--http zttp`, and that is a property of the released version rather than of this machine's environment — it therefore holds inside the container too, without needing to rebuild. Even the degenerate case where `httptools` fails to install (it is transitive via `uvicorn[standard]` and correctly not pinned) falls back to `h11`, not `zttp`.
+
+On the other half — whether anything besides `chat-entrypoint.sh` starts uvicorn — there are exactly two invocation sites in the repository and neither passes `--http`:
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/chat-entrypoint.sh:31` (the container path; `services/chat/Dockerfile:77` `CMD ["./chat-entrypoint.sh"]`, no competing `ENTRYPOINT`)
+- `services/chat/Makefile` `dev` target: `$(UVICORN) main:app --reload --host 0.0.0.0 --port 8000`
+
+No compose `command:` or `entrypoint:` override in either `docker-compose.yml` or `docker-compose.override.yml`, no `uvicorn.run(...)` anywhere in `src/`, `tests/`, or `scripts/`, and no test that constructs a server. Tests go through `fastapi.testclient`, which does not touch the HTTP protocol layer at all.
+
+The one place your argument is narrower than stated: ruling out the new backend does not by itself rule out changes to code shared with the default parser. Your `make e2e-smoke` run against the container actually serving 0.52.3 is what covers that, and it is the right instrument for it — served bytes, not a version string.
+
+### 3. Is `constraints.txt` the whole dependency story? Yes — verified exhaustively
+
+Both version strings appear in exactly one file in the repository. A repo-wide grep for `0.52.` and `0.16.2|0.16.3` across `.py .txt .md .yml .yaml .json .toml .sh Dockerfile* Makefile` returns only the two lines in `services/chat/constraints.txt`. Specifically:
+
+- **Container:** `services/chat/Dockerfile` copies `constraints.txt` in and installs `-r requirements-core.txt -c constraints.txt`, so the uvicorn pin reaches the image through the file that changed, with no second pin to keep in sync. This is the container-inputs seam the root `AGENTS.md` names, and it is satisfied.
+- **CI:** the three `services/chat/constraints.txt` references in `.github/workflows/ci.yml` (lines 215, 1008, 1043) are `setup-python` cache-dependency-paths, not pins. Installation is `make -C services/chat setup`, which routes through the same constraints file.
+- **No lockfile.** No `poetry.lock`, `uv.lock`, `requirements.lock`, or pip-compile output.
+- **No hook-level pin.** `.husky/pre-commit` runs web `lint-staged`; `.husky/pre-push` runs root `make quick-ci`. Neither pins a tool version.
+- **Dependabot** targets `/services/chat` for pip, which is the directory holding `constraints.txt` — the update landed where the config aims it.
+
+Issue #118's gap is the opposite direction (an import with no manifest entry). It cannot bite here, because both packages already have manifest entries and this change moves only the version.
+
+### 4. Does `ruff` belong in `constraints.txt`? The repo has a stated position, and it is mandatory
+
+This is not a judgement call here — it is enforced. `services/chat/scripts/check_dependency_policy.py` validates correspondence in **both** directions across four manifests, one of which is `requirements-dev.txt`. `requirements-dev.txt` declares `ruff` and `mypy` as bare names. So:
+
+- ruff bare in a manifest with no pin in `constraints.txt` → `check_requirements` fails with *"package 'ruff' must be pinned in constraints.txt"*.
+- ruff pinned in `constraints.txt` with no manifest entry → `check_unused_constraints` fails as an inert pin.
+
+The docstring states the rationale outright — *"Versions live in exactly one place"* — and `services/chat/AGENTS.md:112` says *"dependency versions belong in `constraints.txt`"* with no dev/runtime distinction. `mypy`, `pytest`, and `pytest-cov` sit in the same file for the same reason. Deliberate, documented, enforced.
+
+On the scope question — a dev-tool bump and a runtime-server bump arriving together: that is `.github/dependabot.yml` working as designed. The `pip-minor-patch` group is `patterns: ["*"]` with `update-types: [minor, patch]`, and the config's own header explains the choice: *"Minor and patch updates are grouped per ecosystem so routine upgrades arrive as one reviewable PR. Major updates stay ungrouped."* Root `AGENTS.md` step 9's "do not combine unrelated work" is aimed at hand-authored commits; the grouping here is the repository's explicit standing decision about this exact case. Splitting this PR would fight the config, not honour it.
+
+### 4. What crept into the diff
+
+Nothing. `git diff --cached --numstat` and `git diff origin/main --numstat` both report `2 2 services/chat/constraints.txt` and nothing else. `git diff` (unstaged) is empty, `git status --short --untracked-files=all` shows the single staged modification and no untracked files. Alphabetical position of both lines is preserved, trailing newline intact, no whitespace damage.
+
+HEAD is `e46c5ea`, identical to `origin/main`, so there is no branch commit to review — the entire change is the staged worktree, as you described.
+
+Two remit checks that came back not-applicable, recorded rather than skipped: the change touches no file under `.claude/agents/` and none of `AGENTS.md`'s numbered steps or its *Sub-agents this workflow depends on* section, so the step-versus-agent obligation review has no pair to compare. And routing is correct — `services/chat/constraints.txt` appears both in the tooling patterns (line 55 of `scripts/detect_changed_surfaces.py`) and under `services/chat/**` in `CHAT_PATTERNS`, so `make quick-ci-changed` fires both `test-scripts` and `quick-ci-chat` for this diff rather than classifying it `unknown`.
+
+### Outside this change
+
+Nothing. I looked for pre-existing defects in the surrounding dependency tooling, entrypoint, Dockerfile, and dependabot config while reading them for context, and found none worth filing. The root `.ruff_cache/` being absent from `.gitignore` is harmless — ruff writes a self-ignoring `.gitignore` inside the cache directory, which is why it has never shown up as untracked.
+
+### What I reviewed, and what I could not assess
+
+Diff ranges: `git diff --cached`, `git diff`, `git diff origin/main` (all resolving to the same two-line change), `git status --short --untracked-files=all`. No untracked files existed to read directly.
+
+Files read for context: `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/AGENTS.md`, `services/chat/.ruff.toml`, `services/chat/Makefile`, `services/chat/Dockerfile`, `services/chat/src/api/chat-entrypoint.sh`, all four requirement manifests, `services/chat/scripts/check_dependency_policy.py`, `.github/dependabot.yml`, `.github/workflows/ci.yml` (constraints regions), `scripts/detect_changed_surfaces.py`, `docker-compose.yml`, `docker-compose.override.yml`, and the installed `uvicorn` protocol resolver in `.venv`.
+
+Could not assess: the upstream changelogs for ruff 0.16.2→0.16.3 and uvicorn 0.52.1→0.52.3 — no network access. I substituted direct inspection of the installed artifacts, which is the stronger evidence for the two claims that mattered, and both survived it.</result>
+<usage><subagent_tokens>50902</subagent_tokens><tool_uses>30</tool_uses><duration_ms>212618</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aecbec2ebedaadf1f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aecbec2ebedaadf1f.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify aiplatform bump 294" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** PR #294's change is exactly the one-line `google-cloud-aiplatform==1.163.0` → `1.164.0` bump in `services/chat/constraints.txt`, it installs and passes the chat merge gate cleanly, and — critically — the actual code paths this repo calls (`vertexai.init`, `vertexai.generative_models.GenerativeModel`) are **byte-identical** between 1.163.0 and 1.164.0. This is safe to merge.
+
+### 1. What actually executes aiplatform/vertexai code — you were right, and here's the strongest evidence
+
+Your belief was correct, with one refinement:
+
+- `tests/unit/test_chat_request.py::test_generate_llm_response_gcp_provider` fully replaces `sys.modules["vertexai"]` and `sys.modules["vertexai.generative_models"]` with fakes — it never touches the real installed package at all.
+- `tests/unit/test_evaluators.py` (`TestEvaluators.test_*_evaluation`) does real `import vertexai; from vertexai.generative_models import GenerativeModel` against the installed 1.164.0 package, and — because `services/chat/.env` has `PROJECT_ID=local` and the evaluator modules call `load_dotenv()` — it genuinely calls the real `vertexai.init(project="local", location="us-central1")`. Only `GenerativeModel` itself is mocked before `generate_content` is invoked. So unit tests exercise real import + real `init()`, never a real `generate_content` call.
+- `make e2e-smoke` (which I ran, with `LLM_PROVIDER=gcp` inline per your environment note): the Docker build installed `google-cloud-aiplatform-1.164.0` cleanly in the container's own resolution (independent evidence beyond the host `.venv`), the stack came up healthy, and the chat answer came back as the documented `fallback` case — but **not** because `vertexai.init`/`GenerativeModel` failed. It failed one step earlier, in `search_service.py:95` (`raise ValueError("PROJECT_ID, REGION, and DISCOVERY_ENGINE_DATASTORE_ID must be set")`), before `generate_llm_response` (and therefore before any vertexai code) is ever reached. So e2e-smoke in this sandbox gives **zero** exercise of the vertexai surface — even less than your hypothesis, which assumed it at least reached the client construction.
+
+**The strongest available evidence is a direct package diff, not a test run:** I downloaded the 1.163.0 wheel and diffed it against the installed 1.164.0 tree. `vertexai/__init__.py`, `vertexai/generative_models/__init__.py`, `vertexai/generative_models/_generative_models.py`, and `google/cloud/aiplatform/initializer.py` (which implements `vertexai.init`/`aiplatform.init`) are **byte-for-byte identical** between the two versions. The only files that differ anywhere under `vertexai/` are `agent_engines/templates/adk.py`, `_genai/{agent_engines,evals,sandboxes,types/common,types/__init__}.py`, and `preview/reasoning_engines/templates/adk.py` — none of which this repo imports. That matches the upstream changelog, whose 1.164.0 entries are all about Reasoning Engine build config, EvaluationMetric/Run/Set (evals), Agent Engine sessions/sandboxes, Endpoints, and Compute v1 — nothing touching `generative_models` or `initializer`.
+
+### 2. Did the vertexai surface change between 1.163.0 and 1.164.0? No.
+
+Confirmed by the file diff above (identical bytes) and by the changelog (fetched from `https://raw.githubusercontent.com/googleapis/python-aiplatform/main/CHANGELOG.md`, section `## [1.164.0] (2026-08-12)`) — no entry mentions `generative_models`, `GenerativeModel`, or `init`.
+
+One thing worth flagging, though not a regression from this bump: the README's deprecation note (present unchanged in both versions) says `vertexai.generative_models` (and `language_models`, `vision_models`, `tuning`, `caching`) "are deprecated as of June 24, 2025 and will be removed on June 24, 2026." Today is 2026-08-17 — **past that stated removal date** — yet the module is still present and functions identically in 1.164.0 (confirmed by direct import with `-W error::DeprecationWarning`, which raised nothing). This means removal could land in literally the next release with no further notice baked into this changelog format, and `chat_request.py` / all four `evaluators/custom_evals/*.py` files depend on it directly. That's a real, escalating risk independent of this PR — worth a tracking issue, not a blocker here.
+
+### 3. Was `make e2e-smoke` worth running? Ran it; it added narrow value, not the value you'd expect
+
+I ran it rather than skip it, because it does check something local `.venv` install can't: whether `google-cloud-aiplatform==1.164.0` resolves and installs cleanly in the container's own build (it did — full pip resolution log confirms it, 87s install, no conflicts) and whether the chat container starts and reports healthy with the new pin (it did — `/health` and `/health/dependencies` both passed). That is meaningful "does it build and boot" evidence you didn't have yet.
+
+What it did **not** provide, and what your disclosure already correctly anticipated: any evidence about whether `vertexai.init`/`GenerativeModel.generate_content` behave correctly at 1.164.0, because the run never reached that code — it hit the `search_service.py` fallback first. Given (2)'s file-identical proof, this gap doesn't matter for *this* bump, but it's worth naming: **nothing in this repo's CI or smoke path ever makes a real, credentialed `generate_content` call against Vertex AI at any version.** That was already true before this PR and remains true after it — it's a standing coverage gap, not something this bump introduced or something you need to close before merging.
+
+### 4. Staged diff — confirmed, with one correction
+
+The diff is exactly the one line you described. One correction to your disclosure: it is **unstaged**, not staged. `git status --short` shows ` M services/chat/constraints.txt` (space in column 1) and `git diff --cached` is empty while `git diff` shows the hunk. Doesn't change the verification outcome, just flagging the inaccuracy since you asked me to contradict you where warranted. Also independently re-confirmed: working tree is byte-identical to `origin/dependabot/pip/services/chat/google-cloud-a0a112ca6c` (`81c83d0`), and the only diff vs `origin/main` (`dfa7c27`, which includes #295) is this one line.
+
+## Failures
+None.
+
+## Flakes
+None observed. Did not need a re-run to distinguish signal from noise — both `make -C services/chat ci` and `make e2e-smoke` passed on their single runs.
+
+## Missing coverage
+- No test or CI path in this repo ever exercises a real, credentialed `vertexai.generative_models.GenerativeModel.generate_content()` call (pre-existing gap, not introduced by this PR — see #3 above).
+- `e2e-smoke`'s "chat answered for real" branch is structurally unreachable in this sandbox because `search_service.py` raises before `generate_llm_response` is called when `DISCOVERY_ENGINE_DATASTORE_ID` isn't set — so even setting `E2E_REQUIRE_REAL_CHAT=1` here would just fail for missing datastore config, not exercise or validate the aiplatform bump.
+- The upstream `vertexai.generative_models` deprecation-removal date (June 24, 2026) has passed relative to today without removal happening — worth a standalone tracking issue so a future patch/minor bump that does remove it isn't a surprise.
+
+## Environment issues
+None blocking. Ports 3100/8100/55432 were free at test time (confirmed via `ss`/`docker ps` before running). `LLM_PROVIDER=local` preflight would fail here (Ollama not listening on 11434, matching your note), so I ran `e2e-smoke` with `LLM_PROVIDER=gcp` set inline, which is the documented workaround and didn't touch `.env`.
+
+## Commands run (for reproduction)
+```
+git status --short
+git diff --stat main...HEAD
+git diff --cached / git diff   (confirm staged vs unstaged)
+git fetch origin dependabot/pip/services/chat/google-cloud-a0a112ca6c
+git diff FETCH_HEAD -- services/chat/constraints.txt   (empty)
+git diff FETCH_HEAD --stat                              (empty)
+
+grep -rn "vertexai" services/chat/src/api/ --include="*.py"
+services/chat: pytest tests/unit/test_evaluators.py tests/unit/test_chat_request.py -v -W default
+
+curl https://pypi.org/pypi/google-cloud-aiplatform/json
+curl https://raw.githubusercontent.com/googleapis/python-aiplatform/main/CHANGELOG.md
+curl https://api.github.com/repos/googleapis/python-aiplatform/commits/&lt;readme-docs-commits&gt;
+
+.venv/bin/python -m pip download --no-deps google-cloud-aiplatform==1.163.0
+diff -u old163/vertexai/__init__.py &lt;installed&gt;/vertexai/__init__.py
+diff -u old163/vertexai/generative_models/__init__.py &lt;installed&gt;/.../generative_models/__init__.py
+diff -u old163/vertexai/generative_models/_generative_models.py &lt;installed&gt;/.../_generative_models.py
+diff -u old163/google/cloud/aiplatform/initializer.py &lt;installed&gt;/.../initializer.py
+diff -rq old163/vertexai &lt;installed&gt;/vertexai
+
+LLM_PROVIDER=gcp make e2e-smoke
+make -C services/chat ci
+make -C services/chat deps-check
+```
+
+## What I did not run, and why
+- `make ci` (full cross-surface gate): not needed — the change touches only `services/chat/constraints.txt`, and `detect_changed_surfaces.py`-style scoping plus the diff confirm no web/schema surface is touched.
+- `make test-e2e` (journey suite): skipped — this is a backend dependency-pin change with no UI-rendered behavior change; `e2e-smoke` (which I ran) is the applicable check per the routing table, and journeys wouldn't add anything for a version bump that provably doesn't touch the code paths exercised.
+- `e2e-smoke-full` (`CHAT_INSTALL_LOCAL_STACK=1`): skipped — this bump doesn't change which chat dependency profile gets installed, only a version pin within the core profile, so the lite/default profile I ran is sufficient and running full would be duplicated work per the stated guidance.
+- `make release-dry-run`: skipped — no `.github/workflows/release.yml` or release-guardrail changes here.</result>
+<usage><subagent_tokens>95714</subagent_tokens><tool_uses>55</tool_uses><duration_ms>542805</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeba1a5c08810fa07</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aeba1a5c08810fa07.output</output-file>
+<status>completed</status>
+<summary>Agent "Review aiplatform bump 294" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Approved.** The one-line bump is correct and safe to merge. One **refinement**, no defects.
+
+First, the state check you asked me to make myself. `git status --short` shows exactly `M services/chat/constraints.txt`; `git diff --cached` is empty; `git diff origin/main...HEAD` is empty; HEAD is `dfa7c279215646f9926e4d9acd486f6ea343af05` = base. So the change is **unstaged**, as you said — nothing staged, no untracked files, no committed delta on the branch. The diff is the single `google-cloud-aiplatform==1.163.0` → `==1.164.0` line and nothing else has crept in. `grep` across the repo finds the version string in exactly one place, so no manifest, workflow, doc or lockfile is left pointing at 1.163.0.
+
+`.venv/bin/python services/chat/scripts/check_dependency_policy.py` passes, 26 pinned packages across 4 requirement files, and the installed interpreter reports 1.164.0.
+
+## Finding 1 — the byte-identical argument is overbroad as written (refinement, 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/src/api/contoso_chat/chat_request.py:58` and the four `custom_evals` modules.
+
+The claim under review is that four files are byte-identical and therefore the bump cannot reach us. I downloaded both wheels and diffed the full `RECORD` rather than those four paths. The four are indeed identical — but the claim does not survive, because three modules that *did* change are reachable by transitive import from the byte-identical `_generative_models.py`:
+
+```
+google/cloud/aiplatform_v1/types/tool.py
+google/cloud/aiplatform_v1beta1/types/tool.py
+google/cloud/aiplatform_v1beta1/types/batch_prediction_job.py
+```
+
+`vertexai/generative_models/_generative_models.py:61` is `from google.cloud.aiplatform_v1beta1.types import tool as gapic_tool_types`, and line 50 pulls the whole `aiplatform_v1beta1.types` package, which loads `batch_prediction_job`. A file being unchanged says nothing about what it imports. The stated summary — "the only files differing under `vertexai/` are …" — is true but scopes to `vertexai/`, and the reachable changes are under `google/cloud/`, so a reader takes it as "nothing reachable moved" and that is false.
+
+The conclusion survives on stronger evidence, which is what should replace the claim. All three changes are purely additive protobuf fields: a new `Tool.ExaAiSearch` nested message at field number 15 (15 was unused in 1.163.0 — that file used 4, 10, 11, 13), and `BatchPredictionJob.endpoint` at field 41. No field removed, no number reused, no type narrowed. Additive proto fields are backward compatible on both wire and attribute surface, so existing `GenerativeModel` construction and `Tool` use behave identically.
+
+Suggested fix: no code change. Restate the justification in the PR as "every module reachable from `vertexai.init` and `GenerativeModel` is either byte-identical or changed only by additive proto fields with fresh field numbers," and cite the three files. It is worth applying but not worth another review round.
+
+## Your three questions, answered directly
+
+**1. Does "modules we import are unchanged" establish "cannot affect us"?** No, as above — but the extended checks all come back clean:
+
+- *Entry points*: `entry_points.txt` is byte-identical between the two wheels.
+- *`_genai` reachability*: genuinely unreachable, not merely un-imported-by-name, and the mechanism is worth knowing. `vertexai/__init__.py` defines a PEP 562 module `__getattr__` that lazily imports `._genai.client` and `._genai.types`. It fires for exactly three names — `preview`, `Client`, `types` — and raises `AttributeError` for anything else. Our code touches `vertexai.init` (statically bound at `vertexai/__init__.py:24`) and `from vertexai.generative_models import GenerativeModel` (a real submodule import, which does not route through `__getattr__`). Neither path can reach `_genai`. Had we used `vertexai.types` anywhere, the answer would flip, so this is a property of our call sites, not of the package.
+- *`google/cloud/aiplatform/**` beyond `initializer.py`*: the only other changes there are `version.py` and a pile of `gapic_version.py` files, all version-string bumps, plus the two `types/tool.py` and one `batch_prediction_job.py` covered above.
+- *Coverage gap the verification missed*: `/home/scottdensmore/Developer/scottdensmore/contoso/infrastructure/scripts/seed_gcp_products.py:18` imports `vertexai.language_models.TextEmbeddingModel`, a fifth reachable surface not in the four-file comparison. I checked it — nothing under `vertexai/language_models/` changed. No issue, but the original evidence set did not cover it.
+
+**2. Did the dependency-resolution surface move?** This was the right thing to suspect, and the answer is no for us. Diffing `Requires-Dist` sorted (the raw file order is nondeterministic, so an unsorted diff is pure noise): the base, non-extra requirements are **identical**, as are `Requires-Python` and the `Provides-Extra` set. Three things changed, all confined to extras: `aiohttp` added to `adk`, `google-cloud-iam` dropped from `agent-engines` and `testing`, and the `litellm` bound in `evaluation`/`full`/`testing` split by Python version (`&lt;1.86.0` for py&lt;3.14, `&lt;1.97.0,&gt;=1.93.0` for py≥3.14). None reaches us — `requirements-core.txt` declares a bare `google-cloud-aiplatform` with no extras, and `grep` for `aiplatform[` across the repo finds nothing. Worth noting for later: `constraints.txt` pins `litellm==1.96.2`, which violates the `evaluation` extra's `&lt;1.86.0` on our Python 3.11, so if anyone ever adds `[evaluation]` the resolve will fail loudly rather than silently.
+
+**3. Is the diff clean?** Yes — verified above.
+
+## Outside this change
+
+Pre-existing, not introduced here, not scored. Both in `/home/scottdensmore/Developer/scottdensmore/contoso/infrastructure/scripts/seed_gcp_all.py`:
+
+- Lines 66-67: `install_requirements()` pip-installs `google-cloud-aiplatform` and `vertexai` unpinned and without `-c constraints.txt`, bypassing the constraint policy entirely. The standalone `vertexai` package is precisely what `services/chat/src/api/requirements-core.txt` documents as deliberately excluded because it pins aiplatform to an exact version — so running this script can silently pull the pinned version away from `constraints.txt`.
+- Line 73: `importlib.import_module(package.replace('-', '_'))` builds `google_cloud_aiplatform` / `google_cloud_discoveryengine`, which are not importable module names (the real ones are `google.cloud.aiplatform` and `google.cloud.discoveryengine_v1`). The presence check therefore always raises `ImportError`, so the script re-runs `pip install` on every invocation and the "already installed" branch is dead code.
+
+## Scope reviewed
+
+`git diff` (the sole unstaged change), `git diff --cached` (empty), `git diff origin/main...HEAD` (empty), `git status --short` (no untracked files). Runbooks read for the touched subtree: `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/AGENTS.md` — this change touches no `.claude/agents/` definition and no numbered workflow step, so the guard-obligation cross-read did not apply. Seam checks: `requirements-core.txt` ↔ `constraints.txt`, the chat `Dockerfile`'s `-c constraints.txt` install, `.github/dependabot.yml` grouping, and the five repo files importing `vertexai`.
+
+Not assessed: the `mypy`/`ruff`/pytest results and the `e2e-smoke` container boot, which I took from your report rather than re-running. The wheels themselves are binary artifacts; I compared them through `RECORD` hashes and extracted source, not byte-level archive structure.</result>
+<usage><subagent_tokens>41232</subagent_tokens><tool_uses>31</tool_uses><duration_ms>211620</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a95e5963890892ac9</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a95e5963890892ac9.output</output-file>
+<status>completed</status>
+<summary>Agent "Rendered review of drawer dialog" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed.** Viewports 390x844, 768x1024 (the ones you asked for; I used 768 rather than my default 834), and 1440x900, against your production server at `http://127.0.0.1:3201`. I started nothing and stopped nothing. Repo untouched — the same four files were modified when I finished as when I started.
+
+**Path:** the Playwright MCP tools failed exactly as you predicted (`Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome` — issue #279), so I drove Playwright's own Chromium (151.0.7922.34) through `Bash`, with scripts kept outside the repository.
+
+## The core fix works. Confirmed, not inferred.
+
+I ran the walk on `/`, which is where your #306 sequence was recorded, because all fourteen product links (`TrailMaster X4 Tent`, `Alpine Explorer Tent`, …) are present and tabbable in that document — verified by enumerating them before opening the drawer. The trap holds at all three viewports:
+
+```
+focus on open: div[dialog] "Site navigation"
+ 1. button "Close"   2. a "Home"     3. a "Sign In"  4. a "Sign Up"
+ 5. a "About Us"     6. a "Contact"  7. a "FAQ"
+ 8. button "Close"   9. a "Home"    10. a "Sign In"  ...
+```
+
+Twelve forward stops, never leaving the dialog, wrapping cleanly at 7→1. Byte-identical sequence at 390, 768, and 1440. Shift+Tab from `Close` wraps backwards to `FAQ` → `Contact` → `About Us`. Escape closes and lands focus on `button "Open menu"` (not `&lt;body&gt;`), and the next Tab continues to `Sign In` rather than restarting. Close button and backdrop click both return focus to the trigger at all three viewports. `aria-expanded` flips `false`/`true`, the name flips `Open menu`/`Close menu`, and `aria-controls` resolves to the dialog while open.
+
+## Answering your axe question directly: no, the backdrop does not trip `aria-hidden-focus`
+
+Zero axe violations and zero incompletes, drawer open, at all three viewports, and again with axe scoped to `#site-navigation-drawer` alone. The rule ran and the backdrop is in its **passes**:
+
+```
+aria-hidden-focus -&gt; violations:0 incomplete:0 passes:4
+  nodes: [".-m-2\\.5 &gt; .h-6", ".bg-black\\/30", ".text-gray-400 &gt; .h-6", ".rounded-full &gt; svg"]
+```
+
+`.bg-black\/30` is the backdrop. `tabIndex={-1}` takes it out of the tab order, which is what that rule tests, so `aria-hidden="true"` on it is fine. That part of your change is sound.
+
+Related, and also not a defect: `aria-controls` points at a non-existent id while closed (the drawer unmounts). `aria-valid-attr-value` passes it — that is the documented deferred-rendering exception for `aria-expanded="false"`. No action needed.
+
+## Findings
+
+**1. The link-follow close route does not actually leave focus on the trigger (low).** Your description claims focus return "by any route", and this is the one route where it does not hold. A `focusin` trace across the navigation shows the handler firing and then being overridden:
+
+```
+focusin trace: ["A \"FAQ\"", "BUTTON \"Open menu\""]
+final focus:   BODY
+```
+
+Your effect does focus the trigger; Next's App Router route-change focus reset then moves it to `&lt;body&gt;`. The user-visible consequence is nearly nil — the trigger is the first tabbable element in the document, so the next Tab lands on `Open menu` either way, which is why this looks correct from the outside. But it is a coincidence of ordering, not restoration, and screen-reader users get the route announcer instead of the trigger. Arguably Next's behaviour is the right one for a navigation and the claim should be narrowed to the three non-navigating routes rather than the code changed. Either way the current wording overstates what happens.
+
+**2. The background scrolls behind an `aria-modal="true"` dialog (low-medium).** With the drawer open on `/faq` at 390x844, a wheel gesture over the backdrop scrolled the document from `scrollY=0` to `scrollY=600`, and the page stays scrolled after close. The pointer containment argument in your comment covers clicks but not wheel or touch-drag. `overflow: hidden` on `&lt;html&gt;` while open would close it. Not something #306 asked for, so reasonable to defer.
+
+**3. A focus ring is drawn around the entire drawer panel when it is opened by keyboard (cosmetic — this is your "did a pixel move").** The answer is yes, one did, and only on the keyboard path. `tabIndex={-1}` plus programmatic focus makes the panel match `:focus-visible` in Chromium, giving it the UA default `outline: auto 1px rgb(16, 16, 16)` around the full 320px-wide panel. I confirmed this renders rather than merely computing: screenshotting the panel region with and without `outline: none` on that one element produces different pixels (17023 vs 17153 bytes), and the hairline is visible along the panel's top and right edges in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/uir/desktop-panel-ring-crop.png`. Opened by mouse it does not appear. `focus:outline-none` on the panel is the usual fix, and is safe here because every control inside keeps its own ring (next item). Everything else is pixel-identical — classNames in the diff are byte-for-byte unchanged apart from a stripped trailing space, and panel/backdrop geometry is exactly `320×viewport` / full-viewport at all three sizes.
+
+**4. Nit, pre-existing, not yours:** drawer controls use the UA default ring (`auto 1px`) while header controls use the repo's `ACTION_FOCUS` custom ring (`solid 2px`, indigo). The sidebar never carried focus classes, so this change did not introduce it, but the drawer is now a keyboard-primary surface and the inconsistency is more visible.
+
+## A correction to my own measurement, since you flagged this risk
+
+My first focus-ring pass reported `outline: none` and `focusVisible: false` on every control in the drawer — which would have been a serious finding, and was wrong. I had set focus with `element.focus()` from `page.evaluate`, which cannot satisfy Chromium's `:focus-visible` heuristic. Re-running with real `Tab` presses shows a ring on all seven stops. I kept a sanity check in that run that could distinguish outcomes: the header's `Sign In` reports `solid 2px lab(...)` and the drawer's report `auto 1px`, so the probe demonstrably reads real values rather than falling through to a constant. Contrast likewise came from axe, not a hand-rolled parser: drawer links `4.83`, section headings `17.74`, all AA-passing, with the `lab()` serialisation handled correctly.
+
+## Checks not performed, and why
+
+- **Loading/empty/error states:** the empty Shop list is #308, excluded. No other drawer state exists — it renders synchronously from props.
+- **Density (2x):** not applicable. This change alters semantics and focus only; no `srcset`, no image dimensions, nothing affecting what the browser requests.
+- **Heading order:** headings on `/about` are `h1 → h2 → h2`; the drawer's section titles are `h3` inside `role="dialog"`, which is correct scoping and not an ordering break.
+- **Tap targets:** measured, all pass — Close is 40x40, links are 304x40, above the 24x24 of WCAG 2.5.8.
+- The three console 500s in every run are `/api/categories` (#308).
+
+Screenshot evidence is in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/uir/` — `{phone,tablet,desktop}-*-{open,closed}.png`, `home-{phone,tablet,desktop}-open.png`, `ring-stop-1..7.png`, and `ring-on.png`/`ring-off.png` for finding 3.</result>
+<usage><subagent_tokens>49860</subagent_tokens><tool_uses>23</tool_uses><duration_ms>383070</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab543c29edd87e555</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ab543c29edd87e555.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review drawer fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed** — Chromium 151.0.7922.34 at 390×844, 768×1024 and 1440×900 against your server at `http://127.0.0.1:3201`. I started nothing and tore nothing down.
+
+Rendered through `Bash`, not the MCP tools. The first `browser_navigate` call failed with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome` — the #279 default-channel problem. The `Bash` probe launched fine, so I drove Playwright from scripts in the scratchpad, requiring `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/playwright` by absolute path. Nothing was written inside the repo; `git status` is unchanged from the four modified files you handed me.
+
+I also independently confirmed the served bundle: `/_next/static/chunks/12up_kdp3mcgn.css` contains `focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}`, and the served HTML carries `aria-expanded`/`aria-controls`. The build is the one with your fixes.
+
+---
+
+## One new defect, introduced by the fix to finding 1
+
+**Closing the drawer scrolls the page to the top.** All three close routes, all viewports.
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx:37`
+
+```
+if (wasOpen.current &amp;&amp; !isSidebarOpen) triggerRef.current?.focus();
+```
+
+Measured on `/faq` at 390×844, opening the drawer at `scrollY=900`:
+
+```
+route=escape    scrollY: before=900  open=900  AFTER=0   focus=BUTTON "Open menu"
+route=closebtn  scrollY: before=900  open=900  AFTER=0   focus=BUTTON "Open menu"
+route=backdrop  scrollY: before=900  open=900  AFTER=0   focus=BUTTON "Open menu"
+```
+
+Isolated to the cause, same page and scroll position:
+
+```
+plain focus()            -&gt; scrollY = 0
+focus({preventScroll: true}) -&gt; scrollY = 900
+```
+
+The header is a normal-flow element at the top of `&lt;main&gt;`, not sticky, so at `scrollY=900` the trigger is off-screen and `focus()` scrolls it into view. Your scroll-lock effect is not at fault — position is correctly held at 900 for the whole time the drawer is open (step J). It is the restore-focus call that loses it.
+
+This is why your step-F check read clean: at `scrollY=0` the jump is a no-op and invisible. It only shows when the drawer is opened from a scrolled position, which on `/faq` and `/` is the common case.
+
+Suggested fix: `triggerRef.current?.focus({ preventScroll: true })`. Worth considering the same at `sidebar.tsx:29` for `panelRef` — the panel is `fixed inset-0` so it does not currently move anything, but it is the same latent shape.
+
+---
+
+## Your three fixes: confirmed
+
+**Finding 3 — panel focus ring. Fixed, confirmed in pixels.**
+
+Opened by real `Tab` then `Enter` (no `evaluate` focus anywhere on this path). Screenshots of the panel element:
+
+- `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/shots/panel-BEFORE-fix.png` — a dark hairline traces all four edges of the 320×844 panel.
+- `.../shots/panel-AFTER-fix.png` — no ring on any edge.
+
+For the BEFORE image I removed only the `focus:outline-none` token from the live element's `classList` and re-shot, leaving the focus state and everything else identical, then put it back. That is a browser-side A/B, not a repo change. Computed style corroborates: `outline-style` reads `auto` with the class stripped and `none` with it present, `:focus-visible` matching `true` in both.
+
+**Every control inside still rings — the trade you were worried about did not happen.** On a real `Tab`, all seven report `outline: auto 1px rgb(16,16,16)` and `:focus-visible = true`, and I confirmed two of them visually rather than by computed style (`shots/phone-stop1.png`, `shots/phone-stop2.png` — both show the ring). The suppression rule is `.focus\:outline-none:focus`, and the panel is the only element carrying that class.
+
+**Finding 2 — scroll behind the dialog. Fixed, and the restore path holds.**
+
+```
+C. OPEN, at top        : winY=0   docEl.style.overflow=hidden
+D. OPEN, wheel backdrop: winY=0                          &lt;- was 600
+E. OPEN, wheel panel   : winY=0
+F. closed via Esc      : winY=0   docEl.style.overflow=(empty)
+G. closed, wheel again : winY=600                        &lt;- scrolls normally
+```
+
+Not stuck after close, and the inline style is restored to empty rather than to a literal `visible`.
+
+**Your `documentElement` reasoning is correct, verified in the browser, not taken on trust:**
+
+```
+document.scrollingElement          -&gt; HTML
+documentElement.scrollTop after wheel -&gt; 600     (window.scrollY 600)
+body.scrollTop after wheel            -&gt; 0
+documentElement scrollable -&gt; true
+body scrollable            -&gt; false
+```
+
+`&lt;html class="h-full antialiased"&gt;` in the served markup. Setting `body`'s overflow would indeed have moved nothing.
+
+**Finding 1 — link-follow route. Your narrowed comment matches what the browser does.** I re-measured because it was cheap; I do not disagree with leaving it to the router. The trace reproduces yours exactly:
+
+```
+focusin trace: ["A \"About Us\"", "BUTTON \"Open menu\""]
+final focus  : BODY
+next Tab     : BUTTON "Open menu"
+```
+
+---
+
+## Core journey, re-confirmed at all three viewports
+
+The stop sequence was **byte-identical at 390×844, 768×1024 and 1440×900**. Observed, not asserted:
+
+```
+open   -&gt; DIV "Site navigation" (panel, isPanel=true, outline none)
+stop  1: BUTTON "Close"     inPanel=true  fv=true  outline=auto 1px
+stop  2: A "Home"           inPanel=true  fv=true  outline=auto 1px
+stop  3: A "Sign In"        inPanel=true  fv=true  outline=auto 1px
+stop  4: A "Sign Up"        inPanel=true  fv=true  outline=auto 1px
+stop  5: A "About Us"       inPanel=true  fv=true  outline=auto 1px
+stop  6: A "Contact"        inPanel=true  fv=true  outline=auto 1px
+stop  7: A "FAQ"            inPanel=true  fv=true  outline=auto 1px
+stop  8: BUTTON "Close"     &lt;- wraps 7 to 1
+stop  9: A "Home"
+stop 10: A "Sign In"
+stop 11: A "Sign Up"
+stop 12: A "About Us"
+```
+
+`inPanel=true` at every one of the twelve; focus never left the dialog. Shift+Tab from the first control: `Close -&gt; FAQ -&gt; Contact -&gt; About Us`, wrapping backwards correctly.
+
+Escape / Close button / backdrop click all land focus on `BUTTON "Open menu"`, and the next Tab goes to `A "Sign In"` — continuing, not restarting. Trigger state tracks correctly: `Open menu/expanded=false` → `Close menu/expanded=true` → `Open menu/expanded=false`.
+
+**axe-core with the drawer open — clean everywhere** (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `best-practice`), on `/`, `/about` and `/faq` × three viewports: nine runs, zero violations. `aria-hidden-focus` passes with 4 nodes and the backdrop is explicitly among them (`.bg-black\/30`); the element measures `tabIndex=-1, aria-hidden=true, 390x844`. `aria-dialog-name`, `tabindex` and `color-contrast` (19 nodes) also pass with no violations.
+
+Tap targets in the drawer: Close 40×40, all links 304×40. All clear of the 24×24 minimum.
+
+---
+
+## Pre-existing, not caused by this change — flagging so they are not mistaken for it
+
+- **`/contact` has no drawer at all.** The page never imports `Header` (`git diff main` on it is empty; last touched in #179). The first Tab lands on `INPUT "name"`. This is why my first axe sweep timed out there.
+- **At 390×844, an open chat panel makes the drawer unreachable.** `chat.tsx` sets `inert` on `&lt;main&gt;` at phone width only — `main inert = true` at 390, `false` at 1440 — so the trigger is neither focusable nor clickable while chat is open, and Escape then closes the chat. Lives entirely in `chat.tsx`, which this diff does not touch. Your scoped Escape is a strict improvement over the unscoped handler.
+- **Trigger box is `[2, -1, 44, 44]`** — the `-m-2.5` puts its top edge 1px above the viewport, so the top of its focus ring is clipped. Cosmetic; className unchanged in this diff.
+- **`SHOP` renders as a heading with no items**, matching #308 as you said. The only console error across every run was the `/api/categories` 500.
+
+---
+
+## Checks not performed, with reasons
+
+- **Density / 2×** — not applicable. The diff touches no `srcset`, no image source and no image dimensions; nothing changes what the browser requests.
+- **Loading and error states** — no loading or error state exists on this journey; the drawer renders synchronously from a static `navigation` module. The one empty state (`SHOP`) is #308 and was observed.
+- **Contrast** — covered by axe `color-contrast` (19 passing nodes, no violations) rather than by hand-computing pairs, since I could render.</result>
+<usage><subagent_tokens>66590</subagent_tokens><tool_uses>32</tool_uses><duration_ms>652942</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a89faa2498cf796aa</task-id>
+<tool-use-id>toolu_01Kqc1m6AKFKE3eoZtn34nDM</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a89faa2498cf796aa.output</output-file>
+<status>completed</status>
+<summary>Agent "Confirm scroll fix on close" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: rendered review completed
+
+Rendered through `Bash`-driven Chromium (Playwright 151.0.7922.34) against your server at `http://127.0.0.1:3201`. The MCP Playwright tools were unavailable — `browser_navigate` failed with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, the known #279 channel default — so I drove Chromium directly. I started nothing and stopped nothing; your server is untouched, and the repository is unmodified.
+
+I first confirmed the running build carries the fix independently of the source tree: the served chunk `/_next/static/chunks/1zsewao2u2yks.js` contains both call sites, `i.current?.focus({preventScroll:!0})` (panel) and `p.current?.focus({preventScroll:!0})` (trigger return).
+
+## 1. The measurement, re-run
+
+`/faq` at 390x844, `scrollY=900`:
+
+```
+route=escape    390x844 before=900 open=900 afterWheel=900 AFTER=900  focus=BUTTON/"Open menu"/trigger=true
+route=closebtn  390x844 before=900 open=900 afterWheel=900 AFTER=900  focus=BUTTON/"Open menu"/trigger=true
+route=backdrop  390x844 before=900 open=900 afterWheel=900 AFTER=900  focus=BUTTON/"Open menu"/trigger=true
+```
+
+Fixed on all three routes, and the focus return is intact — `document.activeElement` is the trigger itself (identity comparison, not label matching) after every close. You did not buy scroll preservation at the cost of focus return.
+
+**One thing to carry into any future run of this measurement.** My first pass reported `before=900 open=0 AFTER=0`, which looks like the fix failing. It was my harness: Playwright's `page.click()` performs an actionability scroll, so it scrolled the trigger into view and reset the page to 0 before the app did anything. Re-running with `page.$eval(TRIG, el =&gt; el.click())` — no actionability scroll — produced the numbers above. Anything that clicks the trigger through Playwright's normal click API will measure its own scrolling rather than the app's.
+
+## 2. Ordinary case at 1440x900
+
+```
+escape/closebtn/backdrop  1440x900 before=40 open=40 AFTER=40  focus=trigger=true
+escape                    1440x900 before= 0 open= 0 AFTER= 0  focus=trigger=true
+```
+
+Unbroken. Drawer renders correctly at desktop width (320px panel against the blurred backdrop): `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/shots/1440-top-open.png`
+
+## 3. Opening from a scrolled position, and the lock
+
+Drawer renders correctly at `scrollY=900` — panel rect `{x:0,y:0,w:320,h:844}`, scrolled FAQ content visible behind the backdrop. The lock holds: `documentElement.overflow` is `hidden` while open, a wheel gesture over the backdrop moves nothing (`afterWheel=900`), and overflow returns to `visible` on close. Worth noting `maxScroll` stays 1266 while locked, so the `overflow:hidden` on `&lt;html&gt;` is not collapsing the scroll range and clamping the position to 0 — a failure mode this layout (`h-full` on `&lt;html&gt;`) is a candidate for, and does not exhibit.
+
+Evidence: `shots/390-escape-open.png` (open at 900) and `shots/390-escape-after.png` (after close, still showing "Returns &amp; Refunds" mid-page, i.e. still at 900).
+
+## 4. Core journey at 390x844
+
+Twelve-stop walk, all twelve `inDialog=true`, wrapping cleanly at stop 8:
+
+```
+TAB  1 BUTTON "Close" 40x40      TAB  7 A "FAQ" 304x40
+TAB  2 A "Home" 304x40           TAB  8 BUTTON "Close" 40x40   &lt;- wraps
+TAB  3 A "Sign In" 304x40        TAB  9 A "Home" 304x40
+TAB  4 A "Sign Up" 304x40        TAB 10 A "Sign In" 304x40
+TAB  5 A "About Us" 304x40       TAB 11 A "Sign Up" 304x40
+TAB  6 A "Contact" 304x40        TAB 12 A "About Us" 304x40
+```
+
+Shift+Tab reverses correctly and stays inside. **axe-core with the drawer open: 0 violations.** Only console error is the known `/api/categories` 500 (#308).
+
+## Observations — none are regressions, none block
+
+**The window in which the fixed defect is reachable is about 43px.** The header computes `position: static`, so the trigger's rect runs `[-1, 43]` at `scrollY=0` and leaves the viewport entirely by `scrollY=60`. Driving a real pointer click at the trigger's remaining on-screen pixels:
+
+```
+y=0   visible 43px -&gt; opened; after Escape scrollY=0  (was 0)
+y=20  visible 23px -&gt; opened; after Escape scrollY=20 (was 20)
+y=30  visible 13px -&gt; opened; after Escape scrollY=30 (was 30)
+y=42  visible  1px -&gt; click-missed
+```
+
+And from `scrollY=900`, a single Tab from `&lt;body&gt;` lands on the trigger but the browser's own sequential-focus scrolling takes the page to 0 first. So by pointer or keyboard, the drawer cannot be opened below ~43px of scroll, which bounds the jump the fix prevents at ~43px rather than 900. The fix is correct and costs nothing — and it becomes load-bearing the moment the header goes sticky, which is the change most likely to arrive here. I'd keep it; I'd just not expect it to be visible to a user today.
+
+**The trade-off it introduces, in the same window.** With `preventScroll`, focus returns to a trigger that is partially clipped: 13px of 44 visible at `scrollY=30`. `shots/390-focusring-after-close-y30.png` shows the returned focus ring reduced to the bottom sliver of its curve. Plain `focus()` used to scroll it fully into view. Both behaviours are defensible at ≤43px; the real fix for both this and the reachability bound above is a sticky header, which is a separate change and not one to make on the back of #306.
+
+**The 1px top edge: I agree it is cosmetic**, with one qualification. Since `scrollY` cannot go below 0, that pixel is permanently unrenderable, so the trigger's focus ring is clipped at its top edge even in the best case. It is a 1px clip on a 44px control that remains fully operable and correctly named, so cosmetic is the right classification — but it is the same geometry that produces the clipping above, so if the header is ever revisited, fixing the offset resolves both.
+
+**Your `sidebar.tsx` prediction is confirmed empirically.** The panel measured `fixed inset-0` at both viewports (`y=0`, height equal to the viewport), and `openSettled` never differed from `before` at any offset. That `preventScroll` is inert today, exactly as your comment says.
+
+## Checks not performed, and why
+
+Contrast, density/2x, tablet 834x1112, and the non-drawer journeys were skipped deliberately to keep this proportionate to a fix confined to two `focus()` call sites — none of them touch what a `focus()` option can change. The `/contact`, `/login`, `/signup` navigation gap (#307), the `inert` interaction (#316), and the UA focus rings (#315) are excluded as you directed — though note the `outline=auto 1px` visible on all twelve tab stops above is #315 showing up in this data, not a new finding.
+
+Screenshots: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/shots/` (`390-*`, `1440-*`, `390-open-top.png`, `390-after-12-tabs.png`, `390-focusring-after-close-y30.png`). Scripts: `measure2.cjs`, `walk.cjs`, `edge.cjs` in the same directory, all outside the repository.</result>
+<usage><subagent_tokens>47890</subagent_tokens><tool_uses>21</tool_uses><duration_ms>349391</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aae1f8dfff5659a09</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/aae1f8dfff5659a09.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the drawer dialog change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** The fix for #306 passes the applicable merge gate and `test-scripts`, and I found no counter-evidence to the author's disclosure — no existing e2e journey touches the drawer, so the `complementary` → `dialog` role change cannot regress one, and no other reference to the old semantics survives outside the two files already updated.
+
+### What I ran
+
+1. **`make -C apps/web ci`** — full merge gate.
+   - `eslint .` — clean.
+   - `tsc --noEmit` (app) and `tsc --noEmit -p tsconfig.e2e.json` — clean.
+   - `node scripts/check-journey-coverage.mjs` — passed (no drift between journey specs and their declared coverage).
+   - `vitest run` — **170 passed, 38 files** — matches the disclosed count.
+   - `next build` (Turbopack) — succeeded, 230 static params generated, all routes compiled and typechecked.
+2. **`make test-scripts`** — **192 tests, OK**. Nothing under `tests/scripts/` (including `test_page_headings.py`, `test_published_ports.py`, `test_e2e_journey_wiring.py`) references `complementary`, `sidebar`, `Sidebar`, or `drawer`.
+3. **Grep for old semantics**: `grep -rn "complementary"` across the repo turns up exactly one hit — the comment in `sidebar.test.tsx` explaining why the old role assertion was replaced. No `.spec.ts` under `apps/web/e2e/` mentions `Bars3Icon`, `Open menu`, `hamburger`, `isSidebarOpen`, or `SidebarWrapper` — confirmed by grepping all eleven spec files individually and reading `action-controls.spec.ts`'s `CONTROLS` list (eleven entries, none of them the hamburger or the drawer's Close button) and `layout.spec.ts` (sweeps 8 viewport widths per route but never opens the drawer). This matches your account of two references you updated and is consistent with the #315 gap: nothing currently depends on the old role, so nothing needed a third fix, and nothing here would break on a journey run.
+4. **`next-env.d.ts`** — not in the working diff. `git diff --stat`, `git status --short`, and an md5 comparison against `HEAD`'s blob all confirm it, both before and after the full `next build`.
+
+One thing worth flagging under item 4/5: mid-session, a single `git diff --name-only` call (run in parallel with an unrelated `ls`) transiently showed `next-env.d.ts` as a fifth changed file, while `git status --short` in the same breath did not. I polled five times immediately after and it never recurred, and the file's content hashes match `HEAD` exactly. Your `next start -p 3201` process was running throughout (I did not touch it), and this is consistent with the #260 regeneration behavior you described — a transient touch from that server rather than a real diff. I'm reporting it as an observed blip, not a finding, since it never persisted and doesn't appear now.
+
+### Judgement on journey coverage (item 3)
+
+I agree with your assessment and would not add `make test-e2e` to the gate for this change. Reasoning, independent of your disclosure:
+- Grepped all eleven `apps/web/e2e/*.spec.ts` files for any interaction with the hamburger trigger or the drawer panel — none exists. `layout.spec.ts` loads routes at various widths but never clicks anything; `action-controls.spec.ts`'s explicit eleven-control list excludes it (its own comment already notes the header's `Open menu` "has no focus accent at all," consistent with it being out of scope for that file).
+- Since no journey queries `role="complementary"` or otherwise touches the drawer, the role change to `dialog` has nothing to regress — I looked for exactly the "would an existing journey break" scenario you asked about and found no candidate.
+- Given that, and that the keyboard/focus mechanics (Tab trap wrapping, Escape scoping, focus return with `preventScroll`, scroll lock) are the kind of thing jsdom cannot exercise for real (the unit tests themselves say as much — jsdom doesn't move focus on Tab), the two rendered review passes against a production build are the stronger check here, not a journey spec that doesn't exist yet.
+- This is a gap (#315), not a regression risk for this PR.
+
+### Failures
+
+None.
+
+### Flakes
+
+None. Vitest and the Python suite each ran once and passed; no retries were needed. (I did not deliberately induce a flake to test re-run behavior, since neither suite showed any sign of one.)
+
+### Missing coverage
+
+- **The #315 gap itself**: no `apps/web/e2e/*.spec.ts` exercises the drawer's trigger or panel at all — not just the mutations you already covered in the unit-test table, but presence: nothing walks tab order through the hamburger, opens the drawer, or checks it against `action-controls.spec.ts`'s focus-accent contract. You've already filed this; I'm confirming the gap is real and unchanged by this diff.
+- **What the unit tests explicitly disclaim** (their own comments say so, and I agree): real pointer/scroll behavior (the `documentElement.style.overflow = "hidden"` assertion is a declaration check only, since jsdom has no layout to actually scroll), and whether the page behind the open drawer is truly unreachable to a screen reader (no test measures the `aria-modal` claim against the DOM tree the way a real AT would traverse it — this is inherent to the `Header`-renders-per-page structure that rules out `inert`, as the comments note).
+- Neither of these is a defect in the change; they're the boundary of what a component test / this suite can reach, same as your rendered-review disclosure already flags.
+
+### Environment issues
+
+None encountered. Ports 3100/8100/55432 were untouched (I ran no `make e2e-smoke` or `make test-e2e`, and your `next start -p 3201` was left alone). No `.env`-dependent stack was needed for either check I ran.
+
+### Checks not run, and why
+
+- **`make e2e-smoke`** — not run. Not requested for this change, and the change is component-level with no Dockerfile/compose/runtime-route impact that would call for it.
+- **`make test-e2e`** — not run, by judgement (see above): no existing journey touches the drawer, so it cannot catch a regression here, and standing one up would cost a composed stack (`LLM_PROVIDER=gcp` workaround, Playwright browser) for zero incremental signal on this diff. If you'd rather have it run anyway as a belt-and-suspenders check, say so and I will.
+- **`make docs-check`** — not run; no Markdown changed in this diff.
+- **`make ci`** (cross-surface) — not run; the change is web-only, `apps/web ci` is the correct narrower gate per the table.
+
+### Files touched (for reference)
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.test.tsx`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.test.tsx`
+
+### Commands run
+
+```
+git status --short
+git diff --stat origin/main...HEAD
+git diff --name-only / git diff --name-only HEAD
+git diff apps/web/src/components/sidebar.tsx
+git diff apps/web/src/components/header.tsx
+git diff apps/web/src/components/sidebar.test.tsx
+git diff apps/web/src/components/header.test.tsx
+grep -rn "complementary" (repo-wide, excluding node_modules/.next)
+grep -rn "Open menu|Close sidebar|Close menu" apps/web
+grep -rln "sidebar|drawer|hamburger|complementary" apps/web/e2e tests/scripts
+grep -n "sidebar|drawer|hamburger|Open menu|Close menu|role=.dialog" apps/web/e2e/action-controls.spec.ts apps/web/e2e/layout.spec.ts
+make -C apps/web ci
+make test-scripts
+git show HEAD:apps/web/next-env.d.ts | md5sum   (compared against working-tree md5sum)
+```</result>
+<usage><subagent_tokens>48074</subagent_tokens><tool_uses>24</tool_uses><duration_ms>188570</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ae59c570bb325e08d</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ae59c570bb325e08d.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the drawer dialog change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — site navigation drawer as a modal dialog
+
+I reviewed `git diff` (working tree vs `origin/main` @ 5d42a4b) across all four files, `git diff --cached` (empty), `git status --short` (no untracked files). Read for context: `AGENTS.md`, `apps/web/AGENTS.md`, `chat.tsx` (the prior art you cite), `sidebar-wrapper.tsx`, `app/layout.tsx`, `block.tsx`, `control-classes.ts`, and every other reference to `complementary` / `Close sidebar` in the tree (none). Ran the four affected specs (55 passed). Measurements below were taken with the repo's own Playwright Chromium against reconstructions in a scratch directory — nothing in the repository was touched.
+
+---
+
+### 1. DEFECT — Shift+Tab from the panel walks straight out of the dialog
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx:67-73`
+
+```ts
+if (event.shiftKey &amp;&amp; active === first) {
+```
+
+The panel itself is the focus target on open (`panelRef.current?.focus()`), and the panel is not in `focusable` — it carries `tabindex="-1"`, which `FOCUSABLE` excludes. So in the drawer's *initial* state `active === panel`, which is neither `first` nor `last`, and neither wrap branch fires. `panel.contains(active)` is true, so the recovery branch does not fire either. The handler returns without `preventDefault()`, and the browser performs its default backward sequential navigation from the panel — to the previous tabbable in document order, which is outside the drawer.
+
+Measured in Chromium against a reconstruction of the rendered DOM (header trigger + Sign In/Sign Up, then backdrop `tabindex=-1`, then the panel, with this exact handler):
+
+```
+after open:                    panel
+shift+tab from panel        -&gt; signup      &lt;-- outside the dialog
+shift+tab again             -&gt; l2          (recovery branch, one keystroke late)
+after clicking heading      -&gt; panel
+shift+tab after heading click -&gt; signup
+```
+
+Two reachable paths, not one:
+- open the drawer by keyboard and press Shift+Tab as the first keystroke;
+- click any non-interactive area inside the panel — a section heading, the padding — which focuses the panel (`tabIndex={-1}` makes it the nearest focusable ancestor), then Shift+Tab.
+
+In the real component the escape lands on the header's **Sign Up** link (unauthenticated) or **Sign Out** button (authenticated) — controls sitting under the backdrop. While focus is there, Enter activates them, and your Escape handler correctly refuses to fire (`event.target` is outside the panel), so the drawer stays open with focus on a covered control and no keyboard dismissal until the user Tabs again. That is the exact failure #306 was filed for, surviving in the backward direction.
+
+This also answers your question 4 directly: the Escape hole is real, and it is downstream of the trap not being airtight rather than of the Escape scoping, which is correct as written.
+
+The twelve-stop walk in the rendered review did not catch it because a tab walk begins by Tabbing *forward* — forward from the panel correctly lands on Close (verified above: `tab from panel -&gt; close`). Only the backward-first case escapes.
+
+Suggested fix — treat the panel as sitting immediately before `first`:
+
+```ts
+if (event.shiftKey &amp;&amp; (active === panel || active === first)) {
+  event.preventDefault();
+  last.focus();
+}
+```
+
+And a corresponding assertion: `wraps focus at both ends rather than letting Tab leave the page` starts from `first`/`last`, never from the panel, so it cannot see this. A case that focuses the panel (the post-open state) and fires `Tab`+`shiftKey` expecting `last` would have gone red. Note that with an empty `sections` array (#308) `first === last === ` the Close button, and the same escape applies.
+
+**Confidence: 100.**
+
+---
+
+### 2. REFINEMENT — the scroll-lock comment states a false fact about `body`
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx:85-91`
+
+&gt; "the root layout puts `h-full` there, so `documentElement` is what scrolls and setting `body`'s overflow moves nothing"
+
+`document.scrollingElement` being `documentElement` does not mean `body`'s overflow is ignored. When the root element's overflow is `visible` — and `h-full` sets only `height: 100%` — the used overflow for the viewport is propagated *from the body*. Measured on a reconstruction of the root layout (`&lt;html style="height:100%"&gt;`, body with taller content), 1440x900 and 390x844, wheel gesture of 400px:
+
+```
+no lock       -&gt; scrollY 400
+body hidden   -&gt; scrollY 0
+html hidden   -&gt; scrollY 0
+```
+
+Both work. `documentElement` is a fine choice, but the stated reason is wrong, and it is wrong in a way that impugns the code two lines above it in the same comment: `chat.tsx:124` locks scroll with `document.body.style.overflow` in this same document, and this comment says that "moves nothing". A reader following it would conclude chat's lock is broken and go change it.
+
+The rest of the paragraph — that `document.scrollingElement` is `undefined` under jsdom — I verified against the installed jsdom 30.0.1: it is genuinely `undefined`, so that half is accurate and worth keeping.
+
+Suggested fix: replace the causal claim with the actual reason for the choice (either element works; `documentElement` is used because `chat.tsx` already owns `body` and two components writing the same inline property would interleave their save/restore).
+
+**Confidence: 90.**
+
+---
+
+### 3. REFINEMENT — one number in the `preventScroll` comment does not follow
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx:44-45`
+
+&gt; "`position: static` puts the trigger's rect at [-1, 43], so **it leaves the viewport by about scrollY=60**: below ~43px it cannot be clicked at all"
+
+You asked for every number checked. I rebuilt the header's box model (Block `pl-3`, row `h-12`, button `-m-2.5 p-2.5`, icon `h-6 w-6`, Tailwind v4 preflight) and measured in Chromium at 390x844:
+
+```
+rect@scroll0  {x: 2, y: -1, w: 44, h: 44, bottom: 43}
+scrollY=30 -&gt; visible 13 of 44
+scrollY=43 -&gt; visible 0
+scrollY=60 -&gt; top -61, bottom -17 (17px past gone)
+focus() from scrollY=42 -&gt; scrollY 0     (jump of 42)
+```
+
+So four of the five numbers are exactly right, including the two I'd have most expected to drift: `[-1, 43]` reproduces to the pixel as the rect's top and bottom, "13px of 44 at scrollY=30" is exact, "cannot be clicked below ~43px" is exact, and "bounded at roughly 43px" is exact (42 → 0).
+
+`scrollY=60` is the one that is wrong. The trigger leaves the viewport at exactly 43, which is what the clause immediately after the colon says — so the sentence contradicts itself, and the wrong half is the one presented as the derived conclusion. Drop it, or make it "so it leaves the viewport at scrollY=43".
+
+Same family, one file over: `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.test.tsx:106` says "opening at scrollY=900". Per the geometry above the drawer cannot be *opened* at scrollY=900 — the trigger is 857px above the viewport — so the procedure must have been open-then-scroll. `header.tsx` carries that bound; the test comment repeats the 900 with no bound, which is the reading a future editor is most likely to take at face value.
+
+On the length question you raised: 40 lines of comment on a 6-line effect matches the house style set by `chat.tsx`, so I would not cut it for volume. The block earns its keep — the "kept anyway, becomes load-bearing when the header goes sticky" paragraph is the part a future reader actually needs.
+
+**Confidence: 85.**
+
+---
+
+## Your five questions
+
+**1. Is `aria-modal="true"` honest here?** Yes, once finding 1 is fixed — and the arrangement you describe is not what `chat.tsx` warns about. Its warning is `aria-modal` *without a trap*; you have a trap, and its second warning (a trap without `inert` leaves covered controls clickable) is answered by the backdrop. I checked the one thing that could have broken the pointer half: the drawer is `fixed inset-0 z-50` and the chat widget is `fixed ... z-10` (`chat.tsx:477`), and since `&lt;main className="grow"&gt;` establishes no stacking context, both compete in the root context — so the backdrop genuinely paints over the only other fixed layer on the page. Scroll is locked, so the page behind cannot move either. What is *not* honest today is the keyboard half, for exactly one keystroke, which is finding 1. If you later want the `inert` mechanism without restructuring the layout, the lever is `createPortal` on the drawer's root — mounting it to `document.body` makes it a sibling of the layout tree without moving `Header`. That is a bigger change than this slice needs and I would not ask for it here.
+
+**2. The two focus calls and the comment volume.** Covered in finding 3. The `preventScroll` on the panel in `sidebar.tsx:35` is honestly labelled as pre-emptive and I have no objection to it.
+
+**3. `focus:outline-none` on the panel.** Scoped tightly enough. The rule is on the panel element only, `outline` does not inherit, and the panel is not a tab stop — it is reachable only by the programmatic `focus()` and by a click on its own non-interactive area, so `:focus` and `:focus-visible` collapse to the same set here and the narrower selector would buy nothing. The comment is accurate about what it does and why. No finding.
+
+**4. Escape scoping.** There is a real path, and it is finding 1's consequence rather than the scoping's fault. Once the panel is included in the backward wrap, focus cannot leave the drawer and the scoping is airtight. The remaining hole — focus parked in browser chrome after Ctrl+L — is the same one `chat.tsx` lives with and self-heals on the next Tab.
+
+**5. The test file changes.** I found no other guard of the shape you rewrote. Specifically on the backdrop tests: `keeps the backdrop out of the tab order` selects on `aria-hidden` and asserts `tabindex`, two different attributes, so removing either fails it — not circular. `should call onClose when clicking the backdrop` fails on `aria-hidden`'s removal too, though by a `null` dereference rather than the assertion, which is untidy but not vacuous. I checked each of the ten mutation-table rows against its named assertion and all ten would go red as claimed. The one gap is the one in finding 1: the table's "Tab trap disabled" row is true, but no row covers the panel-as-starting-position case, which is why a real hole sits under a green table.
+
+---
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx:78-88` — the drawer trigger has no focus indicator at all (recorded at `src/lib/control-classes.ts:26` as predating that work, and not covered by #315, which is about the drawer's own controls). This change makes focus *return* to that trigger on close, so it is now a focus destination with nothing visible to show for it.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.test.tsx` — no trailing newline at EOF, both before and after this change.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar-wrapper.tsx:15` — `useState([])` infers `never[]`, so `setCategories(data)` type-checks only because `data` is `any` off `response.json()`. Pre-existing; `apps/web/AGENTS.md` discourages exactly this at a boundary.
+
+---
+
+**Verdict: one defect (finding 1), two refinements.** This is not a refinement-only round — finding 1 needs a fix and a re-review of the changed state. Findings 2 and 3 are comment-only and not UI-affecting; finding 1 changes keyboard behaviour in the rendered application, so under step 8 it reopens step 6 as well.
+
+**Could not assess:** whether locking `overflow` on `documentElement` produces a scrollbar-gutter reflow behind the backdrop at desktop widths — Playwright's headless Chromium reports `clientWidth === innerWidth`, i.e. no classic scrollbar, so the measurement is not available here. `chat.tsx` applies the same lock only below `lg`, where the question does not arise; this one applies at every width. I did not run the production build, the journey suite, or `make -C apps/web ci`.</result>
+<usage><subagent_tokens>90156</subagent_tokens><tool_uses>29</tool_uses><duration_ms>608755</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6424fff8e6237158</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/a6424fff8e6237158.output</output-file>
+<status>completed</status>
+<summary>Agent "Confirm the Shift+Tab fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Rendered review completed** — Chromium at 390x844 and 1440x900, against your server at `http://127.0.0.1:3201`. I started nothing and stopped nothing; your `next start` process is untouched, and the repository is unmodified.
+
+**How I rendered.** The Playwright MCP tools are connected but every call fails with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome` — the #279 signature. I drove Chromium through `Bash` instead, from a script outside the repository requiring `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/playwright` by absolute path. Probe first: `browser: ok 151.0.7922.34`.
+
+**Method, given your note.** No forward walk was used to establish any of this. Every keystroke is a real `keyboard.press`, and every panel-focus state was produced by `page.mouse.click(x, y)` at coordinates read off a bounding box — not `page.click()` (actionability scroll) and not `$eval(el =&gt; el.click())`, which dispatches a click event without running the browser's focus-nearest-focusable-ancestor algorithm and so would not have focused the panel at all. No `element.focus()` anywhere.
+
+I confirmed the fix is in what the server serves before measuring: chunk `/_next/static/chunks/1ei3j23rnszxn.js` contains `shiftKey&amp;&amp;(l===t||l===n)`.
+
+## Results
+
+The drawer's focusable list is 7 stops at both viewports: `first` = `BUTTON "Close"`, `last` = `A "FAQ"`.
+
+**1. Keyboard open, Shift+Tab as the very first keystroke** — fixed. Tabbed to the trigger by sequential navigation, pressed Enter, panel holds focus (`DIV "Site navigation" [PANEL]`), then Shift+Tab lands on **`A "FAQ"`, inside the drawer**. Not `Sign Up`. Both viewports. Drawer still open.
+
+**2. Click a non-interactive part of the panel, then Shift+Tab** — fixed, on three separate click targets, both viewports. Real click on the `Support` heading, on the panel's bottom padding, and on the top bar strip beside `Close`: each leaves `document.activeElement === panel`, and Shift+Tab from there lands on `A "FAQ"`.
+
+**3. Continued backward cycling** — holds. Seven more Shift+Tabs from `FAQ` walk `Contact → About Us → Sign Up → Sign In → Home → Close → FAQ` and wrap cleanly. I then ran 25 further Shift+Tabs with a capturing `focusin` listener recording any target outside the panel: **empty list**, drawer still open. The `Sign Up` reached in that cycle is the drawer's own link, not the header's — the listener distinguishes them.
+
+**4. Forward from the panel still lands on `Close`** — undisturbed, and from both routes into the panel-focused state. Fresh keyboard open then Tab → `BUTTON "Close"`. Heading-click then Tab → `BUTTON "Close"`. The forward cycle runs `Close → Home → Sign In → Sign Up → About Us → Contact → FAQ → Close`, and 25 forward Tabs produced zero escapes.
+
+**5. Other routes to the panel-focused state.** All land on `FAQ` on Shift+Tab, both viewports: open with **Space** rather than Enter; open by **mouse** then Shift+Tab as the first keystroke; **return** to the panel by clicking a heading after having tabbed to `Close`; and both paths repeated on **`/`** as well as `/faq`. One adjacent behaviour worth recording since focusing the panel changes the Escape handler's `event.target`: Escape with focus on the panel itself still closes the drawer and returns focus to `BUTTON "Open menu"`.
+
+**The empty-`sections` state is unreachable, not merely unobserved.** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/navigation.ts` unconditionally pushes General, Shop, Account and Support, and only Shop's links come from `categories`. The DOM in your environment reads `["General (1 links)","Shop (0 links)","Account (2 links)","Support (3 links)"]` — Shop is the empty one, but six links remain, so `first === last === Close` cannot occur. That is source plus a measured DOM, not an inference from the empty Shop list.
+
+## Findings
+
+No defects found in the change under review. Nothing to report at either viewport, in either direction, from any of the eight entry states.
+
+Two observations, neither a finding and neither new:
+
+- The wrapped target renders with `outline: auto 1px rgb(16, 16, 16)` — the UA default, which is #315 and excluded. It is at least visible: rect `[8, 436, 304, 40]`, fully in viewport, with no panel or document scroll induced by the wrap (`panelScrollTop: 0`, `docScroll: 0`), so the backward wrap does not land focus somewhere the user cannot see.
+- The `SHOP` heading renders with nothing beneath it (visible in both screenshots). Environmental here per #308; whether a real deployment should render a heading for an empty section is not this change's question.
+
+## Checks not performed, with reasons
+
+- **The `!panel.contains(active)` branch** — I could not reach focus-outside-the-panel through any real user path. The backdrop covers the viewport and dismisses on click, so no element behind it can be clicked without closing the drawer, and headless Chromium gives no address bar. I did not simulate it with a programmatic `focus()`, because per your own note that would not reproduce what sequential navigation does, so a pass there would have meant nothing.
+- **Tablet 834x1112** — omitted at your instruction; the two viewports agree stop-for-stop, including the full focusable inventory and the wrapped element's rect.
+- **Contrast, density, loading/empty/error states, semantics beyond the dialog** — the change touches focus order and the trigger's `aria-expanded`/label only. Contrast and 2x were covered in earlier passes and nothing here alters a colour pair or an image request.
+- **Chat panel** — running on your stack, out of scope for this diff, not exercised.
+
+Console during the runs showed only repeated `500` from `/api/categories`, expected per #308.
+
+Screenshots, all under `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/shots/`:
+- `phone-case1-shifttab-from-panel.png`, `desktop-case1-shifttab-from-panel.png` — focus ring on `FAQ` after the first backward keystroke
+- `phone-case2a-heading-click.png`, `desktop-case2a-heading-click.png` — same, via the click path
+- `phone-case4-forward-wrap.png`, `desktop-case4-forward-wrap.png` — forward direction
+- `phone-case5e-home.png`, `desktop-case5e-home.png` — both paths on `/`
+
+Harness and full transcript: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/focus.cjs`, `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/addendum.cjs`, `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/89a8e71c-0cc2-4723-bb0b-893448362963/scratchpad/full.txt`.</result>
+<usage><subagent_tokens>46144</subagent_tokens><tool_uses>18</tool_uses><duration_ms>300585</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ac845437d83775d78</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/ac845437d83775d78.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after the defect fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed clean at the end too — still exactly the four files, no `next-env.d.ts` blip this run.
+
+Now for the judgement call on the `wraps backwards from the panel itself` test.
+
+## Verdict: Verified. The fix is present and both required checks pass.
+
+### Failures
+None. `make -C apps/web ci` passed in full (lint, typecheck, journey-coverage check, 171/171 vitest tests, and `next build`). `make test-scripts` passed in full (192/192 Python tests).
+
+### Flakes
+None observed. Both suites ran once and passed cleanly; no re-run was needed.
+
+### Missing coverage
+- The gap the diff's own comment block names is real and worth restating: nothing in this test suite exercises actual browser Tab-key focus movement (jsdom doesn't implement sequential focus navigation), so the trap's forward-wrap, backward-wrap-from-a-control, and the new backward-wrap-from-the-panel assertions all measure "the handler called `.focus()` on the right node," not "Tab actually lands there." The submission states a rendered pass covered this at two viewports across eight entry states; I did not verify that pass myself (no rendered/E2E check was in scope for this request).
+- Nothing in this suite verifies that page content behind the drawer is actually unreachable (the `inert`-can't-be-used-here case) — the sidebar test file's own docstring says as much. Out of scope for what was asked, flagging per instructions to note gaps.
+
+### Environment issues
+None. Ports 3100/8100/55432 were free as stated; only 3201 (the user's own `next start`) was bound, and it was left untouched. No `next-env.d.ts` diff appeared after the build this time — the transient blip from the earlier pass did not recur.
+
+### Diff confirmation
+Exactly four files changed, matching the description:
+- `apps/web/src/components/sidebar.tsx` — confirmed the fix line: `if (event.shiftKey &amp;&amp; (active === panel || active === first)) {`
+- `apps/web/src/components/sidebar.test.tsx` — confirmed the new test `wraps backwards from the panel itself, not just from its first control`
+- `apps/web/src/components/header.tsx` — confirmed the "about scrollY=60" claim is gone, replaced with the exact 43px bound
+- `apps/web/src/components/header.test.tsx` — confirmed "opening at scrollY=900" corrected to open-then-scroll-to-900
+
+`apps/web/next-env.d.ts` is not in the diff, and `git status --short --untracked-files=all` showed only the same four files both before and after running both check batteries.
+
+### My take on the judgement call
+I'd keep the test, but I'd also push back a little on "it cannot observe the thing that was broken."
+
+What it verifies for certain: reverting the fix (narrowing the backward branch back to `active === first`) turns it red, and it pins the exact defect mechanism — that the panel, sitting outside the `focusable` list via `tabindex="-1"`, needs to be named explicitly in the wrap condition or no branch fires at all. That's a real regression guard: someone refactoring the focusable-query logic or "simplifying" the condition back to just `first` would be caught here, in CI, in milliseconds, without needing a browser.
+
+What it can't verify, and this is the honest limit: it can't distinguish "my handler declined to act and the browser's default ran" from "my handler never runs on this key combo for some unrelated reason" — because jsdom never runs *any* default Tab behavior for either case to diverge against. So the test's failure mode if the fix regresses in a different way (e.g., the effect stops being attached, or `document.activeElement` isn't `panel` at the point the check runs) is indistinguishable from its failure mode for the original bug. It's a proxy for the mechanism, not a replica of the browser behavior.
+
+Given that the rendered pass is what actually confirms the browser-observable claim, and this unit test is cheap, fast, and demonstrably fails on the specific regression it's named for, I'd call it worth keeping as a fast-feedback regression lock — just not sufficient on its own, which the submission already seems to understand (it leans on the rendered pass for the real claim). I would not block on this; it's a reasonable design opinion either way and the comment block already documents the limitation honestly for the next reader.
+
+### What I did not run and why
+- `make e2e-smoke` / `make test-e2e` — not requested for this re-verification pass; the ask was specifically `make -C apps/web ci` and `make test-scripts`, plus the diff/judgement checks. I did not spin up a stack.
+- `detect_changed_surfaces.py --print-targets` produced no output because it diffs `origin/main...HEAD` and HEAD is at the same commit as origin/main (5d42a4b) — the four changed files are uncommitted, which the script structurally can't see. This matches the documented limitation; `git status --short` was used instead to establish scope.
+
+### Commands run
+```
+git status --short
+git diff --stat origin/main...HEAD
+git branch --show-current
+git log --oneline -5
+.venv/bin/python scripts/detect_changed_surfaces.py --base origin/main --head HEAD --print-targets
+git diff --stat -- apps/web/src/components/sidebar.tsx apps/web/src/components/sidebar.test.tsx apps/web/src/components/header.tsx apps/web/src/components/header.test.tsx
+git status --short --untracked-files=all
+git diff -- apps/web/src/components/sidebar.tsx
+git diff -- apps/web/src/components/header.tsx
+git diff -- apps/web/src/components/header.test.tsx
+git diff -- apps/web/src/components/sidebar.test.tsx
+ss -tlnp | grep -E ':3100|:8100|:55432|:3201'
+make -C apps/web ci
+make test-scripts
+git diff -- apps/web/next-env.d.ts
+```</result>
+<usage><subagent_tokens>33530</subagent_tokens><tool_uses>13</tool_uses><duration_ms>145062</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>abcb015888e727582</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/6981b884-fc97-4527-9bb8-dfe067a590b0/tasks/abcb015888e727582.output</output-file>
+<status>completed</status>
+<summary>Agent "Second review round on drawer" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**No defects this round.** Two refinements, both about comment text rather than behaviour. The loop can end here.
+
+Full unit suite green (38 files, 171 tests). I re-derived the trap's behaviour over its whole state space and could not find a route out of the dialog that the fix does not cover.
+
+---
+
+## Answers to what you asked
+
+### 1. The `body`-versus-`documentElement` reasoning — see Finding 1
+
+The *mechanism* you wrote down is correct: two owners of one inline property do interleave, and whichever cleanup runs second writes back a value it captured while the other held the lock. What I could not confirm is the premise. The two locks cannot be held at the same time today — three independent barriers, detailed below. So the comment describes a hazard the design prevents, not one the code has.
+
+### 2. Is the trap airtight
+
+Yes, over the whole `document.activeElement` state space, not just the two routes I found. While the drawer is open, `activeElement` can only be:
+
+| state | who handles it | result |
+| --- | --- | --- |
+| outside the panel (incl. `body`, `null`) | `!panel.contains(active)` — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx:62` | pulled to `first`/`last` |
+| the panel itself | new `active === panel` clause, line 78 | Shift → `last`; forward falls through to the default, which is `first` because the panel precedes its own descendants |
+| `first` (Close) | line 78 | Shift → `last`; forward → default → second control |
+| `last` (FAQ) | line 81 | forward → `first`; Shift → default → previous control |
+| any middle control | default | stays inside |
+
+The list is exhaustive because `FOCUSABLE` matches every focusable descendant the panel can contain (`a[href]` from `next/link`, the Close `button`, nothing else — `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx:167-200`), and the panel itself is excluded from `querySelectorAll` by being the root of the query rather than by the `tabindex` filter, so no focusable node inside the panel sits before `first` or after `last`.
+
+Two residual behaviours I checked and am **not** reporting:
+
+- **Re-entry from browser chrome.** Focus in the address bar, Tab into the page: no keydown reaches the document, so the browser lands on the header trigger (the first tabbable element, underneath the backdrop). The *next* Tab hits `!panel.contains(active)` and pulls back. Inherent to every keydown trap; `chat.tsx` only escapes it by having `inert`, which the comment at `sidebar.tsx:33-42` correctly explains this component cannot use.
+- **Shift+Tab after clicking mid-panel text.** Chrome sets the sequential-focus starting point at the clicked node but `activeElement` to the panel, so `active === panel` fires and focus jumps to `last` rather than to the control just above the click. Contained, and matches what your rendered pass observed (`A "FAQ"` from all three click targets). Surprising ordering, not an escape.
+
+`first === last` stays unreachable: the Close button plus a minimum of six links from `getSidebarLinks` (`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/navigation.ts` pushes General/Shop/Account/Support unconditionally, and only Shop depends on `categories`).
+
+### 3. Comment volume — see Finding 2
+
+It has passed the point. 223 of 451 added lines are comments (49%); `header.tsx` is 42 comment lines against 6 lines of code (69%).
+
+### 4. Crept in
+
+Nothing. No untracked files, no test elsewhere referencing the removed `complementary` role or the `Close sidebar` label (grepped repo-wide including the Playwright specs), no duplicate `SIDEBAR_DIALOG_ID` (the two `&lt;Header /&gt;` renders in `profile/page.tsx` are mutually exclusive returns), `document.scrollingElement` genuinely is `undefined` under jsdom 30 as the comment claims (verified directly).
+
+---
+
+## Findings
+
+### Finding 1 — **refinement** — confidence 80
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.tsx:101-105`
+
+```
+// The reason is that `chat.tsx` already owns `body`'s inline overflow. Two
+// components saving and restoring the same property interleave: whichever
+// closes second restores the value it captured while the other held it, and
+// the page is left locked or unlocked by accident of ordering. Separate
+// elements cannot collide.
+```
+
+The interleave described cannot occur in the current code, because the drawer and a modal chat cannot be open simultaneously. Three barriers, each sufficient alone:
+
+1. **Below `lg`**, chat's lock only exists when `isModal` (`chat.tsx:98`), and the same condition marks every sibling of the widget `inert` (`chat.tsx:108-118`). The widget's sibling is `&lt;main&gt;` (`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/layout.tsx`), and `Header` renders inside `children`, so while chat holds `body`'s overflow the hamburger is neither clickable nor focusable.
+2. **Drawer open first**: the backdrop is `fixed inset-0 z-50` inside a stacking context the chat widget's `z-10` (`chat.tsx:477`) shares, so a click aimed at the launcher hits the backdrop and closes the drawer; the Tab trap keeps focus off the launcher.
+3. **At `lg` and up**, chat holds no `body` lock at all, and opening the drawer focuses the panel, which fires chat's focus-out handler (`chat.tsx:217-229`) and closes the chat before the drawer's effect runs.
+
+So the comment reads as documenting a live hazard where it is documenting a design property. That matters specifically because the previous round's finding was a confident wrong reason in this same comment — a reader who checks this one will find the mechanism right and the premise unverifiable, which is the same trust cost.
+
+Suggested fix: keep the choice and say what it actually buys, e.g. "`chat.tsx` owns `body`'s inline overflow. Nothing today can hold both locks at once — `inert`, the `z-50` backdrop and chat's focus-out close each rule it out — but two owners of one property would interleave their save/restore, and separate elements mean a future path that makes them coexist cannot produce that." That is defensible, checkable, and does not claim a bug that is not there.
+
+### Finding 2 — **refinement** — confidence 75
+
+Root `AGENTS.md` §Comments policy: *"Only write high-value comments if at all. Avoid talking to the user through comments."*
+
+Highest-density spots:
+
+- **`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/header.tsx:18-58`** — 42 comment lines above a 6-line effect. Lines 42-58 are three paragraphs (the bound on the effect, "Kept anyway", "The trade in the same window") that exist because a reviewer questioned the 900px figure. The load-bearing content is one sentence — the header is in normal flow, so `focus()` scrolls; the reachable jump is bounded near 43px, kept because a sticky header would widen it. The phrase *"worth saying so the next reader does not overrate this"* is addressed to a reviewer, not a maintainer.
+- **`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar.test.tsx:63-114`** — a 52-line docblock before the describe. The mutation table and the "three of those knock out more than one test" note earn their place; *"The last row is the one to read if you are wondering whether a full table is worth the trouble"* and the paragraph following it are a retrospective on the review process, and *"Caught by the test, not by reasoning"* (`sidebar.tsx:109-110`) is the same.
+
+One accuracy point while you are in there, if you trim: `header.tsx:73` calls the trigger *"the only thing on the page that says whether the drawer is open."* With `aria-modal="true"` on the panel, assistive technology confines itself to the dialog subtree while it is open, so `aria-expanded="true"` is never perceivable — the open state is announced by the dialog, and the trigger only ever reports `false` to a user. The attribute is fine and conventional; the sentence claiming it is what announces the open state is not.
+
+Suggested fix: cut `header.tsx:42-58` to two lines, drop the process-retrospective sentences from the test docblock, and restate `header.tsx:73`. No code change.
+
+---
+
+## Outside this change
+
+Not scored, not introduced here, filed by you per *Unrelated findings become issues*:
+
+- **Duplicate `main` landmarks.** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/layout.tsx` wraps `children` in `&lt;main class="grow"&gt;`, and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/contact/page.tsx:5`, `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/contact/thanks/page.tsx:5` and `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/profile/page.tsx:67` each render a second `&lt;main&gt;` inside it. Nested/duplicate `main` gives landmark navigation two identical destinations.
+- **Categories fetched on every page load.** `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/sidebar-wrapper.tsx:17-31` fetches `/api/categories` from a mount effect with `[]` deps, so every page pays the request whether or not the drawer is ever opened, and the result is not shared between navigations.
+
+---
+
+## What I reviewed
+
+- `git diff` against `origin/main` @ 5d42a4b — nothing staged, nothing committed on the branch, no untracked files.
+- All four changed files read in full plus surrounding context: `header.tsx`, `sidebar.tsx`, `header.test.tsx`, `sidebar.test.tsx`, and for the seams `chat.tsx`, `sidebar-wrapper.tsx`, `layout.tsx`, `navigation.ts`, `control-classes.ts`, the pages that render `&lt;Header /&gt;`.
+- Root `AGENTS.md` and `apps/web/AGENTS.md` (both `## Code Review Rules`). No `.claude/agents/` definition or `AGENTS.md` workflow step is touched by this change, so the step-versus-agent obligation check has nothing to compare.
+- Ran `npx vitest run` (whole web suite) and the two focused specs. Verified `document.scrollingElement === undefined` under the pinned jsdom, and checked the mutation table row-by-row against the assertions it names — all eleven rows hold by construction.
+- Could not assess directly: the rendered-browser claims (scroll positions, focus traces, the 43px bound, the `:focus-visible` outline). I took those as reported and checked only that the code and comments are consistent with them.</result>
+<usage><subagent_tokens>75691</subagent_tokens><tool_uses>28</tool_uses><duration_ms>535946</duration_ms></usage>
+</task-notification>

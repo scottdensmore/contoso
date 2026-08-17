@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "1b913308d22b",
+  "strategy": "manual-commit",
+  "branch": "fix/306-drawer-modal-dialog",
+  "checkpoints_count": 15,
+  "files_touched": [
+    "apps/web/src/components/header.test.tsx",
+    "apps/web/src/components/header.tsx",
+    "apps/web/src/components/sidebar.test.tsx",
+    "apps/web/src/components/sidebar.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1b/913308d22b/0/metadata.json",
+      "transcript": "/1b/913308d22b/0/full.jsonl",
+      "compact_transcript": "/1b/913308d22b/0/transcript.jsonl",
+      "content_hash": "/1b/913308d22b/0/content_hash.txt",
+      "prompt": "/1b/913308d22b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 574,
+    "cache_creation_tokens": 457092,
+    "cache_read_tokens": 77687729,
+    "output_tokens": 233952,
+    "api_call_count": 288,
+    "subagent_tokens": {
+      "input_tokens": 626,
+      "cache_creation_tokens": 768142,
+      "cache_read_tokens": 10804042,
+      "output_tokens": 266314,
+      "api_call_count": 313
+    }
+  }
+}
