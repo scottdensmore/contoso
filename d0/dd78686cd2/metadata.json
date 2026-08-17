@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "d0dd78686cd2",
+  "strategy": "manual-commit",
+  "branch": "fix/260-next-env-drift",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "apps/web/next-env.d.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d0/dd78686cd2/0/metadata.json",
+      "transcript": "/d0/dd78686cd2/0/full.jsonl",
+      "compact_transcript": "/d0/dd78686cd2/0/transcript.jsonl",
+      "content_hash": "/d0/dd78686cd2/0/content_hash.txt",
+      "prompt": "/d0/dd78686cd2/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 112,
+    "cache_creation_tokens": 68810,
+    "cache_read_tokens": 12636488,
+    "output_tokens": 42365,
+    "api_call_count": 57,
+    "subagent_tokens": {
+      "input_tokens": 232,
+      "cache_creation_tokens": 218429,
+      "cache_read_tokens": 4131549,
+      "output_tokens": 95240,
+      "api_call_count": 116
+    }
+  }
+}
