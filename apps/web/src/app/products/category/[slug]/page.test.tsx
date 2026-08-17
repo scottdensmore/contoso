@@ -53,9 +53,9 @@ describe('Category Page', () => {
   })
 
   // The card is one link, so everything inside it is read out as that link's
-  // name. `getByRole('link', { name })` computes that name the way a screen
-  // reader does, which is the part `getByText` above cannot see: it passes
-  // just as happily when the name is announced twice.
+  // name, which is the part `getByText` above cannot see: it passes just as
+  // happily when the name is announced twice. So the name has to be computed
+  // the way a screen reader computes it.
   //
   // The e2e journey covers the image branch against the real catalogue. It
   // cannot cover the branch below it, because every seeded product has an
@@ -68,16 +68,49 @@ describe('Category Page', () => {
     products: [{ id: '1', price: 120, slug: 'trail-boots', ...product }],
   })
 
+  // Located by href rather than by `getByRole('link', { name })`, matching the
+  // home page's equivalent test. That one is where the cost was; this one is
+  // consistency, and it bought no measurable time -- 462ms -> 476ms across
+  // three full runs, inside a 427-500ms spread on both sides. The reason is
+  // that a mocked category renders one product, so the document this query
+  // walks is small, and what remains is a fixed jsdom cost that the accessible
+  // name still pays. Kept because the two tests are a documented pair, and
+  // leaving them asserting the same property two ways invites the next reader
+  // to converge them on the slow one. See #302.
+  //
+  // The three assertions are the three properties `getByRole` was making: the
+  // card is the only one, it is a link, and its name is what the case says.
+  //
+  // Demonstrated by mutating `page.tsx` and watching the named assertion fail:
+  //
+  // | mutation                             | result                          |
+  // | ------------------------------------ | ------------------------------- |
+  // | `alt=""` -> `alt={product.name}`     | name fails, doubled             |
+  // | `role="button"` on the card link     | role fails, reporting button    |
+  // | each card rendered twice             | length fails, reporting 2       |
+  // | empty state reworded                 | name fails, no-image case only  |
+  // | `role="img"` + `aria-label` restored | name fails, `for X` is back     |
+  //
+  // The last row is the defect the no-image branch exists for, and the pair it
+  // names is the one `page.tsx` removed deliberately -- so this is the
+  // assertion that holds that removal in place.
+  const expectOneCardNamed = (container: HTMLElement, name: string) => {
+    const cards = container.querySelectorAll('a[href="/products/trail-boots"]')
+    expect(cards).toHaveLength(1)
+    expect(cards[0]).toHaveRole('link')
+    expect(cards[0]).toHaveAccessibleName(name)
+  }
+
   it('names a product card once when it has an image', async () => {
     vi.mocked(getProductsByCategory).mockResolvedValue(
       categoryOf({ name: 'Trail Boots', image: '/images/boots.webp' }) as any,
     )
 
-    render(await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }))
+    const { container } = render(
+      await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }),
+    )
 
-    expect(
-      screen.getByRole('link', { name: 'Trail Boots $120.00' }),
-    ).toBeDefined()
+    expectOneCardNamed(container, 'Trail Boots $120.00')
   })
 
   it('names a product card once when it has no image', async () => {
@@ -85,11 +118,11 @@ describe('Category Page', () => {
       categoryOf({ name: 'Trail Boots', image: null }) as any,
     )
 
-    render(await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }))
+    const { container } = render(
+      await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }),
+    )
 
-    expect(
-      screen.getByRole('link', { name: 'No image available Trail Boots $120.00' }),
-    ).toBeDefined()
+    expectOneCardNamed(container, 'No image available Trail Boots $120.00')
   })
 
   it('marks the card box skippable only when it holds an image', async () => {
