@@ -193,14 +193,8 @@ make venv
 .venv/bin/python -m pip install \
   -r services/chat/src/api/requirements-core.txt \
   -c services/chat/constraints.txt
-# Generate python prisma client
-prisma generate --schema=apps/web/prisma/schema.prisma
-# Run the master seeding script (skip DataStore seeding if it doesn't exist yet)
-.venv/bin/python infrastructure/scripts/seed_gcp_all.py || {
-  echo ""
-  echo "Warning: Data seeding failed (likely because Discovery Engine DataStore doesn't exist yet)."
-  echo "Re-run this script after the DataStore deletion completes (up to 2 hours from teardown)."
-}
+# Run the master GCP seeding script. Its logs and exit status identify failures.
+.venv/bin/python infrastructure/scripts/seed_gcp_all.py
 
 echo "✅ Project setup and deployment complete!"
 echo "Web App URL: $(cd infrastructure/terraform && terraform output -raw web_app_url)"
