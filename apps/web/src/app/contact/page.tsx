@@ -1,4 +1,5 @@
 import ContactForm from "@/components/contact-form";
+import { LAUNCHER_SAFE_COLUMN } from "@/lib/control-classes";
 
 export default function ContactPage() {
   return (
@@ -22,7 +23,9 @@ export default function ContactPage() {
           </p>
         </div>
         
-        <ContactForm />
+        <div className={`flex w-full justify-center ${LAUNCHER_SAFE_COLUMN}`}>
+          <ContactForm />
+        </div>
       </div>
     </div>
   );

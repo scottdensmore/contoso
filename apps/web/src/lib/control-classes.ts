@@ -1,11 +1,20 @@
 /**
  * What the app's controls share, for the parts that have one right answer.
  *
- * Four exports, because fields and action controls fail differently, are fixed
- * differently, and a control whose focusable element is a descendant needs a
- * different variant again. None of them carries an accent. A control's focus
- * colour is indigo on the page and sky-700 inside the chat widget — #184 chose
- * that split so the panel reads as its own place — so the mechanism is shared
+ * Four of the five exports are control properties: fields and action controls
+ * fail differently, are fixed differently, and a control whose focusable
+ * element is a descendant needs a different variant again. The fifth,
+ * `LAUNCHER_SAFE_COLUMN`, is not a control property at all — it is a layout
+ * reservation one page makes against the chat launcher's fixed geometry. It
+ * lives here because it is a shared class constant derived from a control's
+ * measurements, and because `ACTION_FOCUS` above is what sets its lower bound,
+ * but it is the one export in this file whose correctness depends on another
+ * file (`chat.tsx`'s `mr-4` and `p-2`). `launcher-safe-area.spec.ts` is what
+ * holds that coupling together; nothing in this file can.
+ *
+ * None of the five carries an accent. A control's focus colour is indigo on
+ * the page and sky-700 inside the chat widget — #184 chose that split so the
+ * panel reads as its own place — so the mechanism is shared
  * and the accent stays at the call site, the same division as radius and
  * padding staying with each field below.
  *
@@ -247,3 +256,124 @@ export const ACTION_BOUNDARY = `forced-colors:border-2 ${ACTION_FOCUS}`
  */
 export const ACTION_FOCUS_WITHIN =
   'has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2'
+
+/**
+ * The inset `/contact` adds so its controls clear the chat launcher.
+ *
+ * The launcher is `fixed bottom-0 right-0` with `mr-4 mb-4` below `sm`, and it
+ * is a 40x40 disc — `p-2` around a `w-6` icon. So it owns the rightmost 56px
+ * of the viewport: 40 of control, 16 of margin. #286 measured the `/contact`
+ * submit button at 48..342 against a launcher at 334..374, an 8x32 overlap in
+ * which `document.elementFromPoint` returns the launcher — so the last 8px of
+ * the page's primary action opened the chat instead of submitting it.
+ *
+ * ## Why a column and not a gutter below the content
+ *
+ * #286 proposed bottom padding, and it cannot work. The launcher is `fixed`,
+ * so the page scrolls under it and every row passes through its band; a gutter
+ * separates them only at the very end of the document. `padding-bottom` also
+ * moves nothing at `scrollY=0` — it makes the document taller and leaves what
+ * is already rendered where it was.
+ *
+ * There is a structural reason too: `layout.tsx` puts the copyright `Block`
+ * inside `<main>`, so bottom padding on `main` lands below the footer and
+ * shows page background under the dark bar on every route.
+ *
+ * ## The arithmetic, which is why this class is 16px and not 56
+ *
+ * Two numbers below are easy to confuse, so: this class contributes **16px**,
+ * and the page's own `px-4` contributes the other 16, for a **32px total
+ * inset** from the viewport edge. The sweep table further down is in total
+ * inset, because that is what the launcher's geometry is measured against.
+ *
+ * The card's own `p-8` already holds its controls 32px inside its edge, and
+ * the page's `px-4` already holds the card 16px inside the viewport. Against a
+ * launcher column starting at `viewport - 56`, the card's box has to end by
+ * `viewport - 24` for its controls to clear, or `viewport - 28` for their
+ * focus rings to clear as well. Both are below the shipped 32: 16px is simply
+ * the next step on Tailwind's spacing scale above the 12px that would satisfy
+ * the ring, which the sweep table and the ring paragraph below set out.
+ *
+ * A page with a different gutter, or a card with different padding, has to
+ * redo that sum rather than reuse the number — the 16px here is not a property
+ * of the launcher, it is what this page's other spacing leaves to make up.
+ *
+ * Only the right half of that is clearance. The matching left inset is
+ * cosmetic: with `pr-4` alone the card sat 16px inboard on the right and flush
+ * on the left, under a full-width centred subtitle, and read as misaligned
+ * rather than as reserved. Measured, the symmetric version costs nothing — same
+ * 8px gap, same document height, same submit position, and the copy does not
+ * re-wrap at 360, 390 or 414. It only moves where the card's spare width comes
+ * from.
+ *
+ * ## Why the reserve is 32px of total inset
+ *
+ * Measured on the rendered page, sweeping this wrapper's padding at 390x844.
+ * `total inset` is page gutter plus this class, as above — the shipped value
+ * is the 32px row, which this class reaches with `px-4`:
+ *
+ * ```
+ * total inset  submitGap  ringGap  submitW  docHeight  submitBottom
+ *        16px       -8px      -12      294        960           848   <- the defect
+ *        24px         0        -4      278        960           848
+ *        28px        +4         0      270        960           848
+ *        32px        +8        +4      262        960           848   <- shipped
+ *        40px       +16       +12      246        960           848
+ *        56px       +32       +28      214        960           848
+ * ```
+ *
+ * Document height and submit position do not move at all: this wrapper narrows
+ * the card and nothing else, so no copy re-wraps. The bounds are horizontal at
+ * both ends.
+ *
+ * The lower bound is the focus ring, not the hit target. `ACTION_FOCUS` is
+ * `outline-2 outline-offset-2`, so the submit button's ring reaches 4px past
+ * its edge: at 24px the button is already untappable-by-mistake and its ring
+ * still renders under the launcher. 28px brings the ring exactly to the
+ * launcher's edge; 32px is the next step on Tailwind's scale and the first
+ * that leaves daylight. `launcher-safe-area.spec.ts` measures the settled ring
+ * rather than pinning either number.
+ *
+ * The upper bound is the width the card gives up for nothing. At 56px the
+ * submit button is 214px on a 390px viewport, which the spec's width floor
+ * rejects. That floor, not any vertical cost, is what rules out reserving the
+ * launcher's whole 56px footprint here.
+ *
+ * ## On the card, not on the page container
+ *
+ * The first version put this on the page's outer container. That cleared the
+ * launcher identically and shifted the centred `Get in Touch` heading 8px left
+ * of the viewport centre, because the container is what centres it — a display
+ * heading moved off-centre for a reason that has nothing to do with it.
+ * Wrapping the card keeps the heading where it was, and keeps the reserve on
+ * the one element that needs it.
+ *
+ * That placement also decides whether the reserve costs vertical space, which
+ * is why the table above is flat. On the page container a 40px inset narrows
+ * the centred subtitle to a third line — measured, its height goes 56 to 84 —
+ * adding 28px of document and pushing the submit button from 4px below the
+ * fold to 32px. On this wrapper the subtitle is untouched at every inset from
+ * 16 to 56. The vacuity check in the spec's `costs no vertical space` test is
+ * what catches a move back: it reads this wrapper's padding, and finds none if
+ * the reserve has been lifted to the column.
+ *
+ * ## Below `sm` only
+ *
+ * At `sm` and up the launcher takes `mr-12 mb-12` and the card is `max-w-lg`
+ * centred in a much wider viewport, so nothing reaches the corner — measured
+ * clear at 834x1112, where the gap is already 105px.
+ *
+ * ## Opt-in, not automatic
+ *
+ * Only `/contact` uses this. The catalogue grid is full-bleed and every
+ * product card sits under the launcher at every viewport (#334), which is a
+ * standing decision rather than an oversight — `chat-launcher.spec.ts` records
+ * that "covering content is tolerable". `/login` and `/signup` put a submit in
+ * the same column and do not need it today, but for a narrower reason than it
+ * looks: their submits *do* run into the launcher's column horizontally, and
+ * what saves them is vertical — the content is short enough that `justify-center`
+ * keeps it above the bottom 56px band, and neither page scrolls at 390x844 or
+ * 360x740, so no control ever reaches the launcher. A field added to either
+ * form would move the submit down with nothing measuring it.
+ */
+export const LAUNCHER_SAFE_COLUMN = 'max-sm:px-4'
