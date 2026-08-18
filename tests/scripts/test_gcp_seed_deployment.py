@@ -34,7 +34,25 @@ def load_product_seed_module():
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Unable to load seed_gcp_products from {script_path}")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+
+    discoveryengine = mock.MagicMock()
+    api_exceptions = mock.MagicMock()
+    language_models = mock.MagicMock()
+    google_cloud = mock.MagicMock(discoveryengine_v1=discoveryengine)
+    google_api_core = mock.MagicMock(exceptions=api_exceptions)
+    vertexai = mock.MagicMock(language_models=language_models)
+    import_stubs = {
+        "google": mock.MagicMock(cloud=google_cloud, api_core=google_api_core),
+        "google.cloud": google_cloud,
+        "google.cloud.discoveryengine_v1": discoveryengine,
+        "google.api_core": google_api_core,
+        "google.api_core.exceptions": api_exceptions,
+        "vertexai": vertexai,
+        "vertexai.language_models": language_models,
+    }
+
+    with mock.patch.dict("sys.modules", import_stubs):
+        spec.loader.exec_module(module)
     return module
 
 
