@@ -1,0 +1,1 @@
+Look through the code and issues and pick the next work. If you find things that we can work on in parallel do that. Use @AGENTS.md

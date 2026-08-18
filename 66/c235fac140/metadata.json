@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "66c235fac140",
+  "strategy": "manual-commit",
+  "branch": "fix/323-indexer-exit-status",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "infrastructure/scripts/index_products_local.py",
+    "tests/scripts/test_local_indexing_retry.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/66/c235fac140/0/metadata.json",
+      "transcript": "/66/c235fac140/0/full.jsonl",
+      "compact_transcript": "/66/c235fac140/0/transcript.jsonl",
+      "content_hash": "/66/c235fac140/0/content_hash.txt",
+      "prompt": "/66/c235fac140/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 104,
+    "cache_creation_tokens": 153076,
+    "cache_read_tokens": 5837699,
+    "output_tokens": 75337,
+    "api_call_count": 52,
+    "subagent_tokens": {
+      "input_tokens": 46,
+      "cache_creation_tokens": 59827,
+      "cache_read_tokens": 908829,
+      "output_tokens": 7205,
+      "api_call_count": 23
+    }
+  }
+}
