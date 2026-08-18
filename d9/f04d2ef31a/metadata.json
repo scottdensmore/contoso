@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "d9f04d2ef31a",
+  "strategy": "manual-commit",
+  "branch": "fix/chat-pandas-markdown-mode",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "services/chat/src/api/evaluate.py",
+    "services/chat/tests/unit/test_evaluate.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d9/f04d2ef31a/0/metadata.json",
+      "transcript": "/d9/f04d2ef31a/0/full.jsonl",
+      "compact_transcript": "/d9/f04d2ef31a/0/transcript.jsonl",
+      "content_hash": "/d9/f04d2ef31a/0/content_hash.txt",
+      "prompt": "/d9/f04d2ef31a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 172042,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 9020160,
+    "output_tokens": 13321,
+    "api_call_count": 89
+  }
+}

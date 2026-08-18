@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "d9f04d2ef31a",
+  "session_id": "01a01233-aaac-7f13-857f-98077d6db2e9",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-18T00:39:56.037685353Z",
+  "branch": "fix/chat-pandas-markdown-mode",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "services/chat/src/api/evaluate.py",
+    "services/chat/tests/unit/test_evaluate.py"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.6-sol",
+  "turn_id": "8dee155cd342",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 172042,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 9020160,
+    "output_tokens": 13321,
+    "api_call_count": 89
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-18T00:39:55.799688665Z",
+    "agent_lines": 6,
+    "agent_removed": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 6,
+    "total_lines_changed": 9,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
