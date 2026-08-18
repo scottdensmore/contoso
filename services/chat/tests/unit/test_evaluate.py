@@ -1,9 +1,11 @@
 import json
+import warnings
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pandas as pd
 from evaluate import create_response_data, create_summary, evaluate, load_data
+from pandas.errors import Pandas4Warning
 
 
 def test_load_data_reads_jsonl(tmp_path, monkeypatch):
@@ -79,7 +81,9 @@ def test_create_summary_writes_markdown(tmp_path, monkeypatch):
         ]
     )
 
-    create_summary(df)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", Pandas4Warning)
+        create_summary(df)
 
     content = Path("eval_results.md").read_text(encoding="utf-8")
     assert "Averages scores" in content

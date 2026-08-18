@@ -107,7 +107,7 @@ def create_summary(df):
     df.to_markdown('eval_results.md')
     with open('eval_results.md', 'a') as file:
         file.write("\n\nAverages scores:\n\n")
-    mean_df.to_markdown('eval_results.md', 'a')
+    mean_df.to_markdown('eval_results.md', mode='a')
 
     print("Results saved to result_evaluated.jsonl")
 
@@ -119,5 +119,4 @@ if __name__ == "__main__":
    response_results = create_response_data(test_data_df)
    result_evaluated = evaluate()
    create_summary(result_evaluated)
-
 
