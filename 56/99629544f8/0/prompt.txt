@@ -1,0 +1,346 @@
+<task-notification>
+<task-id>ab3e4e59e87c43be3</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/ab3e4e59e87c43be3.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review the contact error announcement" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Rendered review completed
+
+Phone 390×844, tablet 834×1112, desktop 1440×900, plus 320 px reflow, 200% page zoom and 200% text zoom. **The Playwright MCP tools were unavailable** — every call fails with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, the `@playwright/mcp` default-channel problem in #279. I drove Chromium through `Bash` instead, using the repository's own Playwright (`apps/web/node_modules/playwright`) from scripts held outside the tree. I used your stack on 3100/8100/55432 and started and stopped nothing; all three containers are still running. Repo is unmodified (`git status` identical to when I started).
+
+Build confirmed by content first: `role="alert"` count 1, `empty:mt-0` count 0.
+
+Screenshots in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/scratchpad/shots/`: `phone-idle.png`, `phone-error.png`, `tablet-error.png`, `desktop-error.png`, `phone-kbd-focus-after.png`, `phone-inflight.png`, `phone-success.png`, `zoom200-text-error.png`, `reflow320-error.png`, `alert-{phone,tablet,desktop}.png`.
+
+---
+
+## Findings
+
+### 1. The error text fails WCAG AA contrast — 3.96:1 measured, 4.5:1 required (high; pre-existing colour, but this change is what makes it matter)
+
+Sampled from real rendered pixels of the `[role="alert"]` element, glyph core against the panel behind it:
+
+| viewport | glyph | background | ratio |
+|---|---|---|---|
+| phone 390 | `rgb(231,0,11)` | `rgb(237,235,235)` | **4.02:1** |
+| tablet 834 | `rgb(231,0,11)` | `rgb(235,234,233)` | **3.97:1** |
+| desktop 1440 | `rgb(231,0,11)` | `rgb(234,234,233)` | **3.96:1** |
+
+Best-case background pixel in any crop gave 4.23:1; worst-case 3.65:1. At 14 px / weight 500 this is normal text, so the threshold is 4.5:1. It fails everywhere.
+
+The cause is not `text-red-600` alone — that colour is 4.77:1 on pure white and would pass. The panel is `bg-white/90 backdrop-blur-xs` sitting on `/images/contact-bg.webp`, so the effective background is ~`rgb(234,234,233)`, not white, and that 20-point drop is what pushes it under. Neither the colour nor the panel changed in this diff, so this is not a regression — but the whole point of #326 is making a failed submission perceivable, and it is currently not perceivable to the contrast standard.
+
+Fix: `text-red-700` measures **5.33:1** against the same sampled background. One class, in `apps/web/src/components/contact-form.tsx`.
+
+### 2. The #338 log does not fire on the case its own comment names (medium, not user-facing)
+
+The `console.error` sits in `catch`, but an HTTP error response never reaches `catch` — `response.ok === false` takes the `else` branch, which calls `setError(data.message)` and logs nothing. Measured across three failure modes:
+
+| injected failure | app logged? | message shown |
+|---|---|---|
+| network abort | yes — `TypeError: Failed to fetch` | "An unexpected error occurred…" |
+| 500 with an HTML body (parse failure) | yes — `SyntaxError: Unexpected token '&lt;'` | "An unexpected error occurred…" |
+| **500 with a JSON body** | **no** | "Server said no" |
+
+The comment says the log is "the only place the actual failure survives: without it a network failure, a parse failure and a 500 are indistinguishable afterwards." The first two are covered; the 500 is not. In the three-viewport runs the only console output on a mocked 500 was Chromium's own `Failed to load resource`, nothing from the app.
+
+Either move the log so the `else` branch is covered too, or narrow the comment to say network and parse failures.
+
+### 3. The scoping is right; the reason recorded for it is not reproducible on this build (medium — a comment that invites a future "simplification")
+
+You asked me to confirm the announcer. It is not there in the form you described. Measured:
+
+- `/contact` loaded directly: exactly **1** element with `role="alert"` — yours — held steady across 30 polls over 1.8 s.
+- `#__next-route-announcer__` **does not exist**, at any point.
+- `&lt;next-route-announcer&gt;` **does** exist, but is permanently empty: `&lt;next-route-announcer style="position: absolute;"&gt;&lt;/next-route-announcer&gt;`.
+- Across a real client-side navigation (home → `/login`, 40 samples at 50 ms): `role="alert"` count never rose above 0, announcer content never became non-empty.
+
+The reason is visible in the same data: `document.title` is `"Contoso Outdoors Company"` before and after the navigation. Next's route announcer only emits when the accessible page name changes, and every route here shares one static title, so it stays empty forever. An unscoped `getByRole('alert')` on `/contact` would **not** fail strict mode today.
+
+Your conclusion is still the right one — keep `role="alert"`, keep the scoping. Scoping is correct on its own merits and it is what will keep the spec working the day per-route titles land (which is a separate, real a11y gap: route changes are currently not announced at all). But `apps/web/e2e/contact-error.spec.ts` states the two-element collision as present-tense fact, and a maintainer who checks will find one element and may delete the scoping as dead defensiveness. Recommend rewording to "Next injects its own announcer, which is empty on this build only because every route shares a title; scope anyway so this does not become order-dependent later."
+
+### 4. Focus is still on `&lt;body&gt;` for the whole in-flight window (low, partially inherent to the fix's approach)
+
+With a 1.2 s delayed response, measured mid-flight: button label `"Sending..."`, `disabled: true`, `opacity: 0.5`, `aria-busy: null`, `document.activeElement === BODY`, region empty. The fix restores focus when the error lands, but the blur that caused #326 still happens on every submission and lasts as long as the request. A keyboard user who presses Tab during a slow submit starts from the top of the document. On success they navigate away so it does not surface, but the failure path is exactly the slow path.
+
+If you want the blur gone rather than repaired: keep the button focusable and use `aria-disabled="true"` plus a guard in `handleSubmit`, instead of `disabled`. That also removes the need for the `useEffect` entirely.
+
+### 5. Focus ring animates in via `transition-all` (very low, pre-existing)
+
+Reading the submit button's computed outline immediately after Tab gave `solid 3px white, offset 0px`; after 400 ms it settled to `solid 2px oklab-indigo, offset 2px`. `transition-all` is animating `outline-color`/`outline-width`, so the ring flickers through an off-brand intermediate. Button classes are unchanged by this diff.
+
+---
+
+## Your four questions
+
+**1. Does the error state look right, rendered?** Yes, at all three viewports. `phone-error.png` / `tablet-error.png` / `desktop-error.png`: the message wraps to 3 lines at 390, 2 lines at 834 and 1440, sits directly above the submit button with the `space-y-6` rhythm intact, and reads as clearly associated with the action. Nothing shifts unexpectedly.
+
+I confirmed your zero-cost claim independently rather than taking it: at idle the region reports `marginTop: 0px, marginBottom: 24px, height: 0px`, and its bounding rect is `y=796` — **identical to the submit button's `y=796`** at 390×844, i.e. the region occupies no space at all. Same coincidence at tablet (both `y=818`) and desktop (both `y=718`). Your measurement holds.
+
+When it fills, the button moves down 84 px in the document, and `focus()` scrolls it into view — so at phone the user ends at `scrollY=200` with the error at `y=596` and the button at `y=680`, both fully visible. That is a good outcome.
+
+**2. `role="alert"` over `aria-live="polite"`?** `role="alert"` is right. It is a user-initiated action that failed and blocks the task; that is the assertive case, and it matches the APG guidance for form submission errors. `polite` would queue behind whatever the SR is currently saying, which after a button press is often the button's own name — more likely to be swallowed, not less. Keep it.
+
+One caveat I could not settle here: `role="alert"` and a focus move land in the same tick, and some screen readers flush the speech queue on focus change, which can clip an assertive announcement. I have no screen reader in this environment, so this is a known risk rather than an observed defect — see the "not performed" list.
+
+**3. Focus on the button rather than the message.** Your choice is the better one, and I'd keep it. The message is a `&lt;p&gt;` — parking focus there means adding `tabindex="-1"`, and it leaves the user on a non-interactive node they must Tab out of to reach the retry, which is the very next element anyway. The button is where they were, it is where they are going, and `role="alert"` carries the text without focus. `phone-kbd-focus-after.png` shows the outcome for a keyboard user: after an Enter-key submit, a 2 px indigo ring at 2 px offset around the button, with the error legible immediately above it. `:focus-visible` matched. Correctly, a mouse click produces no ring.
+
+The counter-argument (determinism across screen readers, per the caveat above) is the only reason to reconsider, and it is not strong enough to trade away the retry ergonomics.
+
+**4. Whole journey including 200% zoom.** Exercised, and it holds up:
+
+- **200% text zoom** (root font-size 32 px, `text-sm` computing to 28 px, `zoom200-text-error.png`): error wraps to 6 lines, no clipping, no truncation, `scrollWidth === innerWidth` so no horizontal overflow, submit button fully within the viewport and focused.
+- **200% page zoom** (195×422): no horizontal document scroll, button fully visible and focused.
+- **320 px reflow** (`reflow320-error.png`, WCAG 1.4.10): clean, no overflow at all, button fully visible.
+- **Repeat identical failure re-announces.** A MutationObserver on the region across two consecutive failures with the same message recorded `["Our mail service is tempo", "", "Our mail service is tempo"]` — the `setError("")` at the top of `handleSubmit` gives the region a genuine empty→text transition each time, so the second failure is announced. This is load-bearing and undocumented; someone removing that reset as redundant would silently break re-announcement, and it may be worth a word in the comment.
+- **No focus stealing.** After an error, clicking into Name and typing leaves `activeElement` on `INPUT#name` and the error still displayed. The `[error, isSubmitting]` deps are correct.
+- **Tab order** is clean and trap-free: name → email → subject → orderNumber → message → submit → chat launcher. The region is not focusable, which is right.
+- Your new spec passes against the running stack: 3/3 in 6.5 s.
+
+**5. Success path and surrounding pages.** Success still redirects to `/contact/thanks` (h1 "Thank You!"), `phone-success.png`. `/`, `/about`, `/login`, `/signup`, `/contact/thanks` all return 200, correct `h1`, zero console errors, zero stray `role="alert"` elements. Screenshots `page_.png`, `page_about.png`, `page_login.png`, `page_signup.png`, `page_contact_thanks.png`.
+
+---
+
+## Does this make the known issues worse?
+
+No — and at phone it makes **#286 better**. `phone-idle.png` shows the landing state: the submit button is clipped by the fold *and* the chat launcher overlaps its right edge. After a failure, `focus()` scrolls the button to `y=680`, clear of both the fold and the launcher. #217/#218/#176/#339 are untouched.
+
+## Checks not performed
+
+- **Real screen reader.** No NVDA/JAWS/VoiceOver available. The announcement is verified structurally — region exists before content, content mutates on each failure, role is correct — but not audibly. The assertive-vs-focus-change race in finding 3's caveat is unresolved for that reason.
+- **2× density.** Not applicable: the change adds no image, no `srcset`, and alters no source dimensions. (Zoom passes did run at `deviceScaleFactor: 2` regardless.)
+- **Real server-side failure.** Not reachable: `POST /api/contact` returns `200 {"message":"Contact inquiry submitted successfully."}` for an empty body and for `"email":"not-an-email"`. Every failure I exercised was injected. Worth knowing that in production this path is reached only by network failure or an infrastructure 5xx — the validation gap is pre-existing and outside this diff.</result>
+<usage><subagent_tokens>81759</subagent_tokens><tool_uses>32</tool_uses><duration_ms>773474</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>af40454ecf8753cff</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/af40454ecf8753cff.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the contact error announcement" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Continuing to wait for the Playwright suite to finish; will report back with full results once the background task completes.</result>
+<usage><subagent_tokens>53840</subagent_tokens><tool_uses>44</tool_uses><duration_ms>576325</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>af40454ecf8753cff</task-id>
+<tool-use-id>toolu_01DUcGGq9zjoYPn733UCnuJq</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/af40454ecf8753cff.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the contact error announcement" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All confirmed and stable. Now I have everything needed for the full report.
+
+## Verdict
+
+**Verified.** Branch `fix/326-contact-error-announcement` (uncommitted working-tree changes: `apps/web/src/components/contact-form.tsx`, `contact-form.test.tsx`, and untracked `apps/web/e2e/contact-error.spec.ts`) passes the web merge gate and the full journey suite on a live rebuild, and all five claims I could independently measure check out. One discrepancy: the task description says the unit test file has "5 new unit tests" — it has 4.
+
+## Answers to your five items
+
+**1. `make -C apps/web ci`** — Passed in full: `lint` clean, both type-checks clean (`tsc --noEmit` and `-p tsconfig.e2e.json`, plus `check-journey-coverage.mjs`), unit tests **179 passed / 39 files**, and `next build` (Turbopack) succeeded — 230 static pages generated, no errors.
+
+**2. Full journey suite** — **147 passed, 0 failed**, run in ~8.3 minutes with `E2E_BASE_URL=http://127.0.0.1:3100`. Exactly the expected count (143 existing + 4 new `contact-error.spec.ts` tests, lines 91–94 of the run: "is announced through a region that was already there", "leaves focus on the control that was pressed", "announces a second identical failure as well as the first", "the always-present region costs no layout while it is empty" — all green).
+
+**3. Contrast** — Measured independently via Playwright (deviceScaleFactor 2) + `sharp` pixel sampling, taking the modal reddish pixel as glyph fill and modal non-reddish pixel as background (a method chosen specifically to avoid the failure mode you flagged — picking the majority-red pixel at 390 where text wraps to 3 lines):
+- 390×844: glyph `rgb(193,0,7)` vs bg `rgb(236,234,234)` → **5.36:1**
+- 834×1112: glyph `rgb(193,0,7)` vs bg `rgb(234,233,233)` → **5.30:1**
+- 1440×900: glyph `rgb(193,0,7)` vs bg `rgb(234,233,233)` → **5.30:1**
+
+All three clear AA (4.5:1) with margin. My absolute numbers (5.30–5.36) sit slightly below your reported 5.58–5.81, likely a methodology difference (I sampled after screenshotting a tight clip of the alert's bounding box at DSF2, and used a stricter "reddish" classifier), but the conclusion — pass, comfortably — is the same and reproduced independently.
+
+**4. Route announcer / shadow root** — Your claim is correct; `ui-review`'s conclusion was wrong. Independently measured on the live page:
+- `document.querySelectorAll('[role="alert"]').length` → **1** (does not pierce shadow DOM)
+- `&lt;next-route-announcer&gt;` has a **shadow root** containing `&lt;div role="alert" aria-live="assertive" id="__next-route-announcer__"&gt;`
+- `page.getByRole('alert').count()` → **2** (Playwright's engine pierces shadow DOM)
+- An unscoped `page.getByRole('alert')` **does fail strict mode**: `locator.textContent: Error: strict mode violation: getByRole('alert') resolved to 2 elements: 1) &lt;p role="alert" ...&gt; ... 2) &lt;div role="alert" ... id="__next-route-announcer__"&gt;`
+- Scoped `page.locator('form').getByRole('alert')` → **1**
+
+The comment in `e2e/contact-error.spec.ts` (lines 13–25) is accurate as written.
+
+**5. Served build = branch build** — `grep -c 'text-red-700'` on `/contact` → **1**; `grep -c 'text-red-600'` → **0**. Confirmed both before and after the test runs (web container recreated 12 minutes ago in your window, unchanged throughout my checks).
+
+**6. Stack state on exit** — Untouched, all three containers still up: `contoso-web-1` (Up), `contoso-chat-1` (Up, healthy), `contoso-db-1` (Up, healthy), same ports (3100/8100/55432). I did not run `make e2e-smoke`, did not tear anything down, and did not touch the chat container (no `LLM_PROVIDER` prefix needed since I never recreated it).
+
+## Additional findings
+
+**Discrepancy in your claim, not a defect:** `contact-form.test.tsx` contains **4** new `it()` blocks, not 5 — `keeps the error region in the document before there is an error to put in it`, `announces a failed submission through that region`, `reports an HTTP error response, which never reaches the catch block`, `reports the error it caught rather than discarding it` (lines 55, 65, 83, 114). I counted via `grep -n "it("` and confirmed the diff adds exactly 86 lines / these 4 blocks. If a 5th test was intended (e.g., a focus-related jsdom test), it isn't present — consistent with your note that the jsdom focus assertion was deleted rather than kept. Worth reconciling the count in the writeup, but it does not block anything: coverage of the claimed behaviors is present regardless of the miscount.
+
+**jsdom-blur claim, independently verified:** wrote a throwaway jsdom test (created and deleted, not committed — repo is clean) confirming `document.activeElement` stays on a `&lt;button&gt;` after `btn.disabled = true` under jsdom — it does not blur to `document.body` the way real browsers do. This corroborates your reasoning for guarding the focus-restoration behavior only in the Playwright spec.
+
+**`empty:mt-0` inertness, independently verified:** live DOM read on `/contact` at 390×844 gives the alert `&lt;p&gt;` `marginTop: 0px`, `marginBottom: 24px`, `height: 0px`, `display: block` — consistent with Tailwind v4's `space-y-6` setting `margin-bottom` on non-last children rather than `margin-top`, so `empty:mt-0` (now removed) had nothing to target. No `empty:mt-0` remains in the component; it's referenced only in the explanatory comment.
+
+**Filed issues, verified to exist and match their descriptions:** #343 (open, "The contact submit button blurs to `&lt;body&gt;` for the whole in-flight window"), #344 (open, "POST /api/contact accepts an empty body and an invalid email, and reports success"), and a comment on #235 documenting the CSS-initial-value focus-ring transient — all present via `gh issue view`. None of them blocks this change: #343 and #344 describe pre-existing, adjacent defects this change narrows but doesn't fully close, and the #235 comment is informational (documents a measurement pitfall for future guards, doesn't propose new work here).
+
+**Scope check:** `git diff --stat` and `git status --short` confirm only the three claimed files changed (2 modified, 1 untracked); no drift into `avatar-upload.tsx` or `chat.tsx`, whose patterns are referenced in the new comments and which I confirmed independently use the described `aria-live`/`role="status"` conventions.
+
+## Failures
+None.
+
+## Flakes
+None observed. All 147 journey tests and 179 unit tests passed on a single run each; no re-run was needed to distinguish signal from environment noise.
+
+## Missing coverage
+- No coverage (unit or e2e) for issue #343's actual window — the focus-to-`&lt;body&gt;` gap during the in-flight request itself, before failure. This is explicitly out of scope per your filed-rather-than-fixed note, so not a defect in this change, just confirming the gap is real and untested by design.
+- No unit-level (jsdom) regression guard for the focus-restoration behavior exists, by design, since jsdom can't reproduce it — only the browser spec covers it. You asked whether jsdom coverage should exist anyway: given jsdom's disabled-element blur behavior diverges from real browsers (verified above), a jsdom assertion would be vacuously true and provide no signal; I don't think one should be added.
+- The 5-vs-4 unit test count discrepancy noted above — not missing coverage per se (the 4 present tests do cover the claimed behaviors: alert-region presence, announcement, HTTP-error logging, caught-error logging), but worth reconciling in case a 5th test was meant to exist and got dropped silently.
+
+## Environment issues
+None. Stack ports 3100/8100/55432 were already occupied by your own rebuilt stack as expected, no collisions with unrelated projects observed. `.venv/bin/python` and `gh` were both available and worked without issue.
+
+## Commands run
+
+```
+git status --short
+git diff --stat main...HEAD   # (and origin/main...HEAD)
+git fetch origin main
+git merge-base HEAD origin/main
+git log --oneline -10 HEAD / origin/main
+git diff --stat HEAD origin/main
+git diff --stat HEAD
+.venv/bin/python scripts/detect_changed_surfaces.py --base origin/main --head HEAD --print-targets
+git diff HEAD -- apps/web/src/components/contact-form.tsx
+git diff HEAD -- apps/web/src/components/contact-form.test.tsx
+cat apps/web/e2e/contact-error.spec.ts
+docker compose ps
+curl -s http://127.0.0.1:3100/contact | grep -c 'text-red-700'
+curl -s http://127.0.0.1:3100/contact | grep -c 'text-red-600'
+make -C apps/web ci
+E2E_BASE_URL=http://127.0.0.1:3100 make -C apps/web test-e2e   # backgrounded, 147 passed in 8.3m
+# independent contrast measurement (Playwright + sharp pixel sampling), scratchpad script
+# independent shadow-root / strict-mode measurement (Playwright), scratchpad script
+# independent margin-collapse measurement (Playwright), scratchpad script
+# independent jsdom disabled-blur check (temp test file, created then deleted, repo left clean)
+gh issue view 343 / 344 --repo scottdensmore/contoso
+gh issue view 235 --comments --repo scottdensmore/contoso
+grep -n "role=\"status\"\|role=\"alert\"\|aria-live" apps/web/src/components/avatar-upload.tsx apps/web/src/components/chat.tsx
+```
+
+## Not run, and why
+- `make e2e-smoke` — explicitly excluded by your instructions (would rebuild/recreate the containers on your live stack).
+- `make docs-check` — not run; no Markdown files changed in this branch's diff, so out of scope.
+- `make -C services/chat ci`, `make ci` (cross-surface) — not run; scope is web-only per the task description and confirmed by the file diff (no chat/schema files touched).
+- Any command that would tear down, rebuild, or recreate the stack — deliberately avoided per instructions; the stack is exactly as it was handed to me (`contoso-web-1` still "Up 12 minutes" from your rebuild, chat/db untouched at ~1 hour uptime).</result>
+<usage><subagent_tokens>68586</subagent_tokens><tool_uses>49</tool_uses><duration_ms>679581</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>acf86a7cd174091f6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/acf86a7cd174091f6.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the contact error branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/326-contact-error-announcement`
+
+No defects this round. Four refinements, all evidence-backed. **This is a refinement-only round — step 8's loop closes here.** Apply what you agree with, rerun the focused tests and the verifier, and do not come back for another review round.
+
+---
+
+### 1. Focus is moved even when it was never lost — refinement, 80
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:20-29`
+
+The effect fires on `error &amp;&amp; !isSubmitting` regardless of where focus actually is. Only the submit button is disabled during the request; the text inputs are not. So on implicit submission — Enter pressed in Name, Email, Subject or Order Number — focus never leaves the field, and this effect takes it away anyway.
+
+Measured against the running stack (390x844, `/api/contact` stubbed 500, Enter pressed in Subject):
+
+```
+after Enter-submit failure, activeElement = {"tag":"BUTTON","text":"Send Message"}
+```
+
+That path is a small regression relative to `main`, which leaves the user in the field they were typing in — and it is the path where the risk `ui-review` flagged has no compensating benefit: on the click path the focus move repairs a blur to `&lt;body&gt;`, on the Enter path it is pure cost, a focus change racing an assertive announcement for nothing. The comment at line 22-23 ("Focus goes back where they left it") is true only of the click path.
+
+Two fixes, and I would apply both:
+
+- Gate on the loss actually having happened: `if (error &amp;&amp; !isSubmitting &amp;&amp; document.activeElement === document.body)`. That leaves the click path exactly as it is and stops the Enter path moving anyone.
+- On your question 3 — do not reorder, and do not move focus to the `&lt;p&gt;`. The robust answer to a screen reader flushing its queue on focus change is to make the error part of what the focus announcement says: give the region an `id` and put `aria-describedby` on the submit button. Then whether the live region survives the flush or not, a user landing on the button hears the failure. It costs nothing while the region is empty, and it covers the click path too, which your current design cannot.
+
+### 2. The `marginTop` assertion cannot fail — refinement, 90
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/contact-error.spec.ts:192`
+
+```js
+expect(measured!.marginTop, 'the empty region still carries space-y-6 margin').toBe('0px')
+```
+
+The served CSS is `.space-y-6 &gt; :not(:last-child) { margin-block-start: calc(24px * var(--tw-space-y-reverse)); margin-block-end: calc(24px * calc(1 - ...)) }` with `--tw-space-y-reverse: 0`. `margin-top` is therefore `0px` for every non-last child of this form, under every implementation. Measured on the running stack, same page, region idle and region filled:
+
+```
+idle region   {"marginTop":"0px","marginBottom":"24px","height":0}
+filled region {"marginTop":"0px","marginBottom":"24px","height":20}
+```
+
+So the assertion passes identically on a region occupying 20px of content plus 24px of margin — the exact state its failure message says it rejects. It is the "measures a nearby declaration" case the root `AGENTS.md` Code Review Rules name, and your own comments (component lines 204-206, spec lines 152-154) already state the reason it cannot work.
+
+Related: `height` is read at spec line 172 and returned at line 185, and no assertion uses it.
+
+Fix: drop line 192 and assert `measured!.height` is `0` instead. That is the property that makes the collapse happen, it is not vacuous, and it fails the moment someone adds a `min-h-5` like `avatar-upload.tsx` carries. The differential `submitTop`/`doc` assertions are sound and carry the real coverage either way.
+
+### 3. A 5xx with a non-JSON body still logs without its status — refinement, 80
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:67-72`, and the test name at `contact-form.test.tsx:83`
+
+The comment states, unconditionally, "An HTTP error response never reaches here — `response.ok` is false and the `else` above takes it". That holds only when the error body parses as JSON. `await response.json()` at line 59 throws on anything else, and the throw lands in `catch`. Measured against the running stack with `/api/contact` stubbed to a 502 with an HTML body — an infrastructure error page, which is the most likely production 5xx:
+
+```
+alert text = An unexpected error occurred. Please try again later.
+console.error = "Contact form submission failed SyntaxError: Unexpected token '&lt;', "&lt;html&gt;&lt;bod"... is not valid JSON"
+```
+
+No status is logged. That is precisely the distinction #338 exists to give an operator, and it is missing for the failure they are most likely to be asked about. The unit test at line 83 encodes the same over-general claim in its name while its mock only exercises the JSON case, so nothing catches the gap.
+
+Fix — hoist the log above the parse, which also fixes the unguarded `data.message` dereference on the next line:
+
+```js
+} else {
+  console.error("Contact form submission failed", { status: response.status });
+  const data = await response.json().catch(() =&gt; null);
+  setError(data?.message || "Failed to send message. Please try again.");
+}
+```
+
+Then reword the comment to "an HTTP error response with a JSON body", and rename the test accordingly.
+
+### 4. The contrast half of the change has no guard — refinement, 75
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:210`
+
+The announcement and focus halves have four e2e assertions and four unit tests between them. `text-red-600` -&gt; `text-red-700` has none: revert that one token and every check in this change stays green. `grep -c 'text-red-700'` is a class check, which `apps/web/AGENTS.md`'s Code Review Rules specifically exclude as evidence for a UI change ("review the rendered behavior rather than class names alone"), and the root file's `lab()` example is about exactly this measurement.
+
+`e2e/contact-error.spec.ts` already renders the failed state at 390x844, which is the one place the composited background exists. `e2e/support/boundary.ts` already has the sampling and relative-luminance machinery. A ratio assertion against `4.5` there would have had a genuine red phase on `main` at your measured 3.96-4.02:1.
+
+On scope: I agree with including the colour change. An announcement whose visible text fails AA is half a fix, and the spread between your 5.58-5.81:1 and the verifier's 5.30-5.36:1 is background sampling over a photograph, not a disagreement about the pass. I also agree with the #338 ride-along — it is inside the block #326 rewrites, and splitting it would have produced two PRs editing the same five lines.
+
+---
+
+### Your other questions
+
+1. **Always-present empty `role="alert"`** — right pattern, keep it. It matches what `avatar-upload.tsx` records, and the served HTML confirms the region ships empty in the SSR output so the first content write is a change. The only cost I can name is a screen-reader user navigating by element meeting an empty alert node, which is negligible against an announcement that does not fire. One inaccuracy: the component comment at lines 187-189 says "`/contact` renders no other alert, so a test can address this one by role" — your own spec header documents that Playwright's role engine sees two and that unscoped `getByRole('alert')` fails strict mode. Reword that to match the spec.
+2. **The `setError("")` guard measures the right thing.** The MutationObserver observes the node whose text React mutates, and the two assertions fail in different ways: remove the reset and React bails out on the identical state, so the log has one entry, failing both `&gt;= 2` and `toContain('')`. Not vacuous.
+3. Answered under finding 1.
+4. Answered under finding 4.
+
+None of the filed issues blocks this. #344 only means the guard injects its failures through `page.route`, which is the correct way to force a 500 in a journey regardless.
+
+### Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:64` — `data.message` dereferences the parse result unguarded (pre-existing line). Harmless today only because the throw is caught two lines below and reported as an unexpected error. Folded into finding 3's suggested fix; file separately if you would rather not touch it here.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/api/contact/route.ts:6-20` — accepts any body and returns 200; already yours as #344, not repeated.
+- Process note, not a finding: `git diff origin/main...HEAD` is empty. `HEAD` is `cbcc328` and `origin/main` is `eb158b6` (#342, `scripts/` and `tests/scripts/` only), so the branch is one commit behind and the entire change is in the working tree. Nothing here depends on #342, but step 10 makes updating from `main` before pushing invalidate verification, not just review.
+
+### What I reviewed
+
+`git diff origin/main...HEAD` (empty), `git diff` (`apps/web/src/components/contact-form.tsx`, `apps/web/src/components/contact-form.test.tsx`), `git diff --cached` (empty), and the untracked `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/contact-error.spec.ts` read in full. Also read for context: the root and `apps/web` `AGENTS.md`, `playwright.config.ts`, `vitest.config.mts`, `tsconfig.e2e.json`, `tests/scripts/test_e2e_journey_wiring.py`, `src/app/api/contact/route.ts`, and the live-region prior art in `chat.tsx` and `avatar-upload.tsx`.
+
+Measurements were taken read-only against your stack on 3100 with a scratchpad Playwright script writing nothing into the repository; `git status --short` is unchanged from the start of the review, and the stack is still up. I did not run `make e2e-smoke` or the journey suite. Seams checked and untouched: web/chat payloads, Prisma and handwritten SQL, dependency manifests and `constraints.txt`, container inputs, `AGENTS.md`'s numbered steps and `.claude/agents/` — this change touches none, so the workflow-obligation check does not arm. I could not assess screen-reader speech behaviour directly; finding 1's second bullet is the mitigation that does not depend on it.</result>
+<usage><subagent_tokens>77241</subagent_tokens><tool_uses>30</tool_uses><duration_ms>486569</duration_ms></usage>
+</task-notification>

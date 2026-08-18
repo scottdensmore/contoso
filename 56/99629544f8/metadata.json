@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "5699629544f8",
+  "strategy": "manual-commit",
+  "branch": "fix/326-contact-error-announcement",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/web/e2e/contact-error.spec.ts",
+    "apps/web/src/components/contact-form.test.tsx",
+    "apps/web/src/components/contact-form.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/56/99629544f8/0/metadata.json",
+      "transcript": "/56/99629544f8/0/full.jsonl",
+      "compact_transcript": "/56/99629544f8/0/transcript.jsonl",
+      "content_hash": "/56/99629544f8/0/content_hash.txt",
+      "prompt": "/56/99629544f8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 116,
+    "cache_creation_tokens": 105645,
+    "cache_read_tokens": 29612774,
+    "output_tokens": 72024,
+    "api_call_count": 58,
+    "subagent_tokens": {
+      "input_tokens": 256,
+      "cache_creation_tokens": 302779,
+      "cache_read_tokens": 4894433,
+      "output_tokens": 113331,
+      "api_call_count": 128
+    }
+  }
+}
