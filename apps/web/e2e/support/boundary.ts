@@ -431,8 +431,16 @@ async function settled(page: Page) {
  * it "completely invisible"; by the criterion it paints a new 2px perimeter
  * over pixels that were background, which is compliant. Both arguments were
  * plausible and neither was a measurement.
+ *
+ * `focusControl` lets a journey produce focus through the behavior under test,
+ * such as closing a dialog, instead of replacing that behavior with `focus()`.
  */
-export async function focusChange(page: Page, selector: string) {
+export async function focusChange(
+  page: Page,
+  selector: string,
+  focusControl: () => Promise<void> = () =>
+    page.evaluate((sel) => (document.querySelector(sel) as HTMLElement).focus(), selector),
+) {
   const control = page.locator(selector)
   // Before the box, and before either screenshot: `focus()` scrolls a control
   // that is off screen, and the two images are only comparable if nothing
@@ -458,7 +466,7 @@ export async function focusChange(page: Page, selector: string) {
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
   await settled(page)
   const unfocused = (await page.screenshot({ clip })).toString('base64')
-  await page.evaluate((sel) => (document.querySelector(sel) as HTMLElement).focus(), selector)
+  await focusControl()
   await settled(page)
   const focused = (await page.screenshot({ clip })).toString('base64')
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())

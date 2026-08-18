@@ -27,7 +27,7 @@ export const Header = () => {
   // `preventScroll` because the header is in normal flow rather than sticky, so
   // a plain `focus()` scrolls the off-screen trigger into view and takes the
   // reader's place with it. The reachable jump is small -- the trigger's rect
-  // is [-1, 43], so the drawer cannot be opened past scrollY=43 -- and this is
+  // is [4, 44], so the drawer cannot be opened past scrollY=44 -- and this is
   // kept for when the header goes sticky, which would widen that to the page.
   const wasOpen = useRef(false);
   useEffect(() => {
@@ -57,7 +57,7 @@ export const Header = () => {
           <button
             ref={triggerRef}
             type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+            className={`-mx-2 inline-flex items-center justify-center rounded-md p-2 text-gray-700 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
             onClick={() => setIsSidebarOpen((open) => !open)}
             aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
             aria-expanded={isSidebarOpen}
