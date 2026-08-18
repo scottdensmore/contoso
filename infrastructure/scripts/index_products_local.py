@@ -1,5 +1,7 @@
 import os
+import sys
 import asyncio
+import traceback
 from prisma import Prisma
 import chromadb
 from chromadb.utils import embedding_functions
@@ -65,11 +67,14 @@ async def index_products():
             )
             print(f"Successfully indexed {len(ids)} products to {CHROMA_DB_PATH}")
     except Exception as e:
-        print(f"Error during indexing: {e}")
-        # Don't exit with error to avoid breaking the master seed script
-        # but print the traceback for debugging if needed
-        import traceback
+        print(f"Error during indexing: {e}", file=sys.stderr)
         traceback.print_exc()
+        raise
 
 if __name__ == "__main__":
-    asyncio.run(index_products())
+    try:
+        asyncio.run(index_products())
+    except Exception:
+        # chat-entrypoint.sh retries this command while it exits nonzero, so a
+        # failed attempt has to be visible as one.
+        sys.exit(1)
