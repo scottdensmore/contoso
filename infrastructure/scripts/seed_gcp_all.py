@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Master script to seed all data into Google Cloud Platform.
-This script orchestrates the seeding of both products and customers.
-"""
+"""Orchestrate product seeding into Google Cloud Platform."""
 
 import os
 import sys
@@ -119,7 +116,6 @@ def main():
     # Define seeding scripts in order
     seeding_scripts = [
         (script_dir / "seed_gcp_products.py", "Product Data Seeding (GCP)"),
-        (script_dir / "index_products_local.py", "Local Vector Search Indexing")
     ]
 
     # Track results
