@@ -1,9 +1,1 @@
-Ok lets pick up the next work. If we can parallelize any of the work lets do it
-
----
-
-Lets pick up the next set of work. If we can do things in parallel lets pick that up and do it. We can use workstrees
-
----
-
 Ok lets fix 324
