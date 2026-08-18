@@ -2,6 +2,7 @@
 
 import importlib
 import importlib.util
+import json
 import os
 import re
 import subprocess
@@ -25,6 +26,19 @@ def load_seed_module():
 
 
 seed_gcp_all = load_seed_module()
+
+
+def load_product_seed_module():
+    script_path = REPO_ROOT / "infrastructure/scripts/seed_gcp_products.py"
+    spec = importlib.util.spec_from_file_location("seed_gcp_products", script_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Unable to load seed_gcp_products from {script_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+seed_gcp_products = load_product_seed_module()
 
 
 def invokes_package_installer(command):
@@ -148,6 +162,57 @@ class SeedOrchestrationTests(unittest.TestCase):
             any(invokes_package_installer(command) for command in commands),
             f"the seeder launched a package installer: {commands}",
         )
+
+
+class ProductSeedCatalogTests(unittest.TestCase):
+    def test_main_passes_the_checked_in_web_catalog_to_the_seeder(self):
+        product = {"id": "fixture-product", "name": "Fixture Product"}
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fixture_root = Path(temp_dir)
+            fixture_script = fixture_root / "infrastructure/scripts/seed_gcp_products.py"
+            fixture_script.parent.mkdir(parents=True)
+            fixture_script.write_text("# fixture script location\n", encoding="utf-8")
+            fixture_catalog = fixture_root / "apps/web/public/products.json"
+            fixture_catalog.parent.mkdir(parents=True)
+            fixture_catalog.write_text(json.dumps([product]), encoding="utf-8")
+            decoy_catalog = fixture_root / "public/products.json"
+            decoy_catalog.parent.mkdir(parents=True)
+            decoy_catalog.write_text(
+                json.dumps([{"id": "decoy", "name": "Wrong catalog"}]),
+                encoding="utf-8",
+            )
+
+            loaded_catalogs = []
+
+            def seed_products(json_path):
+                path = Path(json_path)
+                loaded_catalogs.append(
+                    (path, json.loads(path.read_text(encoding="utf-8")))
+                )
+                return True
+
+            seeder = mock.Mock()
+            seeder.seed_products.side_effect = seed_products
+
+            with (
+                mock.patch.object(seed_gcp_products, "__file__", str(fixture_script)),
+                mock.patch.dict(
+                    os.environ,
+                    {
+                        "PROJECT_ID": "fixture-project",
+                        "REGION": "us-central1",
+                        "DISCOVERY_ENGINE_DATASTORE_ID": "fixture-datastore",
+                    },
+                    clear=True,
+                ),
+                mock.patch.object(seed_gcp_products, "ProductSeeder", return_value=seeder),
+                self.assertRaises(SystemExit) as exit_status,
+            ):
+                seed_gcp_products.main()
+
+        self.assertEqual(exit_status.exception.code, 0)
+        self.assertEqual(loaded_catalogs, [(fixture_catalog, [product])])
 
 
 class SetupProjectSeedTests(unittest.TestCase):
