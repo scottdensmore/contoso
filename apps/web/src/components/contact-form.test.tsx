@@ -26,6 +26,13 @@ describe('ContactForm', () => {
     expect(screen.getByRole('button', { name: /send message/i })).toBeDefined()
   })
 
+  it('identifies the contact fields to browser autofill', () => {
+    render(<ContactForm />)
+
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveProperty('autocomplete', 'name')
+    expect(screen.getByRole('textbox', { name: 'Email' })).toHaveProperty('autocomplete', 'email')
+  })
+
   it('shows error if required fields are missing and submitted', async () => {
     render(<ContactForm />)
     const submitButton = screen.getByRole('button', { name: /send message/i })
