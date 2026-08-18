@@ -187,6 +187,38 @@ test.describe('page controls', () => {
   })
 })
 
+test.describe('drawer trigger', () => {
+  // Mutation coverage:
+  // - Removing Header's focus-return effect fails the focused-element check.
+  // - Restoring the trigger's clipped top position leaves too few changed
+  //   pixels to meet the full-perimeter check.
+  test('returns focus to a fully visible indicator at the top of the page', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+
+    const selector = 'button[aria-controls="site-navigation-drawer"]'
+    const trigger = page.locator(selector)
+    await expect(trigger).toBeVisible()
+
+    const change = await focusChange(page, selector, async () => {
+      await trigger.click()
+      await expect(page.getByRole('dialog', { name: 'Site navigation' })).toBeVisible()
+      await page.keyboard.press('Escape')
+
+      await expect(trigger).toBeFocused()
+      expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    })
+
+    expect(
+      change.qualifying,
+      `the drawer trigger's returned focus indicator covers ${change.qualifying} pixels ` +
+        `changing by ${REQUIRED_RATIO}:1 or more, against the ${Math.round(change.required)} ` +
+        `a 2px perimeter needs (${change.changed} changed at all, median ` +
+        `${change.median.toFixed(2)}:1)`,
+    ).toBeGreaterThanOrEqual(change.required)
+  })
+})
+
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`action controls in forced colors (${scheme})`, () => {
     test.use({ contextOptions: { forcedColors: 'active', colorScheme: scheme } })
