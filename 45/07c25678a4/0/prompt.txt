@@ -1,0 +1,182 @@
+<task-notification>
+<task-id>b59qozqub</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/b59qozqub.output</output-file>
+<status>completed</status>
+<summary>Background command "Background wait for E2E smoke" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets pick up the next action. If there is more work that we can do in parallel.. lets do that
+
+---
+
+<task-notification>
+<task-id>addc538bbc912351b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/addc538bbc912351b.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the 297 quoted-path fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Repository state unchanged (only the two files under review remain modified, as before I started). Final verification complete.
+
+## Verdict
+
+**Verified.** `fix/297-quoted-paths` is ready to proceed — `make test-scripts` passes in full (214/214), the new `QuotedPathTests` (8/8) pass against the fixed script, ordinary path classification and `--print-targets` output are unchanged from `main`'s behavior, and the central design claim (avoiding `core.quotePath=false`) checks out under independent, direct testing. One factual discrepancy in the stated "Known state" is worth flagging (below) but does not block the change.
+
+## Failures
+None. All 214 tests in `tests/scripts` pass, including the 27 in `test_detect_changed_surfaces` (19 pre-existing + 8 new `QuotedPathTests`).
+
+## Flakes
+None observed; no re-runs were needed.
+
+## Missing coverage
+None identified for this change's scope. The new tests exercise both readers (`changed_files_from_range` and `changed_files_from_worktree`), the rename-with-quoted-destination case, the rename-separator-inside-a-quoted-name edge case, non-ASCII octal round-tripping, and the non-UTF-8 byte-name case — which is the full space of cases the diff introduces. I don't see a gap.
+
+## Correctness of the load-bearing design claim (independently reproduced, not just read)
+I reproduced both measurements myself, outside the test suite, in a scratch git repo:
+- `git status --porcelain` on a filename containing byte `0xff`: default quoting emits ASCII-safe `"apps/web/src/bad\377.tsx"`; with `-c core.quotePath=false`, `subprocess.run(..., text=True)` raises `UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 19: invalid start byte`. This is exactly the failure mode the diff cites as the reason not to use the issue-recommended flag.
+- `git status --porcelain "apps/web/src/a b.tsx"` (a modified, spaced name) is quoted whether or not `core.quotePath=false` is set, while `git diff --name-only` never quotes it. This confirms the flag "would also not be enough on its own."
+- The "naive split lands right by luck" claim for the rename test: I confirmed `git status --porcelain` on a rename from an unquoted source to a quoted (spaced) destination produces `R  plain.tsx -&gt; "a b.tsx"` — a literal ` -&gt; ` appears exactly once, so the naive split does happen to work here, as claimed, because the destination itself doesn't contain that substring.
+
+I agree with the author's reasoning on all three points; nothing contradicts it.
+
+One thing worth surfacing back to the author, not a blocker: I built an isolated red-phase harness (original `main` script + the new test file, in a scratch directory, with `ROOT` correctly rebindable since `run_git` reads the module-level `ROOT` at call time) and got **7 of 8** new tests failing against the unfixed script, not the 5 of 8 stated in "Known state" (only `test_the_fixture_actually_produces_quoted_output` passed, since that test only asserts on git's own quoting behavior, not the script's handling of it). The other 19 pre-existing tests all still passed in the same harness, confirming the harness itself is sound. This is a discrepancy in the PR's self-report, not a defect in the fix or tests — worth a note back to the author but doesn't affect merge-readiness.
+
+## Environment issues
+None encountered. `.venv/bin/python` was used throughout, per instruction. A stack (`contoso-web-1` on 3100, `contoso-chat-1` on 8100, `contoso-db-1` on 55432) is running in the background for unrelated follow-on work; it was left untouched, and `make e2e-smoke` was correctly not run, per the task's instruction (this change doesn't touch runtime/routes/containers anyway — it's scoped entirely to `scripts/` and `tests/scripts/`).
+
+## Commands run
+```
+git status --short
+git diff --stat origin/main...HEAD
+git diff --stat
+git log --oneline origin/main..HEAD
+git diff -- scripts/detect_changed_surfaces.py
+git diff -- tests/scripts/test_detect_changed_surfaces.py
+.venv/bin/python scripts/detect_changed_surfaces.py --print-targets
+make test-scripts
+.venv/bin/python -m unittest tests.scripts.test_detect_changed_surfaces -v
+docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
+```
+Plus scratch-directory-only experiments (independent verification, no repo files touched): a temporary git repo under `/tmp` probing `core.quotePath` behavior on non-UTF-8 and spaced filenames, and a scratch copy of `scripts/` + `tests/scripts/` (built from `git show origin/main:scripts/detect_changed_surfaces.py` plus the new test file) used to confirm the red-phase failure count. Both scratch trees were removed after use; `git status --short` shows only the same two files the task started with as modified.
+
+## What I did not run, and why
+- `make -C apps/web ci`, `make -C services/chat ci`, `make ci` — not run. The changed surface is exactly two Python files under `scripts/` and `tests/scripts/`; no web, chat, or schema code changed. `detect_changed_surfaces.py --print-targets` recommends `quick-ci-web`/`quick-ci-chat` for this range, but per my instructions those are the fast-variant recommendations meant for the step-4 iteration loop (and are conservative because editing the detector itself is treated as a routing-critical change), not the merge-gate commands step 7 is supposed to run for a surface that didn't actually change.
+- `make docs-check` — not run; no Markdown changed.
+- `make e2e-smoke` / `make test-e2e` — not run; no runtime code, Dockerfiles, compose files, or rendered routes changed, and the task explicitly said not to touch the running stack.
+- `make release-dry-run` — not run; nothing release- or workflow-related changed.
+
+Files most relevant to this verification: `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/detect_changed_surfaces.py`, `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_detect_changed_surfaces.py`.</result>
+<usage><subagent_tokens>44675</subagent_tokens><tool_uses>28</tool_uses><duration_ms>192659</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a1433a1cd6d4fa647</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/a1433a1cd6d4fa647.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the 297 branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+The `core.quotePath=false` decision is **correct — the issue's recommendation should be rejected**, and I reproduced all three supporting measurements independently on git 2.53. Two findings, **both refinements. No defects.** This round closes step 8's loop.
+
+---
+
+## The decision you asked me to attack
+
+I reproduced every claim rather than accepting it, in a throwaway repo:
+
+```
+ M "apps/web/src/a b.tsx"            &lt;- default
+ M "apps/web/src/a b.tsx"            &lt;- core.quotePath=false, identical
+apps/web/src/a b.tsx                 &lt;- git diff --name-only, never quoted
+```
+
+The flag does not change space quoting in `status --porcelain`, so it does not fix the case that motivated #297 for the worktree reader; the unquoter would be needed anyway. Adding it would buy nothing and cost the `UnicodeDecodeError` you measured. **The write-up's reasoning holds.**
+
+One alternative the write-up does not mention, for completeness in the PR body: `run_git` could pass `errors="surrogateescape"` to `subprocess.run`, which defuses the crash and would make the flag survivable. It still would not address space quoting, so it only adds a second code path. The chosen approach is strictly simpler. Since this contradicts the filed issue, record the three measurements in the commit body.
+
+**Red phase independently reproduced.** Against `HEAD`'s script, 7 of 8 fail; only `test_the_fixture_actually_produces_quoted_output` passes. Your corrected account is accurate.
+
+---
+
+## Findings
+
+### 1. The `_C_ESCAPES` table is unexercised — four mutations to it leave all 27 tests green (refinement, 80)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/detect_changed_surfaces.py:133-143, 183`
+
+No fixture name contains `"`, `\`, or a control character. `SPACED` and `a -&gt; b.tsx` produce no escape at all (just quoting); `NON_ASCII` and `bad\xff.tsx` exercise only the octal branch. The named-escape branch is never reached. Measured, each of these leaves 27/27 passing:
+
+| mutation | failing tests |
+| --- | --- |
+| `"t": 0x09` → `0x58` | 0 |
+| `'"': 0x22` → `0x58` | 0 |
+| `"\\": 0x5C` → `0x58` | 0 |
+| `_C_ESCAPES.get(escape, ord(escape))` → `ord(escape)` | 0 |
+
+The last is the one that bites: `ord('t')` is `0x74`, so dropping the table decodes `"apps/web/src/ta\tb.tsx"` to `apps/web/src/tatb.tsx` — a wrong path, silently, in the file that routes all CI. Nothing would catch it.
+
+I verified the table itself is **correct**, so this is a blind spot rather than a bug. Against git 2.53's actual emission, every escape round-trips: `\"` `\\` `\a` `\t` `\n` `\001` `\377`, plus leading and trailing spaces. A fixture with `"`, `\`, tab, newline, BEL, `0x01`, `0xff` and edge spaces gave zero missing and zero extra against `os.fsdecode`.
+
+Fix: add one fixture name containing a `"` or a tab. Root `AGENTS.md` step 4 also asks that gaps nothing catches be written down, and this one is not recorded anywhere.
+
+### 2. `\377` in a non-raw docstring is an octal escape, so the docstring says the opposite of its point (refinement, 85)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/scripts/detect_changed_surfaces.py:154`
+
+```
+source:   `"apps/web/src/bad\377.tsx"`. That would turn a misclassification into a
+__doc__:  `"apps/web/src/badÿ.tsx"`. That would turn a misclassification into a
+```
+
+The sentence exists to show that git's default keeps the stream ASCII-safe. Rendered, it contains a literal U+00FF and demonstrates the reverse. It is also the only non-ASCII character this change adds to the file. No `SyntaxWarning` fires, because `\377` is a *valid* octal escape — which is why nothing flags it.
+
+Fix: `\\377`, or make the docstring raw. The test file gets this right already (`assertIn("\\303\\257", ...)`, `assertIn("\\377", ...)`).
+
+---
+
+## Your four questions
+
+**1. `surrogateescape` vs `replace`.** `surrogateescape` is right, and no test can distinguish it — the mutation to `replace` leaves 27/27 green. That is not a gap: for this script's only consumer the two are behaviourally identical, since paths are pattern-matched and never encoded, printed, or written (`write_github_output` emits flags and targets only, and `files` reaches nothing but `classify`). `surrogateescape` is still the better default on principle — two distinct non-UTF-8 names stay distinct instead of collapsing into one set entry — and it matches `os.fsdecode`, which is what I diffed the round-trip against. No finding.
+
+**2. The `" -&gt; "` parse property.** It holds, verified rather than assumed. `status --porcelain` quotes any space-containing path with and without the flag, so an unquoted token cannot contain the separator. Both mixed shapes parse correctly:
+
+```
+R  apps/web/src/plain.tsx -&gt; "apps/web/src/dest with space.tsx"
+R  "apps/web/src/src with space.tsx" -&gt; apps/web/src/dest2.tsx
+```
+
+One unreachable edge, not a finding: `porcelain_destination` raises `IndexError` on a payload ending in a bare `" -&gt; "` (empty destination), because `_read_path_token(payload, index + 4)` indexes at `len(payload)`. Git cannot emit an empty path, and `.strip()` cannot manufacture one — a whitespace-only name gets quoted. Noting it only so it is on the record.
+
+**3. Routing for ordinary paths — unchanged, and this is the check that mattered most.** Differential old-vs-new over `HEAD~1/3/10/30/80/200` and the dirty worktree: identical file lists and identical `--print-targets` at every range, up to 2,821 files. Separately, an exhaustive cross-product of 15 realistic repo paths × 9 status codes × simple and rename forms: 0 mismatches against the old `split(" -&gt; ", 1)[1].strip()`. The lost trailing `.strip()` on the rename destination is provably a no-op, since `" -&gt; "` consumes the leading space and the outer strip handles the tail.
+
+**4. Fixture isolation — correct, and your reading of "only constant" is right.** `ROOT` is the module's sole path constant; the pattern tuples are plain strings and `write_github_output` takes its path as an argument. `run_git` dereferences `ROOT` at call time, so `patch.object` redirects it. `QuotedPathTests` never calls `main()`, so `--github-output` never resolves anything. The `ExitStack` unwinds LIFO, so the patch lifts before the tempdir is removed. The tempdir `git init` matches the existing precedent in `tests/scripts/test_check_agent_docs.py:175`, and `tests/scripts/AGENTS.md`'s "compare outputs from the owning tool where practical" is exactly the case a real repo serves.
+
+**Untracked-directory collapse: does not block.** `?? apps/` matches no pattern, sets `unknown`, and forces runtime — fail-safe. The diff neither creates nor worsens it. Correctly deferred to #297.
+
+---
+
+## Outside this change
+
+Pre-existing, not introduced here, for you to file under *Unrelated findings become issues*:
+
+- `scripts/detect_changed_surfaces.py:231` — `changed_files_from_range` applies `line.strip()` to each `git diff --name-only` line. That reader does not quote spaces, so a tracked path with a leading or trailing space is silently altered before matching. Harmless today (it still matches `apps/web/**`), but it would defeat an exact-name pattern such as `Makefile`. Present at `HEAD` in the same form.
+- `scripts/detect_changed_surfaces.py:236` — `git status --porcelain` without `-uall` collapses an untracked directory to one entry. Already raised on #297; listing it so the issue exists in a durable place.
+
+---
+
+## What I reviewed
+
+Diff ranges: `git diff origin/main...HEAD` (empty — no commits on `fix/297-quoted-paths`), `git diff` (both files), `git diff --cached` (empty), `git status --short` (no untracked files). Read in full: `scripts/detect_changed_surfaces.py`, `tests/scripts/test_detect_changed_surfaces.py`, root `AGENTS.md`, `tests/scripts/AGENTS.md`.
+
+Run: `make test-scripts` 214/214, the focused module 27/27, red phase against `HEAD`'s script, 11 mutations, escape round-trip against a real repo containing `"` `\` tab newline BEL `0x01` `0xff` and edge spaces, and the old-vs-new routing differential. All in the scratchpad; the repository was not modified, and I did not touch the stack on 3100/8100/55432 or run `make e2e-smoke`.
+
+Not applicable: no rendered surface, and nothing under `AGENTS.md`'s numbered steps or `.claude/agents/`, so the workflow-obligation cross-check does not apply. Nothing I could not assess.</result>
+<usage><subagent_tokens>68751</subagent_tokens><tool_uses>28</tool_uses><duration_ms>543668</duration_ms></usage>
+</task-notification>
