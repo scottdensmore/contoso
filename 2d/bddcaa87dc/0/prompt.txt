@@ -1,0 +1,9 @@
+Take a look through this code and repo and pick up the next work and follow AGENTS.md
+
+---
+
+Ok what is up next?
+
+---
+
+Ok lets pick up the next work. If we can parallelize any of the work lets do it
