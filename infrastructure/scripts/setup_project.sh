@@ -187,12 +187,16 @@ cd ../..
 
 # --- Data Seeding ---
 echo "Seeding data into GCP..."
-# Ensure python dependencies are installed
-pip install -r services/chat/src/api/requirements-core.txt
+# Install the constrained runtime dependencies into the project virtualenv.
+make venv
+.venv/bin/python -m pip uninstall --yes vertexai
+.venv/bin/python -m pip install \
+  -r services/chat/src/api/requirements-core.txt \
+  -c services/chat/constraints.txt
 # Generate python prisma client
 prisma generate --schema=apps/web/prisma/schema.prisma
 # Run the master seeding script (skip DataStore seeding if it doesn't exist yet)
-python3 infrastructure/scripts/seed_gcp_all.py || {
+.venv/bin/python infrastructure/scripts/seed_gcp_all.py || {
   echo ""
   echo "Warning: Data seeding failed (likely because Discovery Engine DataStore doesn't exist yet)."
   echo "Re-run this script after the DataStore deletion completes (up to 2 hours from teardown)."
