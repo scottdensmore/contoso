@@ -1,0 +1,620 @@
+<task-notification>
+<task-id>abf644e541ccf897c</task-id>
+<tool-use-id>toolu_018YogAJd6FNKg6Ls24mpYtK</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/abf644e541ccf897c.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review the launcher safe column" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: Rendered review completed
+
+I drove real Chromium and rendered every viewport below. **The Playwright MCP tools were unavailable** — `browser_navigate` failed with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, which is the `@playwright/mcp` default-channel problem (#279). I rendered through `Bash` instead, using scripts outside the repository that require `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/playwright` by absolute path. The `Bash` probe reported `browser: ok 151.0.7922.34`.
+
+I used your stack and started/stopped nothing. `curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:pr-8'` returned `1` before every measurement. Repo is untouched (`git status --short` identical to start).
+
+Viewports: **360×844**, **390×844**, **414×896**, **834×1112**, **1440×900**; plus a 2× pass (`deviceScaleFactor: 2`) for the corner and focus crops.
+
+Screenshots: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/scratchpad/shots/`
+
+---
+
+## The fix works, and your measurements reproduce exactly
+
+I re-ran your sweep independently by overriding `padding-right` on the rendered page at three phone widths. At 390×844 my table is identical to yours, including the 960→988 document-height cliff between 32px and 40px. The tradeoff you describe is real and I could not find a better value on this lever.
+
+Confirmations at 360 / 390 / 414: `submitGap` = **+8px**, `textareaGap` = **+8px**, `elementFromPoint` at the submit button's right edge returns `BUTTON[submit]` (at 16px reserve it returns `Open chat` — the defect). Holds at landing, scrolled to bottom, filled, and error states. No horizontal overflow anywhere. Tablet gap 105px, desktop 408px — the `max-sm` scoping is correct.
+
+One detail that strengthens the choice of 32 over 24, which your note does not mention: the submit button's focus ring is `outline-2 outline-offset-2`, so it extends **4px past the button's right edge** (to x=330 at 390). The launcher starts at 334. At 32px reserve the ring clears by exactly 4px; at 24px reserve (`gap: 0`) the focus ring would render **underneath the launcher**. 32px is the smallest value that keeps the focus indicator intact, not just the hit target.
+
+---
+
+## Findings
+
+### 1. The reserve de-centres the hero heading, not just the card (moderate — the answer to your question 1)
+
+This is what makes it read as a mistake rather than as intent. `max-sm:pr-8` is on the outer `flex … justify-center` container, so it narrows the *entire* centred column — `&lt;h1&gt;Get in Touch&lt;/h1&gt;` and its subheading included, neither of which has anything to do with the launcher.
+
+Measured, at all three phone widths:
+
+| | h1 centre vs viewport centre | card left / right gutter |
+|---|---|---|
+| before (`pr-4`) | **0px** | 16 / 16 |
+| after (`max-sm:pr-8`) | **−8px** | 16 / 32 |
+
+The card's 16/32 asymmetry alone reads as acceptable — the background is photographic with no reference edges, and at 390 I would not flag it. What tips it is the heading: large centred display type shifted 8px left of the viewport it is centred in is the single most symmetry-sensitive element on the page, and it is the one thing on the page with no reason to move. Compare `after-contact-phone-390.png` against `before-sim-contact-390x844.png` — the heading shift is the difference you notice first, before the card.
+
+**Suggested fix:** scope the reserve to the card rather than the page container. I tested a card-scoped variant in-browser: it produces **identical** clearance (gap 8, focus ring clears by 4) and an **identical** document height (960 at 390, 988 at 360), while restoring `h1Offset` to 0. Note that a naive `max-sm:mr-4` on the `&lt;form&gt;` regresses the gap to 0, and `mr-8` collapses the left gutter to 0, because the form is `w-full max-w-lg` — the width needs handling alongside the margin. So the direction is sound but the exact class needs working out; I am not prescribing one.
+
+If you keep the container approach, it is defensible — just record in the comment that the heading shift is accepted, because right now the comment derives the 32px thoroughly and never mentions that the reserve moves the hero.
+
+### 2. The new guard permits a gap the chosen value deliberately avoids (minor)
+
+`apps/web/e2e/launcher-safe-area.spec.ts:237`:
+
+```
+expect(measured!.gap, 'the submit button still runs into the launcher column').toBeGreaterThanOrEqual(0)
+```
+
+A `gap` of 0 passes, but per the focus-ring measurement above, gap 0 puts the focus indicator under the launcher — invisible for keyboard users, with every DOM and status assertion still green. A future change shaving the reserve to 24px would satisfy this guard while reintroducing a real accessibility defect. Tighten to `toBeGreaterThanOrEqual(4)` at minimum (the ring's reach), or 8 to pin the current value. The other four assertions are well chosen; the "costs no vertical space" test in particular is exactly the right guard for the tradeoff you documented.
+
+### 3. The launcher over the card corner is fine (the answer to your question 2)
+
+24×40 of the launcher sits on the white card at all three phone widths. At 2× (`corner-2x-390.png`) it reads unambiguously as a floating control: it is a saturated indigo disc with a hard circular edge against flat white — roughly 6:1 against the card — with the submit button visibly separated by the 8px channel. It does not read as card furniture.
+
+Worth knowing rather than fixing: the launcher's `shadow-[0_0_0_2px_#ffffff,…]` white separator ring is *invisible* here, because it is white-on-white against the card. The ring exists to separate the disc from the photography behind it (per #190's reasoning in the comment). On the card it contributes nothing, and the disc relies entirely on its own fill for separation — which is sufficient. No action.
+
+### 4. Error state pushes the submit button further below the fold (pre-existing, unchanged, but adjacent to your question 5)
+
+At 390×844, when the error paragraph appears the submit button moves from 4px below the fold to **44px below the fold**, `document.activeElement` stays `BODY`, and nothing scrolls. So on a failed submit the user sees no message and no button without scrolling. This is the intersection of #326 and the below-fold half of #286 — I am not reporting it as new, and **this diff does not make it worse** (the horizontal gap holds at 8px throughout the error state, and the error paragraph's geometry is unchanged by the reserve).
+
+**On whether the 4px-below-fold should have been fixed here: no.** Your sweep is the argument — the only lever this change touches makes it worse past 32px. It needs a different lever (the `py-12`, or the heading block's `mb-10`), which is a separate change with its own risk surface. Bundling it would have made the reserve's tradeoff table unreadable.
+
+---
+
+## Checks performed, and their results
+
+- **Interaction** — all five fields fill and update; submit fires; forced 500 renders the error; chat launcher opens (panel is full-screen 390×844 at phone, no overflow, focus moves to the message input). No console errors on any route except the expected 404.
+- **Loading / empty / error states** — landing (empty), filled with deliberately long values, and forced-500 error captured at all five viewports. No wrapping or overflow regressions from the narrower card at any state; long email and order-number values do not overflow at 360.
+- **Focus** — visible and correct. I pixel-diffed the submit button focused vs unfocused at 2×: **5428 changed pixels**, computed `outline: 2px solid lab(38.4 52.6 −92.4)` (indigo-600) at `outline-offset: 2px`. (My first tab-loop pass read a 3px white outline; that was the UA default read before the `:focus-visible` style settled — it is not real. Flagging it because the wrong number is the kind of thing that would have become a false finding.)
+- **Keyboard** — journey completable without a mouse at all five viewports. Order is name → email → subject → orderNumber → message → Send Message → Open chat, which puts the launcher after the form rather than interrupting it. Nothing reachable-but-unusable; nothing unreachable.
+- **Contrast** — sampled real rendered pixels inside the card, before vs after. Card backdrop is `rgb(235,235,235)` in **both**, so the reserve does not change contrast anywhere. Labels (`gray-900`) ≈ **14.8:1**, pass. Placeholders (`gray-400`) ≈ **2.2:1**, fail AA — that is #217, pre-existing, and **not worsened**. Likewise #218/#176 are untouched by a padding change.
+- **Responsiveness** — no horizontal overflow (`scrollWidth == innerWidth`) on any route or viewport. No truncation. Launcher tap target is 40×40 (passes WCAG 2.5.8's 24px minimum, below 2.5.5's 44px) — pre-existing and unchanged.
+- **Semantics** — `/contact` is `H1` only, correctly. All five controls have `&lt;label for&gt;` matching an `id`. Unchanged by this diff. The error `&lt;p&gt;` has no `role`/`aria-live` — that is #326, unchanged.
+- **Density** — I ran the corner and focus crops at `deviceScaleFactor: 2` and layout holds. A full 2× pass is **not applicable** to this change: it moves no image and adds no `srcset`. The only image on the route is a CSS `background-image` (`/images/contact-bg.webp`), which carries no density negotiation.
+
+## Pages that did not change (your question 4) — genuinely unchanged
+
+Rendered `/`, `/about`, `/login`, `/signup`, `/faq`, `/contact/thanks`, and `/products/category/tents` at 390/834/1440. All HTTP 200, zero elements carrying `max-sm:pr-8`, zero horizontal overflow, no console errors, heading structures intact. (`/products` is a 404 — that route does not exist in this app; the catalogue is `/products/category/[slug]`.)
+
+I also checked whether the opt-in scoping leaves a real gap on sibling pages, since that is the risk of an opt-in fix:
+
+- **`/contact/thanks`** — no control overlaps the launcher at 360/390/414. The journey's completion page does not need the column.
+- **`/login`, `/signup`** — their submit buttons extend into the launcher's horizontal column, but `scrollHeight == viewport height` at 360×740, so no scroll can ever bring a control under the launcher. No overlap at any scroll position. No action needed.
+
+So the opt-in scope is correct as it stands — `/contact` was the only page that needed it.
+
+## Not verified
+
+I did not run `make e2e-smoke` or the new spec, per your instruction not to recreate containers. My independent geometry measurements agree with what the spec asserts, but I have not observed the 5 tests pass.</result>
+<usage><subagent_tokens>78698</subagent_tokens><tool_uses>32</tool_uses><duration_ms>751036</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad68e3fa1afaf234a</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/ad68e3fa1afaf234a.output</output-file>
+<status>completed</status>
+<summary>Agent "Confirm the re-scoped reserve renders correctly" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Rendered review completed
+
+Rendered against your stack at `http://127.0.0.1:3100` — I started nothing and stopped nothing. Build confirmed by content before measuring: `max-sm:pr-4` count 1, `max-sm:pr-8` count 0.
+
+**Path:** the Playwright MCP tools are connected but every call fails with `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome` (the #279 default-channel issue). I drove Chromium through `Bash` instead, via scripts outside the repository requiring `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/node_modules/playwright` by absolute path. Probe: `browser: ok 151.0.7922.34`.
+
+**Viewports:** 360×740, 390×844, 414×896, 834×1112, 1440×900. Screenshots in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/scratchpad/shots/` — `contact-&lt;vp&gt;.png`, `-full`, `-bottom`, `filled-&lt;vp&gt;.png`, `error-&lt;vp&gt;.png`, `edge-top-390x844.png`, `focus-settled-390-crop.png`, `chatopen-&lt;vp&gt;.png`, `route_*`, `cat_*`.
+
+Your five numbers all reproduce: `h1Offset = 0` at every viewport, `submitGap = 8` at every phone width (at scrollY 0, 25%, 50%, 75% and max), `docHeight` 988/960/960, `overflowX = 0` everywhere. Card insets 16/32 at the three phone widths and 161/161 at 834, 464/464 at 1440.
+
+---
+
+## Finding 1 — the new focus-ring guard reads the ring mid-transition (medium, actionable)
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/launcher-safe-area.spec.ts`, the `"the submit button's focus ring clears the launcher too"` test.
+
+The submit button carries `transition-all`. The test presses Tab and evaluates immediately, so `getComputedStyle` returns the transition's *starting* values, not the ring anyone sees. Measured at all three phone widths:
+
+```
+                outline            reach   ringGap
+immediate       solid 3px / 0px    3       5        &lt;- what the test asserts on
+settled (1s)    solid 2px / 2px    4       4        &lt;- the actual ring
+```
+
+`3px / 0px / white` are the CSS initial values — `medium` width and `currentcolor`, which on this button is `text-white`. The settled ring is indigo-600 at `outline-2 outline-offset-2`, exactly as `ACTION_FOCUS` declares. So the doc comment's 4px arithmetic in `control-classes.ts` is correct; the *test* is the thing that is 1px off, in the loose direction.
+
+Two consequences:
+
+- The guard has a one-pixel blind window. An inset producing `submitGap = 3` is a genuine defect — settled `ringGap = -1`, ring under the launcher — and the guard passes it at `ringGap = 0`. Your 24px-inset demonstration still failed correctly because it was 3px past the boundary, which is why the demonstration didn't surface this.
+- The two vacuity checks (`outlineStyle !== 'none'`, `outlineWidth &gt; 0`) are currently satisfied by the pre-transition state, which is the "ring that means nothing" case they were written to reject. The comment above them anticipates exactly this ("`outlineWidth` reports the user-agent default even when the style is `none`") and then reads at the one moment when that default is what it gets.
+
+Fix: settle the transition before reading — `await page.waitForTimeout(200)` after the Tab, or better, poll until `outlineWidth` is `2px` so the wait is a measurement too. `ringGap` then asserts 4.
+
+Also worth correcting in the PR record: the `focusRingGap = 5` you reported is the transient. The settled figure is 4, so a future change has 4px of headroom, not 5.
+
+## Finding 2 — the correction to my method note is confirmed; I was wrong (no action)
+
+I tested `locator.focus()` on the submit button directly. `el.matches(':focus-visible')` is `true`, and the settled ring is `solid 2px / 2px` — identical to the Tab path. My earlier claim that programmatic focus does not satisfy Chromium's `:focus-visible` heuristic is wrong for this control, and your #148 cross-reference holds. Keeping the Tab is still the right call for fidelity, and the note should not be carried forward.
+
+(One nuance worth having on record alongside it: `.focus()` shows the same 3px/0px transient as Tab, so whichever path a future test uses, it has to settle the transition.)
+
+## Finding 3 — item 1, does the card-scoped version read as intentional (low; ship it, with an option)
+
+Honest answer: the misalignment did not disappear, it relocated. The h1 is genuinely centred — offset 0, and visible as such in `contact-390x844.png` and `contact-1440x900.png`. But the subtitle below it is a near-full-width centred block spanning 16..374, so at phone widths the card's right edge now sits 16px inboard of the copy above it while its left edge is flush. `edge-top-390x844.png` (2×) shows that relationship directly: the paragraph overhangs the card on the right and aligns on the left.
+
+My judgement is that this is a clear improvement and I would ship it as-is. An off-centre 36px display heading is a much louder defect than a card with a 16px-wider right gutter, and against the photographic background the card asymmetry reads as breathing room rather than error. Calling it *intentional* is generous, but it is not a defect I would block on.
+
+There is a version that resolves it rather than relocating it, and I measured it rather than guessing: `max-sm:px-4` on the same wrapper instead of `max-sm:pr-4`, giving 32px both sides.
+
+```
+                 docH   cardW   left/right   submitGap   submitBottom   cardCentreOffset
+current pr-4     960     342      16 / 32         8           848             -8
+symmetric px-4   960     326      32 / 32         8           848              0
+```
+
+Identical at 360×740 and 414×896 too. It costs no document height and no vertical position — the objection that ruled out wider reserves does not apply, because the extra 16px comes off the left where the card had slack, and the copy does not re-wrap at any of the three phone widths. Submit button drops to 262px, still comfortably over the spec's `viewport * 0.6` = 234 bound. `max-sm:` scoping means `sm` and up is untouched.
+
+Recording it as an option with numbers, not a request. The current version is defensible.
+
+## Finding 4 — error state loses focus and is not announced (low, pre-existing, not a regression)
+
+Exercised at all three viewports by forcing a 500 from `/api/contact`. The error paragraph renders correctly inside the card, wraps to two lines at phone, and stays clear of the launcher column. Two problems, both in `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx`, which this branch does not touch:
+
+- `isSubmitting` disables the button, which blurs it. When the error renders, `document.activeElement` is `BODY` — a keyboard user is returned to the top of the document with no indication anything happened.
+- The error `&lt;p class="text-red-600"&gt;` carries no `role="alert"` and sits in no live region, so it is never announced.
+
+Flagging because I exercised the state for item 3 and this is the one thing wrong in it. Out of scope for this fix.
+
+---
+
+## Items confirmed clean
+
+- **Item 2, heading centred:** `h1Offset = 0` at all five viewports, `text-align: center`, and visually centred in the screenshots. Confirmed rendered, not just computed.
+- **Item 3, interaction:** the #286 defect is gone — `document.elementFromPoint` at the submit button's rightmost interior point returns `BUTTON:Send Message` at 390 and 1440, not the launcher. Full keyboard journey completes: Tab order is name → email → subject → orderNumber → message → Send Message → Open chat, no traps, everything in view, Enter on the submit navigates to `/contact/thanks` (h1 "Thank You!"). All five fields have `label[for]`. Chat launcher still opens and moves focus to the message input at both viewports. Filled state at all three viewports: card geometry unchanged, no overflow, no truncation. Tap targets 278×48 fields, 278×52 submit.
+- **Item 4, centring at `sm` and up:** 161/161 at 834×1112 and 464/464 at 1440×900 — `justify-center` preserves it exactly. `submitGap` 105 and 408. No sign of the wrapper anywhere at those widths.
+- **Item 5, other routes:** `/`, `/about`, `/login`, `/signup`, `/products/alpine-explorer-tent`, `/products/category/tents` all 200 at 390 and 1440, zero horizontal overflow, h1 centre offset 0 where centred, no `max-sm:pr-4` present in any of their DOM, no console or page errors. (`/products` itself is a 404 with no index route — pre-existing, unrelated.)
+- **No console errors** on `/contact` at any viewport except the deliberate 500 I injected.
+
+## Checks not performed, with reasons
+
+- **Contrast** and the **reserve sweep** — done in the previous pass, nothing about either changed, and you asked me not to re-derive them.
+- **Density (2×)** — not applicable. The change moves a padding class between two elements; it alters no `srcset`, no image source, and no image dimensions, so the browser requests the same assets. I did render the edge crops at `deviceScaleFactor: 2` for the alignment judgement in Finding 3, but that is evidence for layout, not a density check.
+- **Loading state** — the button's `Sending...` state was traversed during the submit journeys but not measured or captured separately; it is unchanged by this branch and the geometry is identical to the resting state (same box, text swap only).</result>
+<usage><subagent_tokens>67831</subagent_tokens><tool_uses>33</tool_uses><duration_ms>646557</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>adb47cdd07e2504ac</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/adb47cdd07e2504ac.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the 286 launcher safe column" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified — no blocking issues.** `make -C apps/web ci` passes in full (lint, typecheck including the e2e tsconfig and journey-coverage check, 175 unit tests, and the `next build` production build), and the full Playwright journey suite (142 tests across all 13 spec files, including the new `launcher-safe-area.spec.ts`) passes against the rebuilt stack with zero failures on a single full run.
+
+## What I ran and what I found
+
+**1. `make -C apps/web ci`** — full pass.
+- `eslint .` clean.
+- `tsc --noEmit` (app) and `tsc --noEmit -p tsconfig.e2e.json` (specs) both clean — confirms the new `LAUNCHER_SAFE_COLUMN` export and its import in `contact/page.tsx` type-check.
+- `node scripts/check-journey-coverage.mjs` passed silently, which independently confirms `launcher-safe-area.spec.ts` is both collected by Playwright's config and covered by the e2e tsconfig — not an orphaned file.
+- `vitest run`: 175/175 tests, 39/39 files.
+- `next build`: compiled successfully, 230 static pages generated, `/contact` listed as static (`○`).
+
+**2. Stack integrity, confirmed before and after the journey run.**
+`curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:px-4'` returned `1` both before I ran the suite and again after it finished (11 minutes into the container's life, no rebuild in between) — the container serving the journeys was the one built from this branch, not a stale one. I did not run `make e2e-smoke` and did not rebuild anything, per your instruction.
+
+**3. Full journey suite, via `make -C apps/web test-e2e` with `E2E_BASE_URL=http://127.0.0.1:3100`** — 142 passed, 0 failed, 8.3 minutes, single worker, retries off (per `playwright.config.ts`). This is the harness path (`npm run test:e2e` → `playwright test`, picking up `**/*.spec.ts`), not a direct `npx playwright test launcher-safe-area.spec.ts` invocation — so this answers your question 3 directly: the harness does discover and run the new spec, not just runs it in isolation. All 6 of its tests passed in that context:
+  - the three phone-width overlap checks (390×844, 360×740, 414×896)
+  - "the reserved column costs no vertical space"
+  - "the reserved column is only as wide as the launcher needs"
+  - "the submit button's focus ring clears the launcher too"
+
+I did not re-run the full suite a second time to check for flakes, because nothing failed on the first run — there was nothing to distinguish flake-vs-real-failure on. Given `retries: 0`, `workers: 1`, and a clean pass across all 13 files (including specs that share `control-classes.ts` consumers — `action-controls.spec.ts`, `form-fields.spec.ts`, `headings.spec.ts`, `layout.spec.ts`, `chat-launcher.spec.ts` — all green), I have no evidence of regression elsewhere from the widely-imported file.
+
+## Failures
+None.
+
+## Flakes
+None observed. Only one full run was executed (see above for why a repeat wasn't warranted).
+
+## Missing coverage
+One specific gap, on the boundary the constant itself is defined by: no test exercises the `sm` breakpoint transition (639px→640px) where `max-sm:px-4` toggles off. The task description's manual measurements at 834×1112 (gap 105/101, symmetric gutters) were done by hand during `ui-review`, but nothing in `launcher-safe-area.spec.ts` or elsewhere encodes "the reserve is present just below 640px and absent just above it" as an automated assertion. The three phone widths tested (360/390/414) are all comfortably below the breakpoint, so a regression that shifted or removed the `max-sm:` prefix (e.g., to `sm:` or an unprefixed always-on class) would still pass every current test as long as it also produced 8/8/8px gaps under 640px — the boundary itself is untested.
+
+On your question 4 (unit test for the constant): I agree with your position. `LAUNCHER_SAFE_COLUMN` is a derived Tailwind utility whose correctness is entirely about rendered layout arithmetic (card inset vs. launcher footprint vs. focus-ring reach) documented at length in the comment — a `expect(LAUNCHER_SAFE_COLUMN).toBe('max-sm:px-4')` unit test would only pin the string literal and catch nothing the derivation comment doesn't already assert in prose. The journey spec's geometric measurements (submit gap, settled focus-ring gap, document height, card gutter symmetry) are the only checks that can actually fail if the arithmetic drifts. I don't disagree with omitting a unit test here.
+
+## Environment issues
+None blocking. Two things worth flagging, neither a blocker:
+- `curl http://127.0.0.1:8100/healthz` returned 404 (chat container has no such route); `curl http://127.0.0.1:8100/` returned 200 and `docker ps` reports it `healthy`, so this is just a wrong probe path on my part, not a chat problem — the chat container was never touched by this verification.
+- A discrepancy in the handover framing worth noting: you described the branch as "currently at the merge of #337," but `git log` on this checkout shows HEAD/`origin/main` at `63b056e` (PR #331), with #337 (`fix(infra): exit nonzero when local product indexing fails`, merged 2026-08-18T16:15:51Z per `gh pr view 337`) not present in the local ref. I did not `git fetch` to reconcile this, since updating remote-tracking refs falls outside what I was asked to do and isn't needed for the verification — I tested the actual working-tree diff at the actual current HEAD, which is what will be committed regardless of which upstream commit it's later rebased onto. Flagging it in case it means your local `origin/main` ref is stale relative to GitHub.
+
+## Stack state on exit
+Left exactly as found and running: `contoso-web-1`, `contoso-chat-1` (healthy), `contoso-db-1` (healthy) on 3100/8100/55432. Not torn down, not rebuilt, no `docker compose down` run. The unrelated containers (`petspotr-*`, `travel-app-*`) were left untouched throughout.
+
+## Commands run
+```
+git status --short
+git branch --show-current
+git log --oneline -5
+git diff --stat origin/main...HEAD
+.venv/bin/python scripts/detect_changed_surfaces.py --base origin/main --head HEAD --print-targets
+git log --oneline origin/main -3
+git merge-base HEAD origin/main
+git status
+git diff --stat origin/main..HEAD
+git diff apps/web/src/lib/control-classes.ts apps/web/src/app/contact/page.tsx
+cat apps/web/e2e/launcher-safe-area.spec.ts
+docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3100/contact
+curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:px-4'
+cat apps/web/Makefile
+make -C apps/web ci
+cat apps/web/package.json (test:e2e script)
+cat apps/web/playwright.config.ts
+E2E_BASE_URL=http://127.0.0.1:3100 make -C apps/web test-e2e
+curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:px-4'   # re-check after suite
+docker ps --filter "name=contoso-" --format 'table {{.Names}}\t{{.Status}}'
+gh pr view 337
+gh pr list --state all --search "286"
+```
+
+## What I did not run, and why
+- `make e2e-smoke` — deliberately skipped, per your instruction; it probes the literal ports and unconditionally rebuilds (`--build --force-recreate`), which would have replaced the stack you handed me.
+- `make ci` (root, cross-surface) — not needed; scope is web-only per the diff (`apps/web/src/lib/control-classes.ts`, `apps/web/src/app/contact/page.tsx`, `apps/web/e2e/launcher-safe-area.spec.ts`), no chat/schema/scripts changes.
+- `make test-scripts`, `make docs-check` — not applicable; no scripts or Markdown changed.
+- `make release-dry-run` — not applicable; no release workflow changes.
+- A second full run of `make test-e2e` to hunt for flakes — skipped because the first run was clean end to end; there was no failure to reproduce or distinguish as environmental vs. code.
+- `git fetch` — skipped to avoid altering repository ref state beyond what verification required; the `origin/main` vs. #337 discrepancy above is reported unresolved rather than reconciled.</result>
+<usage><subagent_tokens>44925</subagent_tokens><tool_uses>16</tool_uses><duration_ms>716745</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a25a90d151bca5a50</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/a25a90d151bca5a50.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after adding boundary test" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I'll end this turn here and wait for the system notification that the background e2e run (and the wait-loop watching it) has completed before continuing.</result>
+<usage><subagent_tokens>41204</subagent_tokens><tool_uses>25</tool_uses><duration_ms>504403</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a25a90d151bca5a50</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/a25a90d151bca5a50.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after adding boundary test" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All three contoso containers (web, chat, db) are still up on the expected ports 3100/8100/55432, untouched by this run (unrelated `petspotr-verifier-*` containers belong to a different project/agent and are not something I started or need to manage).
+
+## Verdict: Verified. The branch is ready to merge.
+
+## 1. `make -C apps/web ci`
+Passed in full: lint clean, `tsc --noEmit` clean, `tsc --noEmit -p tsconfig.e2e.json` clean (this is the type-check that covers the new spec file), `check-journey-coverage.mjs` clean, unit tests **175/175 passed**, and `next build` completed successfully (230 static/SSG pages generated, no errors).
+
+## 2. Full journey suite
+**143 passed (8.4m)** — one more than the 142 you reported last time, as expected. The new seventh test in `apps/web/e2e/launcher-safe-area.spec.ts` ran and passed:
+- `#131 the reserve is scoped to below the sm breakpoint (2.0s)`
+
+alongside the six that existed before it (`#128–130` the three phone-width overlap checks, `#132` vertical-space cost, `#133` column width, `#134` focus-ring clearance). No failures, no retries in the output.
+
+## 3. File identity
+Confirmed directly, not assumed:
+- `git diff --stat` shows the same two files with the same line counts as before: `apps/web/src/app/contact/page.tsx | 5 ++-` and `apps/web/src/lib/control-classes.ts | 90 +++...`, 94 insertions/1 deletion total.
+- `LAUNCHER_SAFE_COLUMN` reads exactly `'max-sm:px-4'` (`apps/web/src/lib/control-classes.ts:339`).
+- Working tree otherwise clean except the new untracked `apps/web/e2e/launcher-safe-area.spec.ts`.
+
+## 4. Served build content
+Checked before trusting the journey run, and again just now after it finished:
+- `curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:px-4'` → `1`
+- `curl -s http://127.0.0.1:3100/contact | grep -c 'justify-center px-4'` → `0`
+
+The container is serving the restored source, not the mutated one.
+
+## 5. Merge cleanliness onto `origin/main`
+Fetched; `origin/main` is at `57d1bbf` as you said. `git merge-tree origin/main HEAD` resolved to a single tree with no conflict markers, exit code 0 — merges cleanly, still unrebased as intended.
+
+## Failures
+None.
+
+## Flakes
+None observed — nothing failed and needed a re-run.
+
+## Missing coverage
+None beyond what I flagged last time, which is now closed by the new test. I don't have new findings this round.
+
+## Environment issues
+None blocking. Note only: unrelated `petspotr-verifier-*` containers appeared on the host during this run (ports 65510–65512) — not mine, not touched, not a collision with 3100/8100/55432.
+
+## Stack state on exit
+Unchanged from what you handed me: `contoso-web-1` (3100), `contoso-chat-1` (8100, healthy), `contoso-db-1` (55432, healthy) all still running. I did not tear anything down, did not run `make e2e-smoke`, and made no repository changes.
+
+## Commands run
+```
+git status --short
+git diff --stat
+git diff apps/web/src/lib/control-classes.ts
+git diff apps/web/src/app/contact/page.tsx
+git merge-tree origin/main HEAD
+cat apps/web/e2e/launcher-safe-area.spec.ts
+docker ps
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3100/contact
+curl -s http://127.0.0.1:3100/contact | grep -c 'max-sm:px-4'
+curl -s http://127.0.0.1:3100/contact | grep -c 'justify-center px-4'
+make -C apps/web ci
+E2E_BASE_URL=http://127.0.0.1:3100 make -C apps/web test-e2e
+git fetch origin main --quiet
+git rev-parse origin/main
+```
+
+## What I did not run, and why
+- `make e2e-smoke` — explicitly excluded by your instruction (it force-recreates containers on fixed local ports, which would have clobbered the stack you handed me).
+- `make ci` (cross-surface) — not requested and not needed; only web-surface files changed, and chat/schema are untouched.
+- Anything that would tear down or recreate the stack.</result>
+<usage><subagent_tokens>54662</subagent_tokens><tool_uses>32</tool_uses><duration_ms>646588</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a1db0239ea1bf24a9</task-id>
+<tool-use-id>toolu_0168jGczuh5Sf33uRrvXr8wZ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/a1db0239ea1bf24a9.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the 286 branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `fix/286-launcher-safe-column`
+
+The fix itself is correct. I re-measured the geometry against the running stack (`127.0.0.1:3100`, which serves the new wrapper) rather than re-deriving it: at 390x844 the submit sits at 64..326 against a launcher at 334..374, gap 8, ring reach 4, ringGap 4. Collapsing the reserve reproduces #286 exactly — `8x32` at 390x844, `8x40` on the `message` textarea at 360x740, `8x8` at 414x896 — so all three `PHONES` annotations are accurate to the pixel, and each has a real red phase. `/login` and `/signup` are `scrollable=0` with no overlap at either phone width, as the comment claims. The 834 gap of 105px checks out. All 7 tests pass in 13.7s against the live stack, and my run left the worktree untouched.
+
+The problems are all in the prose, and one of them is load-bearing.
+
+---
+
+### 1. The sweep table measures the superseded implementation — **defect**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts:295-306`, and the same claim at `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/launcher-safe-area.spec.ts:197-201`.
+
+The table asserts `docHeight` 988 and `submitBelowFoldBy` 32px at 40px and 56px of card inset. On the shipped code those rows do not reproduce. Sweeping the wrapper's padding at 390x844:
+
+```
+totalInset=16  gap= -8  doc=960  submitBottom=848
+totalInset=24  gap=  0  doc=960  submitBottom=848
+totalInset=32  gap= +8  doc=960  submitBottom=848   &lt;- shipped
+totalInset=40  gap=+16  doc=960  submitBottom=848
+totalInset=56  gap=+32  doc=960  submitBottom=848
+```
+
+Document height and submit position are invariant from 16px to 56px. The 988/876 numbers appear only when the padding is applied to the **page column** — the version ui-review round 1 rejected:
+
+```
+pageColumn pad=16 totalInset=32 doc=988 submitBottom=876 subtitleH=84
+cardWrapper pad=16 totalInset=32 doc=960 submitBottom=848 subtitleH=56
+```
+
+and the extra 28px comes from the subtitle paragraph wrapping to a third line (`subtitleH` 56 → 84, one `text-xl` line), not from the card. So line 303's "the card narrows enough that its text wraps taller" is wrong about the cause even for the version it was measured on, and wrong outright for the version being shipped. The table was carried across the move from page column to card wrapper without being re-measured.
+
+Scenario in which it produces a wrong result: the next person widening or narrowing this reserve reads that 40px costs 28px of document and pushes the primary action further below the fold, and rules out a value that in fact costs nothing.
+
+It also mis-names the guard. The spec comment at lines 197-201 calls "the reserved column costs no vertical space" *the constraint that chose 32px over the launcher's full 56px*. That test passes at every inset from 0 to 56 — it cannot distinguish them. The test that actually bounds the upper end is "the reserved column is only as wide as the launcher needs": at inset 56 the submit is 214px wide against a `viewport * 0.6` floor of 234 and fails; at inset 40 it is 246 and passes.
+
+Fix: replace the two 988/32px rows with the measured 960/848, delete the "wraps taller" paragraph, and say what actually chose 32 over 56 — the width floor in the fourth test. Re-point the spec comment at that test. Comment-only, so not UI-affecting; the verifier is the only step this reopens.
+
+Confidence: 95.
+
+### 2. "32px is the smallest value that keeps the indicator intact" — **refinement**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts:311-313`.
+
+Measured, a 28px total inset (`max-sm:px-3`) gives gap 4 and ringGap 0: the focus ring is fully painted and clear of the launcher. 32 is the smallest of the three values the table happens to sample, not the smallest that works. The surrounding argument (the lower bound is the ring, not the hit target) is right and worth keeping; the superlative is not. Suggest "the smallest Tailwind step that leaves the indicator clear of the launcher, with 24px putting it 4px under" or drop the sentence.
+
+Confidence: 90.
+
+### 3. The `sm` boundary test reads a declaration with no behaviour behind it — **refinement**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/e2e/launcher-safe-area.spec.ts:156-165` and `:189`.
+
+You asked whether this crosses the line. It does, at the 640 end, and the comment's justification is the reason I'd change rather than keep it. It says dropping `max-sm:` would mean "the cost would land on viewports nothing measures". There is no cost at any viewport. The card is `max-w-lg`, and the wrapper's content box never falls below 560px at or above 640 (`640 − 2×24 − 32 = 560`), so it never binds:
+
+```
+w=640  cardW(as shipped)=512  cardW(px-4 at every width)=512  doc=932/932
+w=768  512 / 512   w=1024  512 / 512   w=1440  512 / 512
+```
+
+Dropping the prefix changes no rendered pixel at any width. `expect(readings[640].padding).toBe('0px')` therefore can only ever fail for a change that renders identically — the "configuration check that never exercises the rendered pixels" the root `AGENTS.md` names. Its current red phase is incidental too: reverting the change entirely fails it because `submit.closest('form').parentElement` then resolves to the page container (`sm:px-6` → `24px`), not because anything moved.
+
+I would keep the test — pinning the scope of a class is worth something — but say what it pins: that the reserve is declared only where it is needed, with no rendered consequence above `sm`. The current comment claims a consequence that does not exist, which is the same failure mode as finding 1 one level down.
+
+Confidence: 85.
+
+### 4. The module header now under-counts its own exports — **refinement**
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts:4`: "Four exports, because fields and action controls fail differently, are fixed differently, and a control whose focusable element is a descendant needs a different variant again." There are now five, and that rationale enumerates the four it was written for — none of which is a layout reservation.
+
+This is the concrete form of your question 3. The file's contract, as its own header states it, is *what controls share, for the parts that have one right answer*; `LAUNCHER_SAFE_COLUMN` is a single page's reservation against one component's fixed geometry, and it is not shared with anything. It is also the only export here whose correctness depends on code in another file (`chat.tsx`'s `mr-4` and `p-2`) — a coupling the new spec does guard, so it is not a defect, but it is a coupling nothing in this file's header prepares a reader for. Either extend the header to say why a fifth export that is not a control property lives here, or move the constant next to what it is derived from. Leaving the header saying "Four" is the one option that is simply wrong.
+
+Confidence: 90.
+
+---
+
+**On your other questions.** Question 2, the wrapper: I swept 390/414/600/639/640/641/700/768/896/1024/1440 comparing card width, document height and gap against the padding collapsed, and the wrapper changes nothing at or above 640 and only narrows the card below it. The form is the sole child, `align-items: stretch` in the new flex row has no height to stretch against, and the error and submitting states are vertical-only. I found no width or state where it moves anything you have not measured.
+
+**On the filed-not-fixed list:** none of #334, #326, #217, #218, #176 or the ~4px below-fold blocks this. The below-fold one I re-measured directly — `submitBottom=848` at 844 of viewport height, identical at every inset from 16 to 56 — so this change provably neither causes nor worsens it.
+
+**Outside this change.**
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:44` — `catch (err)` binds a variable that is never read and the underlying error is discarded entirely, so a network failure on `/api/contact` leaves nothing in the console or logs to diagnose it. Distinct from #326, which is about announcing the message to the user, not about losing it.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/contact/page.tsx:25` — trailing whitespace on the blank line above the new wrapper, pre-existing and untouched by the diff.
+
+**What I reviewed.** `git diff main...HEAD` is empty — the branch carries no commits, so the whole change is the working tree: modified `apps/web/src/app/contact/page.tsx` and `apps/web/src/lib/control-classes.ts`, plus untracked `apps/web/e2e/launcher-safe-area.spec.ts`, which I read in full. Staged diff is empty. Root `AGENTS.md` and `apps/web/AGENTS.md` both apply; `tests/scripts/AGENTS.md` and `services/chat/AGENTS.md` do not cover these paths. Nothing under `.claude/agents/` or in `AGENTS.md`'s numbered steps is touched, so the workflow-obligation check is not applicable to this diff. I verified journey wiring against `tests/scripts/test_e2e_journey_wiring.py` — `tsconfig.e2e.json` includes `e2e/**/*.ts` by glob and there is no spec registry, so the new file needs no registration. Measurements were taken with Playwright's Chromium against the stack already running on 3100; I could not assess how the `640` assertion behaves in an environment with classic (space-taking) scrollbars, since `innerWidth` reported 640 with the media query matching here.</result>
+<usage><subagent_tokens>87839</subagent_tokens><tool_uses>34</tool_uses><duration_ms>541837</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aa2ef9216ef8a0196</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/aa2ef9216ef8a0196.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify 286 after comment corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Stack is intact, no scratch files left in the repo, and working tree matches what it was at the start (only the branch's own uncommitted changes remain — no modifications made by me).
+
+## Verdict: Verified — the branch is confirmed for the third time
+
+Both requested checks pass cleanly, and I independently re-measured all three corrections named in the handover rather than trusting them. No defects found this round.
+
+### Failures
+None.
+
+### Flakes
+None. No re-runs were needed; both `make -C apps/web ci` and the full journey suite passed on the first attempt.
+
+### Independent verification of the three corrected claims
+Rather than trust the rewritten comments, I drove a live Playwright session against the served build (confirmed by content-check to be the correct build, not a stale/mutated one — see below) and reproduced each number directly:
+
+1. **Sweep table invariance.** Swept the wrapper's total card inset (outer page `px-4` + the wrapper's own reserve) from 16 to 56px and reproduced the table's `submitGap`/`submitW`/`docHeight`/`submitBottom` columns exactly (e.g. 16→submitW 294/gap −8, 32→submitW 262/gap +8, 56→submitW 214/gap +32). `docHeight` was 960 and `submitBottom` was 848 at every one of the six sampled insets — the comment's central claim (document height and submit position are invariant from 16 to 56px) holds, to the pixel, independent of the spec's own assertions.
+2. **≥640px content box.** Measured the wrapper's content-box width and the form's rendered width at 639/640/768/1024/1440px. At 640 the wrapper drops `max-sm:px-4` and its content box is 592px; the form stays pinned at 512px (`max-w-lg`) at every one of those widths, confirming dropping the `max-sm:` prefix changes no rendered pixel at ≥640.
+3. **Vacuity checks caught the wrong-file move.** Confirmed both named tests — `'the reserve is scoped to below the sm breakpoint'` and `'the reserved column costs no vertical space'` — exist in `launcher-safe-area.spec.ts` (lines 156 and 202) and both passed against the current implementation, which does reserve on the inner wrapper (not the page container).
+
+I also worked through an apparent contradiction in the file worth noting: the earlier "why this is 16px and not 56" section and the later "Why 32px of card inset" section use different conventions for "card inset" — the first is the wrapper's own padding contribution (16px, matching the shipped `max-sm:px-4`), the second is the *total* inset from the viewport edge (outer page's fixed 16px `px-4` plus the wrapper's own reserve, summing to 32px "chosen"). Both are internally consistent with the code and with each other once that convention shift is accounted for, and my independent sweep matched the second table's numbers exactly when I used that convention. This is not a defect, but it's a spot where a future reader could trip the same way I initially did — worth flagging even though it isn't something the correction changed and isn't blocking.
+
+### Missing coverage
+None new. This round changed only prose (a module header count, a re-measured comment table, and two spec-comment rewrites) — no production behaviour changed, and rendered-UI review is correctly out of scope per the handover. The pre-existing coverage (143 journeys, including the five `launcher-safe-area.spec.ts` tests) already exercises everything the comments describe.
+
+### Environment issues
+None. Ports 3100/8100/55432 were already held by this project's own stack, as expected, and the served `/contact` content-check (`justify-center max-sm:px-4` = 1, `pr-10` = 0, `items-center max-sm:px-4` = 0) confirmed the container was serving the correct build before I trusted any measurement against it.
+
+### Stack state on exit
+Left exactly as handed over and running: web `http://127.0.0.1:3100`, chat `8100` (healthy), db `55432` (healthy). Not rebuilt, not torn down. `docker compose build web` was not run since the served content already matched the expected fix.
+
+### Commands run
+```
+git status --short
+git diff --stat main...HEAD
+git diff --stat
+git diff apps/web/src/app/contact/page.tsx
+git log --oneline main..HEAD
+
+curl -s http://127.0.0.1:3100/contact | grep -c 'justify-center max-sm:px-4'
+curl -s http://127.0.0.1:3100/contact | grep -c 'pr-10'
+curl -s http://127.0.0.1:3100/contact | grep -c 'items-center max-sm:px-4'
+
+make -C apps/web ci
+
+# ad-hoc Playwright scripts run from apps/web (using its local Playwright install),
+# copied in and removed immediately after each run — no files left behind
+node .scratch-verify3.mjs   # total-inset sweep, 16..56, reproducing the doc's table
+node .scratch-verify4.mjs   # content-box width at 639/640/768/1024/1440
+
+E2E_BASE_URL=http://127.0.0.1:3100 make -C apps/web test-e2e
+```
+
+### Checks not run, and why
+- `make e2e-smoke` — explicitly told not to run it (it rebuilds and force-recreates containers, which would discard the handed-over stack).
+- `make -C services/chat ci`, `make ci` (cross-surface), `make docs-check`, `make test-scripts`, `make release-dry-run` — out of scope; this change touches only `apps/web` prose/spec files, and `detect_changed_surfaces.py` was not re-run this pass since the diff (two files, both under `apps/web`) is unambiguous and matches what the two prior verified runs already scoped.
+- Rendered-UI/visual review — correctly out of scope per the handover, since no markup or class output changed (verified by the content grep and by the live-measured `submitW`/`className` values matching pre-existing shipped behaviour).</result>
+<usage><subagent_tokens>63830</subagent_tokens><tool_uses>22</tool_uses><duration_ms>820883</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a392c72834ac6106b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/32aea79c-3855-4190-9ae4-5916c6d50c99/tasks/a392c72834ac6106b.output</output-file>
+<status>completed</status>
+<summary>Agent "Fresh code review of 286 after defect fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**No defects. Two refinements.** This round returns no defects, so step 8's loop can close.
+
+Both findings are in prose inside `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts`. The code, the spec, and every number I could derive check out.
+
+---
+
+### 1. Orphaned sentence and broken wrap in the module header — refinement, 85
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts:13`
+
+```
+ * holds that coupling together; nothing in this file can. None of them carries an accent. A control's focus
+```
+
+The insertion spliced the new `LAUNCHER_SAFE_COLUMN` paragraph in front of an existing sentence without rewrapping. Two consequences: the line is 108 characters in a file whose every other line wraps at ~78 (it and one pre-existing line at 87 are the only ones over 85), and "None of them" has lost its antecedent — it used to follow "a different variant again", referring to the four control exports; it now follows "nothing in this file can", where the nearest plural nouns are the coupling and the other file.
+
+Nothing catches this: there is no `max-len` rule in `apps/web/eslint.config.mjs`, and Prettier does not reflow comment bodies.
+
+Fix: rewrap, and give the accent sentence an explicit subject — e.g. end the new paragraph at "nothing in this file can.", then start a fresh line "None of the five carries an accent." (which is still true of `max-sm:px-4`).
+
+### 2. The "arithmetic" section states a floor 8px stricter than its own table — refinement, 80
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/lib/control-classes.ts:288-290`
+
+```
+ * the page's `px-4` already holds the card 16px inside the viewport. Against a
+ * launcher column starting at `viewport - 56`, the card's box has to end by
+ * `viewport - 32` for its controls to clear
+```
+
+The controls sit `p-8` = 32px inside the card, so for `controlRight ≤ viewport - 56` the card's box has to end by `viewport - 24`, not `viewport - 32`. With the focus ring's 4px reach it is `viewport - 28`. `viewport - 32` is the shipped value, not the requirement.
+
+The section directly below it says so: the sweep table's 24px row gives `submitGap 0`, and the following paragraph names 28px as where the ring reaches the launcher's edge and 32px as "the next step on Tailwind's scale". So the section that purports to derive the 16px presents it as forced, while the two sections after it establish that the derived floor is 8px and 16 is the next Tailwind step above it. That is the same class of carried-over-claim you asked me to hunt for, and the sentence explicitly invites reuse — "a page with a different gutter has to redo this sum" — so the wrong constant is the one that would be redone.
+
+Fix: state the clearance floor as `viewport - 24` (or `- 28` with the ring), and say the shipped 32 is the Tailwind step above it, pointing forward to the ring paragraph rather than pre-empting it.
+
+---
+
+## Answers to your three questions
+
+**1. Is the rewritten prose accurate?** Everything I could derive is, and the sweep table is internally consistent to the pixel. I re-derived the whole table from the class stack rather than trusting it: at 390 with page `px-4` and card `p-8`, `submitW = 390 − totalInset·2 − 64` gives 294/278/270/262/246/214 for insets 16/24/28/32/40/56 — exact match on all six rows. `submitGap = (390 − 56) − (390 − totalInset − 32)` gives −8/0/+4/+8/+16/+32 — exact match. `ringGap = submitGap − 4` for `outline-2 outline-offset-2` — exact match, and it confirms both focus-ring boundary values: 28px is where the ring lands exactly on the launcher edge, 24px is where the button clears and the ring does not.
+
+The `docHeight 960 / submitBottom 848` invariance I could not measure directly, but it is structurally forced and independently corroborated: every element inside the card is single-line or fixed-height (four `&lt;input&gt;`, a `rows={4}` textarea, a one-line submit), the `grid-cols-1 sm:grid-cols-2` pair is stacked below `sm`, and the subtitle sits in a sibling above the wrapper and cannot be reached by it. `960 − 844 = 116` also matches the spec header's independent "scrolls just 116px", and `848 − 844 = 4` matches the filed below-fold figure. I consider the flatness claim sound.
+
+I spot-checked three more numbers and all three land: the 592px content box at 640 (`640 − 48` under `sm:px-6`, `max-w-4xl` not binding); the 105px gap at 834x1112 (`834 − 40 − 48 = 746` launcher left, `512`-wide card centred in 786 gives submit right at 641 — 105 exactly); and `#286`'s `48..342` against `334..374`. The `layout.tsx` structural claim (copyright `Block` inside `&lt;main&gt;`) and the `chat-launcher.spec.ts` quote ("covering content is tolerable") are both verbatim correct, and `ACTION_FOCUS` is `focus-visible:outline-2 focus-visible:outline-offset-2` as quoted.
+
+Two claims I could not verify and am not scoring: the subtitle's 56→84 at a 40px page-container inset (requires rendering; it is consistent with the 988/876 pair and with `text-xl`'s 28px line box, and it is the one place the "40px" threshold is asserted rather than derived), and "neither `/login` nor `/signup` scrolls". On the latter I did check the geometry it protects — both pages are `px-6` with no `max-w` below `sm`, so their submit buttons run to `viewport − 24` and *do* sit in the launcher's column horizontally; the claim rests entirely on the vertical, i.e. on `justify-center` keeping short content out of the bottom 56px band. That is plausible at 390x844 and 360x740 but it is the load-bearing half of the sentence, and the sentence gives the weaker reason ("neither page scrolls") rather than that one.
+
+**2. Should the constant still move?** No — the new paragraph earns it. The strongest thing in it is not the "shared class constant" framing but the admission that this is the one export whose correctness depends on `chat.tsx`, plus the name of the file that holds the coupling. That is the information a reader needs, and it is stated where they will hit it. I checked for a guard that counts exports here; there is none, so nothing breaks on the "four exports" phrasing changing. The alternative — a `layout-classes.ts` with one member — would put the constant further from `ACTION_FOCUS`, which is exactly the dependency that sets its lower bound.
+
+**3. Anything else in the diff.** The spec's `submit.closest('form').parentElement` resolves to the new wrapper only because `ContactForm` renders the card *as* the `&lt;form&gt;` (`p-8 rounded-xl max-w-lg w-full`) rather than wrapping one — worth knowing, since a refactor that adds a card `&lt;div&gt;` around the form would silently redirect every wrapper reading at once. It fails loudly rather than passing (the vacuity checks reject `0px`), so it is not a finding. I confirmed all five tests have a genuine red phase against pre-change geometry: the overlap sweep on the 8x32 intrusion, the width-floor and ring tests on `gap = −8` / `ringGap = −12`, and both wrapper-padding tests on their vacuity guards. `max-sm:` pairs correctly with the launcher's `sm:mr-12` at the same 640 boundary; `max-lg:` is already used in `chat.tsx`, so the variant is established. The 120ms settle matches `layout.spec.ts`'s convention, and there is no `scroll-behavior: smooth` anywhere to make it insufficient. The new spec is collected by `testMatch: '**/*.spec.ts'` and type-checked by `tsconfig.e2e.json`'s `e2e/**/*.ts`, so `test_e2e_journey_wiring.py` stays satisfied.
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/contact/page.tsx:25` — trailing whitespace on the blank line before the form. Pre-existing, appears only as diff context. My view: leave it. Sweeping it in adds a line to the diff that has nothing to do with #286, and `AGENTS.md`'s *Unrelated findings become issues* points the other way unless leaving it would make this change wrong, which it does not.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/app/login/page.tsx` and `signup/page.tsx` — both are `px-6` with no `max-w` below `sm`, so their submit buttons extend to `viewport − 24` and overlap the launcher's column horizontally at every phone width. They are safe only because `justify-center` keeps short content above the bottom 56px band. A field added to either form, or a taller error state, moves the submit down with nothing measuring it — the new spec covers `/contact` only. Worth an issue if #286's reasoning is meant to generalise.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/src/components/contact-form.tsx:47` — `catch (err)` binds a variable it never reads. This is the same site as the already-filed #338; noting it only because the binding itself is what a linter would flag if one were configured for it.
+
+## What I reviewed
+
+`git diff origin/main...HEAD` is empty — the branch has no commits, so the whole change is unstaged plus untracked. Nothing staged.
+
+- Unstaged: `apps/web/src/app/contact/page.tsx` (+3/−1), `apps/web/src/lib/control-classes.ts` (+118/−3)
+- Untracked: `apps/web/e2e/launcher-safe-area.spec.ts` (read in full)
+
+Context read for judgement: `contact-form.tsx`, `chat.tsx` (launcher geometry), `layout.tsx`, `login/page.tsx`, `signup/page.tsx`, `playwright.config.ts`, `tsconfig.e2e.json`, `eslint.config.mjs`, `chat-launcher.spec.ts`, `layout.spec.ts`, `form-fields.spec.ts`, `action-controls.spec.ts`, `tests/scripts/test_e2e_journey_wiring.py`, and the root plus `apps/web` `AGENTS.md`.
+
+Not assessed: the rendered page — I ran no stack and took no measurements of my own, so every geometric claim above is derived from the class stack rather than observed. The subtitle rewrap threshold and the `/login`+`/signup` non-scrolling claim are the two that derivation cannot settle. The change touches no file under `.claude/agents/` and none of `AGENTS.md`'s numbered steps, so the step-versus-agent obligation check does not apply this round.</result>
+<usage><subagent_tokens>68801</subagent_tokens><tool_uses>26</tool_uses><duration_ms>372460</duration_ms></usage>
+</task-notification>

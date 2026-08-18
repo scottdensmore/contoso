@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "26f1ab307151",
+  "strategy": "manual-commit",
+  "branch": "fix/286-launcher-safe-column",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "apps/web/e2e/launcher-safe-area.spec.ts",
+    "apps/web/src/app/contact/page.tsx",
+    "apps/web/src/lib/control-classes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/26/f1ab307151/0/metadata.json",
+      "transcript": "/26/f1ab307151/0/full.jsonl",
+      "compact_transcript": "/26/f1ab307151/0/transcript.jsonl",
+      "content_hash": "/26/f1ab307151/0/content_hash.txt",
+      "prompt": "/26/f1ab307151/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 184,
+    "cache_creation_tokens": 189645,
+    "cache_read_tokens": 25028029,
+    "output_tokens": 127704,
+    "api_call_count": 92,
+    "subagent_tokens": {
+      "input_tokens": 438,
+      "cache_creation_tokens": 678349,
+      "cache_read_tokens": 8491643,
+      "output_tokens": 210395,
+      "api_call_count": 219
+    }
+  }
+}
