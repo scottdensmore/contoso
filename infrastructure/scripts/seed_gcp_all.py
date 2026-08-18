@@ -59,37 +59,6 @@ def run_script(script_path: Path, script_name: str) -> bool:
         logger.error(f"Error running {script_name}: {e}")
         return False
 
-def install_requirements():
-    """Install required Python packages."""
-    requirements = [
-        "google-cloud-discoveryengine",
-        "google-cloud-aiplatform",
-        "vertexai"
-    ]
-
-    logger.info("📦 Installing required packages...")
-
-    for package in requirements:
-        try:
-            import importlib
-            importlib.import_module(package.replace('-', '_'))
-            logger.debug(f"Package {package} already installed")
-        except ImportError:
-            logger.info(f"Installing {package}...")
-            result = subprocess.run(
-                [sys.executable, "-m", "pip", "install", package],
-                capture_output=True,
-                text=True
-            )
-
-            if result.returncode != 0:
-                logger.error(f"Failed to install {package}")
-                logger.error(result.stderr)
-                return False
-
-    logger.info("✅ All required packages are available")
-    return True
-
 def check_gcp_auth():
     """Check if GCP authentication is configured."""
     try:
@@ -133,10 +102,6 @@ def main():
 
     # Check environment variables
     if not check_requirements():
-        sys.exit(1)
-
-    # Install required packages
-    if not install_requirements():
         sys.exit(1)
 
     # Check GCP authentication
