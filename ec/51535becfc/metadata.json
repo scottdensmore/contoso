@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ec51535becfc",
+  "strategy": "manual-commit",
+  "branch": "fix/gcp-seed-dependency-install",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "infrastructure/scripts/seed_gcp_all.py",
+    "infrastructure/scripts/setup_project.sh",
+    "tests/scripts/test_gcp_seed_deployment.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ec/51535becfc/0/metadata.json",
+      "transcript": "/ec/51535becfc/0/full.jsonl",
+      "compact_transcript": "/ec/51535becfc/0/transcript.jsonl",
+      "content_hash": "/ec/51535becfc/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28419,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 955904,
+    "output_tokens": 1186,
+    "api_call_count": 10
+  }
+}
