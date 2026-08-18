@@ -1,4 +1,8 @@
+import contextlib
 import importlib.util
+import os
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -293,6 +297,223 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 "scripts/new_path.py",
                 "tests/scripts/test_new.py",
             ],
+        )
+
+
+# Names git renders differently from how they sit on disk. `SPACED` is the one
+# that matters most: `git status --porcelain` quotes it even under
+# `core.quotePath=false`, while `git diff --name-only` never quotes it at all,
+# so the two readers need different handling and only one of them is fixed by
+# the config flag.
+SPACED = "apps/web/src/a b.tsx"
+NON_ASCII = "apps/web/src/na\u00efve.tsx"
+PLAIN = "apps/web/src/plain.tsx"
+
+
+def git(repo: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return completed.stdout
+
+
+class QuotedPathFixture:
+    """A real repository containing names git C-quotes.
+
+    Patching `run_git` cannot exercise this: the defect is in what git emits,
+    so the fixture has to be a repository git actually reads. `tests/scripts/
+    AGENTS.md` asks for the owning tool's own output where practical, and this
+    is the case it is describing.
+    """
+
+    def __init__(self, stack):
+        self.root = Path(stack.enter_context(tempfile.TemporaryDirectory()))
+        git(self.root, "init", "--quiet", ".")
+        git(self.root, "config", "user.email", "guard@example.test")
+        git(self.root, "config", "user.name", "Guard")
+        git(self.root, "config", "commit.gpgsign", "false")
+        (self.root / "README.md").write_text("base\n", encoding="utf-8")
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "--quiet", "-m", "base")
+
+    def write(self, *relative: str) -> None:
+        for name in relative:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("contents\n", encoding="utf-8")
+
+    def commit(self, message: str) -> None:
+        git(self.root, "add", "-A")
+        git(self.root, "commit", "--quiet", "-m", message)
+
+    def raw_status(self) -> str:
+        return git(self.root, "status", "--porcelain")
+
+    def raw_diff(self, base: str, head: str) -> str:
+        return git(self.root, "diff", "--name-only", "--diff-filter=ACMRTD", f"{base}...{head}")
+
+
+class QuotedPathTests(unittest.TestCase):
+    """Paths git quotes must still classify as the surface they belong to.
+
+    Routing fails safe today -- an unrecognised path sets `unknown`, which
+    forces the full runtime recommendation -- so nothing is under-gated and the
+    defect has never been visible in CI. The cost is to the flag: `unknown` is
+    meant to mean "no pattern claims this path", and #253 narrowed it for
+    exactly that reason. A renamed component with a space in its name reads, to
+    that flag, as unclassified.
+    """
+
+    def setUp(self):
+        stack = contextlib.ExitStack()
+        self.addCleanup(stack.close)
+        self.fixture = QuotedPathFixture(stack)
+        # Every assertion below reaches git through this constant, so the
+        # fixture is only isolated once it is rebound -- otherwise `run_git`
+        # reads the checkout this guard is meant to protect.
+        stack.enter_context(patch.object(detect_changed, "ROOT", self.fixture.root))
+
+    def test_the_fixture_actually_produces_quoted_output(self):
+        """Without this, the tests below could pass on a fixture git never quotes."""
+        self.fixture.write(SPACED, NON_ASCII, PLAIN)
+        self.fixture.commit("add awkward names")
+        self.fixture.write(SPACED, NON_ASCII, PLAIN)
+        for path in (self.fixture.root / SPACED, self.fixture.root / NON_ASCII):
+            path.write_text("modified\n", encoding="utf-8")
+
+        status = self.fixture.raw_status()
+        self.assertIn('"apps/web/src/a b.tsx"', status)
+        self.assertIn("\\303\\257", status)
+
+    def test_worktree_reader_unquotes_the_names_git_quoted(self):
+        self.fixture.write(SPACED, NON_ASCII, PLAIN)
+        self.fixture.commit("add awkward names")
+        for name in (SPACED, NON_ASCII, PLAIN):
+            (self.fixture.root / name).write_text("modified\n", encoding="utf-8")
+
+        files = detect_changed.changed_files_from_worktree()
+
+        self.assertEqual(files, sorted([SPACED, NON_ASCII, PLAIN]))
+
+    def test_worktree_quoted_names_classify_as_web(self):
+        self.fixture.write(SPACED, NON_ASCII)
+        self.fixture.commit("add awkward names")
+        for name in (SPACED, NON_ASCII):
+            (self.fixture.root / name).write_text("modified\n", encoding="utf-8")
+
+        flags = detect_changed.classify(detect_changed.changed_files_from_worktree())
+
+        self.assertTrue(flags["web"], "a web source file must classify as web")
+        self.assertFalse(
+            flags["unknown"],
+            "a tracked source file must not shelter under the unknown fallback",
+        )
+
+    def test_range_reader_unquotes_the_names_git_quoted(self):
+        self.fixture.write(SPACED, NON_ASCII, PLAIN)
+        self.fixture.commit("add awkward names")
+
+        files = detect_changed.changed_files_from_range(base="HEAD~1", head="HEAD")
+
+        self.assertEqual(files, sorted([SPACED, NON_ASCII, PLAIN]))
+
+    def test_range_quoted_names_classify_as_web(self):
+        self.fixture.write(SPACED, NON_ASCII)
+        self.fixture.commit("add awkward names")
+
+        flags = detect_changed.classify(
+            detect_changed.changed_files_from_range(base="HEAD~1", head="HEAD"),
+        )
+
+        self.assertTrue(flags["web"])
+        self.assertFalse(flags["unknown"])
+
+    def test_a_quoted_name_containing_the_rename_separator_is_not_split_on_it(self):
+        """The separator git puts between a rename's two paths is also legal in a name.
+
+        `status --porcelain` quotes any name with a space in it, so this one
+        arrives as a single quoted token. Splitting the raw payload on " -> "
+        cuts it in half and reports `b.tsx"` as the changed file.
+        """
+        awkward = "apps/web/src/a -> b.tsx"
+        self.fixture.write(awkward)
+        self.fixture.commit("add a name containing the separator")
+        (self.fixture.root / awkward).write_text("modified\n", encoding="utf-8")
+
+        files = detect_changed.changed_files_from_worktree()
+
+        self.assertEqual(files, [awkward])
+
+    def test_names_using_the_named_escapes_round_trip(self):
+        """The escape table for quotes, backslashes and control characters.
+
+        Nothing else in this class reaches it. A space produces quoting with no
+        escape at all, and non-ASCII goes through the octal branch, so the
+        named-escape table was free to be wrong: dropping it entirely leaves
+        every other test here green while `\t` decodes to `t` and
+        `apps/web/src/ta\tb.tsx` silently becomes `apps/web/src/tatb.tsx` -- a
+        rewritten path in the file that routes every check CI runs.
+        """
+        awkward = 'apps/web/src/qu"o\tte\\back.tsx'
+        self.fixture.write(awkward)
+        self.fixture.commit("add a name needing named escapes")
+        (self.fixture.root / awkward).write_text("modified\n", encoding="utf-8")
+
+        # Vacuity: this is only a test of the escape table if git actually
+        # emitted those escapes. A fixture git chose to quote some other way
+        # would leave the assertion below passing for the wrong reason.
+        status = self.fixture.raw_status()
+        self.assertIn('\\"', status, "git did not escape the quote character")
+        self.assertIn("\\t", status, "git did not escape the tab character")
+
+        files = detect_changed.changed_files_from_worktree()
+
+        self.assertEqual(files, [awkward])
+
+    def test_a_filename_that_is_not_utf8_does_not_crash_the_reader(self):
+        """This is why the fix does not use `core.quotePath=false`.
+
+        With that flag git emits the raw bytes and `subprocess.run(text=True)`
+        raises `UnicodeDecodeError`, so a single such file would take down
+        `make quick-ci-changed` entirely rather than misclassify one path.
+        Git's default quoting keeps the stream ASCII, which is what the
+        unquoter is built to read.
+        """
+        directory = self.fixture.root / "apps/web/src"
+        directory.mkdir(parents=True, exist_ok=True)
+        raw_name = os.path.join(os.fsencode(directory), b"bad\xff.tsx")
+        with open(raw_name, "wb") as handle:
+            handle.write(b"contents\n")
+        self.fixture.commit("add a name that is not utf-8")
+        with open(raw_name, "wb") as handle:
+            handle.write(b"modified\n")
+
+        # Vacuity: if git had not quoted this, the reader would be getting an
+        # ordinary ASCII path and the decode path under test never runs.
+        self.assertIn("\\377", self.fixture.raw_status())
+
+        files = detect_changed.changed_files_from_worktree()
+
+        self.assertEqual(len(files), 1, f"expected one changed file, got {files!r}")
+        flags = detect_changed.classify(files)
+        self.assertTrue(flags["web"])
+        self.assertFalse(flags["unknown"])
+
+    def test_worktree_rename_into_a_quoted_name_reports_the_destination(self):
+        self.fixture.write(PLAIN)
+        self.fixture.commit("add plain")
+        git(self.fixture.root, "mv", PLAIN, SPACED)
+
+        files = detect_changed.changed_files_from_worktree()
+
+        self.assertEqual(
+            files,
+            [SPACED],
+            "a rename reports where the file now is, not where it was",
         )
 
 

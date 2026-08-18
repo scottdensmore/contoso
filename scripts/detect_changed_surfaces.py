@@ -125,13 +125,111 @@ def matches_any(path: str, patterns: Iterable[str]) -> bool:
     return any(path_matches(pattern, path) for pattern in patterns)
 
 
+# git renders a path it considers unsafe as a C-quoted string: wrapped in
+# double quotes, with backslash escapes and non-ASCII bytes as three-digit
+# octal. `git status --porcelain` does that for any name containing a space,
+# and both readers do it for non-ASCII. Taken literally, `"apps/web/a b.tsx"`
+# matches no pattern and classifies as `unknown` (#297).
+_C_ESCAPES = {
+    "a": 0x07,
+    "b": 0x08,
+    "f": 0x0C,
+    "n": 0x0A,
+    "r": 0x0D,
+    "t": 0x09,
+    "v": 0x0B,
+    '"': 0x22,
+    "\\": 0x5C,
+}
+
+
+def unquote_git_path(path: str) -> str:
+    """Undo git's C-quoting. Returns anything unquoted unchanged.
+
+    Not `core.quotePath=false`, which is the obvious fix and is a worse one.
+    That makes git emit the raw bytes, and a filename that is not valid UTF-8
+    then raises `UnicodeDecodeError` out of `subprocess.run(text=True)` --
+    measured, `git -c core.quotePath=false status --porcelain` on a name
+    containing byte 0xff dies where the default emits an ASCII-safe
+    `"apps/web/src/bad\\377.tsx"`. That would turn a misclassification into a
+    hard failure of `make quick-ci-changed`. The flag would also not be enough
+    on its own: `status --porcelain` quotes a name containing a space whether
+    it is set or not.
+
+    Decoding is via bytes rather than str because the escapes are bytes: a
+    single non-ASCII character arrives as several octal escapes, and only the
+    assembled sequence is decodable.
+    """
+    if len(path) < 2 or not path.startswith('"') or not path.endswith('"'):
+        return path
+
+    body = path[1:-1]
+    out = bytearray()
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if char != "\\":
+            out.extend(char.encode("utf-8"))
+            index += 1
+            continue
+        index += 1
+        if index >= len(body):
+            break
+        escape = body[index]
+        if escape in "01234567":
+            out.append(int(body[index : index + 3], 8))
+            index += 3
+            continue
+        out.append(_C_ESCAPES.get(escape, ord(escape)))
+        index += 1
+    # surrogateescape so a name that is not valid UTF-8 survives as a distinct
+    # string rather than raising or collapsing into replacement characters.
+    return out.decode("utf-8", errors="surrogateescape")
+
+
+def _read_path_token(payload: str, index: int) -> tuple[str, int]:
+    """Read one porcelain path starting at `index`, quoted or not."""
+    if payload[index] == '"':
+        cursor = index + 1
+        while cursor < len(payload):
+            if payload[cursor] == "\\":
+                cursor += 2
+                continue
+            if payload[cursor] == '"':
+                return payload[index : cursor + 1], cursor + 1
+            cursor += 1
+        return payload[index:], len(payload)
+    separator = payload.find(" -> ", index)
+    if separator == -1:
+        return payload[index:], len(payload)
+    return payload[index:separator], separator
+
+
+def porcelain_destination(payload: str) -> str:
+    """The path a porcelain entry is about -- for a rename, where it now is.
+
+    Splitting the raw string on " -> " is not enough once quoting is in play,
+    because a quoted name can contain that sequence. Reading the first token to
+    its closing quote and looking for the separator after it cannot be fooled
+    that way.
+    """
+    if not payload:
+        return payload
+    token, index = _read_path_token(payload, 0)
+    if payload[index:].startswith(" -> "):
+        token, _ = _read_path_token(payload, index + 4)
+    return unquote_git_path(token)
+
+
 def changed_files_from_range(base: str, head: str) -> list[str]:
     # D is included: a deletion changes a surface just as much as an edit.
     # Without it a deletion-only change classified as "none" and CI skipped
     # every scoped check, so removing a referenced asset or source file would
     # have gone green without the web or chat suites ever running.
     raw = run_git(["diff", "--name-only", "--diff-filter=ACMRTD", f"{base}...{head}"])
-    return sorted({line.strip() for line in raw.splitlines() if line.strip()})
+    return sorted(
+        {unquote_git_path(line.strip()) for line in raw.splitlines() if line.strip()}
+    )
 
 
 def changed_files_from_worktree() -> list[str]:
@@ -140,9 +238,7 @@ def changed_files_from_worktree() -> list[str]:
     for line in raw.splitlines():
         if len(line) < 4:
             continue
-        payload = line[3:].strip()
-        if " -> " in payload:
-            payload = payload.split(" -> ", 1)[1].strip()
+        payload = porcelain_destination(line[3:].strip())
         if payload:
             files.add(payload)
     return sorted(files)
