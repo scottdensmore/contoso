@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "9403fb3d835c",
+  "strategy": "manual-commit",
+  "branch": "fix/gcp-seeder-catalog-path",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/scripts/test_gcp_seed_deployment.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/94/03fb3d835c/0/metadata.json",
+      "transcript": "/94/03fb3d835c/0/full.jsonl",
+      "compact_transcript": "/94/03fb3d835c/0/transcript.jsonl",
+      "content_hash": "/94/03fb3d835c/0/content_hash.txt",
+      "prompt": "/94/03fb3d835c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 184666,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 2757632,
+    "output_tokens": 4313,
+    "api_call_count": 16
+  }
+}
