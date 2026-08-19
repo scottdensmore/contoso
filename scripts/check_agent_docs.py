@@ -25,7 +25,8 @@ AGENTS_FILENAME = "AGENTS.md"
 
 # Pointer files created beside every AGENTS.md. Both assistants support nested
 # context files, so each scoped runbook gets its own pointers.
-SIBLING_POINTER_FILENAMES = ("CLAUDE.md", "GEMINI.md")
+CLAUDE_POINTER_FILENAME = "CLAUDE.md"
+SIBLING_POINTER_FILENAMES = (CLAUDE_POINTER_FILENAME, "GEMINI.md")
 
 # Pointers that live at a fixed path instead of beside an AGENTS.md, mapped to
 # the AGENTS.md they point at (both repo-relative).
@@ -46,6 +47,31 @@ SKIP_DIRECTORIES = {
     "out",
     "venv",
 }
+
+# Claude Code resolves `@AGENTS.md` as an import and loads the file into context;
+# a markdown link only works if the agent chooses to open it. The wording matches
+# what agent-skills' adopt.sh writes so that adoption runs leave this file alone
+# instead of re-breaking the check on every run -- adopt.py's is_pointer_text()
+# accepts a project's own wording, which is what lets the trailing comment stay.
+#
+# The comment is not decoration: this guard exists to catch `#` memories appended
+# to CLAUDE.md, and it is the only thing in the file that says so.
+CLAUDE_POINTER_TEMPLATE = """# {title}
+
+> This file is a thin pointer. All contributor and agent guidance lives in
+> **{agents_label}** — the single source of truth every coding agent reads. Claude Code
+> loads it via the import below.
+>
+> Edit **{agents_label}**, not this file. Move any notes or learned patterns into {agents_label}.
+
+@{agents_label}
+
+<!--
+Do not add content to this file. Agent instructions belong in AGENTS.md, including
+memories captured by pressing `#` in Claude Code. `make agent-docs-check` fails
+when this pointer drifts.
+-->
+"""
 
 POINTER_TEMPLATE = """# {title}
 
@@ -85,7 +111,12 @@ class PointerSpec:
         return link if link.startswith(".") else posixpath.join(".", link)
 
     def render(self) -> str:
-        return POINTER_TEMPLATE.format(
+        template = (
+            CLAUDE_POINTER_TEMPLATE
+            if self.pointer.name == CLAUDE_POINTER_FILENAME
+            else POINTER_TEMPLATE
+        )
+        return template.format(
             title=self.pointer.name,
             agents_link=self.agents_link,
             agents_label=AGENTS_FILENAME,

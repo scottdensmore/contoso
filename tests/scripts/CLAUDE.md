@@ -1,9 +1,12 @@
 # CLAUDE.md
 
-`AGENTS.md` is the single source of truth for agent instructions in this scope.
-This file is a pointer only; it intentionally carries no instructions of its own.
+> This file is a thin pointer. All contributor and agent guidance lives in
+> **AGENTS.md** — the single source of truth every coding agent reads. Claude Code
+> loads it via the import below.
+>
+> Edit **AGENTS.md**, not this file. Move any notes or learned patterns into AGENTS.md.
 
-Read and follow [AGENTS.md](./AGENTS.md).
+@AGENTS.md
 
 <!--
 Do not add content to this file. Agent instructions belong in AGENTS.md, including

@@ -86,6 +86,33 @@ class CheckAgentDocsTests(unittest.TestCase):
         self.assertEqual(spec.agents_link, "../AGENTS.md")
         self.assertIn("[AGENTS.md](../AGENTS.md)", spec.render())
 
+    def test_claude_pointer_uses_the_import_form(self):
+        """Claude Code loads AGENTS.md through `@AGENTS.md`; a link it may never open.
+
+        The form has to match what agent-skills' adopt.sh writes. When the two
+        disagree every adoption run silently re-breaks this guard, which is how
+        the drift was found.
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            rendered = canonical_pointer(root, "CLAUDE.md", "AGENTS.md")
+
+        self.assertIn("@AGENTS.md", rendered)
+        self.assertNotIn("[AGENTS.md](./AGENTS.md)", rendered)
+
+    def test_non_claude_pointers_keep_the_link_form(self):
+        """`@AGENTS.md` is Claude Code syntax. Gemini and Copilot do not parse it,
+        so importing the template wholesale would hand them a broken pointer."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            gemini = canonical_pointer(root, "GEMINI.md", "AGENTS.md")
+            copilot = canonical_pointer(root, ".github/copilot-instructions.md", "AGENTS.md")
+
+        self.assertIn("[AGENTS.md](./AGENTS.md)", gemini)
+        self.assertNotIn("@AGENTS.md", gemini)
+        self.assertIn("[AGENTS.md](../AGENTS.md)", copilot)
+        self.assertNotIn("@AGENTS.md", copilot)
+
     def test_claude_memory_append_is_flagged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
