@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ef34b435e14e",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/chore/agents-md-profile-and-pointer",
+  "checkpoints_count": 12,
+  "files_touched": [
+    "CLAUDE.md",
+    "apps/web/CLAUDE.md",
+    "scripts/check_agent_docs.py",
+    "services/chat/CLAUDE.md",
+    "tests/scripts/CLAUDE.md",
+    "tests/scripts/test_check_agent_docs.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ef/34b435e14e/0/metadata.json",
+      "transcript": "/ef/34b435e14e/0/full.jsonl",
+      "compact_transcript": "/ef/34b435e14e/0/transcript.jsonl",
+      "content_hash": "/ef/34b435e14e/0/content_hash.txt",
+      "prompt": "/ef/34b435e14e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 232,
+    "cache_creation_tokens": 376077,
+    "cache_read_tokens": 17185148,
+    "output_tokens": 109109,
+    "api_call_count": 116
+  }
+}
