@@ -1,271 +1,277 @@
-# AGENTS
+# AGENTS.md — contoso Contributor & Agent Guide
 
-This repository contains two runtime surfaces:
+Working agreement for coding agents (Antigravity, Gemini CLI, Claude Code,
+Cursor, Copilot, Codex, or humans) contributing to this repository. This file is
+the single source of truth for the project contract and conventions. Tool-specific
+files such as `CLAUDE.md` point here rather than duplicating these rules.
 
-- `apps/web/` for the Next.js web app (UI + API routes).
-- `services/chat/` for the FastAPI chat service.
+## Project overview
 
-Use this file as the default runbook for coding agents.
+- **Description**: contoso — a Next.js storefront and a FastAPI chat service
+  sharing one Prisma data model.
+- **Stack / Toolchain**: TypeScript / Next.js (npm workspaces) + Python 3.11 /
+  FastAPI. Node `22`, Python `3.11`, both pinned in `mise.toml`.
+- **Runtime surfaces**: `apps/web/` (Next.js UI + API routes),
+  `services/chat/` (FastAPI chat service).
+- **UI Domain**: Web (responsive browser UI, WCAG AA).
+- **Base Branch**: `main`
 
-## Source of truth
+Command surfaces are layered: root `Makefile` delegates to `apps/web/Makefile`
+and `services/chat/Makefile`; root `package.json` scripts are thin wrappers over
+the same make targets. Prefer make targets — the npm scripts add nothing but a
+second spelling.
 
-`AGENTS.md` is the canonical format for agent instructions. The root file defines
-repository-wide policy; a nested `AGENTS.md` adds authoritative instructions for
-its subtree. Apply both, from the root down to the file closest to the work.
+## Development Commands
 
-Assistant-specific context files are pointers only. They contain no independent
-instructions:
+Run from the repository root.
 
-| Assistant | Pointer file | Points at |
-| --- | --- | --- |
-| Claude Code | `CLAUDE.md` (per scope) | sibling `AGENTS.md` |
-| Gemini CLI | `GEMINI.md` (per scope) | sibling `AGENTS.md` |
-| GitHub Copilot | `.github/copilot-instructions.md` | root `AGENTS.md` |
+| Stage | Command |
+|---|---|
+| Bootstrap (one command) | `make bootstrap` |
+| Dev Server (web + db/chat in Docker) | `make dev` |
+| Dev Server (web only) | `make dev-web` |
+| Dev Server (chat only) | `make dev-chat` |
+| Lint | `make lint` (web) · `make -C services/chat lint` (chat) |
+| Type Check | `make typecheck` (web) · `make -C services/chat typecheck` (chat) |
+| Unit / Component Tests | `make test` (web + chat) |
+| Repo tooling guard tests | `make test-scripts` |
+| Build | `make build` (web production build) |
+| Fast iteration loop | `make quick-ci-changed` |
+| Merge gate — web | `make -C apps/web ci` |
+| Merge gate — chat | `make -C services/chat ci` |
+| Merge gate — docs | `make docs-check` |
+| Complete gate | `make ci` |
+| End-to-end journeys | `make test-e2e` (needs a running stack + browser) |
+| Dockerized smoke | `make e2e-smoke` |
 
-Scopes with their own runbook:
+Root `make lint` and `make typecheck` cover the **web app only** — they delegate
+to `apps/web`. Chat linting and type-checking reach you through
+`make quick-ci-chat`, `make -C services/chat ci`, or `make ci`, not through the
+root `lint`/`typecheck` targets.
 
-- `AGENTS.md` (repo-wide)
-- `apps/web/AGENTS.md`
-- `services/chat/AGENTS.md`
-- `tests/scripts/AGENTS.md`
+`make ci` is the complete gate and expands to: `quick-ci` (toolchain-doctor,
+env-contract-check, web lint/typecheck/test, chat deps-check/lint/typecheck/test)
+→ `test-scripts` → `build` → `docs-check`. CI's `full-ci-main` job runs exactly
+`make ci PYTHON_BASE=python`.
 
-Never add instructions to a pointer file. That includes memories captured by pressing
-`#` in Claude Code, which append to the nearest `CLAUDE.md` — move that text into the
-matching `AGENTS.md` instead.
+## Architecture & Conventions
 
-`make agent-docs-check` (part of `make docs-check`, and gated in CI) fails when a
-pointer drifts and prints the added lines. To restore the pointers locally after
-moving the content across:
+- **Two runtime surfaces, one contract.** `apps/web/src/app/api/chat/*` and
+  `services/chat/src/api/*` are two halves of the same payload contract. A change
+  to either is a change to both — inspect and validate both sides.
+- **Nested runbooks win locally.** A nested `AGENTS.md` adds authoritative rules
+  for its subtree. Apply the root file plus every nested one from the root down to
+  the file closest to the work. JavaScript/TypeScript and React conventions live
+  in `apps/web/AGENTS.md`, not here.
+- **Separate route handlers, domain logic, and presentation.** Web pages and API
+  routes in `apps/web/src/app/`, shared helpers and domain logic in
+  `apps/web/src/lib/`, presentation in `apps/web/src/components/`.
+- **Validate inputs at boundaries** using schemas, on both the web and chat sides
+  of a call.
+- **All Python runs from the single `.venv` at the repo root.** Make targets create
+  it on demand and call `.venv/bin/python` directly — there is nothing to activate.
+  Never install project Python dependencies into a system or `mise` interpreter.
+- **Responsive and accessible.** The web surface is checked at phone, tablet, and
+  desktop viewports; ESLint runs `jsx-a11y/recommended`, so accessibility
+  regressions fail lint rather than review.
+- **Guards must measure effective behavior**, not a nearby declaration. A test that
+  asserts on configuration while claiming to cover rendered output is a failing
+  test that passes.
+- Keep generated artifacts and local runtime outputs out of commits.
+
+## Gotchas & Troubleshooting
+
+- Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
+- Virtualenv missing, broken, or on the wrong Python: run `rm -rf .venv && make venv`.
+- `ModuleNotFoundError` for a chat dependency: you are probably outside the venv —
+  re-run through `make`, or use `.venv/bin/python`. If you are inside it, the chat
+  dependencies were never installed: `make setup` covers web only, so run
+  `make setup-chat`.
+- `make setup` and `npm run setup` are **not** the same command. `make setup`
+  installs web dependencies only; `npm run setup` runs `setup:web` then
+  `setup:chat`. Use `make bootstrap` for both through make.
+- Playwright journeys fail with a missing browser: run
+  `make -C apps/web install-e2e-browsers`, then rerun `make test-e2e`. Neither
+  `make setup` nor `make bootstrap` installs it.
+- Env contract drift: run `make env-contract-check` and update
+  contract/templates/docs together.
+- Docs link drift (including root runbooks): run `make docs-check`.
+- Agent doc drift (a `CLAUDE.md`, `GEMINI.md`, or
+  `.github/copilot-instructions.md` gained content): move the flagged lines into
+  the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.
+- Release guardrail failure: run `make release-dry-run` and fix missing guardrail files.
+- E2E smoke failure: run `make e2e-smoke KEEP_STACK=1`, then inspect `docker compose logs`.
+- Need local LLM/vector dependencies in the Docker chat image: rerun with
+  `CHAT_INSTALL_LOCAL_STACK=1`. In Python chat setup: `make setup-chat-full`.
+- Local-provider startup preflight fails (`LLM_PROVIDER=local`): start Ollama
+  (`ollama serve`), pull the model (`ollama pull <LOCAL_MODEL_NAME>`), and for
+  dockerized chat use `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+- One-command local-provider preflight: `make local-provider-check`. Fuller
+  diagnostics (preflight + health payload + compose logs):
+  `make diagnose-chat-local`.
+- Fresh Docker DB volume and rebuilt chat product index: `make docker-init-fresh`.
+- Full-profile smoke failure in CI: inspect the `e2e-full-compose.log`,
+  `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`,
+  `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts.
+- Scheduled full-profile smoke alerts keep one open issue per alert class and
+  auto-close when scheduled runs recover; include the run URL and summary when triaging.
+- Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
+- Sandbox-only build failure (`listen EPERM`): run `make ci` outside a restricted sandbox.
+- Vitest excludes `e2e/**`. Playwright specs match vitest's default glob, and left
+  in they fail on `@playwright/test` imports vitest cannot run.
+- Web type-checking is **two** `tsc` passes — the app's `tsconfig.json` and the
+  specs' `tsconfig.e2e.json` — plus `scripts/check-journey-coverage.mjs`. Running
+  bare `npx tsc --noEmit` checks only the first and misses the journeys entirely.
+- `make e2e-smoke` probes `127.0.0.1:3100` and `:8100` **literally** and cannot be
+  aimed elsewhere; only `make test-e2e` follows `E2E_BASE_URL`. A remapped stack and
+  `e2e-smoke` do not mix, and one failure mode is a green smoke run against an
+  unrelated project's containers — worse than a red one, because nothing looks wrong.
+  Free the default ports first.
+- `make e2e-smoke` deletes its containers **and their volumes** on exit unless you
+  pass `KEEP_STACK=1`. Use it when a later step still needs the stack.
+- A change carrying a `srcset`, or one whose image source dimensions changed, needs a
+  **2x pass as well as 1x** (`deviceScaleFactor: 2`). Density is a browser-context
+  property, not a width, so it is a second pass rather than another viewport: a 2x
+  screen asks for twice the CSS width and the optimiser never upscales past the
+  source, so a source that satisfies 1x can fall short at 2x with every 1x
+  measurement clean. The 600px re-encode in #152 measured −0.9 to −2.2 dB PSNR at 1x
+  but −4.4 to −6.6 dB at 2x.
+- Bumping a **rendering dependency** — `tailwindcss`, `next`, `react`, `postcss`, or
+  a UI library in `apps/web/package.json` — is a UI-affecting change even though the
+  diff touches no component. A Tailwind major shipped here with every check green.
+
+## Verification Map
+
+Which gate commands read which paths. Stage 7 of the workflow uses this to rerun
+only what a fix could have invalidated, instead of the whole gate every time.
+
+`scripts/detect_changed_surfaces.py` is the executable form of this table, and
+`make quick-ci-changed` runs it. Prefer that over reading the table by hand:
 
 ```bash
-make agent-docs-check FIX=1
+CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
 ```
 
-## Code Review Rules
+| A fix touches | Rerun |
+|---|---|
+| `apps/web/**`, `Dockerfile` | `make -C apps/web ci`, `make test-scripts` |
+| `services/chat/**`, `Dockerfile.migrate` | `make -C services/chat ci`, `make test-scripts` |
+| `apps/web/prisma/**`, `apps/web/prisma.config.ts` | both surfaces: `make -C apps/web ci`, `make -C services/chat ci`, `make test-scripts` |
+| `docs/**`, `README.md`, any `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` | `make docs-check`, `make test-scripts` |
+| `docker-compose.yml` | the complete gate — it is web, chat, and runtime at once |
+| `Makefile`, `mise.toml`, `package.json`, `apps/web/package.json`, `apps/web/package-lock.json` | the complete gate |
+| `config/env_contract.json`, `.env.example`, `services/chat/.env.example`, `docs/ENV_CONTRACT.md` | the complete gate |
+| `scripts/*.py`, `tests/scripts/**`, `.claude/agents/**` | the complete gate |
+| `services/chat/constraints.txt`, `services/chat/requirements-dev.txt`, `services/chat/src/api/requirements-*.txt`, `services/chat/tests/requirements-test.txt` | the complete gate |
+| `.github/workflows/ci.yml`, `release.yml`, `release-main-build.yml`, `.github/dependabot.yml`, `CODEOWNERS`, PR/issue templates | the complete gate |
+| anything else | the complete gate — unmatched paths fall back to runtime by design |
 
-- Treat changes at system seams as one contract. When a change touches the web/chat
-  payload, Prisma schema and handwritten SQL, dependency manifests and constraints,
-  or container inputs and runtime files, inspect and validate both sides.
-- Require guards to measure effective behavior, not a nearby declaration. Reject
-  vacuous loops, mislabeled samples, or configuration checks that never exercise the
-  rendered pixels, served bytes, accessibility tree, resolved files, or tool output
-  named by the assertion.
-- For runtime and container changes, verify the built artifact and real integration
-  path. Unit tests cannot prove that a file was copied into an image, a service starts
-  with its deployed configuration, or the web/chat/database path works together.
+**Rows accumulate -- they are not first-match.** A path matching several rows runs
+the union of their commands, which is what the script does: a Prisma change is a
+chat dependency *and* still matches `apps/web/**`, and a nested `AGENTS.md` under a
+surface runs that surface's gate as well as `docs-check`. Reading the table as
+first-match is how a Prisma change skips `next build`.
 
-## Development workflow
+There is no "rerun nothing" row, and that is deliberate rather than an omission.
+`tests/scripts/` asserts on files across every surface — docs headings, image
+references, compose ordering, agent definitions — so `make test-scripts` runs for
+**any** non-empty change, documentation included.
 
-Follow these steps in order for every change.
+`quick-ci-web` / `quick-ci-chat` are the fast forms and skip the web production
+build. They are the iteration loop, not the merge gate: the gate that has to have
+run before pushing is the `ci` target for each changed surface.
 
-1. **Inspect before changing anything.** Inspect the repository, current Git
-   state, and all applicable instruction files before making changes. Preserve
-   unrelated staged, unstaged, and untracked work.
+<!-- agent-skills:begin workflow 8881bee7 — managed block, edits here are overwritten -->
+## Development Workflow
 
-2. **Create a branch first.** Create a dedicated feature, fix, refactor, chore,
-   test, or documentation branch before making code changes. Never commit
-   directly to `main`, and create the branch from the latest appropriate
-   `main` state.
+Follow these stages in order (governed by the global `agent-workflow-skills`). Scale the pipeline to the
+size of the change using the triage table — skipping a stage is a decision to
+state out loud, never a shortcut taken silently.
 
-3. **Choose a thin vertical slice.** Before implementing a tracked issue or
-   feature, define the smallest end-to-end slice that can be reviewed, tested,
-   shipped, and merged independently. Prefer one coherent user-visible or
-   operational outcome over a broad horizontal layer. If the next issue is too
-   large for one pull request, split it into ordered slices and complete only
-   the current slice. Keep pull requests small enough for thorough review,
-   reliable verification, and quick rollback.
+| Track | When | Stages |
+|---|---|---|
+| **Trivial** | Docs, comments, typos, config with no logic change | 1 → 7 → 9 |
+| **Single fix** | One bug or small change with a clear, contained cause | 1 → 2 → 5 → 7 → 8 → 9 |
+| **Feature** | New behavior, several files, or an architectural choice | All stages; repeat 5–8 per slice |
 
-4. **Use test-driven development when behavior or structure is testable.**
-   - Add or update a focused test before implementation.
-   - Run it and confirm it fails for the expected reason.
-   - Implement the smallest appropriate change.
-   - Run focused tests while iterating.
-   - Refactor only while the relevant tests remain green.
+**Division of labor.** The main agent runs only focused checks — the single test
+it just wrote, a formatter over the files it just touched. Whole suites, builds,
+dependency audits, and repository-wide lint belong to `verifier`, and reviews
+belong to `ui-review` and `code-review`. This is not ceremony: it keeps routine
+command output out of the implementation context, and it means each gate is read
+by something that has not already convinced itself the change is correct.
+Sub-agents report successes in one line and include only the evidence needed to
+diagnose a failure.
 
-   **A guard added for behavior that already works has no red phase**, so the
-   confirm-it-fails bullet never reaches it. Write down which mistake each
-   assertion catches, and which ones nothing catches, then demonstrate it:
-   break an input on purpose and watch that assertion fail on it. Coverage
-   argued rather than demonstrated is the defect the guard was added to
-   prevent, one level up.
+**Preserve what you did not change.** A worktree may hold work that is not yours.
+Never stage, revert, or "clean up" a change you did not make; when something
+unrelated is in the way, name it and leave it alone.
 
-   **Measure what was produced, not what was asked for.** A guard that reads a
-   declaration is measuring the request, and the two come apart constantly: a
-   colour Tailwind serialises as `lab()` reads as a different colour through a
-   regex for numbers; `ring-0` leaves its colour in the computed box-shadow
-   with no geometry to paint it; a zero-width border still reports a border
-   colour; a blurred shadow reports its source colour while every pixel it
-   paints is composited toward the background; `outlineWidth` reports the
-   user-agent default of `3px` for an outline whose style is `none`. Every one
-   of those passed a check that looked right and was measuring something
-   adjacent to the claim. Read the rendered pixels, the served bytes, the
-   accessibility tree — whatever the asserted thing actually is.
-
-   The same trap catches fixtures and samples. Assert that a sample is what its
-   name says — for example, a brightness band, an overlap, or a count that only
-   the intended case produces. Fixture-isolation rules for the root guard suite
-   live in `tests/scripts/AGENTS.md`.
-
-   **Run the focused test here, and only the focused test.** This step needs
-   the one spec or module under change, its red phase, and the mutations that
-   demonstrate what each assertion catches. The `verifier` will not do those:
-   it is instructed not to modify the repository, so breaking an input on
-   purpose is not available to it. Fast whole-suite runners are fine too where
-   they are genuinely fast — `make test-web` is a few seconds.
-
-   The one spec may itself be a journey, and then it needs a composed stack:
-   `make e2e-smoke KEEP_STACK=1` builds one and leaves it up, and steps 6 and 7
-   will want that same one. No make target runs a single spec, so running just
-   the one is `npx playwright test <file>` from `apps/web`.
-
-   What does not belong here is the whole journey suite. Running it costs
-   minutes per iteration, and the trigger for handing over is "I believe this
-   is done", not "I want to know whether it works".
-
-5. **Inspect the complete diff.** Review the branch diff plus all staged,
-   unstaged, and untracked files. Remove accidental or unrelated changes while
-   preserving work that belongs to the user. A real problem found here is filed
-   as an issue before the change is removed — see *Unrelated findings become
-   issues* below.
-
-6. **Run `ui-review` before verification.** After the main agent completes an
-   implementation pass, invoke the `ui-review` sub-agent. The `ui-review`
-   sub-agent must act as an expert in website design, usability,
-   responsiveness, and accessibility. Address every actionable finding before
-   running the `verifier`. For UI-affecting changes, exercise the changed
-   journey in the rendered application at representative phone, tablet, and
-   desktop viewports; inspect interaction, loading, empty, error, focus,
-   keyboard, contrast, and responsive states as applicable; and capture
-   screenshots or equivalent visual evidence.
-
-   A viewport is a width in CSS pixels, which says nothing about how many
-   device pixels fill it. Where the change affects what the browser requests —
-   anything carrying a `srcset`, or a source whose dimensions changed —
-   exercise it at **2x as well as 1x**. Density is a property of the browser
-   context (`deviceScaleFactor: 2`), not a width, so it needs a second pass
-   rather than another viewport. A 2x screen asks for twice the CSS width, and
-   the optimiser never upscales past the source, so a source that satisfies 1x
-   can fall short at 2x while every 1x measurement stays clean. The 600px
-   re-encode first tried in #152 came out at −0.9 to −2.2 dB PSNR at 1x and
-   −4.4 to −6.6 dB at 2x: a difference at 1x small enough to accept, and one at
-   2x that was plainly visible.
-
-   A change is UI-affecting when it moves a rendering dependency, too —
-   `tailwindcss`, `next`, `react`, `postcss`, or a UI library in
-   `apps/web/package.json`. That diff touches no component and can still change
-   every rendered pixel; a Tailwind major shipped here with every check green.
-
-   For changes with no UI impact, explicitly record that rendered UI review is
-   not applicable. If a finding is not applicable, record the concrete reason
-   rather than silently ignoring it.
-
-   `ui-review` may start and stop a stack of its own. If one is already up —
-   from step 4, or from an earlier pass through steps 6 and 7 when step 8 sends
-   you back here — give it the `E2E_BASE_URL` and the ports if they are not the
-   defaults, say the stack is not to be torn down, and say it is not
-   `ui-review`'s. Naming it without addressing it is not a handover: remapped
-   ports are normal here, and a reviewer that cannot reach the stack starts its
-   own or renders nothing. Otherwise step 7's handover below promises a stack
-   that stopped existing here.
-
-7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to run
-   the builds, static checks, tests, and journey coverage appropriate for the
-   change. The verifier must report failures, flakes, missing coverage, and
-   environment issues. Fix or explicitly resolve every actionable finding
-   before starting code review. If a verifier finding requires a code change,
-   rerun the verifier after addressing it.
-
-   **The whole battery belongs here** — the merge-gate command, the production
-   build, the root guard suite, and the full journey run. Do not pre-run those
-   and hand over a summary: it doubles the wall-clock, and a summary is not
-   what the next step needs.
-
-   **Hand over the stack rather than leaving one to be found.** Where journeys
-   need a composed stack, step 4 has usually built one, and step 6 may have
-   built its own — `ui-review` is allowed to, and that one is then its to tear
-   down and may be on ports it chose. Give the `E2E_BASE_URL`, say the stack is
-   yours, and say `KEEP_STACK=1`: without that flag `make e2e-smoke` deletes
-   the containers and their volumes on exit. What the handover buys is not the
-   rebuild, which happens either way, but that the verifier knows a stack
-   exists, knows where it is, and knows not to destroy it. Tear it down after
-   the last step that needs it, not after this one.
-
-   Say the ports if they are not the defaults. `make test-e2e` follows
-   `E2E_BASE_URL` anywhere; `make e2e-smoke` probes `127.0.0.1:3100` and
-   `:8100` literally and cannot be aimed elsewhere, so it and a remapped stack
-   do not mix. One of the ways they fail is a green smoke run against an
-   unrelated project's containers, which is worse than a failure because
-   nothing looks wrong. Exactly which way you get depends on which compose
-   files resolve and which ports are already held, and is not worth predicting
-   here. Free the default ports before step 7, or hand over nothing and say
-   why.
-
-8. **Run `code-review` before every commit.** Invoke the `code-review`
-   sub-agent against the current branch diff and every staged, unstaged, and
-   untracked file. The reviewer must act as an expert in the languages and
-   frameworks used by this application. Address every actionable finding
-   before committing. If review findings cause changes, rerun the appropriate
-   tests and the `verifier`, then obtain a fresh `code-review` approval for the
-   changed state.
-
-   That loop has no natural end, so ask for one: **have the reviewer say which
-   findings are defects and which are refinements.** The loop ends on a round
-   returning no defects, however many refinements come with it. Apply those,
-   rerun the focused tests and the `verifier`, and record what was applied — a
-   refinement-only change does not earn a fresh review round, here or at
-   step 10.
-
-   **A fix made in this loop can invalidate step 6 as well.** If it alters what
-   a page renders, rerun `ui-review` before the verifier and carry its verdict
-   forward; the screenshots from step 6 otherwise describe a state that no
-   longer exists. If it does not, record that the fix was not UI-affecting and
-   go straight to the verifier. Only defects reopen step 6, on the same
-   reasoning that ends this loop — a refinement applied to a rendered surface
-   does not.
-
-9. **Commit after approval.** Commit only after verification and code review
-   are complete. Use Conventional Commits:
-
-   ```text
-   <type>(<scope>): <imperative summary>
-   ```
-
-   Keep the subject at 72 characters or fewer, describe why in the body when
-   useful, and do not combine unrelated work.
-
-10. **Create pull requests from the reviewed state.**
-    - Confirm that local verification remains valid.
-    - Rerun `code-review` only if the reviewed state changed after the
-      pre-commit review.
-    - A changed state includes code, tests, documentation, generated files,
-      conflict resolution, or any other staged, unstaged, or untracked content.
-    - Except refinements the reviewer classified as such and step 8 cleared:
-      applying those does not re-arm this, or the loop step 8 just ended
-      reopens here.
-    - Do not repeat code review when the already-reviewed diff and worktree
-      remain unchanged.
-    - Updating the branch from `main` — rebase, merge, or conflict resolution —
-      invalidates **verification** as well as review. The builds, merge gates,
-      smoke, and journeys were measured against a tree that no longer exists,
-      so rerun step 7's applicable commands against the updated one rather than
-      rerunning `code-review` alone.
-    - Tear down any stack steps 4, 6, or 7 left running, once step 8's loop has
-      closed and no further `verifier` run is coming: `make down`, or
-      `docker compose down --volumes` to drop the seeded database with it. Step
-      7 hands its stack forward under `KEEP_STACK=1`, which disables the only
-      teardown the workflow otherwise performs — so without this the containers
-      outlive the change and hold ports 3100, 55432, and 8100 against the next
-      one.
-    - Push and create the pull request only after local verification and any
-      required code review are complete.
-    - Open a normal, ready-for-review pull request by default. Do not open
-      draft pull requests unless the user explicitly asks for a draft.
-
-11. **Merge only clean, passing pull requests.** Merge only after GitHub
-    reports a clean merge state and every configured check passes. Never bypass
-    a failing or pending required check. Self-merges are allowed when these
-    conditions are met. Use squash merge for short-lived development branches
-    to keep `main` linear, then delete the merged branch.
+1. **Inspect & Branch**: Inspect `git status`, the current branch, and every
+   applicable instruction file before touching anything. Note unrelated staged,
+   unstaged, and untracked work so you can preserve it. Fetch the base branch
+   (`git fetch origin main`) and create a dedicated branch:
+   `git checkout -b <owner>/<type>/<short-description> origin/main`.
+   `<owner>` is your GitHub login (`gh api user --jq .login`); `<type>` is one of
+   `feat`, `fix`, `refactor`, `chore`, `test`, `docs`. Never commit to `main`.
+2. **Plan & Slice (`plan-and-prototype`)**: Formulate a clear step-by-step plan
+   before writing code. Define the smallest end-to-end slice that can be reviewed,
+   tested, and shipped independently; if the work is too large for one pull
+   request, order the slices and complete only the current one.
+3. **Prototype Options (if needed)**: When facing architectural choices, unfamiliar
+   APIs, or UX alternatives, spike lightweight prototypes and compare trade-offs
+   before committing to an approach.
+4. **Track Bugs & Follow-ups**: When bugs, edge cases, technical debt, or follow-up
+   tasks surface mid-change, file them immediately (`gh issue create`, the project's
+   tracker, or `ISSUES.md` when none is configured) instead of expanding the current
+   slice.
+5. **Test-Driven Development (`tdd-workflow`)**:
+   - Write/update a focused test first → confirm it fails for the expected reason →
+     minimal implementation → iterate until passing → refactor. A test that passes
+     before the code exists is testing the wrong thing.
+   - **When the change replaces an existing contract, find the tests pinning the old
+     one first.** A new failing test proves the new behavior is missing; it says
+     nothing about tests still asserting the behavior being removed. Search for
+     assertions on the symbol, attribute, label, or role being changed and update
+     them inside the same red/green loop. Skipping this is silently safe — the new
+     test goes green, the loop looks complete, and the contradiction only surfaces a
+     full gate cycle later.
+   - Run only the test you authored or changed, filtered by file and name. Whole
+     suites are stage 7's job.
+   - Pure logic (calculations, state machines, business rules) must be unit-tested.
+     Non-testable areas (rendering, audio) must be visually/interactively verified.
+6. **UI Review (`ui-review`)**:
+   - Audit layout, visual hierarchy, contrast (WCAG AA), interaction states, and
+     accessibility according to the project's UI domain.
+   - For a change with no user-visible surface, say so and return. Do not invent
+     findings to justify the stage.
+7. **Verification (`verifier`)**:
+   - Run the project's full gate: lint, type-check, test suites, build. Focused runs
+     from stage 5 do not substitute for it.
+   - Fix or explicitly resolve every actionable finding before code review. When a
+     fix changes code, rerun the affected focused tests, then rerun the gate commands
+     whose inputs the fix touched — see **Verification Map** below if this project
+     defines one. The complete gate must run in full at least once on the state that
+     enters code review.
+   - Some findings are environmental and no code change resolves them (browsers that
+     will not install, no network, a missing credential). Resolving those means
+     naming them precisely — what ran, what did not, and why — not retrying them.
+8. **Code Review (`code-review`)**:
+   - Read the complete change: `git diff origin/main...HEAD`, plus staged
+     and unstaged edits (`git diff HEAD`) and untracked files (`git status
+     --porcelain`). Remove accidental or unrelated edits of your own; preserve
+     anything that belongs to the user.
+   - Enforce architectural boundaries, language idioms, defensive error handling,
+     and zero committed secrets.
+   - Do not repeat this review on an unchanged state. Rerun it only when the
+     reviewed content actually changed.
+9. **Commit & PR Lifecycle (`slice-and-pr`)**:
+   - Commit using Conventional Commits (`<type>(<scope>): <summary>`). Stage files
+     explicitly; never `git add -A` when unrelated work is present.
+   - Open the PR with `gh pr create` and watch CI with `gh pr checks --watch`.
+   - **Stop there and report.** Merging (`gh pr merge`) and force-pushing require
+     explicit approval from the user in the current conversation.
+<!-- agent-skills:end workflow -->
 
 ### Unrelated findings become issues
 
@@ -303,6 +309,42 @@ it: a separate pull request is cheap, and an unscoped one is not.
 
 Sub-agents report findings; they do not file issues. Every finding they report
 that falls outside the current change needs the main agent to file it.
+
+### Stack handover and teardown
+
+The numbered stages above are the generic pipeline. These are the repo-specific
+obligations attached to them, and they live here because the stages themselves are
+a managed block this file does not edit.
+
+**Stage 5 may build the stack the later stages use.** The one spec under change
+may itself be a journey, and then it needs a composed stack: `make e2e-smoke
+KEEP_STACK=1` builds one and leaves it up, and stages 6 and 7 will want that same
+one. No make target runs a single spec, so running just the one is
+`npx playwright test <file>` from `apps/web`.
+
+**Stage 6 hands its stack forward.** Where a stack is already up -- from stage 5, or
+from an earlier pass through 6 and 7 when stage 8 sends you back -- give `ui-review`
+the `E2E_BASE_URL` and the ports if they are not the defaults, say the stack is not to
+be torn down, and say it is not `ui-review`'s. Naming it without addressing it is not
+a handover: remapped ports are normal here, and a reviewer that cannot reach the stack
+starts its own and tears it down on exit, destroying the stack stage 7 was promised.
+
+**Stage 7 hands its stack forward too.** Give the `E2E_BASE_URL`, say the stack is
+yours, and say `KEEP_STACK=1` -- without that flag `make e2e-smoke` deletes the
+containers and their volumes on exit. What the handover buys is not the rebuild, which
+happens either way, but that the verifier knows a stack exists, knows where it is, and
+knows not to destroy it.
+
+**A fix in stage 8's loop can invalidate stage 6.** Rerun `ui-review` before the
+verifier when a review fix touches a rendered surface; a re-review of source alone does
+not re-establish what the rendered pass covered.
+
+**Tear the stack down at the end, not before.** Once stage 8's loop has closed and no
+further `verifier` run is coming, tear down any stack stages 5, 6, or 7 left running:
+`make down`, or `docker compose down --volumes` to drop the seeded database with it.
+Stage 7 hands its stack forward under `KEEP_STACK=1`, which disables the only teardown
+the workflow otherwise performs -- so without this the containers outlive the change
+and hold ports 3100, 55432, and 8100 against the next one.
 
 ### Sub-agents this workflow depends on
 
@@ -414,6 +456,53 @@ while a browser sits there working. That is not a fallback-to-source case:
 `Bash` still drives the installed browser. `ui-review` carries the detail; what
 belongs here is that a rendered review remains required in that state, and that
 the writeup says which path rendered it.
+
+## Source of truth
+
+`AGENTS.md` is the canonical format for agent instructions. The root file defines
+repository-wide policy; a nested `AGENTS.md` adds authoritative instructions for
+its subtree. Apply both, from the root down to the file closest to the work.
+
+Assistant-specific context files are pointers only. They contain no independent
+instructions:
+
+| Assistant | Pointer file | Points at |
+| --- | --- | --- |
+| Claude Code | `CLAUDE.md` (per scope) | sibling `AGENTS.md` |
+| Gemini CLI | `GEMINI.md` (per scope) | sibling `AGENTS.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` | root `AGENTS.md` |
+
+Scopes with their own runbook:
+
+- `AGENTS.md` (repo-wide)
+- `apps/web/AGENTS.md`
+- `services/chat/AGENTS.md`
+- `tests/scripts/AGENTS.md`
+
+Never add instructions to a pointer file. That includes memories captured by pressing
+`#` in Claude Code, which append to the nearest `CLAUDE.md` — move that text into the
+matching `AGENTS.md` instead.
+
+`make agent-docs-check` (part of `make docs-check`, and gated in CI) fails when a
+pointer drifts and prints the added lines. To restore the pointers locally after
+moving the content across:
+
+```bash
+make agent-docs-check FIX=1
+```
+
+## Code Review Rules
+
+- Treat changes at system seams as one contract. When a change touches the web/chat
+  payload, Prisma schema and handwritten SQL, dependency manifests and constraints,
+  or container inputs and runtime files, inspect and validate both sides.
+- Require guards to measure effective behavior, not a nearby declaration. Reject
+  vacuous loops, mislabeled samples, or configuration checks that never exercise the
+  rendered pixels, served bytes, accessibility tree, resolved files, or tool output
+  named by the assertion.
+- For runtime and container changes, verify the built artifact and real integration
+  path. Unit tests cannot prove that a file was copied into an image, a service starts
+  with its deployed configuration, or the web/chat/database path works together.
 
 ## Repo map
 
@@ -572,25 +661,15 @@ Copy templates to `.env` before local development.
 
 ## Validation expectations
 
-Use `make quick-ci-changed` during implementation, and rerun it against an
-explicit range when validating committed work:
+`## Verification Map` above is the authority on which gate command a change
+requires, and `make quick-ci-changed` computes it for you. That is the iteration
+loop during implementation, not a substitute for the gate: the `ci` target for
+every changed surface has to have run before pushing, and step 7 is where that
+happens.
 
-```bash
-CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
-```
-
-Every changed surface's merge-gate command has to have run before pushing.
-Step 7 is where that happens, so this matrix is what tells `verifier` which
-ones apply rather than a list to work through by hand:
-
-- Web: `make -C apps/web ci` (includes lint, type-check, tests, and build)
-- Chat: `make -C services/chat ci`
-- Scripts/tooling: `make test-scripts`
-- Documentation/runbooks: `make docs-check`
-- Cross-surface or repository-wide: `make ci`
-
-Add integration confidence where the change crosses a runtime boundary. These
-are the verifier's too.
+Add integration confidence where the change crosses a runtime boundary. The
+Verification Map does not route these and `make ci` does not run them, so they
+are a deliberate addition to step 7 rather than something a changed path selects:
 
 - End-to-end journeys: `make test-e2e` (needs a running stack and the Playwright
   browser; see step 7)
@@ -599,39 +678,11 @@ are the verifier's too.
 - Full local-provider integration confidence: `make e2e-smoke-full`
 - Release preflight: `make release-dry-run RELEASE_TAG=vX.Y.Z`
 
-## Troubleshooting
-
-- Toolchain mismatch: run `mise install`, then `make toolchain-doctor`.
-- Virtualenv missing, broken, or on the wrong Python: run `rm -rf .venv && make venv`.
-- `ModuleNotFoundError` for a chat dependency: you are probably outside the venv — re-run through `make`, or use `.venv/bin/python`. If you are inside it, the chat dependencies were never installed: `make setup` covers web only, so run `make setup-chat`.
-- Playwright journeys fail with a missing browser: run `make -C apps/web install-e2e-browsers`, then rerun `make test-e2e`. Neither `make setup` nor `make bootstrap` installs it.
-- Env contract drift: run `make env-contract-check` and update contract/templates/docs together.
-- Docs link drift (including root runbooks): run `make docs-check`.
-- Agent doc drift (a `CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md` gained content): move the flagged lines into the matching `AGENTS.md`, then run `make agent-docs-check FIX=1`.
-- Release guardrail failure: run `make release-dry-run` and fix missing guardrail files.
-- E2E smoke failure: run `make e2e-smoke KEEP_STACK=1`, then inspect `docker compose logs`.
-- Need local LLM/vector dependencies in Docker chat image: rerun with `CHAT_INSTALL_LOCAL_STACK=1`.
-- Need local LLM/vector dependencies in Python chat setup: run `make setup-chat-full`.
-- Need one-command local-provider preflight checks: run `make local-provider-check`.
-- Need fuller local chat diagnostics (preflight + health payload + compose logs): run `make diagnose-chat-local`.
-- Need to initialize a fresh Docker DB volume and rebuild chat product index: run `make docker-init-fresh`.
-- Local-provider startup preflight fails (`LLM_PROVIDER=local`): start Ollama (`ollama serve`), pull model (`ollama pull <LOCAL_MODEL_NAME>`), and for docker chat use `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
-- Full-profile smoke failure in CI: inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts.
-- Scheduled full-profile smoke alerts keep one open issue per alert class and auto-close when scheduled runs recover; include run URL and summary when triaging.
-- Missing env files: run `make env-init`, then update `.env` and `services/chat/.env`.
-- Sandbox-only build failure (`listen EPERM`): run `make ci` outside restricted sandbox.
-
-## Building and running
-
-Follow the validation matrix above. `make quick-ci-changed` is the iteration loop,
-not a substitute for the applicable merge-gate command. Web merge gates include a
-production build through `make -C apps/web ci` or `make ci`.
-
-When doing git operations use the GitHub CLI `gh` where possible.
-
 ## Git repo
 
 The main branch for this project is called `main`.
+
+When doing git operations use the GitHub CLI `gh` where possible.
 
 ## Comments policy
 
@@ -642,3 +693,7 @@ Only write high-value comments if at all. Avoid talking to the user through comm
 Use hyphens instead of underscores in flag names (e.g. `my-flag` instead of `my_flag`).
 
 JavaScript/TypeScript and React conventions live in `apps/web/AGENTS.md`.
+
+## Notes & Learned Patterns
+
+- Add learned project patterns, architecture insights, and persistent notes here.
