@@ -1,0 +1,488 @@
+/project-profile
+
+---
+
+Also... do I have only 1 workflow? I think AGENTS.md defined two different ones now
+
+---
+
+the skills I am using and want to use is from ../agent-skills
+
+---
+
+Lets cosolidate (according to the skill since this is the new way) and then the pointer should be the one the skill and adoption picked. What do you think?
+
+---
+
+ok lets get rid of the @tests/scripts/test_verify_docs.py I think that is not needed right?
+
+---
+
+I don't want to just keep checking all the markdown files (AGENTS.md etc). We can assume they will be fine and I will look at them everyonce in awhile to ensure no drift
+
+---
+
+Ok lets follow the workflow to get this in
+
+---
+
+<task-notification>
+<task-id>a3f676e47b123b848</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/93f6c8cf-8698-4af0-962b-05046cda36d1/tasks/a3f676e47b123b848.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify branch change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed identical to the initial scope — no drift caused by my checks.
+
+## Verdict: Verified — the change is ready. No failures found.
+
+The change on `scottdensmore/chore/agents-md-profile-and-pointer` (all uncommitted, working tree only) passes the complete gate and the adoption-tool idempotency check.
+
+### Failures
+None.
+
+### Flakes
+None observed. Only one run of each command was needed (all green on first attempt), so no re-run was required to distinguish flake from defect.
+
+### Missing coverage
+None identified for this change's actual behavior change. The two new tests in `tests/scripts/test_check_agent_docs.py` directly cover the new branching logic in `PointerSpec.render()` (Claude gets the `@AGENTS.md`-import template, Gemini/Copilot keep the link-form template), and `make docs-check` → `agent-docs-check` independently re-validates that the four regenerated `CLAUDE.md` files match what the updated script renders — so the regenerated pointer content isn't just asserted by a unit test, it's checked against the real repo files too. I did not find any behavior in this diff that a test doesn't exercise.
+
+One thing worth flagging as an observation rather than a gap: the AGENTS.md rewrite is a large content diff (677 lines) that is prose/documentation, not something `test-scripts` or `docs-check` can validate for accuracy of the *profiled* content (Development Commands, Architecture &amp; Conventions, Gotchas, Verification Map wording) — those checks validate structure (links resolve, headings exist, pointer files are well-formed) but not that the described commands/toolchain claims are factually correct. That's inherently outside what an automated gate can check; a human/reviewer read of the prose is the only coverage for that.
+
+### Environment issues
+None. The `.venv` was already present, Node/Python toolchain checks passed (`Toolchain check passed: Node v22.23.1, Python Python 3.11.15 (via mise python@3.11), venv Python 3.11.15.`), and the web production build (`npm run build` / `next build`) completed successfully generating all 230 static paths. No ports were needed (no `e2e-smoke` or `test-e2e` was required by scope, and none was run).
+
+### Exact commands run
+
+```bash
+git status --short
+git diff --stat main...HEAD
+git rev-parse HEAD main   # confirmed HEAD == main; all changes are uncommitted working-tree
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+sed -n '/## Verification Map/,/## Development Workflow/p' AGENTS.md
+make ci
+NO_COLOR=1 /home/scottdensmore/Developer/scottdensmore/agent-skills/adopt.sh --dry-run --keep-existing /home/scottdensmore/Developer/scottdensmore/contoso
+```
+
+`make ci` = `quick-ci` (toolchain-doctor, env-contract-check, `apps/web` lint+typecheck+test, `services/chat` ruff+mypy+pytest) + `test-scripts` (217 tests, `tests/scripts` discover) + `build` (`apps/web` `next build`) + `docs-check` (`verify_docs.py`, `agent-docs-check`, `test_agent_definitions.py` — 9 tests). All stages passed; chat pytest: 60/60 passed; root test-scripts: 217/217 `OK`; web build: compiled successfully, 230 static paths generated.
+
+### `adopt.sh` output (verbatim)
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  AGENT WORKFLOW SKILLS                                     │
+│  Universal agent standard - 9-stage development pipeline   │
+└────────────────────────────────────────────────────────────┘
+
+Skills
+  ✔ Gemini CLI / Antigravity : ~/.gemini/config/plugins/agent-workflow-skills
+  ✔ Claude Code Skills       : ~/.claude/skills (7 linked)
+  ✔ OpenAI Codex Skills      : ~/.codex/skills (7 linked)
+  ✔ Universal Agent Skills   : ~/.agents/skills (7 linked)
+
+Repository
+  Project      contoso
+  Path         /home/scottdensmore/Developer/scottdensmore/contoso
+  Toolchain    TypeScript / Node.js (npm) (root)
+  UI domain    Node.js / CLI
+  Base branch  main
+
+Changes
+  ✔ AGENTS.md already current (workflow 8881bee7, no changes written)
+  ✔ Verified CLAUDE.md pointer (left untouched)
+  ✔ Gemini CLI / Antigravity already points to AGENTS.md (GEMINI.md, left as-is)
+
+Dry run — no files were written.
+```
+
+This satisfies both required conditions: AGENTS.md reported already current, and the CLAUDE.md pointer left untouched. Dry run confirmed no files written.
+
+### Checks not run, and why
+
+- `make e2e-smoke`, `make test-e2e`, `make e2e-smoke-lite/full`, `make release-dry-run` — not run. Scope is root tooling/docs (`scripts/check_agent_docs.py`, `tests/scripts/**`, `AGENTS.md`/`CLAUDE.md` pointer files) with no web/chat source, Dockerfile, `docker-compose.yml`, or release-workflow changes. Per the Verification Map, these paths route to "the complete gate" (`make ci`), not the runtime/integration/journey/release checks, and the task's WHAT TO RUN instruction confirmed this scope. No stack was started or needed, and none was torn down.
+- Repository-wide git history/PR-level checks (`gh pr checks`, CI on GitHub) — not run, since this is a local, uncommitted working-tree verification and no PR exists yet for this change.
+
+Relevant file paths:
+- `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/CLAUDE.md`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/apps/web/CLAUDE.md`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/services/chat/CLAUDE.md`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/CLAUDE.md`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/check_agent_docs.py`
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_check_agent_docs.py`</result>
+<usage><subagent_tokens>35203</subagent_tokens><tool_uses>20</tool_uses><duration_ms>175104</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a227942fde91d5be4</task-id>
+<tool-use-id>toolu_019AUsSYVYxzozRNRdoke9uk</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/93f6c8cf-8698-4af0-962b-05046cda36d1/tasks/a227942fde91d5be4.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review branch change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review: `scottdensmore/chore/agents-md-profile-and-pointer`
+
+All seven files are uncommitted; `git diff origin/main...HEAD` is empty as stated. Five findings, four defects.
+
+Two things I want to record as verified up front, because they were the stated risks and they came out clean:
+
+- **The managed block is untouched.** I loaded `/home/scottdensmore/Developer/scottdensmore/agent-skills/scripts/adopt.py` and compared `workflow_block("main")` against the block extracted from the new `AGENTS.md`: byte-identical, version `8881bee7` both sides.
+- **The pointer guard is still strict, and the per-assistant split is the right design.** `check_pointer` is unchanged full-text equality, so an appended `#` memory still fails; `test_claude_memory_append_is_flagged` and `test_drift_in_each_pointer_type_is_flagged` both exercise `CLAUDE.md` and both pass. `CLAUDE_POINTER_TEMPLATE`'s body is byte-identical to adopt.py's `DEFAULT_CLAUDE_POINTER`, and I ran `is_pointer_text()` against all four regenerated pointers — `True` for each, so adoption runs will leave the trailing HTML comment alone. The comment at `check_agent_docs.py:51-58` is accurate. Both new tests fail on regression in the direction they claim.
+
+The defects are all in the `AGENTS.md` restructure, and all of the same kind: the rewrite dropped obligations that files outside `AGENTS.md` are still written to receive.
+
+---
+
+### 1. DEFECT — `### Unrelated findings become issues` deleted; `code-review.md` still cites it by name
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` (section removed, old lines 270-306) · `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/code-review.md:78`
+
+That definition reads:
+
+&gt; `AGENTS.md`'s *Unrelated findings become issues* makes the caller responsible for filing these, and it can only file what you name
+
+The section no longer exists. More importantly its operative sentence has no replacement anywhere in the repo:
+
+&gt; Sub-agents report findings; they do not file issues. Every finding they report that falls outside the current change needs the main agent to file it.
+
+Stage 4 ("Track Bugs &amp; Follow-ups") is not a substitute: it covers bugs the *implementer* trips over mid-change, and it is skipped on both the Trivial track (1 → 7 → 9) and the Single fix track (1 → 2 → 5 → 7 → 8 → 9) — the two tracks most changes run.
+
+**Scenario.** A single-fix change. `code-review` returns an *Outside this change* list exactly as instructed. Nothing in the workflow now tells the main agent to file it, and the section that made it the caller's responsibility is gone. The findings die with the review — which is the failure mode the deleted text was written to prevent, stated in those words.
+
+**Fix.** Restore the section, or at minimum its sub-agent sentence and the "file at the moment of finding" rule, outside the managed block — `### Sub-agents this workflow depends on` is unmanaged and already carries step-scoped obligations. Confidence **90**.
+
+---
+
+### 2. DEFECT — step 6 lost the handover obligation `ui-review.md` is written to receive
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:255-259` (new step 6) · `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/ui-review.md:102`
+
+New step 6 is two bullets: audit, and say so if there is no user-visible surface. The old step 6 additionally required rendering the changed journey at three viewports, a 2× pass, screenshots, and — the part that matters here — handing `ui-review` the `E2E_BASE_URL` and non-default ports when a stack is already up, and telling it the stack is not its to tear down.
+
+`ui-review.md:102` still says:
+
+&gt; **If the caller handed you a stack, use it and start nothing.** Step 6 of the workflow passes an `E2E_BASE_URL` and the ports when they are not the defaults
+
+Step 6 no longer passes anything. `AGENTS.md:375` (retained) likewise still refers to "step 6's rendered-journey requirement", which step 6 no longer states.
+
+**Scenario.** A UI change with a stack already up on remapped ports — normal here, per the change's own gotcha at `AGENTS.md:130-135`. Nothing now tells the main agent to pass the URL. `ui-review` cannot reach the stack, starts its own, and tears it down on exit — destroying the stack step 7 was promised. This is verbatim the failure the deleted paragraph existed to prevent ("Naming it without addressing it is not a handover").
+
+The 2×/`srcset` and rendering-dependency facts did survive, as `## Gotchas` bullets at `AGENTS.md:138-149`, and `ui-review.md` still carries them internally — so the *audit* is intact. It is the caller-side handover that has no home. Same class, also dropped and not reported separately: old step 8's "a fix in this loop can invalidate step 6 — rerun `ui-review` before the verifier" has no replacement either (`grep` for `ui-review` in `AGENTS.md` finds no rerun instruction).
+
+**Fix.** Restate the step 6 stack handover in `### Sub-agents this workflow depends on`, alongside the existing `ui-review` browser paragraph. Confidence **85**.
+
+---
+
+### 3. DEFECT — renumbering left `verifier.md` pointing at the wrong step, three times
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/verifier.md:29, 47, 55`
+
+TDD moved from step 4 to stage 5; step 4 is now "Track Bugs &amp; Follow-ups". `verifier.md` was not updated:
+
+- line 29: "it is built for the iteration loop of step 4; you are step 7"
+- line 47: "Step 7 is the only place that build runs before a push — step 4 iterates"
+- line 55: "Step 4 runs the one spec under change and is told not to run the suite"
+
+An agent that follows the cross-reference lands on issue-filing, which says nothing about iteration or focused specs — so the stated *reason* for running the merge gate rather than the fast variant no longer checks out against the file it cites.
+
+Line 47 has a second, related break: it quotes `AGENTS.md` as calling `quick-ci-changed` "the iteration loop, not a substitute for the applicable merge-gate command". That exact sentence lived in the deleted `## Building and running` section. The replacement at `AGENTS.md:589-592` rewords it, so the quotation no longer matches its attributed source.
+
+`tests/scripts/test_agent_definitions.py:33` pins only `{"ui-review": 6, "verifier": 7, "code-review": 8}` — those three are still correct, which is why the guard suite passes and cannot catch this.
+
+**Fix.** Change the three references to step 5, and re-quote or paraphrase the `quick-ci-changed` line. Confidence **82**.
+
+---
+
+### 4. DEFECT — the stack teardown obligation was dropped, leaving `KEEP_STACK=1` with no terminator
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:266-272` (new step 9)
+
+Old step 10 carried:
+
+&gt; Tear down any stack steps 4, 6, or 7 left running, once step 8's loop has closed and no further `verifier` run is coming: `make down` […] Step 7 hands its stack forward under `KEEP_STACK=1`, which disables the only teardown the workflow otherwise performs — so without this the containers outlive the change and hold ports 3100, 55432, and 8100 against the next one.
+
+New step 9 is commit + PR only. Meanwhile `verifier.md:57-59` still instructs passing `KEEP_STACK=1` and explains it is what makes a handover survive, and both review agents are told not to tear down a stack they did not start. Nothing closes the loop. `make down` survives only as an entry in the `## Canonical commands` list (`AGENTS.md:501`), which is a catalogue, not an instruction.
+
+**Scenario.** Concrete, and named by this change's own gotcha at `AGENTS.md:130-135`: leftover containers hold 3100 and 8100, and `make e2e-smoke` probes those literally with no way to aim it elsewhere — so the next change gets a green smoke run against the previous change's stack, which as the file says is worse than a red one.
+
+**Fix.** Restore the teardown bullet outside the managed block. Confidence **78**.
+
+---
+
+### 5. REFINEMENT — Verification Map rows overlap with no stated precedence, and row 2 under-states the Prisma seam
+
+`/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:164`
+
+Row 2 routes `apps/web/prisma/**` and `apps/web/prisma.config.ts` to `make -C services/chat ci`, `make test-scripts`. I ran `detect_changed_surfaces.classify` on those paths — both come back **web and chat**:
+
+```
+apps/web/prisma/schema.prisma   flags={r:0 w:1 c:1 d:0 u:0}  -&gt; ['test-scripts', 'quick-ci-web', 'quick-ci-chat']
+```
+
+because `apps/web/**` in `WEB_PATTERNS` still matches — a point `detect_changed_surfaces.py:76-78` calls out in a comment. Row 1's `apps/web/**` covers it only if rows are read as a union, which the table never says. Naming the Prisma paths explicitly under the chat row is what invites the first-match reading, and a schema change is precisely the seam where skipping `make -C apps/web ci` — which runs `prisma-generate` and `next build` — matters. Row 3 has the same shape for `apps/web/AGENTS.md` and `tests/scripts/AGENTS.md`.
+
+Mitigated by the preamble at line 154-155 telling you to prefer the script over reading the table by hand, which is why this is a refinement.
+
+**Fix.** Add `make -C apps/web ci` to row 2, or state above the table that matching rows accumulate. Confidence **75**.
+
+---
+
+### Everything else in the prose checked out
+
+I verified each factual claim in `## Development Commands`, `## Architecture &amp; Conventions`, and `## Gotchas` against the repo rather than reading them:
+
+- Every make target named exists, including `make -C apps/web install-e2e-browsers` (`apps/web/Makefile:50`) and `test-e2e` (`:47`).
+- `make ci` → `quick-ci` → `test-scripts` → `build` → `docs-check` matches `Makefile:275-279` exactly, and `quick-ci` expands to toolchain-doctor / env-contract-check / web lint+typecheck+test / chat check-python+deps-check+lint+typecheck+test as described.
+- `.github/workflows/ci.yml:1016,1063` — `full-ci-main` runs `make ci PYTHON_BASE=python`, exactly as claimed.
+- Root `make lint`/`typecheck` really are web-only (`Makefile:184-188` delegate to `$(WEB_MAKE)`).
+- `make setup` vs `npm run setup` divergence is real (`Makefile:83` vs `package.json` `"setup": "npm run setup:web &amp;&amp; npm run setup:chat"`).
+- Two `tsc` passes plus `check-journey-coverage.mjs`: `apps/web/Makefile:36-42`. Vitest `exclude: [... 'e2e/**']`: `apps/web/vitest.config.ts`. `jsx-a11y`: `apps/web/eslint.config.mjs:2`. Node 22 / Python 3.11 in `mise.toml`. `e2e-smoke` hardcodes `127.0.0.1:3100`/`:8100` and `down --volumes` unless `KEEP_STACK=1`: `Makefile:239-257`. All accurate.
+- The `&lt;!-- unverified: ... --&gt;` marker at `AGENTS.md:57-61` is honest about what was declaration-confirmed rather than executed — I did not run those either.
+
+Against `tests/scripts/AGENTS.md`'s Code Review Rules: both new tests point at a `tempfile` root, never the checkout, and reach no path constant of the module (`render()` is pure string formatting), so there is nothing to rebind. Neither is a mutation demonstration, so the bytecode-cache rule does not apply. No violation.
+
+### Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/check_agent_docs.py:26-27` — the comment says "Both assistants support nested context files" while the constant now covers three pointer kinds across `SIBLING_POINTER_FILENAMES` and `FIXED_POINTERS`. Pre-existing wording, untouched by this diff.
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_check_agent_docs.py:75-87, 96-114` — the `tempfile.TemporaryDirectory()` wrappers are inert in these tests: `render()` touches no filesystem, so the fixture root is only used to build path strings. Harmless, and the new tests follow existing prior art in the same file.
+
+### What I reviewed
+
+`git diff HEAD` across all seven modified files; `git status --porcelain` confirmed no untracked files. Read in full for context: `scripts/check_agent_docs.py`, `scripts/detect_changed_surfaces.py`, `tests/scripts/test_check_agent_docs.py`, `tests/scripts/AGENTS.md`, all three `.claude/agents/*.md`, `Makefile`, `apps/web/Makefile`, `services/chat/Makefile`, `package.json`, `mise.toml`, and the pre-change `AGENTS.md` from `HEAD` for a section-by-section loss comparison. Executed: `tests.scripts.test_check_agent_docs` (15 pass), `test_agent_definitions` / `test_agent_runbooks` / `test_verify_docs` / `test_detect_changed_surfaces` (46 pass), plus direct calls into `adopt.py` and `detect_changed_surfaces.py` for the verification above.
+
+Not assessed: the seven make targets behind the `unverified` marker (`test-e2e`, `e2e-smoke*`, `release-dry-run`, `migrate`, `docker-init-fresh`) — running them needs Docker, a browser, or a database mutation, which is the same reason the change flags them.</result>
+<usage><subagent_tokens>103549</subagent_tokens><tool_uses>41</tool_uses><duration_ms>466576</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6aa7d945e729db21</task-id>
+<tool-use-id>toolu_01N1yZUTMrmJCBwjJQUKGNdU</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/93f6c8cf-8698-4af0-962b-05046cda36d1/tasks/a6aa7d945e729db21.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-verify after review fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Unchanged — identical to the state before checks. No repository modification occurred.
+
+## Verdict: VERIFIED. The change on `scottdensmore/chore/agents-md-profile-and-pointer` passes.
+
+All four code-review fixes are confirmed present in `git diff HEAD`, and the complete gate (`make ci`) passes in full on this state.
+
+### Fixes confirmed
+- `AGENTS.md`: `### Unrelated findings become issues` restored (lines 282-317); new `### Stack handover and teardown` section added (lines 319-348) covering stage-6/7 stack handover, the "rerun ui-review after a stage 8 fix" rule, and end-of-workflow teardown; Verification Map corrected — the Prisma row now reads `apps/web/prisma/**`, `apps/web/prisma.config.ts` → both surfaces (`make -C apps/web ci`, `make -C services/chat ci`, `make test-scripts`), and a new "Rows accumulate — they are not first-match" paragraph was added.
+- `.claude/agents/verifier.md`: all three stale "step 4" references now read "step 5"; the AGENTS.md quotation was reworded to `"the iteration loop during implementation, not a substitute for the gate"`, matching the current source text exactly.
+
+### Failures
+None.
+
+### Flakes
+None — `make ci` ran once and passed cleanly; no re-run was needed.
+
+### Missing coverage
+None new to report beyond what a prior pass would have found — this is a docs/tooling change (AGENTS.md, CLAUDE.md pointers, `.claude/agents/verifier.md`, `check_agent_docs.py`) with no rendered/runtime surface. `test_check_agent_docs.py` covers the pointer-rendering logic directly (`test_claude_pointer_uses_the_import_form`, `test_non_claude_pointers_keep_the_link_form`), and `test_agent_definitions.py` (run under `docs-check`) covers agent-definition structure. No behavior in this diff is exercised only by container layout or dynamic routes.
+
+### Environment issues
+- Unrelated Docker containers from other projects (`petspotr-*`, `travel-app-*`, `ollama`) are running on this host, but none occupy ports 3100, 55432, or 8100 — no collision for this repo's checks.
+- No stack was needed for `make ci` (docs/scripts/type-check/build only); none was started, so none needed to be torn down.
+
+### Commands run (verbatim, reproducible)
+```
+git status --short
+git diff HEAD --stat
+git branch --show-current
+git log --oneline -5
+git diff origin/main --stat
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets
+git diff HEAD -- .claude/agents/verifier.md
+git diff HEAD -- CLAUDE.md apps/web/CLAUDE.md services/chat/CLAUDE.md tests/scripts/CLAUDE.md
+git diff HEAD -- scripts/check_agent_docs.py tests/scripts/test_check_agent_docs.py
+make ci
+NO_COLOR=1 /home/scottdensmore/Developer/scottdensmore/agent-skills/adopt.sh --dry-run --keep-existing /home/scottdensmore/Developer/scottdensmore/contoso
+git status --short   # confirmed no repo modification
+```
+
+Note: `detect_changed_surfaces.py --base main --head HEAD` produced no useful signal here — `HEAD` equals `origin/main` (33e27ea) because every change on this branch is uncommitted working-tree edits, so there is no committed diff for the detector to see. I relied on `git diff HEAD --stat`/`git status --short` instead, per the instruction that the detector only sees committed work.
+
+### Checks not run, and why
+- `make e2e-smoke`, `make test-e2e`, `make e2e-smoke-lite/full`, `make release-dry-run` — not run. This change touches no runtime code, Dockerfiles, `docker-compose.yml`, rendered routes, or release workflow files, so nothing in the Verification Map or the "when to add integration confidence" guidance calls for them here. The Verification Map explicitly routes this change's touched paths (`scripts/*.py`, `tests/scripts/**`, `.claude/agents/**`, and the `AGENTS.md`/`CLAUDE.md` docs row) to "the complete gate," which is `make ci` and which was run.</result>
+<usage><subagent_tokens>46275</subagent_tokens><tool_uses>25</tool_uses><duration_ms>197888</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aad7ad811427db54e</task-id>
+<tool-use-id>toolu_01L42tNLueLV2t7CN7BJ8mia</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/93f6c8cf-8698-4af0-962b-05046cda36d1/tasks/aad7ad811427db54e.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review after fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I reviewed the full uncommitted change. `git diff main...HEAD` is empty; everything is in `git diff HEAD` across eight modified files, no untracked files.
+
+## Verification of the four fixes
+
+All four were checked against the source rather than the description:
+
+1. **Defect 1 (restore `### Unrelated findings become issues`)** — closed. Diffed the section body against `HEAD:AGENTS.md`; byte-identical, only the terminating heading differs. Same for the whole `### Sub-agents this workflow depends on` section, which is unchanged from HEAD.
+2. **Defect 3 (stale step numbers in `verifier.md`)** — closed. All three "step 4" now read "step 5", and no `step [0-9]` reference in any file under `.claude/agents/` disagrees with the managed block's numbering. The reworded quotation matches: `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:666` now reads "That is the iteration loop during implementation, not a substitute for the gate", and `verifier.md:47` paraphrases it accurately. The old verbatim quote came from the `## Building and running` section this change deletes, so the rewording was necessary, not cosmetic.
+3. **Refinement 5 (Verification Map)** — closed and correct. I ran `classify()`/`recommended_targets()` over fifteen representative paths rather than reading the table. Every row holds: `apps/web/prisma/schema.prisma` and `apps/web/prisma.config.ts` both return `web` **and** `chat`; `Dockerfile.migrate` is chat-only; `apps/web/AGENTS.md` returns web + docs; `tests/scripts/AGENTS.md` returns runtime + docs. The new "rows accumulate, not first-match" paragraph is an accurate description of the loop in `classify()`.
+4. **Guard suite** — `217 passed, 144 subtests passed`. `agent_names_claimed_by_docs()` still extracts exactly `{ui-review, verifier, code-review}` because the two new `###` sections sit before the Sub-agents heading, and `step_that_invokes()` reads 6/7/8 out of the managed block. `check_agent_docs.py` and `verify_docs.py` both pass against the working tree.
+
+The two new tests in `test_check_agent_docs.py` are real: they call `PointerSpec.render()` (the production path), and `test_non_claude_pointers_keep_the_link_form` fails if the CLAUDE template is applied to GEMINI/copilot, which is the regression the branch condition could plausibly introduce.
+
+## Findings
+
+### 1. DEFECT — `AGENTS.md:325` and `AGENTS.md:343`: the new section carries the old step numbering
+
+The `### Stack handover and teardown` section was lifted from HEAD's 11-step workflow, where **step 4 was Test-Driven Development**. Under the managed block this change adopts, **stage 4 is "Track Bugs &amp; Follow-ups"** and TDD is stage 5. Both stack references were not renumbered:
+
+```
+line 325: **Stage 6 hands its stack forward.** Where a stack is already up -- from stage 4, or
+line 343: further `verifier` run is coming, tear down any stack stages 4, 6, or 7 left running:
+```
+
+This is the same class of error the round-1 fix corrected in `verifier.md` (step 4 → step 5), applied in one file and missed in the other.
+
+Concrete scenario: an agent runs a Playwright journey spec during stage 5 and leaves the stack up (`make e2e-smoke KEEP_STACK=1`). At stage 6 it reads "Where a stack is already up — from stage 4"; stage 4 filed issues and started nothing, so the sentence reads as not applying, and it hands `ui-review` nothing. `ui-review.md:102` only uses a stack when the caller passes `E2E_BASE_URL`, so it starts its own and tears it down on exit — precisely the failure the paragraph names two lines later. At the end, "tear down any stack stages 4, 6, or 7 left running" never names the stage-5 stack either, so it survives and holds ports 3100, 55432 and 8100 against the next change — the consequence spelled out at line 347.
+
+Compounding it: HEAD's step 4 contained the sentence establishing that a journey spec needs a composed stack ("The one spec may itself be a journey, and then it needs a composed stack: `make e2e-smoke KEEP_STACK=1` builds one and leaves it up"), and how to run a single spec (`npx playwright test &lt;file&gt;`). Neither survives anywhere in the new file, so nothing now says stage 5 builds a stack at all.
+
+Fix: change both to stage 5, and restore a sentence in this section stating that stage 5 may build the stack it hands forward and how.
+
+Confidence: **90**.
+
+### 2. REFINEMENT — `AGENTS.md:57-60`: authoring-provenance comment violates the Comments policy
+
+```html
+&lt;!-- unverified: `make test-e2e`, `make e2e-smoke`, ... are declared in the
+     Makefiles and wired in CI, but confirming them here would mean starting
+     Docker, driving a browser, or mutating a database. Declaration-confirmed,
+     not execution-confirmed. --&gt;
+```
+
+New in this change (absent from HEAD). `AGENTS.md`'s own `## Comments policy` says "Only write high-value comments if at all. Avoid talking to the user through comments." This is a note from the authoring session to whoever reviews it, invisible in rendered Markdown, describing what the author did not run — not durable guidance. It will also go stale silently the moment someone does execute one of those targets.
+
+Fix: drop it. Every other claim in that section is verifiable from the Makefiles, which I confirmed (`make ci` expansion, `quick-ci` composition on both surfaces, `full-ci-main` running `make ci PYTHON_BASE=python`, `jsx-a11y` in `apps/web/eslint.config.mjs`, `mise.toml` pins).
+
+Confidence: **75**.
+
+## Cross-reference check, no findings
+
+- `### Stack handover and teardown` vs `.claude/agents/`: the stage 6 handover matches `ui-review.md:102`; the stage 7 `KEEP_STACK=1` handover matches `verifier.md`'s "`KEEP_STACK=1` is what makes a handover survive" and its remapped-handover paragraph; "a fix in stage 8's loop can invalidate stage 6" is a caller obligation with nothing required of a sub-agent. No new drift in either direction.
+- The 2× density obligation moved from HEAD's step 6 into `## Gotchas &amp; Troubleshooting`; `ui-review.md:110` and `:122` still carry it, including the fallback when `deviceScaleFactor` cannot be set. That historical gap stays closed.
+- The managed block is unedited (`agent-skills:begin/end workflow 8881bee7` intact, content matches the skill's stages).
+- `verifier.md`'s claims that the caller is "told not to pre-run this battery" and that step 5 "is told not to run the suite" still resolve against the new file — via the **Division of labor** paragraph and stage 5's "Whole suites are stage 7's job" respectively, even though HEAD's literal sentences were dropped.
+- `check_agent_docs.py`: `CLAUDE_POINTER_TEMPLATE` ignores the `agents_link` kwarg, which is correct — `@AGENTS.md` resolves relative to the importing file, so nested pointers reach their sibling runbook. Extra `.format()` kwargs are harmless.
+
+## Outside this change
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md:435` — "the instructions it matches by regex in a definition's body ... and that `code-review` still carries the bullet below" refers to a bullet that lives in `code-review.md`, not below it in `AGENTS.md`. Byte-identical to HEAD, so pre-existing; the wording misleads on first read.
+
+## What I could not assess
+
+Nothing binary or generated. I did not run `make ci`, `make docs-check`, `make e2e-smoke`, or `make test-e2e` — that is stage 7's job — but I did run the guard suite, `scripts/check_agent_docs.py`, `scripts/verify_docs.py`, and `scripts/detect_changed_surfaces.py`'s classifier directly.
+
+**This round returns one defect, so it is not a terminating round.** Correcting the two stage numbers at `AGENTS.md:325` and `:343` (plus restoring the "stage 5 may build a stack" sentence) is a content change to a reviewed file and warrants one more pass; the refinement alone would not have.</result>
+<usage><subagent_tokens>88747</subagent_tokens><tool_uses>35</tool_uses><duration_ms>378771</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aeab59f9b1af7dc0e</task-id>
+<tool-use-id>toolu_01XEcfPCBMfVoEsdTXP8stqB</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/93f6c8cf-8698-4af0-962b-05046cda36d1/tasks/aeab59f9b1af7dc0e.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify round 2 fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Verified.** Branch `scottdensmore/chore/agents-md-profile-and-pointer` passes the complete gate (`make ci`) cleanly on the current uncommitted state, and the `adopt.sh` dry-run confirms both required outcomes verbatim.
+
+## Failures
+
+None.
+
+## Flakes
+
+None observed. Each check was run once and passed; no re-run was needed to distinguish signal from environment noise.
+
+## Missing coverage
+
+None specific to this diff. The change is entirely documentation and pointer-generation tooling (`AGENTS.md`, four `CLAUDE.md` pointer files, `scripts/check_agent_docs.py`, `tests/scripts/test_check_agent_docs.py`, `.claude/agents/verifier.md`). It touches no runtime code, no Dockerfile, no `docker-compose.yml`, and nothing a Playwright journey renders, so `make e2e-smoke` and `make test-e2e` are not applicable per the routing rules in `AGENTS.md` and were correctly out of scope. The new/changed behavior (the `@AGENTS.md` import form for `CLAUDE.md` pointers, the corrected stage numbers in the handover section) is exercised by `tests/scripts/test_check_agent_docs.py::test_claude_pointer_uses_the_import_form` and `::test_non_claude_pointers_keep_the_link_form`, both of which ran and passed inside `make test-scripts`/`make ci`.
+
+## Environment issues
+
+None. `.venv`, Node 22.23.1, npm 10.9.8, Python 3.11.15 (via mise), and Docker were all already present and required no setup. Ports 3100, 8100, and 55432 were free (not needed, since no stack was started — no smoke/e2e was run for this doc-only change). Unrelated Docker containers from other projects (`petspotr-*`, `travel-app-*`) are running on the host but were not touched and do not collide with anything this verification needed.
+
+## What I ran
+
+```
+git status --short
+git diff --stat main...HEAD
+.venv/bin/python scripts/detect_changed_surfaces.py --base main --head HEAD --print-targets   # empty: HEAD==main, all changes uncommitted; detector only sees committed work
+git diff HEAD -- AGENTS.md
+git diff --stat HEAD
+git diff HEAD -- CLAUDE.md apps/web/CLAUDE.md services/chat/CLAUDE.md tests/scripts/CLAUDE.md scripts/check_agent_docs.py tests/scripts/test_check_agent_docs.py .claude/agents/verifier.md
+make ci PYTHON_BASE=python
+NO_COLOR=1 /home/scottdensmore/Developer/scottdensmore/agent-skills/adopt.sh --dry-run --keep-existing /home/scottdensmore/Developer/scottdensmore/contoso
+git status --short   # confirmed unchanged after all checks
+docker ps            # confirmed no contoso containers running/started
+```
+
+`make ci` result summary (all stages passed, no errors/failures anywhere in the 625-line log):
+- `toolchain-doctor`: passed (Node v22.23.1, Python 3.11.15)
+- `env-contract-check`: passed
+- `quick-ci-web`: lint clean, typecheck clean (`tsc --noEmit` x2 + journey-coverage check), tests 39 files / 180 tests passed
+- `quick-ci-chat`: deps-check (26 packages), ruff lint clean, mypy clean (15 files), pytest 60 passed, 77% coverage
+- `test-scripts`: 217 tests passed in 3.3s, including the two new pointer-form tests and the corrected stage-number test paths
+- `build`: `next build` succeeded, 230 pages generated, no TS/build errors
+- `docs-check`: `verify_docs.py` passed, `agent-docs-check` passed ("Agent doc validation passed"), plus the redundant `test_agent_definitions.py` (9 tests) passed
+
+`adopt.sh --dry-run --keep-existing` verbatim output:
+```
+┌────────────────────────────────────────────────────────────┐
+│  AGENT WORKFLOW SKILLS                                     │
+│  Universal agent standard - 9-stage development pipeline   │
+└────────────────────────────────────────────────────────────┘
+
+Skills
+  ✔ Gemini CLI / Antigravity : ~/.gemini/config/plugins/agent-workflow-skills
+  ✔ Claude Code Skills       : ~/.claude/skills (7 linked)
+  ✔ OpenAI Codex Skills      : ~/.codex/skills (7 linked)
+  ✔ Universal Agent Skills   : ~/.agents/skills (7 linked)
+
+Repository
+  Project      contoso
+  Path         /home/scottdensmore/Developer/scottdensmore/contoso
+  Toolchain    TypeScript / Node.js (npm) (root)
+  UI domain    Node.js / CLI
+  Base branch  main
+
+Changes
+  ✔ AGENTS.md already current (workflow 8881bee7, no changes written)
+  ✔ Verified CLAUDE.md pointer (left untouched)
+  ✔ Gemini CLI / Antigravity already points to AGENTS.md (GEMINI.md, left as-is)
+
+Dry run — no files were written.
+```
+This satisfies both required outcomes: "AGENTS.md already current" and the CLAUDE.md pointer verified/left untouched.
+
+## Checks not run, and why
+
+- `make e2e-smoke` and `make test-e2e` — not run. The change is docs + pointer-generator tooling only; it touches no runtime code, no Dockerfile, and no `docker-compose.yml`, and it changes nothing a Playwright journey renders. No stack was started for this verification, consistent with the environment note that none was handed to me and none should be started unless needed.
+- No separate `make -C apps/web ci` / `make -C services/chat ci` runs beyond what `make ci` already executes — `make ci` is the complete gate and subsumes both merge gates plus `test-scripts`, `build`, and `docs-check`.
+
+## Relevant paths
+
+- `/home/scottdensmore/Developer/scottdensmore/contoso/AGENTS.md` (lines 313–347, the corrected `### Stack handover and teardown` section; lines 1–80, `## Development Commands` with the `&lt;!-- unverified --&gt;` marker removed)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/CLAUDE.md`, `apps/web/CLAUDE.md`, `services/chat/CLAUDE.md`, `tests/scripts/CLAUDE.md` (pointer files, now using `@AGENTS.md` import form)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/scripts/check_agent_docs.py` (new `CLAUDE_POINTER_TEMPLATE`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/tests/scripts/test_check_agent_docs.py` (new tests `test_claude_pointer_uses_the_import_form`, `test_non_claude_pointers_keep_the_link_form`)
+- `/home/scottdensmore/Developer/scottdensmore/contoso/.claude/agents/verifier.md` (stage-number corrections matching this run's own instructions)</result>
+<usage><subagent_tokens>59465</subagent_tokens><tool_uses>18</tool_uses><duration_ms>177561</duration_ms></usage>
+</task-notification>

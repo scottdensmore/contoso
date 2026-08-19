@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "ee91a880b95a",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/chore/agents-md-profile-and-pointer",
+  "checkpoints_count": 12,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ee/91a880b95a/0/metadata.json",
+      "transcript": "/ee/91a880b95a/0/full.jsonl",
+      "compact_transcript": "/ee/91a880b95a/0/transcript.jsonl",
+      "content_hash": "/ee/91a880b95a/0/content_hash.txt",
+      "prompt": "/ee/91a880b95a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 228,
+    "cache_creation_tokens": 371734,
+    "cache_read_tokens": 16698551,
+    "output_tokens": 107823,
+    "api_call_count": 114,
+    "subagent_tokens": {
+      "input_tokens": 216,
+      "cache_creation_tokens": 341401,
+      "cache_read_tokens": 4706339,
+      "output_tokens": 79302,
+      "api_call_count": 108
+    }
+  }
+}
