@@ -1,0 +1,13 @@
+/project-profile
+
+---
+
+Ok lets look through the workflow and all of AGENTS.md and make sure it makes sense for this project now
+
+---
+
+what is the skills refresh? Why does this repo know about agent-skills
+
+---
+
+Lets update teh PR-templates

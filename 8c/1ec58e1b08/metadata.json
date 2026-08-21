@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "8c1ec58e1b08",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/docs/consolidate-agent-guide",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".github/PULL_REQUEST_TEMPLATE.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8c/1ec58e1b08/0/metadata.json",
+      "transcript": "/8c/1ec58e1b08/0/full.jsonl",
+      "compact_transcript": "/8c/1ec58e1b08/0/transcript.jsonl",
+      "content_hash": "/8c/1ec58e1b08/0/content_hash.txt",
+      "prompt": "/8c/1ec58e1b08/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 82,
+    "cache_creation_tokens": 96113,
+    "cache_read_tokens": 3619415,
+    "output_tokens": 40785,
+    "api_call_count": 41,
+    "subagent_tokens": {
+      "input_tokens": 6,
+      "cache_creation_tokens": 19647,
+      "cache_read_tokens": 36400,
+      "output_tokens": 796,
+      "api_call_count": 3
+    }
+  }
+}
