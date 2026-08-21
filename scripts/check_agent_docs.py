@@ -23,14 +23,16 @@ ROOT = Path(__file__).resolve().parent.parent
 
 AGENTS_FILENAME = "AGENTS.md"
 
-# Pointer files created beside every AGENTS.md. Both assistants support nested
-# context files, so each scoped runbook gets its own pointers.
+# Context filenames discovered anywhere in the repository. Only their root
+# instances are supported; nested copies create a second instruction scope that
+# the generated reviewers do not read.
 CLAUDE_POINTER_FILENAME = "CLAUDE.md"
 SIBLING_POINTER_FILENAMES = (CLAUDE_POINTER_FILENAME, "GEMINI.md")
 
-# Pointers that live at a fixed path instead of beside an AGENTS.md, mapped to
-# the AGENTS.md they point at (both repo-relative).
+# The only supported pointers, mapped to the one root AGENTS.md they load.
 FIXED_POINTERS = {
+    CLAUDE_POINTER_FILENAME: AGENTS_FILENAME,
+    "GEMINI.md": AGENTS_FILENAME,
     ".github/copilot-instructions.md": AGENTS_FILENAME,
 }
 
@@ -182,25 +184,28 @@ def find_agent_directories(root: Path) -> list[Path]:
 
 
 def collect_pointer_specs(root: Path) -> tuple[list[PointerSpec], list[str]]:
-    """Return every expected pointer, plus errors for pointers with no AGENTS.md."""
+    """Return the root pointers and reject every nested instruction scope."""
     specs: list[PointerSpec] = []
     errors: list[str] = []
 
     for directory in find_agent_directories(root):
+        if directory == root:
+            continue
+
         agents = directory / AGENTS_FILENAME
         if agents.exists():
-            specs.extend(
-                PointerSpec(directory / filename, agents, root)
-                for filename in SIBLING_POINTER_FILENAMES
+            errors.append(
+                f"{display_path(agents, root)} is a nested runbook. "
+                f"The repository-root {AGENTS_FILENAME} is the only supported "
+                f"{AGENTS_FILENAME}; move durable guidance there and remove this file."
             )
-            continue
 
         for filename in SIBLING_POINTER_FILENAMES:
             pointer = directory / filename
             if pointer.exists():
                 errors.append(
-                    f"{display_path(pointer, root)} has no sibling {AGENTS_FILENAME}. "
-                    f"Agent instructions live in {AGENTS_FILENAME}; add it or remove the pointer."
+                    f"{display_path(pointer, root)} is a nested agent pointer. "
+                    f"Only the root {filename} pointer is supported; remove this file."
                 )
 
     for pointer_relative, agents_relative in sorted(FIXED_POINTERS.items()):
@@ -299,7 +304,7 @@ def main() -> int:
     if args.fix:
         changed, rescued = fix_agent_docs()
         if rescued:
-            print("Move the following content into the matching AGENTS.md:\n")
+            print("Move the following content into the root AGENTS.md:\n")
             for line in rescued:
                 print(f"  {line}")
             print()
@@ -309,7 +314,7 @@ def main() -> int:
             if rescued:
                 print(
                     "\nAction required: the content above was removed from the pointer(s). "
-                    "Add it to the matching AGENTS.md and re-run `make agent-docs-check`."
+                    "Add it to the root AGENTS.md and re-run `make agent-docs-check`."
                 )
                 return 1
             return 0
@@ -322,8 +327,8 @@ def main() -> int:
         for error in errors:
             print(f"  - {error}")
         print(
-            "\nAGENTS.md is the source of truth. CLAUDE.md, GEMINI.md, and "
-            ".github/copilot-instructions.md must stay pointers to it, so memories "
+            "\nThe root AGENTS.md is the source of truth. Root CLAUDE.md, GEMINI.md, "
+            "and .github/copilot-instructions.md must stay pointers to it, so memories "
             "captured with `#` in Claude Code have to be moved into AGENTS.md."
         )
         return 1

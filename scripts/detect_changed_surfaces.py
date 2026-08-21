@@ -12,6 +12,15 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
 
+WORKFLOW_PATTERNS = (
+    ".agents/**",
+    ".claude/agents/**",
+    ".claude/skills/**",
+    ".codex/agents/**",
+    ".cursor/agents/**",
+    ".github/agents/**",
+)
+
 RUNTIME_PATTERNS = (
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
@@ -43,9 +52,10 @@ RUNTIME_PATTERNS = (
     "scripts/verify_docs.py",
     "scripts/check_agent_docs.py",
     "tests/scripts/**",
-    # Agent definitions are repo tooling. Without this they classify as
-    # "unknown", which forces runtime by accident rather than by intent.
-    ".claude/agents/**",
+    # Generated agent definitions and skills are repo tooling. Without these
+    # they classify as "unknown", which forces runtime by accident rather than
+    # by intent and hides omissions when a new host surface is installed.
+    *WORKFLOW_PATTERNS,
     # Compose is web+chat, but the guard that protects its startup ordering
     # lives in tests/scripts. Without this, a change dropping the healthcheck
     # would never run that guard.
@@ -246,6 +256,7 @@ def changed_files_from_worktree() -> list[str]:
 
 def classify(files: list[str]) -> dict[str, bool]:
     runtime = False
+    workflow = False
     web = False
     chat = False
     docs = False
@@ -254,6 +265,8 @@ def classify(files: list[str]) -> dict[str, bool]:
     for path in files:
         if matches_any(path, RUNTIME_PATTERNS):
             runtime = True
+        if matches_any(path, WORKFLOW_PATTERNS):
+            workflow = True
         if matches_any(path, WEB_PATTERNS):
             web = True
         if matches_any(path, CHAT_PATTERNS):
@@ -269,6 +282,7 @@ def classify(files: list[str]) -> dict[str, bool]:
 
     return {
         "runtime": runtime,
+        "workflow": workflow,
         "web": web,
         "chat": chat,
         "docs": docs,
@@ -278,6 +292,12 @@ def classify(files: list[str]) -> dict[str, bool]:
 
 
 def recommended_targets(flags: dict[str, bool]) -> list[str]:
+    # Workflow assets define how every surface is verified and reviewed. Their
+    # Verification Map row requires the complete gate, including the production
+    # build and docs checks that the ordinary quick runtime loop omits.
+    if flags.get("workflow", False):
+        return ["ci"]
+
     ordered: list[str] = []
 
     if flags["runtime"]:

@@ -53,15 +53,14 @@ const nextConfig = {
   // machine, and `next build` never consults the key at all.
   allowedDevOrigins: ['127.0.0.1', '[::1]'],
 
-  // `next dev` otherwise appends a block of its own to `apps/web/AGENTS.md`,
+  // `next dev` otherwise appends a block of its own to an `AGENTS.md`,
   // on every boot under a coding agent -- which is every `make dev` in this
   // repository's workflow, though not one run from a plain shell: the write is
   // gated on agent detection, so it fires on `CLAUDECODE`, `GEMINI_CLI`,
   // `CURSOR_AGENT`, a `COPILOT_*` variable and their equivalents, and not
   // otherwise. That file is this repository's authoritative runbook for coding
-  // agents and is written by hand: `AGENTS.md` says generated content does not
-  // belong in it, and the appended block closes by asking to be committed
-  // along with whatever change was in flight.
+  // agents. This repository keeps one root guide written by hand, and generated
+  // instruction blocks do not belong in it.
   //
   // Only `AGENTS.md`. The sibling `CLAUDE.md` is left alone, because it exists
   // and carries no marker block -- measured, and the branch that decides it is
@@ -102,7 +101,7 @@ const nextConfig = {
   // Tools menu and its trigger (route info, bundler, preferences, segment
   // explorer), the cache badge, and the build-activity pill -- so there is no
   // "compiling" or "rendering" feedback in dev either. For the route's
-  // static/dynamic verdict, which `apps/web/AGENTS.md` does care about, plain
+  // static/dynamic verdict, which the root `AGENTS.md` does care about, plain
   // `next build` prints `○` and `ƒ` per route and CI produces it on every run.
   //
   // Errors still surface with this off. That is Next's separate issues badge,

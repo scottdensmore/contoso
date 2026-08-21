@@ -59,7 +59,6 @@ class CheckAgentDocsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             build_repo(root)
-            build_scope(root, "apps/web")
 
             errors = check_agent_docs.check_agent_docs(root=root)
 
@@ -163,7 +162,20 @@ class CheckAgentDocsTests(unittest.TestCase):
                     msg=f"expected missing-pointer error for {pointer_relative}",
                 )
 
-    def test_pointer_without_sibling_agents_file_is_flagged(self):
+    def test_nested_agents_file_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            build_repo(root)
+            build_scope(root, "apps/web")
+
+            errors = check_agent_docs.check_agent_docs(root=root)
+
+        self.assertTrue(
+            any("only supported AGENTS.md" in error for error in errors),
+            errors,
+        )
+
+    def test_nested_pointer_is_flagged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             build_repo(root)
@@ -173,7 +185,7 @@ class CheckAgentDocsTests(unittest.TestCase):
 
             errors = check_agent_docs.check_agent_docs(root=root)
 
-        self.assertTrue(any("has no sibling AGENTS.md" in error for error in errors))
+        self.assertTrue(any("nested agent pointer" in error for error in errors), errors)
 
     def test_missing_root_agents_file_is_flagged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
