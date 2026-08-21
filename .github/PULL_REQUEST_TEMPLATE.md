@@ -12,12 +12,12 @@ Paste command output snippets or concise summaries for what you actually ran.
 
 ### Required
 - [ ] `make quick-ci-changed`
-- [ ] Applicable merge-gate command(s) from the `AGENTS.md` validation matrix
+- [ ] Applicable merge-gate command(s) from the `AGENTS.md` Verification Map
 - [ ] `make test-scripts` (for runtime/scripts/docs automation changes)
 - [ ] `make docs-check` (for docs/runbook changes)
 - [ ] `ui-reviewer`: rendered evidence or a concrete not-applicable reason
 - [ ] `verifier`: verdict and exact commands
-- [ ] `code-reviewer`: no defects; refinements recorded below
+- [ ] `code-reviewer`: no defects; refinements recorded below (or name the triage track that skips stage 8)
 
 ### Optional / Contextual
 - [ ] `make quick-ci`
