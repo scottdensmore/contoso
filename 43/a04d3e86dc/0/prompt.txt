@@ -1,5 +1,1 @@
-I just updated the skills and AGENTS.md for a new workflow. The workflow that is in the xml block is the one to keep. Lets look through all the AGENTS.md files and remove cruft and update things to make sure everything works. You can use the project-profile skill to make sure the agents.md file is updated. We should probably only have one AGENTS.md file.
-
----
-
 lets clean up any old agents / skills
