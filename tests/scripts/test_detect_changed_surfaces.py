@@ -274,6 +274,43 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         self.assertFalse(flags["unknown"], "should match a pattern, not fall through")
         self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
 
+    def test_every_committed_workflow_is_classified_by_intent(self):
+        """Every file in .github/workflows must match a pattern, not fall through.
+
+        The failure this guards against is adding a workflow and forgetting to
+        classify it. `codeql.yml` was exactly that: CI's own three workflows were
+        listed in RUNTIME_PATTERNS explicitly while it reached runtime through
+        the unknown fallback, so its routing was right by accident and
+        indistinguishable from an oversight.
+
+        Read from disk rather than hardcoded, because a fixed list cannot see the
+        workflow nobody remembered to add. Both suffixes, because GitHub accepts
+        `.yaml` as well: a `.yml`-only glob would omit such a file from the loop
+        entirely and pass, which is this test failing at the one job it has.
+
+        Runtime rather than something narrower, for the same reason as
+        `.github/dependabot.yml` above: it leaves the effective routing
+        byte-identical to the fallback it replaces, so `unknown` narrows without
+        changing what CI runs.
+        """
+        directory = REPO_ROOT / ".github/workflows"
+        workflows = sorted(
+            path
+            for suffix in ("*.yml", "*.yaml")
+            for path in directory.glob(suffix)
+        )
+        self.assertTrue(workflows, "no workflows found -- the glob is wrong")
+        for path in workflows:
+            rel = path.relative_to(REPO_ROOT).as_posix()
+            with self.subTest(path=rel):
+                flags = detect_changed.classify([rel])
+                self.assertTrue(flags["runtime"])
+                self.assertFalse(
+                    flags["unknown"],
+                    f"{rel} reaches runtime only through the unknown fallback; "
+                    "add it to RUNTIME_PATTERNS so the routing is intentional",
+                )
+
     def test_changed_files_from_range_includes_deletions(self):
         """A deletion-only change must still classify its surface.
 

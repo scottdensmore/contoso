@@ -25,6 +25,12 @@ RUNTIME_PATTERNS = (
     ".github/workflows/ci.yml",
     ".github/workflows/release.yml",
     ".github/workflows/release-main-build.yml",
+    # Listed for the same reason as .github/dependabot.yml below: it reached
+    # runtime through the unknown fallback, so its routing was right by accident
+    # while its three siblings above were explicit. test_detect_changed_surfaces
+    # now reads this directory from disk, so a new workflow that is not listed
+    # here fails rather than quietly inheriting the fallback.
+    ".github/workflows/codeql.yml",
     ".github/CODEOWNERS",
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/ISSUE_TEMPLATE/**",
