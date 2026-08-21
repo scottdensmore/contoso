@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "5c050c2061dd",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/fix/verification-map-accuracy",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "AGENTS.md",
+    "scripts/detect_changed_surfaces.py",
+    "tests/scripts/test_detect_changed_surfaces.py"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5c/050c2061dd/0/metadata.json",
+      "transcript": "/5c/050c2061dd/0/full.jsonl",
+      "compact_transcript": "/5c/050c2061dd/0/transcript.jsonl",
+      "content_hash": "/5c/050c2061dd/0/content_hash.txt",
+      "prompt": "/5c/050c2061dd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 84,
+    "cache_creation_tokens": 65157,
+    "cache_read_tokens": 6654469,
+    "output_tokens": 41944,
+    "api_call_count": 42,
+    "subagent_tokens": {
+      "input_tokens": 82,
+      "cache_creation_tokens": 141866,
+      "cache_read_tokens": 1133376,
+      "output_tokens": 20366,
+      "api_call_count": 41
+    }
+  }
+}

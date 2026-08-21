@@ -1,0 +1,159 @@
+Go ahead and merge
+
+---
+
+<task-notification>
+<task-id>bw5u0j2d6</task-id>
+<tool-use-id>toolu_018rNpMX8Uj4MMTMizxZgnXj</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/tasks/bw5u0j2d6.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch PR 347 checks to completion" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+where is adopt.sh notes?
+
+---
+
+you can remove that note
+
+---
+
+Ok lets fix all that
+
+---
+
+<task-notification>
+<task-id>aae1666bd0e12e3a5</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/tasks/aae1666bd0e12e3a5.output</output-file>
+<status>completed</status>
+<summary>Agent "Run complete gate" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All checks confirmed. Verdict below.
+
+## Verdict: PASS
+
+**Command:** `make ci` (repo root, branch `scottdensmore/fix/verification-map-accuracy`)
+**Exit code:** 0
+
+Stage results (all passed):
+| Stage | Result |
+|---|---|
+| `quick-ci-web` (lint/typecheck/tests) | pass — Vitest: 39 files, 180 tests passed |
+| `quick-ci-chat` (dependency policy/lint/typecheck/tests) | pass — pytest: 60 passed, 1 warning |
+| `test-scripts` | pass — `Ran 224 tests in 3.295s` / `OK` |
+| `build` (`apps/web` production build) | pass — Next.js build completed, static/dynamic routes generated |
+| `docs-check` | pass — `verify_docs.py`: "Documentation validation passed."; `agent-docs-check` → "Agent doc validation passed."; embedded `test_agent_definitions.py` run: `Ran 12 tests in 0.025s` / `OK` |
+
+**docs-check specifically:** passed, both sub-checks (`verify_docs.py` and `check_agent_docs.py`) reported success, relevant since `AGENTS.md` changed.
+
+**tests/scripts/ suite and the new test:** confirmed inside the gate run (not a separate pytest invocation). The `test-scripts` stage output at line 339-341 of the log shows `Ran 224 tests in 3.295s` / `OK`, and the new test is listed among the collected/executed tests:
+`test_every_committed_workflow_is_classified_by_intent (test_detect_changed_surfaces.DetectChangedSurfacesTests.test_every_committed_workflow_is_classified_by_intent)` — it ran and passed as part of the full suite, not standalone.
+
+**Not run / not covered by this gate** (per AGENTS.md, `make ci` does not include these):
+- `make test-e2e` (Playwright browser journeys) — NOT RUN, requires a running stack and browser.
+- `make e2e-smoke` (Dockerized integration smoke) — NOT RUN, requires Docker/ports.
+
+**Failure analysis:** N/A — no failures occurred. Full log at `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/scratchpad/make_ci.log`.</result>
+<usage><subagent_tokens>22276</subagent_tokens><tool_uses>4</tool_uses><duration_ms>114532</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aae1666bd0e12e3a5</task-id>
+<tool-use-id>toolu_01RN4t8rkoahMStE8hXuUY9r</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/tasks/aae1666bd0e12e3a5.output</output-file>
+<status>completed</status>
+<summary>Agent "Run complete gate" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All confirmed on the current working tree (with the corrected `## Source of truth` sentence).
+
+## Verdict: PASS (rerun scope: `make docs-check`, `make test-scripts`)
+
+**`make docs-check`** — exit code 0
+```
+.venv/bin/python scripts/verify_docs.py
+Documentation validation passed.
+.venv/bin/python scripts/check_agent_docs.py
+Agent doc validation passed.
+.venv/bin/python -m unittest discover -s tests/scripts -p "test_agent_definitions.py"
+Ran 12 tests in 0.011s
+OK
+```
+
+**`make test-scripts`** — exit code 0
+```
+Ran 224 tests in 3.118s
+OK
+```
+Same total (224) as the earlier `make ci` run — count unaffected by the additional prose edit.
+
+**`test_agent_definitions.py`-specific checks** (the ones a prose edit could plausibly break) — all collected and passing in this run:
+- `test_workflow_agent_names_are_parsed_without_installed_definitions` ... ok
+- `test_workflow_invokes_each_agent_at_the_expected_step` ... ok
+- `test_docs_reference_every_defined_agent` ... ok
+- `test_every_agent_the_docs_name_exists` ... ok
+- `test_installer_manifest_owns_every_agent_and_skill_file` ... ok
+- `test_workflow_agent_skills_exist_and_match_definitions` ... ok
+- (plus the remaining 6 of the 12 tests in that file — full class ran, no `FAILED`/`ERROR` lines)
+
+No failures, no `FAILED`/`ERROR` output in either log.
+
+**Scope note:** Per your instruction, only these two gates were rerun on the current tree; the other `make ci` stages (`quick-ci-web`, `quick-ci-chat`, `build`) were not rerun since AGENTS.md is not their input and they already passed on the otherwise-identical tree. This verdict does not re-cover those stages, and still does not cover `make test-e2e` or `make e2e-smoke` (unchanged from before, not part of `make ci`).
+
+Logs: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/scratchpad/docs_check.log`, `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/scratchpad/test_scripts.log`</result>
+<usage><subagent_tokens>27557</subagent_tokens><tool_uses>7</tool_uses><duration_ms>173858</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a740003841f4ab009</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/tasks/a740003841f4ab009.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: CHANGES_REQUESTED
+
+**Scope of what I checked:** the full uncommitted diff (`git diff HEAD`) across the three touched files — there is nothing staged separately from the worktree, no untracked files, and no diff between `origin/main` and this branch's `HEAD` (all changes are working-tree only). I independently re-derived `classify()`/`recommended_targets()` behavior with a standalone script and ran the new test; both confirm the stated claims.
+
+### Findings
+
+1. **`tests/scripts/test_detect_changed_surfaces.py:291`** — `sorted((REPO_ROOT / ".github/workflows").glob("*.yml"))` only matches the `.yml` extension. GitHub Actions also accepts `.yaml`, and the test's own docstring/comment (lines 277-289, mirrored in `scripts/detect_changed_surfaces.py:28-32`) claims completeness it doesn't have: "a new workflow that is not listed here fails rather than quietly inheriting the fallback." A future workflow added as `some-workflow.yaml` is simply absent from `workflows`, so the loop never runs against it — the guard passes silently while the exact failure mode it was written for (an unclassified workflow reaching runtime only through `unknown`) goes undetected. This isn't a fully vacuous test (it does exercise the 4 real `.yml` files today, confirmed by running it), but the completeness claim in the comments is currently false. Should glob both extensions (or explicitly note the `.yml`-only convention as a repo constraint, if that's intentional).
+
+### Verified as accurate (no issues)
+
+- `scripts/detect_changed_surfaces.py:33` — adding `.github/workflows/codeql.yml` to `RUNTIME_PATTERNS` is behavior-preserving. I confirmed by simulation: without the explicit entry, `codeql.yml` sets `unknown=True` and `runtime=True` (via the fallback at line 286-287); with the entry, `runtime=True` and `unknown=False`. `recommended_targets()` only inspects `runtime`/`workflow`/`web`/`chat`/`docs`/`none`, never `unknown`, so emitted targets are byte-identical either way. The comment's "same reason as `.github/dependabot.yml` below" is also positionally correct (dependabot is listed later, line 43).
+- `AGENTS.md:38` — the `test_agent_definitions.py` claim (fails on a missing manifest entry or an unmanaged file, doesn't compare content) matches `test_installer_manifest_owns_every_agent_and_skill_file` and `unmanaged_workflow_files` exactly; there is genuinely no content diffing anywhere in that file.
+- `AGENTS.md:221-232` — the corrected claim that the script prints the `quick-ci` set (no `build`, no `docs-check`) for every "complete gate" row except the generated-workflow-assets row (which alone sets the `workflow` flag → `["ci"]`) is accurate. I manually traced every "complete gate" row in the table against `RUNTIME_PATTERNS`/`WORKFLOW_PATTERNS` and confirmed only the `.agents/**` etc. row trips `workflow=True`; every other row lands in the `runtime` branch of `recommended_targets()`, which never appends `build` or (absent a separate `docs` match) `docs-check`. This replaces a previously misleading "executable form of this table" claim with an accurate one.
+- All edited prose sits above the `&lt;!-- agent-skills:begin workflow ... --&gt;` managed block (AGENTS.md:254), so none of it risks being clobbered by the generator.
+- No secrets, no unrelated edits — diff is confined to the three files claimed, and `python -m unittest tests.scripts.test_detect_changed_surfaces` passes (30/30).</result>
+<usage><subagent_tokens>50443</subagent_tokens><tool_uses>22</tool_uses><duration_ms>207242</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a740003841f4ab009</task-id>
+<tool-use-id>toolu_01936i2ANPudviEtW7E6t3x8</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-contoso/76d36c20-8877-449b-bb72-3ba33106b3cc/tasks/a740003841f4ab009.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review the branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Confirmed. The fix resolves finding 1.
+
+**1. Glob fix — resolved.** `directory.glob("*.yml")` + `directory.glob("*.yaml")` at `tests/scripts/test_detect_changed_surfaces.py:296-299` now covers both extensions. Re-ran the test standalone: passes (1/1). `git status --porcelain` shows only the three originally-intended files modified — the probe file is gone, consistent with the demonstrate-then-clean-up you described.
+
+**2. Docstring — accurate now.** The antecedent is fixed: "The failure this guards against is adding a workflow and forgetting to classify it. `codeql.yml` was exactly that: ..." reads correctly. Order matches what you said: guarded failure → why disk → why both suffixes → why `runtime` (not narrower). No remaining claim I can fault — "a `.yml`-only glob would omit such a file from the loop entirely and pass, which is this test failing at the one job it has" is now true and is exactly the failure mode I flagged.
+
+**3. `scripts/detect_changed_surfaces.py:28-32` comment** — I read it the same way you do. "reads this directory from disk" makes no suffix claim, so it isn't contradicted by the widened glob; leaving it untouched is correct, nothing to fix there.
+
+**4. Remaining gaps under `.github/workflows`:** none that I can find. GitHub Actions only recognizes files directly inside `.github/workflows/` (no nested subdirectories are treated as workflows) with a `.yml` or `.yaml` extension — nothing else is executed as a workflow regardless of what's placed there. A non-recursive glob on exactly those two suffixes matches GitHub's own definition, so there's no third case left uncovered.
+
+Updated verdict: **APPROVED**. The one finding from my prior review is fixed and independently verified; I have no other outstanding findings on this diff.</result>
+<usage><subagent_tokens>54539</subagent_tokens><tool_uses>2</tool_uses><duration_ms>23006</duration_ms></usage>
+</task-notification>
