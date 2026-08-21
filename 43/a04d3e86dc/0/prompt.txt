@@ -1,1 +1,5 @@
 lets clean up any old agents / skills
+
+---
+
+Yes. The workflow should say that... branch commit, publish pr and monitor
