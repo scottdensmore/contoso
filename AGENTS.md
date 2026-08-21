@@ -33,9 +33,12 @@ Never add instructions to a pointer file. Move appended notes into this file,
 then run `make agent-docs-check FIX=1` to restore the canonical pointer.
 
 `.agents/agent-skills.json` inventories the workflow assets installed under
-`.agents/`, `.claude/`, `.codex/`, `.cursor/`, and `.github/agents/`. Treat those
-listed files as generated output: update them by rerunning
-`agent-workflow-skills`, not by maintaining divergent copies by hand.
+`.agents/`, `.claude/`, `.codex/`, `.cursor/`, and `.github/agents/`. Treat every
+listed file as generated output: do not hand-edit it, and do not keep a divergent
+copy. `tests/scripts/test_agent_definitions.py` fails if a listed file is missing,
+or if an agent or skill file exists that the manifest does not list. It does not
+compare content: a hand-edit passes the gate, then gets backed up and overwritten
+the next time the assets are regenerated.
 
 ## Delivery default
 
@@ -67,7 +70,7 @@ data; those still require explicit approval in the current conversation.
 | Cross-surface smoke | `scripts/e2e_smoke.py`, exercised by `make e2e-smoke` |
 | Repository guard tests | `tests/scripts/` |
 | Deployment | `infrastructure/`, `Dockerfile*`, and `docker-compose.yml` |
-| Generated workflow assets | Paths listed in `.agents/agent-skills.json`; rerun the installer |
+| Generated workflow assets | Paths listed in `.agents/agent-skills.json`; generated, never hand-edited |
 
 Command surfaces are layered: the root `Makefile` delegates to
 `apps/web/Makefile` and `services/chat/Makefile`. Root `package.json` scripts are
@@ -215,12 +218,18 @@ type-checking are reached through `make quick-ci-chat`,
 
 ## Verification Map
 
-`scripts/detect_changed_surfaces.py` is the executable form of this table.
-Prefer it over selecting gates by hand:
+`scripts/detect_changed_surfaces.py` decides which surfaces a change touches.
+Use it to scope iteration:
 
 ```bash
 CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
 ```
+
+It prints iteration targets, not this table's merge gates. For every row below
+that says *complete gate* it prints the `quick-ci` set — no `build`, no
+`docs-check` — so it under-covers exactly the rows with the most to lose. Only a
+change to the generated workflow assets makes it print `ci`. Match your change to
+a row and run that row's gate yourself.
 
 | A fix touches | Rerun |
 |---|---|
