@@ -81,7 +81,7 @@ describe('Profile Page', () => {
   it('stays on screen while the session refreshes behind it', async () => {
     // Saving an avatar calls `update()`, which puts the session back into
     // `loading` — and this page used to answer that by replacing itself with
-    // the first-load spinner. Measured by `ui-review`: the page blanked for
+    // the first-load spinner. Measured by `ui-reviewer`: the page blanked for
     // ~35ms, `AvatarUpload` unmounted mid-save so the "Picture saved." it set
     // never rendered, and focus fell from the file input to `body`.
     vi.mocked(useSession).mockReturnValue({

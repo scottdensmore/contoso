@@ -58,15 +58,28 @@ def sync_env_sources() -> list[str]:
     return re.findall(r"(\.\.[./]*\.env)", "\n".join(body))
 
 
-def tracked_docs() -> list[Path]:
+def tracked_docs(root: Path = REPO_ROOT) -> list[Path]:
     listed = subprocess.run(
-        ["git", "ls-files", "*.md"],
-        cwd=REPO_ROOT,
+        [
+            "git",
+            "ls-files",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+            "-z",
+            "--",
+            "*.md",
+        ],
+        cwd=root,
         capture_output=True,
         text=True,
         check=True,
     )
-    return [REPO_ROOT / name for name in listed.stdout.split()]
+    return [
+        root / name
+        for name in listed.stdout.split("\0")
+        if name and (root / name).is_file()
+    ]
 
 
 class SyncEnvTests(unittest.TestCase):
@@ -185,6 +198,23 @@ class ComposeOverrideTests(unittest.TestCase):
 
 
 class MigrateCommandTests(unittest.TestCase):
+    def test_deleted_tracked_document_is_not_opened(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            kept = root / "kept.md"
+            deleted = root / "deleted.md"
+            kept.write_text("kept\n", encoding="utf-8")
+            deleted.write_text("deleted\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "add", "kept.md", "deleted.md"], cwd=root, check=True
+            )
+            deleted.unlink()
+
+            docs = tracked_docs(root)
+
+        self.assertEqual(docs, [kept])
+
     def test_documented_migrate_dev_commands_name_the_migration(self):
         """Keyed on `npx`, which is what separates a command from a mention.
 

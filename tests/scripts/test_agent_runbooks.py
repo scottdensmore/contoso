@@ -1,4 +1,4 @@
-"""Guard the review-rule contract shared by the repository runbooks."""
+"""Guard the review-rule contract in the repository's one root runbook."""
 
 from __future__ import annotations
 
@@ -11,12 +11,7 @@ from scripts.check_agent_docs import SKIP_DIRECTORIES, find_agent_directories
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-REQUIRED_RUNBOOKS = {
-    Path("AGENTS.md"),
-    Path("apps/web/AGENTS.md"),
-    Path("services/chat/AGENTS.md"),
-    Path("tests/scripts/AGENTS.md"),
-}
+REQUIRED_RUNBOOK = Path("AGENTS.md")
 
 
 def agent_runbooks(root: Path = REPO_ROOT) -> list[Path]:
@@ -29,15 +24,6 @@ def agent_runbooks(root: Path = REPO_ROOT) -> list[Path]:
     )
 
 
-def missing_required_runbooks(
-    runbooks: list[Path], root: Path = REPO_ROOT
-) -> list[Path]:
-    """Return canonical runbook paths absent from the discovered repository set."""
-
-    discovered = {path.relative_to(root) for path in runbooks}
-    return sorted(REQUIRED_RUNBOOKS - discovered)
-
-
 def workflow_step_numbers(text: str) -> set[int]:
     """The numbers of the workflow's own numbered steps."""
 
@@ -45,15 +31,14 @@ def workflow_step_numbers(text: str) -> set[int]:
 
 
 def referenced_step_numbers(text: str) -> set[int]:
-    """Every step number the prose points at, ranges expanded.
+    """Every step or stage number the prose points at, ranges expanded.
 
-    `steps 6 through 8` asserts the existence of 7 as much as of its endpoints,
-    so a range contributes all of its members rather than only the two written
-    down.
+    `stages 6 through 8` asserts the existence of 7 as much as of its endpoints,
+    so a range contributes all of its members rather than only the two written down.
     """
 
     numbers: set[int] = set()
-    pattern = r"(?i)\bsteps?\s+(\d+)(?:\s+(?:to|through|and)\s+(\d+))?"
+    pattern = r"(?i)\b(?:steps?|stages?)\s+(\d+)(?:\s+(?:to|through|and)\s+(\d+))?"
     for match in re.finditer(pattern, text):
         first = int(match.group(1))
         last = int(match.group(2)) if match.group(2) else first
@@ -94,9 +79,9 @@ class AgentRunbookTests(unittest.TestCase):
 
         runbooks = agent_runbooks()
         self.assertEqual(
-            [],
-            missing_required_runbooks(runbooks),
-            "missing a canonical root, web, chat, or script-guardrail runbook",
+            [REPO_ROOT / REQUIRED_RUNBOOK],
+            runbooks,
+            "AGENTS.md must have one repository-root source of truth",
         )
 
         for path in runbooks:
@@ -157,14 +142,6 @@ class AgentRunbookTests(unittest.TestCase):
         for relative, text in sources.items():
             with self.subTest(source=relative):
                 referenced = referenced_step_numbers(text)
-                if relative != Path("AGENTS.md"):
-                    self.assertTrue(
-                        referenced,
-                        f"{relative} names no workflow step, so it cannot name a "
-                        "wrong one; every agent's description says which step "
-                        "invokes it",
-                    )
-
                 dangling = sorted(referenced - steps)
                 self.assertEqual(
                     [],
@@ -249,13 +226,13 @@ class AgentRunbookTests(unittest.TestCase):
 
             self.assertEqual([expected], agent_runbooks(fixture_root))
 
-    def test_extra_scopes_cannot_replace_a_required_runbook(self):
-        """Each canonical scope must exist regardless of the discovered count."""
+    def test_extra_scopes_are_discovered_as_contract_violations(self):
+        """Discovery must expose nested runbooks so the checker can reject them."""
 
         with tempfile.TemporaryDirectory() as temp_dir:
             fixture_root = Path(temp_dir)
-            missing = Path("apps/web/AGENTS.md")
-            fixture_paths = (REQUIRED_RUNBOOKS - {missing}) | {
+            fixture_paths = {
+                REQUIRED_RUNBOOK,
                 Path("services/extra/AGENTS.md"),
                 Path("tools/AGENTS.md"),
             }
@@ -265,8 +242,8 @@ class AgentRunbookTests(unittest.TestCase):
                 path.write_text("# AGENTS\n", encoding="utf-8")
 
             self.assertEqual(
-                [missing],
-                missing_required_runbooks(agent_runbooks(fixture_root), fixture_root),
+                [fixture_root / relative for relative in sorted(fixture_paths)],
+                agent_runbooks(fixture_root),
             )
 
     def test_grouped_review_rules_are_counted(self):
