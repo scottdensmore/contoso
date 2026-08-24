@@ -19,7 +19,7 @@ pytest==9.1.1
 python-dotenv==1.2.2
 requests==2.34.2
 ruff==0.16.3
-sentence-transformers==5.7.0
+sentence-transformers==6.0.0
 starlette==1.6.0
 tabulate==0.10.0
 torch==2.13.0
