@@ -15,7 +15,12 @@ INTERACTIVE_TOOLS = ("AskUserQuestion",)
 MUTATING_TOOLS = ("Write", "Edit", "NotebookEdit")
 
 # Step number in AGENTS.md that invokes each agent.
-EXPECTED_STEP = {"verifier": 6, "ui-reviewer": 7, "code-reviewer": 8}
+EXPECTED_STEP = {
+    "verifier": 6,
+    "ui-reviewer": 7,
+    "localization-reviewer": 8,
+    "code-reviewer": 9,
+}
 MANAGED_ROOTS = (
     ".agents/agents",
     ".agents/skills",
@@ -72,7 +77,20 @@ def frontmatter(path: Path) -> dict[str, str]:
     return out
 
 
-def tools_of(fm: dict[str, str]) -> list[str]:
+def denied_tools_of(fm: dict[str, str]) -> list[str]:
+    """Tools the definition explicitly denies.
+
+    Upstream replaced the `tools:` allowlist with `disallowedTools:` on purpose,
+    and the reason is worth keeping here rather than only in their notes: an
+    allowlist is a guess at every tool the agent will ever need, and it failed
+    silently — it omitted `Skill`, so on Claude Code a definition could not load
+    the paired skill it is told to follow. Everything not denied is inherited.
+    """
+    return [t.strip() for t in fm.get("disallowedTools", "").split(",") if t.strip()]
+
+
+def allowlisted_tools_of(fm: dict[str, str]) -> list[str]:
+    """Any surviving `tools:` allowlist. Should always be empty now."""
     return [t.strip() for t in fm.get("tools", "").split(",") if t.strip()]
 
 
@@ -224,51 +242,94 @@ class AgentDefinitionTests(unittest.TestCase):
             "in EXPECTED_STEP; add it deliberately or remove it",
         )
 
-    def test_agents_cannot_ask_questions(self):
-        """Generated review stages must return a verdict without blocking for input."""
-        for name in sorted(defined_agents() | set(EXPECTED_STEP)):
-            with self.subTest(agent=name):
-                tools = tools_of(frontmatter(AGENTS_DIR / f"{name}.md"))
-                # Assert parsing succeeded first. `assertNotIn(x, [])` is
-                # trivially true, so an unparseable frontmatter would let this
-                # test pass while proving nothing.
-                self.assertTrue(tools, f"{name}: could not parse a tools list")
-                for banned in INTERACTIVE_TOOLS:
-                    self.assertNotIn(
-                        banned,
-                        tools,
-                        f"{name} has {banned}, so it can block waiting for a human; "
-                        "workflow review stages must run unattended",
-                    )
+    def test_agents_are_told_to_return_a_verdict_unattended(self):
+        """Review stages must return a verdict without blocking for input.
 
-    def test_agents_have_no_direct_editing_tools(self):
-        """AGENTS.md claims none of them carries a tool whose purpose is editing.
+        **This guarantee is weaker than it was, and the weakening is upstream's,
+        deliberate.** It used to be enforced by the absence of `AskUserQuestion`
+        from an allowlist. The allowlist is gone, and a denylist naming only the
+        editing tools leaves every other tool inherited — so nothing at the tool
+        level now stops one of these agents asking a question.
 
-        This checks tool grants separately from the definition's explicit
-        read-only declaration and instruction not to edit files.
+        What is still checkable is the instruction, so that is what this asserts.
+        Stated plainly rather than quietly downgraded: upstream made the same
+        trade for hosts that document no denylist, and called body text "weaker,
+        and honest about being weaker". If `AskUserQuestion` ever needs to be
+        denied again, `disallowedTools:` is where it goes.
         """
         for name in sorted(defined_agents() | set(EXPECTED_STEP)):
             with self.subTest(agent=name):
-                tools = tools_of(frontmatter(AGENTS_DIR / f"{name}.md"))
-                self.assertTrue(tools, f"{name}: could not parse a tools list")
+                body = body_of(AGENTS_DIR / f"{name}.md")
+                # `code-reviewer` opens "report findings" rather than "report a
+                # verdict" -- its verdict lives in the report format. The shared
+                # guarantee is that each is told to *return* a result, not to ask
+                # for one, so that is what this matches.
+                self.assertRegex(
+                    body,
+                    r"(?i)report (a verdict|findings)",
+                    f"{name} is not told to report a verdict or findings, which is "
+                    "the only remaining guard that it will not block for input",
+                )
+                # And nothing instructs it to ask. Weak, and the weakness is the
+                # point of this test's docstring -- but a definition that started
+                # telling an agent to consult the user would at least be caught.
+                self.assertNotIn(
+                    "AskUserQuestion",
+                    body,
+                    f"{name} names AskUserQuestion in its body; if asking is "
+                    "intended, deny it or say so deliberately",
+                )
+
+    def test_agents_deny_the_direct_editing_tools(self):
+        """AGENTS.md claims none of them carries a tool whose purpose is editing.
+
+        Checked against the denylist rather than an allowlist. The guarantee is
+        the same and the mechanism is stronger: an allowlist withheld everything
+        nobody thought of, including tools these agents need, while a denylist
+        names exactly the three that must never be reachable.
+        """
+        for name in sorted(defined_agents() | set(EXPECTED_STEP)):
+            with self.subTest(agent=name):
+                denied = denied_tools_of(frontmatter(AGENTS_DIR / f"{name}.md"))
+                # Assert parsing succeeded first. `assertIn(x, [])` fails for the
+                # wrong reason, and an unparseable frontmatter would otherwise be
+                # reported as a missing denial.
+                self.assertTrue(
+                    denied, f"{name}: could not parse a disallowedTools list"
+                )
                 for banned in MUTATING_TOOLS:
-                    self.assertNotIn(
+                    self.assertIn(
                         banned,
-                        tools,
-                        f"{name} has {banned}, an editing tool; AGENTS.md claims "
-                        "these agents carry none",
+                        denied,
+                        f"{name} does not deny {banned}, an editing tool; AGENTS.md "
+                        "claims these agents carry none",
                     )
 
+    # The verifier is the exception, and it is deliberate: running a project's
+    # gate writes — build output, caches, coverage — so a read-only sandbox makes
+    # the one agent whose job is running the gate unable to do it. Upstream
+    # declares `sandbox_mode: workspace-write` for it and derives `readonly:
+    # false`; its prohibition on editing is carried by `disallowedTools` and by
+    # its body instead. Every reviewer stays read-only.
+    NOT_READ_ONLY = {"verifier"}
+
     def test_agent_definitions_are_read_only_by_contract(self):
-        """Claude definitions must request read-only execution and forbid edits."""
+        """Reviewers must request read-only execution; all four must forbid edits."""
 
         for name in sorted(defined_agents() | set(EXPECTED_STEP)):
             with self.subTest(agent=name):
                 path = AGENTS_DIR / f"{name}.md"
+                expected = "false" if name in self.NOT_READ_ONLY else "true"
                 self.assertEqual(
                     frontmatter(path).get("readonly"),
-                    "true",
-                    f"{name} is not declared read-only",
+                    expected,
+                    f"{name} declares readonly="
+                    f"{frontmatter(path).get('readonly')!r}, expected {expected!r}"
+                    + (
+                        " — a gate that cannot run a build is not a gate"
+                        if name in self.NOT_READ_ONLY
+                        else " — reviewers read a diff and need nothing else"
+                    ),
                 )
                 self.assertRegex(
                     body_of(path),
@@ -292,13 +353,27 @@ class AgentDefinitionTests(unittest.TestCase):
                     f"{expected}; update EXPECTED_STEP if the workflow was renumbered",
                 )
 
-    def test_every_agent_declares_tools(self):
-        """An omitted tools list would bypass the explicit read-only tool checks."""
+    def test_no_agent_carries_a_tool_allowlist(self):
+        """An allowlist reads as a guarantee and behaves as a cage.
+
+        This test used to require one. Upstream removed allowlists outright after
+        measuring the cost — the list omitted `Skill`, so on the primary host a
+        definition could not load the skill it is told to follow, and the fix
+        that proves the shape is wrong is "append the missing tool". A returning
+        allowlist would silently withhold whatever nobody predicted next.
+        """
         for name in sorted(defined_agents() | set(EXPECTED_STEP)):
             with self.subTest(agent=name):
+                fm = frontmatter(AGENTS_DIR / f"{name}.md")
+                self.assertEqual(
+                    allowlisted_tools_of(fm),
+                    [],
+                    f"{name} carries a `tools:` allowlist; the contract is a "
+                    "denylist, and everything unnamed is inherited",
+                )
                 self.assertTrue(
-                    tools_of(frontmatter(AGENTS_DIR / f"{name}.md")),
-                    f"{name} declares no tools, so it would inherit the full tool set",
+                    denied_tools_of(fm),
+                    f"{name} denies nothing, so it inherits the editing tools",
                 )
 
 
