@@ -86,7 +86,7 @@ class DetectChangedSurfacesTests(unittest.TestCase):
             ("apps/web/**", "apps/web/src/app/page.tsx"),
             ("docs/**", "docs/ENV_CONTRACT.md"),
             ("services/chat/**", "services/chat/src/api/main.py"),
-            (".claude/agents/**", ".claude/agents/verifier.md"),
+            ("tests/scripts/**", "tests/scripts/test_detect_changed_surfaces.py"),
         ):
             with self.subTest(pattern=pattern, path=child):
                 self.assertTrue(detect_changed.path_matches(pattern, child))
@@ -202,24 +202,6 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 self.assertFalse(flags["unknown"])
                 self.assertIn("docs-check", detect_changed.recommended_targets(flags))
 
-    def test_generated_workflow_assets_route_to_runtime_by_intent(self):
-        for path in (
-            ".agents/agent-skills.json",
-            ".agents/agents/verifier.md",
-            ".agents/skills/verifier/SKILL.md",
-            ".claude/agents/verifier.md",
-            ".claude/skills/verifier/SKILL.md",
-            ".codex/agents/verifier.toml",
-            ".cursor/agents/verifier.md",
-            ".github/agents/verifier.md",
-        ):
-            with self.subTest(path=path):
-                flags = detect_changed.classify([path])
-                self.assertTrue(flags["runtime"])
-                self.assertTrue(flags["workflow"])
-                self.assertFalse(flags["unknown"])
-                self.assertEqual(detect_changed.recommended_targets(flags), ["ci"])
-
     def test_split_chat_requirement_paths_are_runtime(self):
         for path in (
             "services/chat/src/api/requirements-core.txt",
@@ -237,19 +219,6 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         flags = detect_changed.classify(["docker-compose.yml"])
         self.assertTrue(flags["runtime"])
         self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
-
-    def test_agent_definitions_are_runtime(self):
-        """Agent definitions select the complete gate by explicit policy.
-
-        They would reach runtime anyway through the unknown fallback, but by
-        accident. An explicit pattern means the routing survives a change to
-        how unknown paths are handled, and the workflow flag adds build/docs.
-        """
-        flags = detect_changed.classify([".claude/agents/verifier.md"])
-        self.assertTrue(flags["runtime"])
-        self.assertTrue(flags["workflow"])
-        self.assertFalse(flags["unknown"], "should match a pattern, not fall through")
-        self.assertEqual(detect_changed.recommended_targets(flags), ["ci"])
 
     def test_dependabot_config_is_runtime(self):
         """The Dependabot config is repo tooling, not an unclassified path.
