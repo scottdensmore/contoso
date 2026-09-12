@@ -71,4 +71,56 @@ describe('LoginPage', () => {
       expect(screen.getByText(/Invalid credentials/i)).toBeDefined()
     })
   })
+
+  it('renders navigation links to signup and store', () => {
+    render(<LoginPage />)
+
+    const storeLink = screen.getByRole('link', { name: /back to store/i })
+    expect(storeLink).toBeDefined()
+    expect(storeLink.getAttribute('href')).toBe('/')
+
+    const signupLink = screen.getByRole('link', { name: /sign up/i })
+    expect(signupLink).toBeDefined()
+    expect(signupLink.getAttribute('href')).toBe('/signup')
+    expect(screen.getByText(/don't have an account\?/i)).toBeDefined()
+  })
+
+  it('disables the submit button and inputs while submitting and resets on error', async () => {
+    let resolveSignIn: (value: any) => void = () => {}
+    const pendingPromise = new Promise((resolve) => {
+      resolveSignIn = resolve
+    })
+    vi.mocked(nextAuthReact.signIn).mockReturnValue(pendingPromise as any)
+
+    render(<LoginPage />)
+
+    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'test@test.com' } })
+    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'pwd123' } })
+
+    const submitButton = screen.getByRole('button', { name: /Sign in/i })
+    const emailInput = screen.getByLabelText(/Email address/i)
+    const passwordInput = screen.getByLabelText(/Password/i)
+
+    expect(submitButton).not.toBeDisabled()
+    expect(emailInput).not.toBeDisabled()
+    expect(passwordInput).not.toBeDisabled()
+
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Signing in.../i })).toBeDefined()
+    })
+    expect(screen.getByRole('button', { name: /Signing in.../i })).toBeDisabled()
+    expect(emailInput).toBeDisabled()
+    expect(passwordInput).toBeDisabled()
+
+    resolveSignIn({ error: 'Invalid credentials' })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Sign in/i })).toBeDefined()
+      expect(screen.getByRole('button', { name: /Sign in/i })).not.toBeDisabled()
+      expect(emailInput).not.toBeDisabled()
+      expect(passwordInput).not.toBeDisabled()
+    })
+  })
 })

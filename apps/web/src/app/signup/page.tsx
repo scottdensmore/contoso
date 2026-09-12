@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 export default function SignUpPage() {
@@ -9,11 +10,13 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/signup", {
@@ -30,16 +33,24 @@ export default function SignUpPage() {
         router.push("/login"); // Redirect to login page on successful signup
       } else {
         setError(data.message || "Something went wrong during signup.");
+        setIsSubmitting(false);
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err?.message || "An unexpected error occurred.");
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h1 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 focus-visible:outline-indigo-600"
+        >
+          ← Back to store
+        </Link>
+        <h1 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Create a new account
         </h1>
       </div>
@@ -60,9 +71,10 @@ export default function SignUpPage() {
                 type="text"
                 autoComplete="name"
                 required
+                disabled={isSubmitting}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${FIELD_BOUNDARY}`}
               />
             </div>
           </div>
@@ -81,9 +93,10 @@ export default function SignUpPage() {
                 type="email"
                 autoComplete="email"
                 required
+                disabled={isSubmitting}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${FIELD_BOUNDARY}`}
               />
             </div>
           </div>
@@ -104,9 +117,10 @@ export default function SignUpPage() {
                 type="password"
                 autoComplete="new-password"
                 required
+                disabled={isSubmitting}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+                className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${FIELD_BOUNDARY}`}
               />
             </div>
           </div>
@@ -116,12 +130,23 @@ export default function SignUpPage() {
           <div>
             <button
               type="submit"
-              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
+              disabled={isSubmitting}
+              className={`flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${ACTION_BOUNDARY}`}
             >
-              Sign up
+              {isSubmitting ? "Creating account..." : "Sign up"}
             </button>
           </div>
         </form>
+
+        <p className="mt-10 text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500 focus-visible:outline-indigo-600"
+          >
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   );
