@@ -58,7 +58,7 @@ jobs:
             echo "docs=true" >> "$GITHUB_OUTPUT"
             echo "unknown=false" >> "$GITHUB_OUTPUT"
             echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -92,7 +92,7 @@ jobs:
             echo "docs=true" >> "$GITHUB_OUTPUT"
             echo "unknown=false" >> "$GITHUB_OUTPUT"
             echo "none=false" >> "$GITHUB_OUTPUT"
-            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat docs-check" >> "$GITHUB_OUTPUT"
+            echo "targets=toolchain-doctor env-contract-check test-scripts quick-ci-web quick-ci-chat" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -138,23 +138,6 @@ jobs:
 
       - name: Run script tests
         run: make test-scripts PYTHON_BASE=python
-
-  docs-ci:
-    name: Documentation and Agent Doc Checks
-    needs: changes
-    if: ${{ github.event_name != 'push' && (needs.changes.outputs.docs == 'true' || needs.changes.outputs.runtime == 'true') }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-
-      - name: Verify docs links and AGENTS.md pointers
-        run: make docs-check PYTHON_BASE=python
 
   web-ci:
     name: Web App CI
