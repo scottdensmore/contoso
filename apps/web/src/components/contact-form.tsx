@@ -102,7 +102,7 @@ export default function ContactForm() {
           required
           value={formData.name}
           onChange={handleChange}
-          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="Your name"
         />
       </div>
@@ -122,7 +122,7 @@ export default function ContactForm() {
           required
           value={formData.email}
           onChange={handleChange}
-          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="you@example.com"
         />
       </div>
@@ -142,7 +142,7 @@ export default function ContactForm() {
             required
             value={formData.subject}
             onChange={handleChange}
-            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
             placeholder="How can we help?"
           />
         </div>
@@ -151,7 +151,7 @@ export default function ContactForm() {
             htmlFor="orderNumber"
             className="block text-sm font-semibold text-gray-900"
           >
-            Order Number
+            Order Number <span className="text-sm font-normal text-gray-500">(Optional)</span>
           </label>
           <input
             type="text"
@@ -159,8 +159,7 @@ export default function ContactForm() {
             name="orderNumber"
             value={formData.orderNumber}
             onChange={handleChange}
-            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
-            placeholder="Optional"
+            className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
       </div>
@@ -179,7 +178,7 @@ export default function ContactForm() {
           required
           value={formData.message}
           onChange={handleChange}
-          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+          className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="Write your message here..."
         ></textarea>
       </div>

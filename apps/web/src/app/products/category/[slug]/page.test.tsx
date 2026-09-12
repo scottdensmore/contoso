@@ -122,7 +122,7 @@ describe('Category Page', () => {
       await CategoryPage({ params: Promise.resolve({ slug: 'hiking' }) }),
     )
 
-    expectOneCardNamed(container, 'No image available Trail Boots $120.00')
+    expectOneCardNamed(container, 'Trail Boots $120.00')
   })
 
   it('marks the card box skippable only when it holds an image', async () => {

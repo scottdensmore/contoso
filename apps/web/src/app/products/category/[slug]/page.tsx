@@ -149,7 +149,8 @@ export default async function CategoryPage({
                   // `page.test.tsx` pins the shorter name, and fails on the
                   // longer one.
                   <div
-                    className="flex h-full w-full items-center justify-center text-sm text-gray-500"
+                    aria-hidden="true"
+                    className="flex h-full w-full items-center justify-center text-sm text-gray-600"
                   >
                     No image available
                   </div>
