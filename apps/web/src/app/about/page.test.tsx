@@ -32,4 +32,14 @@ describe('About Page', () => {
     expect(screen.getByText('Our Mission')).toBeDefined()
     expect(screen.getByText('Our Story')).toBeDefined()
   })
+
+  it('renders the mission image as decorative to avoid duplicating the heading', () => {
+    render(<AboutPage />)
+
+    const missionImg = document.querySelector('img[src="/images/about/mission.png"]')
+    expect(missionImg).not.toBeNull()
+    expect(missionImg?.getAttribute('alt')).toBe('')
+    expect(missionImg?.getAttribute('aria-hidden')).toBe('true')
+    expect(screen.queryByRole('img', { name: 'Our Mission' })).toBeNull()
+  })
 })

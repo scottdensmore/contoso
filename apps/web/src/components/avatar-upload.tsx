@@ -197,7 +197,7 @@ export default function AvatarUpload({ initialAvatar, onUpload }: AvatarUploadPr
         {pictureSrc(preview) ? (
           <img
             src={pictureSrc(preview)}
-            alt="Avatar Preview"
+            alt="Current avatar"
             className="h-full w-full rounded-full object-cover"
           />
         ) : (

@@ -51,8 +51,9 @@ describe('AvatarUpload', () => {
 
   it('renders initial avatar if provided', () => {
     render(<AvatarUpload initialAvatar="http://example.com/avatar.png" onUpload={() => {}} />)
-    const img = screen.getByRole('img') as HTMLImageElement
+    const img = screen.getByRole('img', { name: 'Current avatar' }) as HTMLImageElement
     expect(img.src).toContain('example.com/avatar.png')
+    expect(img.alt).toBe('Current avatar')
   })
 
   it('handles file selection and uploads base64', async () => {

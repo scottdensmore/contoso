@@ -85,7 +85,8 @@ export const Header = () => {
                       src={session.user.image}
                       width={32}
                       height={32}
-                      alt={session.user.name || "User"}
+                      alt=""
+                      aria-hidden="true"
                       className="rounded-full h-8 w-8 object-cover"
                     />
                   ) : (

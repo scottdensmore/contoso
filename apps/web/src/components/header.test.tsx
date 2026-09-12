@@ -40,6 +40,21 @@ describe('Header', () => {
     expect(screen.getByText(/sign out/i)).toBeDefined()
   })
 
+  it('renders decorative avatar image without accessible name when user has an image', async () => {
+    vi.mocked(useSession).mockReturnValue({ 
+      status: 'authenticated', 
+      data: { user: { name: 'John Doe', email: 'john@test.com', image: 'https://example.com/avatar.jpg' } } 
+    } as any)
+    await act(async () => {
+      render(<Header />)
+    })
+    const avatar = document.querySelector('img[src="https://example.com/avatar.jpg"]')
+    expect(avatar).not.toBeNull()
+    expect(avatar?.getAttribute('alt')).toBe('')
+    expect(avatar?.getAttribute('aria-hidden')).toBe('true')
+    expect(screen.queryByRole('img', { name: /john doe/i })).toBeNull()
+  })
+
   it('should open the sidebar when clicking the hamburger icon', async () => {
     vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
     await act(async () => {

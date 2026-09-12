@@ -29,7 +29,8 @@ export default function AboutPage() {
           <div className="relative h-80 rounded-2xl overflow-hidden bg-zinc-200">
              <Image
                 src="/images/about/mission.png"
-                alt="Our Mission"
+                alt=""
+                aria-hidden="true"
                 fill
                 // A `fill` image has no width prop, so without `sizes` Next
                 // assumes 100vw and the browser fetches for the whole viewport
