@@ -54,22 +54,8 @@ const nextConfig = {
   allowedDevOrigins: ['127.0.0.1', '[::1]'],
 
   // `next dev` otherwise appends a block of its own to an `AGENTS.md`,
-  // on every boot under a coding agent -- which is every `make dev` in this
-  // repository's workflow, though not one run from a plain shell: the write is
-  // gated on agent detection, so it fires on `CLAUDECODE`, `GEMINI_CLI`,
-  // `CURSOR_AGENT`, a `COPILOT_*` variable and their equivalents, and not
-  // otherwise. That file is this repository's authoritative runbook for coding
-  // agents. This repository keeps one root guide written by hand, and generated
-  // instruction blocks do not belong in it.
-  //
-  // Only `AGENTS.md`. The sibling `CLAUDE.md` is left alone, because it exists
-  // and carries no marker block -- measured, and the branch that decides it is
-  // in `generate-agent-files.js`.
-  //
-  // The rest of what a dev server rewrites is #260 (`next-env.d.ts`, on boot)
-  // and #275 (`tsconfig.json`, once it has served a page), and is not fixed
-  // here. This one is, because it lands in an instruction file rather than a
-  // generated one.
+  // on every boot under a coding agent. Generated instruction blocks
+  // do not belong in the repository.
   agentRules: false,
 
   // The dev-tools indicator is a focusable element sitting after the chat
@@ -101,7 +87,7 @@ const nextConfig = {
   // Tools menu and its trigger (route info, bundler, preferences, segment
   // explorer), the cache badge, and the build-activity pill -- so there is no
   // "compiling" or "rendering" feedback in dev either. For the route's
-  // static/dynamic verdict, which the root `AGENTS.md` does care about, plain
+  // static/dynamic verdict, plain
   // `next build` prints `○` and `ƒ` per route and CI produces it on every run.
   //
   // Errors still surface with this off. That is Next's separate issues badge,

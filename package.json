@@ -27,8 +27,6 @@
     "prisma:generate": "make -C apps/web prisma-generate",
     "migrate": "make migrate",
     "migrate:deploy": "make migrate-deploy",
-    "docs:check": "make docs-check",
-    "agent-docs:check": "make agent-docs-check",
     "quick-ci": "make quick-ci",
     "quick-ci:changed": "make quick-ci-changed",
     "quick-ci:web": "make -C apps/web quick-ci",

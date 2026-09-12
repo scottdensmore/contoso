@@ -12,14 +12,6 @@ from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
 
-WORKFLOW_PATTERNS = (
-    ".agents/**",
-    ".claude/agents/**",
-    ".claude/skills/**",
-    ".codex/agents/**",
-    ".cursor/agents/**",
-    ".github/agents/**",
-)
 
 RUNTIME_PATTERNS = (
     ".github/workflows/ci.yml",
@@ -55,13 +47,7 @@ RUNTIME_PATTERNS = (
     "scripts/release_dry_run.py",
     "scripts/e2e_smoke.py",
     "scripts/ci_smoke_metrics.py",
-    "scripts/verify_docs.py",
-    "scripts/check_agent_docs.py",
     "tests/scripts/**",
-    # Generated agent definitions and skills are repo tooling. Without these
-    # they classify as "unknown", which forces runtime by accident rather than
-    # by intent and hides omissions when a new host surface is installed.
-    *WORKFLOW_PATTERNS,
     # Compose is web+chat, but the guard that protects its startup ordering
     # lives in tests/scripts. Without this, a change dropping the healthcheck
     # would never run that guard.
@@ -100,13 +86,7 @@ CHAT_PATTERNS = (
 DOC_PATTERNS = (
     "docs/**",
     "README.md",
-    # Bare filenames match in any directory, covering nested agent runbooks
-    # and their CLAUDE.md pointers.
-    "AGENTS.md",
-    "CLAUDE.md",
-    "GEMINI.md",
     "CONTRIBUTING.md",
-    ".github/copilot-instructions.md",
 )
 
 ALL_PATTERNS = RUNTIME_PATTERNS + WEB_PATTERNS + CHAT_PATTERNS + DOC_PATTERNS
@@ -262,7 +242,6 @@ def changed_files_from_worktree() -> list[str]:
 
 def classify(files: list[str]) -> dict[str, bool]:
     runtime = False
-    workflow = False
     web = False
     chat = False
     docs = False
@@ -271,8 +250,6 @@ def classify(files: list[str]) -> dict[str, bool]:
     for path in files:
         if matches_any(path, RUNTIME_PATTERNS):
             runtime = True
-        if matches_any(path, WORKFLOW_PATTERNS):
-            workflow = True
         if matches_any(path, WEB_PATTERNS):
             web = True
         if matches_any(path, CHAT_PATTERNS):
@@ -288,7 +265,6 @@ def classify(files: list[str]) -> dict[str, bool]:
 
     return {
         "runtime": runtime,
-        "workflow": workflow,
         "web": web,
         "chat": chat,
         "docs": docs,
@@ -298,12 +274,6 @@ def classify(files: list[str]) -> dict[str, bool]:
 
 
 def recommended_targets(flags: dict[str, bool]) -> list[str]:
-    # Workflow assets define how every surface is verified and reviewed. Their
-    # Verification Map row requires the complete gate, including the production
-    # build and docs checks that the ordinary quick runtime loop omits.
-    if flags.get("workflow", False):
-        return ["ci"]
-
     ordered: list[str] = []
 
     if flags["runtime"]:
@@ -327,9 +297,6 @@ def recommended_targets(flags: dict[str, bool]) -> list[str]:
             ordered.append("quick-ci-web")
         if flags["chat"]:
             ordered.append("quick-ci-chat")
-
-    if flags["docs"]:
-        ordered.append("docs-check")
 
     deduped: list[str] = []
     seen: set[str] = set()

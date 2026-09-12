@@ -238,10 +238,6 @@ make -C services/chat dev
 make -C services/chat ci
 ```
 
-For coding agents, start with the repository's one [AGENTS.md](./AGENTS.md).
-`CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are root pointers
-only, enforced by `make agent-docs-check`.
-
 PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
 
 ## Bootstrap Troubleshooting
@@ -252,10 +248,6 @@ Run `mise install`, then retry `make bootstrap`.
 Run `rm -rf .venv && make venv`, then `make setup-chat`. If you invoke Python directly, use `.venv/bin/python`.
 - `make env-contract-check` fails:
 Update `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md` so they match.
-- `make docs-check` fails:
-Fix broken relative links in `docs/*.md`, `README.md`, `AGENTS.md`, or `CONTRIBUTING.md`.
-- `make agent-docs-check` fails:
-A root pointer (`CLAUDE.md`, `GEMINI.md`, or `.github/copilot-instructions.md`) gained content, often a `#` memory from Claude Code. Move the flagged lines into `AGENTS.md`, then run `make agent-docs-check FIX=1`.
 - `make quick-ci-changed` runs no checks:
 Set an explicit diff range, e.g. `CHANGED_BASE=<base_sha> CHANGED_HEAD=<head_sha> make quick-ci-changed`.
 - `make release-dry-run` fails:

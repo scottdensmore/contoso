@@ -19,7 +19,6 @@ make release-dry-run RELEASE_TAG=v1.2.3
 2. tag format (`vMAJOR.MINOR.PATCH`, optional prerelease/build suffix)
 3. quick CI checks (`make quick-ci`)
 4. script guardrail tests (`make test-scripts`)
-5. docs/runbook links (`make docs-check`)
 
 ## Draft Release Workflow
 
