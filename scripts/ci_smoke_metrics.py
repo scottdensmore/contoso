@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Track and analyze CI smoke metrics over time."""
 
 from __future__ import annotations
@@ -225,8 +224,7 @@ def main() -> int:
             f"summary_file={summary_path}",
         ]
         with Path(args.github_output).open("a", encoding="utf-8") as handle:
-            for line in output_lines:
-                handle.write(f"{line}\n")
+            handle.writelines(f"{line}\n" for line in output_lines)
 
     return 0
 

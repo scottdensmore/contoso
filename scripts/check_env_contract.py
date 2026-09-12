@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
 """Validate environment contract drift against templates and docs."""
 
 from __future__ import annotations
 
 import json
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -66,7 +64,7 @@ def load_contract() -> dict[str, Any]:
         raise RuntimeError(f"Contract file is not valid JSON: {exc}") from exc
 
     if not isinstance(payload, dict):
-        raise RuntimeError("Contract root must be a JSON object.")
+        raise TypeError("Contract root must be a JSON object.")
     return payload
 
 

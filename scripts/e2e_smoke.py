@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run a lightweight web -> chat -> db end-to-end smoke check."""
 
 from __future__ import annotations
@@ -9,7 +8,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from html import escape
 from typing import Any
 
@@ -156,7 +155,7 @@ def wait_for(
     label: str,
     timeout_seconds: int,
     interval_seconds: float,
-    check: callable[[], None],
+    check: Callable[[], None],
 ) -> None:
     deadline = time.time() + timeout_seconds
     last_error: str | None = None

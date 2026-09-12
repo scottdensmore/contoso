@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Agent-focused local environment diagnostics."""
 
 from __future__ import annotations
@@ -135,7 +134,7 @@ def load_required_vars_from_contract() -> tuple[tuple[str, ...], tuple[str, ...]
 
     environments = payload.get("environments")
     if not isinstance(environments, list):
-        raise RuntimeError("`environments` must be a list in env contract.")
+        raise TypeError("`environments` must be a list in env contract.")
 
     required_by_name: dict[str, tuple[str, ...]] = {}
     for entry in environments:

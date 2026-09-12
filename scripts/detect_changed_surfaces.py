@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Detect changed repository surfaces and map to recommended checks."""
 
 from __future__ import annotations
@@ -7,8 +6,8 @@ import argparse
 import os
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 ROOT = Path(__file__).resolve().parent.parent
 

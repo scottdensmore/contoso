@@ -44,7 +44,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate migrate-deploy prisma-generate lint typecheck test test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate migrate-deploy prisma-generate lint typecheck test lint-scripts typecheck-scripts check-scripts test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -191,7 +191,17 @@ test: ## Run web tests and chat unit tests
 	$(MAKE) test-web
 	$(MAKE) test-chat
 
+lint-scripts: | $(VENV_PYTHON) ## Lint root scripts
+	$(VENV_DIR)/bin/ruff check scripts/
+
+typecheck-scripts: | $(VENV_PYTHON) ## Type-check root scripts
+	$(VENV_DIR)/bin/mypy scripts/
+
+check-scripts: lint-scripts typecheck-scripts ## Lint and type-check root scripts
+
 test-scripts: | $(VENV_PYTHON) ## Run root script guardrail tests
+	@if [ -x "$(VENV_DIR)/bin/ruff" ]; then $(VENV_DIR)/bin/ruff check scripts/; fi
+	@if [ -x "$(VENV_DIR)/bin/mypy" ]; then $(VENV_DIR)/bin/mypy scripts/; fi
 	$(PYTHON) -m unittest discover -s tests/scripts -p "test_*.py" -v
 
 test-web: ## Run web tests
@@ -215,6 +225,7 @@ quick-ci-chat: ## Fast chat checks
 quick-ci: ## Fast local checks for web + chat (no web build)
 	$(MAKE) toolchain-doctor
 	$(MAKE) env-contract-check
+	$(MAKE) check-scripts
 	$(MAKE) quick-ci-web
 	$(MAKE) quick-ci-chat
 
@@ -264,3 +275,4 @@ ci: ## Run local CI checks
 	$(MAKE) quick-ci
 	$(MAKE) test-scripts
 	$(MAKE) build
+	git diff --exit-code

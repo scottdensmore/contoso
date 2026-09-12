@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Validate release guardrails without publishing a release."""
 
 from __future__ import annotations

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Verify required local runtime toolchain versions."""
 
 from __future__ import annotations

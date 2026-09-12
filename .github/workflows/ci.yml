@@ -171,6 +171,9 @@ jobs:
       - name: Run web checks
         run: npm run ci:web
 
+      - name: Verify clean worktree
+        run: git diff --exit-code
+
   chat-ci:
     name: Chat Service CI
     needs: changes
@@ -203,6 +206,8 @@ jobs:
       - name: Install dependencies
         run: make -C services/chat setup PYTHON_BASE=python
 
+      - name: Check root scripts
+        run: make check-scripts
 
       - name: Run unit tests
         run: npm run ci:chat
