@@ -86,13 +86,7 @@ CHAT_PATTERNS = (
 DOC_PATTERNS = (
     "docs/**",
     "README.md",
-    # Bare filenames match in any directory, covering nested agent runbooks
-    # and their CLAUDE.md pointers.
-    "AGENTS.md",
-    "CLAUDE.md",
-    "GEMINI.md",
     "CONTRIBUTING.md",
-    ".github/copilot-instructions.md",
 )
 
 ALL_PATTERNS = RUNTIME_PATTERNS + WEB_PATTERNS + CHAT_PATTERNS + DOC_PATTERNS

@@ -41,7 +41,7 @@ class DetectChangedSurfacesTests(unittest.TestCase):
             ("apps/web/**", "apps/web-e2e/spec.ts"),
             ("docs/**", "docs-archive/notes.md"),
             ("services/chat/**", "services/chat-legacy/old.py"),
-            (".claude/agents/**", ".claude/agents-extra/foo.md"),
+            ("tests/scripts/**", "tests/scripts-extra/foo.py"),
         ):
             with self.subTest(pattern=pattern, path=sibling):
                 self.assertFalse(detect_changed.path_matches(pattern, sibling))
@@ -183,18 +183,13 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         }
         self.assertEqual(detect_changed.recommended_targets(flags), [])
 
-    def test_agent_doc_paths_route_to_test_scripts(self):
+    def test_doc_paths_route_to_test_scripts(self):
         for path in (
-            "CLAUDE.md",
-            "GEMINI.md",
-            "AGENTS.md",
-            ".github/copilot-instructions.md",
-            "apps/web/CLAUDE.md",
-            "apps/web/GEMINI.md",
-            "apps/web/AGENTS.md",
-            "services/chat/CLAUDE.md",
-            "services/chat/GEMINI.md",
-            "services/chat/AGENTS.md",
+            "README.md",
+            "CONTRIBUTING.md",
+            "docs/README.md",
+            "docs/ENV_CONTRACT.md",
+            "docs/RELEASE.md",
         ):
             with self.subTest(path=path):
                 flags = detect_changed.classify([path])
@@ -350,8 +345,8 @@ class QuotedPathFixture:
     """A real repository containing names git C-quotes.
 
     Patching `run_git` cannot exercise this: the defect is in what git emits,
-    so the fixture has to be a repository git actually reads. `tests/scripts/
-    AGENTS.md` asks for the owning tool's own output where practical, and this
+    so the fixture has to be a repository git actually reads. Repository testing
+    rules ask for the owning tool's own output where practical, and this
     is the case it is describing.
     """
 

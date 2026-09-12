@@ -238,10 +238,6 @@ make -C services/chat dev
 make -C services/chat ci
 ```
 
-For coding agents, start with the repository's one [AGENTS.md](./AGENTS.md).
-`CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are root pointers
-only.
-
 PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
 
 ## Bootstrap Troubleshooting

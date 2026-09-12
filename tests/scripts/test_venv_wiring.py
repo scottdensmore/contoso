@@ -108,9 +108,9 @@ class VenvWiringTests(unittest.TestCase):
 
 
 class DocRoutingWiringTests(unittest.TestCase):
-    def test_agents_md_routes_to_test_scripts(self):
+    def test_readme_md_routes_to_test_scripts(self):
         detector = load_detector()
-        flags = detector.classify(["AGENTS.md"])
+        flags = detector.classify(["README.md"])
         self.assertIn("test-scripts", detector.recommended_targets(flags))
         self.assertFalse(flags["none"])
 

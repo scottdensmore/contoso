@@ -46,10 +46,7 @@ If your change involves the database:
 
 ## Need Help?
 
-Refer to:
-
-- The repository-root `AGENTS.md` for coding-agent workflow, commands, and conventions. Root `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
-- `docs/` for architecture, database, deployment, and release runbooks.
+Refer to `docs/` for architecture, database, deployment, and release runbooks.
 
 ### Quick Troubleshooting
 
