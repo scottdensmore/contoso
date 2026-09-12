@@ -46,10 +46,7 @@ If your change involves the database:
 
 ## Need Help?
 
-Refer to:
-
-- The repository-root `AGENTS.md` for coding-agent workflow, commands, and conventions. Root `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` are pointers only.
-- `docs/` for architecture, database, deployment, and release runbooks.
+Refer to `docs/` for architecture, database, deployment, and release runbooks.
 
 ### Quick Troubleshooting
 
@@ -57,7 +54,6 @@ Refer to:
 - All Python runs from the `.venv` virtualenv created by `make venv`/`make bootstrap`; if a dependency looks missing, re-run the command through `make` rather than a system `python`.
 - If env contract drift check fails, run `make env-contract-check` and align `config/env_contract.json`, env templates, and `docs/ENV_CONTRACT.md`.
 - If env checks fail, run `make env-init` and fill required values in `.env` files.
-- If `make agent-docs-check` fails, move flagged pointer-file content into the root `AGENTS.md`, then run `make agent-docs-check FIX=1`.
 - If release preflight fails, run `make release-dry-run RELEASE_TAG=vX.Y.Z` and fix missing guardrail files.
 - If integration smoke fails, run `make e2e-smoke KEEP_STACK=1` and inspect compose logs.
 - If chat local-provider dependencies are required in Docker, run with `CHAT_INSTALL_LOCAL_STACK=1`.

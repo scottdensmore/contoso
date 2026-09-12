@@ -39,9 +39,8 @@ services:
       # Not sign-in: `login/page.tsx` calls `signIn(..., { redirect: false })`
       # and navigates itself, so that path never reads this. And not a cookie
       # problem: cookies are not isolated by port (RFC 6265 section 8.5), so a
-      # mismatch cannot strip the session. `.claude/agents/verifier.md` records
-      # the measurement — a remapped stack still signs in and runs the
-      # journeys, which is exactly why sign-out is the flow to name here.
+      # mismatch cannot strip the session — a remapped stack still signs in
+      # and runs the journeys, which is exactly why sign-out is the flow to name here.
       - NEXTAUTH_URL=http://localhost:3100
       - CHAT_ENDPOINT=http://chat:8000/api/create_response
       - CHAT_API_KEY=${CHAT_API_KEY:-dummy}

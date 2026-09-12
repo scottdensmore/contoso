@@ -52,8 +52,6 @@ class VenvWiringTests(unittest.TestCase):
             "env-contract-check",
             "agent-doctor",
             "test-scripts",
-            "docs-check",
-            "agent-docs-check",
             "release-dry-run",
         ):
             with self.subTest(target=target):
@@ -109,34 +107,10 @@ class VenvWiringTests(unittest.TestCase):
         self.assertIn(".venv/", read(".gitignore"))
 
 
-class DocsCheckWiringTests(unittest.TestCase):
-    def test_docs_check_runs_the_agent_definition_guard(self):
-        """docs-check must be worth running on its own.
-
-        It is reached directly from `make ci` and the docs job, so the guard
-        that reads AGENTS.md is invoked here as well as by test-scripts.
-        Deliberately redundant — see the companion test below.
-        """
-        makefile = read("Makefile")
-        recipe = makefile.split("docs-check:", 1)[1].split("\n\n", 1)[0]
-        self.assertIn(
-            "test_agent_definitions.py",
-            recipe,
-            "docs-check must run the agent-definition guard; without it, "
-            "renumbering the workflow in AGENTS.md would not be caught",
-        )
-
-    def test_the_redundancy_is_redundant(self):
-        """Pins why the duplicate exists, so the reason cannot go stale again.
-
-        The recipe used to claim a docs-only change "never reaches
-        test-scripts". That stopped being true when the script-tests gate moved
-        off `runtime` to `none`, and nothing failed — a Makefile comment is a
-        mirror of the detector with no test holding the two together. This is
-        that test.
-        """
+class DocRoutingWiringTests(unittest.TestCase):
+    def test_readme_md_routes_to_test_scripts(self):
         detector = load_detector()
-        flags = detector.classify(["AGENTS.md"])
+        flags = detector.classify(["README.md"])
         self.assertIn("test-scripts", detector.recommended_targets(flags))
         self.assertFalse(flags["none"])
 
