@@ -16,8 +16,10 @@ async def index_products():
         # 1. Fetch products from DB
         db = Prisma()
         await db.connect()
-        products = await db.product.find_many(include={'category': True, 'brand': True})
-        await db.disconnect()
+        try:
+            products = await db.product.find_many(include={'category': True, 'brand': True})
+        finally:
+            await db.disconnect()
         
         if not products:
             print("No products found in database. Skipping indexing.")
