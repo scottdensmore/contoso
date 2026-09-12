@@ -7,6 +7,5 @@ Read and follow [AGENTS.md](./AGENTS.md).
 
 <!--
 Do not add content to this file. Agent instructions belong in AGENTS.md, including
-memories captured by pressing `#` in Claude Code. `make agent-docs-check` fails
-when this pointer drifts.
+memories captured by pressing `#` in Claude Code.
 -->

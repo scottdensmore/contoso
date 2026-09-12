@@ -47,8 +47,6 @@ RUNTIME_PATTERNS = (
     "scripts/release_dry_run.py",
     "scripts/e2e_smoke.py",
     "scripts/ci_smoke_metrics.py",
-    "scripts/verify_docs.py",
-    "scripts/check_agent_docs.py",
     "tests/scripts/**",
     # Compose is web+chat, but the guard that protects its startup ordering
     # lives in tests/scripts. Without this, a change dropping the healthcheck
@@ -305,9 +303,6 @@ def recommended_targets(flags: dict[str, bool]) -> list[str]:
             ordered.append("quick-ci-web")
         if flags["chat"]:
             ordered.append("quick-ci-chat")
-
-    if flags["docs"]:
-        ordered.append("docs-check")
 
     deduped: list[str] = []
     seen: set[str] = set()

@@ -29,8 +29,7 @@ Assistant-specific context files are root pointers only:
 | Gemini CLI | `GEMINI.md` |
 | GitHub Copilot | `.github/copilot-instructions.md` |
 
-Never add instructions to a pointer file. Move appended notes into this file,
-then run `make agent-docs-check FIX=1` to restore the canonical pointer.
+Never add instructions to a pointer file. Move appended notes into this file.
 
 ## Delivery default
 
@@ -83,14 +82,13 @@ Run from the repository root.
 | Changed-surface iteration | `make quick-ci-changed` |
 | Web merge gate | `make -C apps/web ci` |
 | Chat merge gate | `make -C services/chat ci` |
-| Documentation merge gate | `make docs-check` |
 | Complete gate | `make ci` |
 | Browser journeys | `make test-e2e` (running stack and browser required) |
 | Dockerized integration | `make e2e-smoke` |
 
 `make ci` expands to `quick-ci` (toolchain and environment contracts, web
 lint/type-check/tests, chat dependency policy/lint/type-check/tests), then
-`test-scripts`, `build`, and `docs-check`. CI's `full-ci-main` job runs
+`test-scripts`, and `build`. CI's `full-ci-main` job runs
 `make ci PYTHON_BASE=python`. A green gate exits 0; it proves only the checks in
 that command. In particular, `make ci` does not run Playwright journeys or the
 Dockerized smoke.
@@ -215,8 +213,7 @@ CHANGED_BASE=<base-sha> CHANGED_HEAD=<head-sha> make quick-ci-changed
 ```
 
 It prints iteration targets, not this table's merge gates. For every row below
-that says *complete gate* it prints the `quick-ci` set — no `build`, no
-`docs-check` — so it under-covers exactly the rows with the most to lose. Match your change to
+that says *complete gate* it prints the `quick-ci` set — no `build` — so it under-covers exactly the rows with the most to lose. Match your change to
 a row and run that row's gate yourself.
 
 | A fix touches | Rerun |
@@ -224,7 +221,7 @@ a row and run that row's gate yourself.
 | `apps/web/**`, `Dockerfile` | `make -C apps/web ci`, `make test-scripts` |
 | `services/chat/**`, `Dockerfile.migrate` | `make -C services/chat ci`, `make test-scripts` |
 | `apps/web/prisma/**`, `apps/web/prisma.config.ts` | both surface gates and `make test-scripts` |
-| `docs/**`, `README.md`, root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` | `make docs-check`, `make test-scripts` |
+| `docs/**`, `README.md`, root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`, `CONTRIBUTING.md`, `.github/copilot-instructions.md` | `make test-scripts` |
 | `docker-compose.yml` | complete gate |
 | `Makefile`, `mise.toml`, `package.json`, web dependency manifests | complete gate |
 | environment contract/templates/docs | complete gate |

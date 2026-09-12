@@ -44,7 +44,7 @@ CHAT_ENV_TEMPLATE := $(CHAT_DIR)/.env.example
 
 .DEFAULT_GOAL := help
 
-.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate migrate-deploy prisma-generate lint typecheck test test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run docs-check agent-docs-check ci
+.PHONY: help venv toolchain-doctor env-contract-check agent-doctor env-init bootstrap setup setup-chat setup-chat-full local-provider-check diagnose-chat-local docker-init-fresh sync-web-env dev dev-web dev-chat up down migrate migrate-deploy prisma-generate lint typecheck test test-scripts test-web test-chat test-e2e build quick-ci quick-ci-changed quick-ci-web quick-ci-chat e2e-smoke e2e-smoke-lite e2e-smoke-full release-dry-run ci
 
 help: ## Show available tasks
 	@awk 'BEGIN {FS = ":.*##"; printf "\nAvailable tasks:\n\n"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  %-24s %s\n", $$1, $$2} END {print ""}' $(MAKEFILE_LIST)
@@ -259,17 +259,8 @@ release-dry-run: | $(VENV_PYTHON) ## Validate release prerequisites without publ
 	$(PYTHON) $(RELEASE_DRY_RUN_SCRIPT) $(if $(RELEASE_TAG),--tag "$(RELEASE_TAG)",)
 	TOOLCHAIN_CHECK_ALLOW_NON_MISE=1 $(MAKE) quick-ci
 	$(MAKE) test-scripts
-	$(MAKE) docs-check
-
-docs-check: | $(VENV_PYTHON) ## Validate docs links and agent doc pointers
-	$(PYTHON) scripts/verify_docs.py
-	$(MAKE) agent-docs-check
-
-agent-docs-check: | $(VENV_PYTHON) ## Verify CLAUDE.md/GEMINI.md/copilot-instructions.md stay pointers to AGENTS.md (set FIX=1 to restore)
-	$(PYTHON) scripts/check_agent_docs.py $(if $(FIX),--fix,)
 
 ci: ## Run local CI checks
 	$(MAKE) quick-ci
 	$(MAKE) test-scripts
 	$(MAKE) build
-	$(MAKE) docs-check

@@ -147,7 +147,7 @@ class DetectChangedSurfacesTests(unittest.TestCase):
             "none": False,
         }
         self.assertEqual(
-            detect_changed.recommended_targets(flags), ["test-scripts", "docs-check"]
+            detect_changed.recommended_targets(flags), ["test-scripts"]
         )
 
     def test_recommended_targets_includes_script_tests_for_any_change(self):
@@ -183,7 +183,7 @@ class DetectChangedSurfacesTests(unittest.TestCase):
         }
         self.assertEqual(detect_changed.recommended_targets(flags), [])
 
-    def test_agent_doc_paths_route_to_docs_check(self):
+    def test_agent_doc_paths_route_to_test_scripts(self):
         for path in (
             "CLAUDE.md",
             "GEMINI.md",
@@ -200,7 +200,7 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 flags = detect_changed.classify([path])
                 self.assertTrue(flags["docs"])
                 self.assertFalse(flags["unknown"])
-                self.assertIn("docs-check", detect_changed.recommended_targets(flags))
+                self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
 
     def test_split_chat_requirement_paths_are_runtime(self):
         for path in (

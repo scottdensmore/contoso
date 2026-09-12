@@ -14,7 +14,6 @@ Paste command output snippets or concise summaries for what you actually ran.
 - [ ] `make quick-ci-changed`
 - [ ] Applicable merge-gate command(s) from the `AGENTS.md` Verification Map
 - [ ] `make test-scripts` (for runtime/scripts/docs automation changes)
-- [ ] `make docs-check` (for docs/runbook changes)
 
 ### Optional / Contextual
 - [ ] `make quick-ci`

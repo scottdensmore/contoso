@@ -7,7 +7,33 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.check_agent_docs import SKIP_DIRECTORIES, find_agent_directories
+import os
+
+SKIP_DIRECTORIES = {
+    ".git",
+    ".next",
+    ".venv",
+    ".entire",
+    "__pycache__",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "out",
+    "venv",
+}
+
+
+def find_agent_directories(root: Path) -> list[Path]:
+    directories: set[Path] = set()
+    tracked = {"AGENTS.md", "CLAUDE.md", "GEMINI.md"}
+
+    for current_dir, dir_names, file_names in os.walk(root):
+        dir_names[:] = [name for name in dir_names if name not in SKIP_DIRECTORIES]
+        if tracked.intersection(file_names):
+            directories.add(Path(current_dir))
+
+    return sorted(directories)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

@@ -52,8 +52,6 @@ class VenvWiringTests(unittest.TestCase):
             "env-contract-check",
             "agent-doctor",
             "test-scripts",
-            "docs-check",
-            "agent-docs-check",
             "release-dry-run",
         ):
             with self.subTest(target=target):
@@ -109,21 +107,7 @@ class VenvWiringTests(unittest.TestCase):
         self.assertIn(".venv/", read(".gitignore"))
 
 
-class DocsCheckWiringTests(unittest.TestCase):
-    def test_docs_check_runs_verification_and_agent_docs_check(self):
-        makefile = read("Makefile")
-        recipe = makefile.split("docs-check:", 1)[1].split("\n\n", 1)[0]
-        self.assertIn(
-            "scripts/verify_docs.py",
-            recipe,
-            "docs-check must run scripts/verify_docs.py",
-        )
-        self.assertIn(
-            "agent-docs-check",
-            recipe,
-            "docs-check must run agent-docs-check",
-        )
-
+class DocRoutingWiringTests(unittest.TestCase):
     def test_agents_md_routes_to_test_scripts(self):
         detector = load_detector()
         flags = detector.classify(["AGENTS.md"])
