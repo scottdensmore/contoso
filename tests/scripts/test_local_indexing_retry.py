@@ -134,8 +134,8 @@ def run_indexer(fail_at):
 def run_entrypoint(failures_before_success):
     """Run the real entrypoint with a stub indexer that fails a set number of times.
 
-    Returns (process, attempts) where `attempts` is how many times the entrypoint
-    actually invoked the indexer.
+    Returns (process, attempts, sleeps) where `attempts` is how many times the entrypoint
+    actually invoked the indexer, and `sleeps` is how many times sleep was invoked.
     """
     with tempfile.TemporaryDirectory() as temp_dir:
         fixture = Path(temp_dir)
@@ -147,6 +147,8 @@ def run_entrypoint(failures_before_success):
 
         attempts_file = fixture / "attempts"
         attempts_file.write_text("0", encoding="utf-8")
+        sleeps_file = fixture / "sleeps"
+        sleeps_file.write_text("0", encoding="utf-8")
 
         # Stands in for the indexer and the preflight, so the loop under test is
         # driven by an exit status we choose rather than by a real database.
@@ -172,8 +174,15 @@ def run_entrypoint(failures_before_success):
         )
         # The entrypoint's last act is `exec uvicorn`; this keeps that a no-op.
         (fake_bin / "uvicorn").write_text('#!/bin/bash\necho "uvicorn started"\nexit 0\n', encoding="utf-8")
-        # The loop sleeps 5s between attempts. Nothing here asserts on timing.
-        (fake_bin / "sleep").write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+        # The loop sleeps 5s between retry attempts.
+        (fake_bin / "sleep").write_text(
+            "#!/bin/bash\n"
+            f'count=$(cat "{sleeps_file}")\n'
+            "count=$((count + 1))\n"
+            f'echo "$count" > "{sleeps_file}"\n'
+            "exit 0\n",
+            encoding="utf-8",
+        )
         for stub in ("python3", "uvicorn", "sleep"):
             (fake_bin / stub).chmod(0o755)
 
@@ -190,7 +199,8 @@ def run_entrypoint(failures_before_success):
             timeout=120,
         )
         attempts = int(attempts_file.read_text(encoding="utf-8").strip())
-        return completed, attempts
+        sleeps = int(sleeps_file.read_text(encoding="utf-8").strip())
+        return completed, attempts, sleeps
 
 
 class IndexerExitStatusTests(unittest.TestCase):
@@ -298,22 +308,45 @@ class EntrypointRetryTests(unittest.TestCase):
     """The retry loop has to react to that exit status."""
 
     def test_a_failing_attempt_is_retried_until_it_succeeds(self):
-        completed, attempts = run_entrypoint(failures_before_success=2)
+        completed, attempts, sleeps = run_entrypoint(failures_before_success=2)
         self.assertEqual(
             attempts,
             3,
             f"expected two failures then a success\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
         )
+        self.assertEqual(sleeps, 2)
         self.assertIn("uvicorn started", completed.stdout)
 
     def test_retrying_stops_at_the_first_success(self):
-        completed, attempts = run_entrypoint(failures_before_success=0)
+        completed, attempts, sleeps = run_entrypoint(failures_before_success=0)
         self.assertEqual(attempts, 1, f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}")
+        self.assertEqual(sleeps, 0)
         self.assertIn("uvicorn started", completed.stdout)
 
     def test_a_permanently_failing_indexer_gives_up_and_still_serves(self):
-        completed, attempts = run_entrypoint(failures_before_success=99)
+        completed, attempts, sleeps = run_entrypoint(failures_before_success=99)
         self.assertEqual(attempts, 5, f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}")
+        self.assertLessEqual(
+            sleeps,
+            4,
+            f"expected at most 4 sleeps when attempts=5\nstdout:\n{completed.stdout}",
+        )
+        self.assertEqual(sleeps, 4)
+        self.assertIn("Indexing attempt 4 failed; retrying in 5s...", completed.stdout)
+        self.assertNotIn("Indexing attempt 5 failed; retrying in 5s...", completed.stdout)
+        self.assertIn(
+            "All indexing attempts failed; starting service without vector index.",
+            completed.stdout,
+        )
+        self.assertIn("uvicorn started", completed.stdout)
+
+    def test_success_on_final_attempt_does_not_announce_retry_or_fail(self):
+        completed, attempts, sleeps = run_entrypoint(failures_before_success=4)
+        self.assertEqual(attempts, 5, f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}")
+        self.assertEqual(sleeps, 4)
+        self.assertIn("Indexing attempt 4 failed; retrying in 5s...", completed.stdout)
+        self.assertNotIn("Indexing attempt 5 failed; retrying in 5s...", completed.stdout)
+        self.assertNotIn("All indexing attempts failed", completed.stdout)
         self.assertIn("uvicorn started", completed.stdout)
 
 

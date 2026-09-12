@@ -20,8 +20,12 @@ if [[ "${provider}" == "local" ]]; then
         if python3 infrastructure/scripts/index_products_local.py; then
             break
         fi
-        echo "Indexing attempt ${i} failed; retrying in 5s..."
-        sleep 5
+        if [ "${i}" -lt 5 ]; then
+            echo "Indexing attempt ${i} failed; retrying in 5s..."
+            sleep 5
+        else
+            echo "All indexing attempts failed; starting service without vector index."
+        fi
     done
 else
     echo "Skipping local product indexing: LLM_PROVIDER=${provider}."
