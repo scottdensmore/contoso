@@ -6,8 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from contoso_chat.chat_request import (
     generate_llm_response,
+    generate_llm_response_stream,
     get_customer_from_postgres,
     get_response,
+    get_response_stream,
 )
 
 
@@ -207,3 +209,145 @@ async def test_get_response_defaults_to_guest_and_default_model():
         None,
         "gemini-2.5-flash",
     )
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_stream_gcp():
+    mock_chunks = [
+        SimpleNamespace(text="Hello "),
+        SimpleNamespace(text=""),
+        SimpleNamespace(text="world!"),
+    ]
+    mock_client = MagicMock()
+    mock_client.models.generate_content_stream.return_value = mock_chunks
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        stream = generate_llm_response_stream(
+            prompt="Best tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+        )
+        if hasattr(stream, "__aiter__"):
+            chunks = [chunk async for chunk in stream]
+        else:
+            chunks = list(stream)
+
+    assert chunks == ["Hello ", "world!"]
+    mock_client_class.assert_called_once_with(
+        vertexai=True, project="project-1", location="us-central1"
+    )
+    mock_client.models.generate_content_stream.assert_called_once()
+    kwargs = mock_client.models.generate_content_stream.call_args.kwargs
+    assert kwargs["model"] == "gemini-2.5-flash"
+    assert "Best tent?" in kwargs["contents"]
+    assert "abc123" in kwargs["contents"]
+    assert "Taylor" in kwargs["contents"]
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_stream_local():
+    mock_chunks = [
+        SimpleNamespace(
+            choices=[SimpleNamespace(delta=SimpleNamespace(content="Local "))]
+        ),
+        SimpleNamespace(
+            choices=[SimpleNamespace(delta=SimpleNamespace(content="stream"))]
+        ),
+        SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None))]),
+    ]
+    mock_completion = MagicMock(return_value=mock_chunks)
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        stream = generate_llm_response_stream(
+            prompt="Best tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+        )
+        if hasattr(stream, "__aiter__"):
+            chunks = [chunk async for chunk in stream]
+        else:
+            chunks = list(stream)
+
+    assert chunks == ["Local ", "stream"]
+    mock_completion.assert_called_once()
+    kwargs = mock_completion.call_args.kwargs
+    assert kwargs["model"] == "ollama/mistral"
+    assert kwargs["stream"] is True
+
+
+@pytest.mark.anyio
+async def test_get_response_stream():
+    product_context = [{"sku": "abc123", "name": "Trailmaster X4"}]
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = product_context
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value={"firstName": "Taylor"}),
+    ) as mock_get_customer, patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ) as mock_get_search_service, patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["streamed ", "tokens"]),
+    ) as mock_generate_stream, patch.dict(
+        "os.environ",
+        {
+            "PROJECT_ID": "project-1",
+            "REGION": "us-central1",
+            "LLM_PROVIDER": "gcp",
+            "GEMINI_MODEL_NAME": "custom-model",
+        },
+        clear=True,
+    ):
+        stream = get_response_stream("cust-1", "Best tent?", "[]")
+        chunks = [chunk async for chunk in stream]
+
+    assert chunks == ["streamed ", "tokens"]
+    mock_get_customer.assert_awaited_once_with("cust-1")
+    mock_get_search_service.assert_called_once_with()
+    mock_search_service.search.assert_called_once_with("Best tent?", limit=5)
+    mock_generate_stream.assert_called_once_with(
+        "Best tent?",
+        json.dumps(product_context, indent=2),
+        "Taylor",
+        "gcp",
+        "project-1",
+        "us-central1",
+        "custom-model",
+    )
+
+@pytest.mark.anyio
+async def test_generate_llm_response_stream_local_provider_requires_optional_dependencies():
+    with patch.dict(sys.modules, {"litellm": None}):
+        with pytest.raises(
+            RuntimeError,
+            match="Local LLM provider dependencies are not installed",
+        ):
+            list(
+                generate_llm_response_stream(
+                    prompt="Best tent?",
+                    context='[{"sku":"abc123"}]',
+                    user_name="Taylor",
+                    provider="local",
+                    project_id="unused-project",
+                    location="unused-region",
+                    model_name="unused-model",
+                )
+            )
