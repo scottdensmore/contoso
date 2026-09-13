@@ -37,8 +37,8 @@ gcloud run revisions list --service=contoso-web --region=us-central1
 gcloud run services update-traffic contoso-web --to-revisions=STABLE_REVISION_NAME=100 --region=us-central1
 ```
 
-### 2. GitHub Actions Rollback
-For faulty commits, revert the commit on the `main` branch to trigger a clean CI build and deployment.
+### 2. Code Rollback
+For faulty commits, create a revert pull request targeting `main`, verify locally with `make ci`, squash-merge, and redeploy via `./infrastructure/scripts/setup_project.sh` (or your deployment pipeline).
 
 ### 3. Terraform Rollback
 For infrastructure failures, revert changes in `infrastructure/terraform` and run `terraform apply`.

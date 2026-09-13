@@ -21,10 +21,11 @@ Work is tracked in GitHub issues and pull requests.
 
 ## Quality Gates
 
-Before submitting a Pull Request, ensure:
+Before submitting or merging a Pull Request, ensure:
+- [ ] Full local CI passes (`make ci`).
+- [ ] No linting errors (`make lint` / `make check-scripts`).
 - [ ] All tests pass (`make test`).
-- [ ] Code coverage is sufficient.
-- [ ] No linting errors (`make lint`).
+- [ ] All changes land on `main` via squash-merged PRs to preserve a linear commit graph.
 - [ ] The code does what the issue it closes describes.
 
 ## Making Changes
@@ -36,6 +37,7 @@ Before submitting a Pull Request, ensure:
 5.  **Commit:** Use conventional commit messages (e.g., `feat(auth): Add login page`).
 6.  **Verify:** Run preflight (`make agent-doctor`), fast changed-scope checks (`make quick-ci-changed`), script tests (`make test-scripts`), integration smoke (`make e2e-smoke`, `make e2e-smoke-lite`, or `make e2e-smoke-full` with the full chat dependency profile installed), release preflight (`make release-dry-run`), and full local checks (`make ci`).
 7.  **Push & PR:** Push your branch and open a Pull Request.
+8.  **Merge Policy:** Squash-merge PRs into `main` (`gh pr merge --squash --delete-branch`) to maintain a clean linear commit graph.
 
 ## Database Migrations
 
@@ -61,7 +63,7 @@ Refer to `docs/` for architecture, database, deployment, and release runbooks.
 - If local-provider runtime is flaky, run `make local-provider-check` before debugging request-path failures.
 - For a full local diagnostics bundle (preflight + health payload + compose status/logs), run `make diagnose-chat-local`.
 - If local-provider startup preflight fails, ensure `ollama serve` is running, `ollama pull <LOCAL_MODEL_NAME>` exists, and docker chat uses `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
-- If full-profile integration smoke fails in CI, inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md`.
-- Scheduled full-profile smoke alerts keep one open issue per alert class, append updates while failing, and auto-close on recovery.
+- If full-profile integration smoke fails, run `make e2e-smoke-full KEEP_STACK=1` and inspect compose logs (`docker compose logs chat`).
+- All validation runs locally; GitHub Actions workflows are disabled to preserve action minutes.
 - Keyboard and focus journeys (e.g. evaluating tab order, focus-out dismissal, or boundary visibility) must be evaluated against a production build (`make build-web` or compose stack). Next.js dev mode injects dev overlay elements (such as the issues portal and error badges) into the DOM that alter tab stop sequences and focus behavior. See `.claude/agents/ui-review.md`.
 - TypeScript is pinned to `^5` in `apps/web/package.json` because `eslint-config-next` bundles `typescript-eslint` with peer dependency `typescript <6.1.0`. TypeScript 7 will be adopted once supported upstream (see `apps/web/README.md`).
