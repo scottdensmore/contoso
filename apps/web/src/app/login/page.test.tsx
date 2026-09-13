@@ -61,15 +61,34 @@ describe('LoginPage', () => {
 
     render(<LoginPage />)
 
-    fireEvent.change(screen.getByLabelText(/Email address/i), { target: { value: 'test@test.com' } })
-    fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'pwd123' } })
+    const emailInput = screen.getByLabelText(/Email address/i)
+    const passwordInput = screen.getByLabelText(/Password/i)
+    const fields = [emailInput, passwordInput]
+
+    for (const field of fields) {
+      expect(field).not.toHaveAttribute('aria-invalid')
+      expect(field).not.toHaveAttribute('aria-describedby')
+      expect(field.className).toContain('aria-[invalid=true]:ring-red-600')
+      expect(field.className).toContain('focus:aria-[invalid=true]:ring-red-600')
+      expect(field.className).toContain('focus-visible:aria-[invalid=true]:outline-red-600')
+    }
+
+    fireEvent.change(emailInput, { target: { value: 'test@test.com' } })
+    fireEvent.change(passwordInput, { target: { value: 'pwd123' } })
     
     const form = screen.getByRole('button', { name: /Sign in/i }).closest('form')
     fireEvent.submit(form!)
 
     await waitFor(() => {
-      expect(screen.getByText(/Invalid credentials/i)).toBeDefined()
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent(/Invalid credentials/i)
+      expect(alert).toHaveAttribute('id', 'auth-error')
     })
+
+    for (const field of fields) {
+      expect(field).toHaveAttribute('aria-invalid', 'true')
+      expect(field).toHaveAttribute('aria-describedby', 'auth-error')
+    }
   })
 
   it('renders navigation links to signup and store', () => {

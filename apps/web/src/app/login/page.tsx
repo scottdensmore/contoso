@@ -70,6 +70,8 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "auth-error" : undefined}
                 className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${FIELD_BOUNDARY}`}
               />
             </div>
@@ -94,12 +96,18 @@ export default function LoginPage() {
                 disabled={isSubmitting}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "auth-error" : undefined}
                 className={`block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-xs placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:ring-indigo-600 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed ${FIELD_BOUNDARY}`}
               />
             </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && (
+            <p id="auth-error" role="alert" className="text-red-500 text-sm">
+              {error}
+            </p>
+          )}
 
           <div>
             <button

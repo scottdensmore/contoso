@@ -102,6 +102,8 @@ export default function ContactForm() {
           required
           value={formData.name}
           onChange={handleChange}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "contact-form-error" : undefined}
           className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="Your name"
         />
@@ -122,6 +124,8 @@ export default function ContactForm() {
           required
           value={formData.email}
           onChange={handleChange}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "contact-form-error" : undefined}
           className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="you@example.com"
         />
@@ -142,6 +146,8 @@ export default function ContactForm() {
             required
             value={formData.subject}
             onChange={handleChange}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "contact-form-error" : undefined}
             className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
             placeholder="How can we help?"
           />
@@ -159,6 +165,8 @@ export default function ContactForm() {
             name="orderNumber"
             value={formData.orderNumber}
             onChange={handleChange}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "contact-form-error" : undefined}
             className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           />
         </div>
@@ -178,6 +186,8 @@ export default function ContactForm() {
           required
           value={formData.message}
           onChange={handleChange}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "contact-form-error" : undefined}
           className={`block w-full rounded-lg border-0 px-4 py-3 text-gray-900 shadow-xs placeholder:text-gray-500 sm:text-sm focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
           placeholder="Write your message here..."
         ></textarea>

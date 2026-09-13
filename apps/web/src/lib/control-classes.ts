@@ -174,7 +174,8 @@
  */
 export const FIELD_BOUNDARY =
   'ring-1 ring-inset ring-zinc-500 forced-colors:border ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-2'
+  'focus-visible:outline-2 focus-visible:outline-offset-2 ' +
+  'aria-[invalid=true]:ring-red-600 focus:aria-[invalid=true]:ring-red-600 focus-visible:aria-[invalid=true]:outline-red-600'
 
 /**
  * What every button and button-shaped link needs, minus its colour.

@@ -64,13 +64,28 @@ describe('ContactForm', () => {
     expect(region.textContent).toBe('')
   })
 
-  it('announces a failed submission through that region', async () => {
+  it('announces a failed submission through that region and marks fields invalid', async () => {
     vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
       json: async () => ({ message: 'Failed to submit contact inquiry.' }),
     } as any)
 
     render(<ContactForm />)
+    const nameField = screen.getByLabelText(/name/i)
+    const emailField = screen.getByLabelText(/email/i)
+    const subjectField = screen.getByLabelText(/subject/i)
+    const orderNumberField = screen.getByLabelText(/order number \(optional\)/i)
+    const messageField = screen.getByLabelText(/message/i)
+    const fields = [nameField, emailField, subjectField, orderNumberField, messageField]
+
+    for (const field of fields) {
+      expect(field).not.toHaveAttribute('aria-invalid')
+      expect(field).not.toHaveAttribute('aria-describedby')
+      expect(field.className).toContain('aria-[invalid=true]:ring-red-600')
+      expect(field.className).toContain('focus:aria-[invalid=true]:ring-red-600')
+      expect(field.className).toContain('focus-visible:aria-[invalid=true]:outline-red-600')
+    }
+
     fillRequiredFields()
     fireEvent.click(screen.getByRole('button', { name: /send message/i }))
 
@@ -80,6 +95,12 @@ describe('ContactForm', () => {
     // The visible text and the announced text are the same node, so they cannot
     // drift apart -- not an sr-only copy alongside a separate visible one.
     expect(screen.getByText('Failed to submit contact inquiry.')).toBe(screen.getByRole('alert'))
+    expect(screen.getByRole('alert')).toHaveAttribute('id', 'contact-form-error')
+
+    for (const field of fields) {
+      expect(field).toHaveAttribute('aria-invalid', 'true')
+      expect(field).toHaveAttribute('aria-describedby', 'contact-form-error')
+    }
   })
 
   it('reports an HTTP error response with a JSON body', async () => {
