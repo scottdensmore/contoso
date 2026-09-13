@@ -12,7 +12,8 @@ describe('ContactThanks', () => {
   it('renders a return to shop button', () => {
     render(<ContactThanks />)
     const button = screen.getByRole('link', { name: /return to shop/i })
-    expect(button).toBeDefined()
     expect(button.getAttribute('href')).toBe('/')
+    expect(button.className).toContain('transition-[background-color]')
+    expect(button.className).not.toContain('transition-colors')
   })
 })

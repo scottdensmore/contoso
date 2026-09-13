@@ -253,7 +253,7 @@ export default function AvatarUpload({ initialAvatar, onUpload }: AvatarUploadPr
           // one is the worst of the three precisely because this state exists
           // to keep a keyboard user *on* the control rather than disabling it
           // out from under them.
-          isUploading ? "cursor-wait bg-zinc-100" : "cursor-pointer bg-white hover:bg-gray-50"
+          isUploading ? "cursor-wait bg-zinc-100" : "cursor-pointer bg-white hover:bg-zinc-100"
         }`}
       >
         <span>Upload Avatar</span>

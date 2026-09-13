@@ -12,7 +12,7 @@ export default function ContactThanks() {
       </p>
       <Link
         href="/"
-        className={`rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 transition-colors w-full ${ACTION_BOUNDARY}`}
+        className={`rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 transition-[background-color] w-full ${ACTION_BOUNDARY}`}
       >
         Return to Shop
       </Link>

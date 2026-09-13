@@ -87,6 +87,7 @@ export const Header = () => {
                       height={32}
                       alt=""
                       aria-hidden="true"
+                      loading="lazy"
                       className="rounded-full h-8 w-8 object-cover"
                     />
                   ) : (

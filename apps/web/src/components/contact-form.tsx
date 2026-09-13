@@ -229,7 +229,7 @@ export default function ContactForm() {
         type="submit"
         disabled={isSubmitting}
         aria-describedby={error ? "contact-form-error" : undefined}
-        className={`w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${ACTION_BOUNDARY}`}
+        className={`w-full flex justify-center rounded-lg bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 focus-visible:outline-solid focus-visible:outline-indigo-600 transition-[background-color] disabled:opacity-50 disabled:cursor-not-allowed ${ACTION_BOUNDARY}`}
       >
         {isSubmitting ? "Sending..." : "Send Message"}
       </button>

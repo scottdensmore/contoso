@@ -181,4 +181,11 @@ describe('ContactForm', () => {
       expect(mockPush).toHaveBeenCalledWith('/contact/thanks')
     })
   })
+
+  it('does not animate outline-color on submit button focus', () => {
+    render(<ContactForm />)
+    const submitButton = screen.getByRole('button', { name: /send message/i })
+    expect(submitButton.className).toContain('transition-[background-color]')
+    expect(submitButton.className).not.toContain('transition-all')
+  })
 })

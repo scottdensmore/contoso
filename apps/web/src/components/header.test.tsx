@@ -52,6 +52,7 @@ describe('Header', () => {
     expect(avatar).not.toBeNull()
     expect(avatar?.getAttribute('alt')).toBe('')
     expect(avatar?.getAttribute('aria-hidden')).toBe('true')
+    expect(avatar?.getAttribute('loading')).toBe('lazy')
     expect(screen.queryByRole('img', { name: /john doe/i })).toBeNull()
   })
 

@@ -293,4 +293,11 @@ describe('AvatarUpload', () => {
     })
     expect(onUpload).not.toHaveBeenCalled()
   })
+
+  it('applies hover:bg-zinc-100 to the upload label for visible contrast on bg-zinc-50', () => {
+    render(<AvatarUpload initialAvatar="" onUpload={() => {}} />)
+    const label = screen.getByText('Upload Avatar').closest('label')
+    expect(label?.className).toContain('hover:bg-zinc-100')
+    expect(label?.className).not.toContain('hover:bg-gray-50')
+  })
 })

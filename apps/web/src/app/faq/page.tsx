@@ -71,7 +71,7 @@ export default function FAQPage() {
         <p className="text-lg text-zinc-600 mb-8">
           We&apos;re here to help. Reach out to our support team for assistance.
         </p>
-        <Link href="/contact" className={`px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 transition-colors focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}>
+        <Link href="/contact" className={`px-6 py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-500 transition-[background-color] focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}>
           Contact Support
         </Link>
       </Block>
