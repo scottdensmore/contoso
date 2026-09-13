@@ -30,19 +30,23 @@ IMAGES_DIR = REPO_ROOT / "apps/web/public/images"
 CONFIG = json.loads((REPO_ROOT / "config/catalogue_images.json").read_text())
 
 # The images that are not part of the catalogue contract. `about/mission.png`
-# is the only one left, and what exempts it is the generation count at
-# delivery: it is a lossless source the optimiser re-encodes on every request,
-# so converting it would make what a visitor receives a third generation. The
-# two backgrounds #158 converted are terminal -- nothing re-encodes them again
-# -- so contact-bg went from one lossy generation to two rather than to three,
-# measured at about 45 dB PSNR against the original render. See #165.
+# is the only one left, and what exempts it is retina display resolution and
+# the generation count at delivery: about/mission.png is not full-bleed (it
+# renders at max 604 CSS px in a grid), but is exempt from downscaling because
+# 604 CSS px at 2x needs 1208 device pixels, so downscaling the 1024px source
+# would degrade retina display quality. Furthermore, it is a lossless source
+# the optimiser re-encodes on every request, so converting it would make what
+# a visitor receives a third generation. The two backgrounds #158 converted
+# are terminal -- nothing re-encodes them again -- so contact-bg went from one
+# lossy generation to two rather than to three, measured at about 45 dB PSNR
+# against the original render. See #165.
 #
-# The name says full-bleed and the reason is not: mission.png renders at most
-# 604 CSS px, half its container. What exempts it is that 604 at 2x already
-# wants more source than the 1024 it has.
+# Renamed from fullBleed per #165: the name said full-bleed but the reason was
+# not. It is exempt for retina display resolution rather than full-bleed width.
 #
 # Listed rather than pattern-matched, so a new exemption has to say so.
-FULL_BLEED = set(CONFIG["fullBleed"])
+RETINA_EXEMPT = set(CONFIG.get("retinaExempt", CONFIG.get("fullBleed", [])))
+FULL_BLEED = RETINA_EXEMPT
 
 MAX_DIMENSION = CONFIG["maxDimension"]
 
@@ -126,13 +130,13 @@ def raster_dimensions(data: bytes) -> tuple[int, int]:
 
 
 def catalogue_images() -> list[Path]:
-    """Every image under public/images that is not an allowlisted background."""
+    """Every image under public/images that is not an allowlisted exemption."""
     return sorted(
         path
         for path in IMAGES_DIR.rglob("*")
         if path.is_file()
         and path.suffix.lower() in IMAGE_SUFFIXES
-        and path.relative_to(IMAGES_DIR).as_posix() not in FULL_BLEED
+        and path.relative_to(IMAGES_DIR).as_posix() not in RETINA_EXEMPT
     )
 
 
@@ -155,9 +159,9 @@ class CatalogueEncodingTests(unittest.TestCase):
         """Guards against every assertion below passing on an empty set."""
         self.assertGreater(len(catalogue_images()), 100)
 
-    def test_full_bleed_allowlist_is_not_stale(self):
+    def test_retina_exempt_allowlist_is_not_stale(self):
         """An allowlist naming files that no longer exist stops being a decision."""
-        missing = sorted(name for name in FULL_BLEED if not (IMAGES_DIR / name).is_file())
+        missing = sorted(name for name in RETINA_EXEMPT if not (IMAGES_DIR / name).is_file())
         self.assertEqual(missing, [], "allowlisted images no longer exist")
 
     def test_catalogue_images_are_webp(self):
@@ -173,7 +177,7 @@ class CatalogueEncodingTests(unittest.TestCase):
             "`node scripts/reencode-catalogue-images.mjs`",
         )
 
-    def test_full_bleed_images_fit_the_srcset_ceiling(self):
+    def test_retina_exempt_images_fit_the_srcset_ceiling(self):
         """The allowlist is exempt from the encoding, not from the delivery.
 
         `apps/web/next.config.js` derives its `deviceSizes` ceiling from
@@ -189,17 +193,17 @@ class CatalogueEncodingTests(unittest.TestCase):
         format, and reading headers directly costs nothing.
         """
         undersupplied = {}
-        for name in sorted(FULL_BLEED):
+        for name in sorted(RETINA_EXEMPT):
             path = IMAGES_DIR / name
             if not path.is_file():
-                continue  # covered by test_full_bleed_allowlist_is_not_stale
+                continue  # covered by test_retina_exempt_allowlist_is_not_stale
             width, height = raster_dimensions(path.read_bytes())
             if max(width, height) > MAX_DIMENSION:
                 undersupplied[name] = f"{width}x{height}"
         self.assertEqual(
             undersupplied,
             {},
-            f"full-bleed images wider than the {MAX_DIMENSION}px srcset ceiling "
+            f"retina-exempt images wider than the {MAX_DIMENSION}px srcset ceiling "
             "derived in apps/web/next.config.js; they would be served capped",
         )
 

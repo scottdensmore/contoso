@@ -152,6 +152,10 @@ export default async function Page({
             // Spaces inside the parens: next/image finds the viewport
             // percentage with /(^|\s)(1?\d?\d)vw/ to trim the srcset, and
             // `calc(100vw` hides it behind a paren.
+            //
+            // 100vw includes the classic ~15px scrollbar on desktop OSes, so
+            // the arithmetic slightly over-declares by ~5px (which safely
+            // selects the correct or next rung without causing image softness).
             sizes="(min-width: 574px) 550px, calc( 100vw - 24px )"
             // The first gallery image is what largest-contentful-paint reports
             // from 834px up, worth 616ms there. At 390 the description fills

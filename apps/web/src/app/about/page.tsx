@@ -48,6 +48,10 @@ export default function AboutPage() {
                 // and it emits all eleven rungs instead of five. Selection is
                 // unaffected either way — this is 780 bytes of dead candidates
                 // per response, listed twice because `priority` preloads them.
+                //
+                // 100vw includes the classic ~15px scrollbar on desktop OSes, so
+                // the arithmetic slightly over-declares by ~5px (which safely
+                // selects the correct or next rung without causing image softness).
                 sizes="(min-width: 1280px) 604px, (min-width: 768px) calc( 50vw - 36px ), calc( 100vw - 24px )"
                 // Largest-contentful-paint reports this image at every width
                 // above 390. It was lazy, so the request that decides LCP was

@@ -13,6 +13,7 @@ import catalogueImages from '../../config/catalogue_images.json'
 const nextConfig = require('./next.config.js')
 
 const deviceSizes: number[] = nextConfig.images.deviceSizes
+const imageSizes: number[] = nextConfig.images.imageSizes
 const sourceWidth: number = catalogueImages.maxDimension
 
 describe('image deviceSizes', () => {
@@ -43,5 +44,18 @@ describe('image deviceSizes', () => {
         expect(deviceSizes).toContain(width)
       }
     }
+  })
+})
+
+describe('image imageSizes', () => {
+  it('is a valid ladder', () => {
+    expect(imageSizes.length).toBeGreaterThan(0)
+    expect(imageSizes.every(Number.isInteger)).toBe(true)
+    expect(imageSizes).toStrictEqual([...imageSizes].sort((a, b) => a - b))
+    expect(new Set(imageSizes).size).toBe(imageSizes.length)
+  })
+
+  it('includes the 512 rung to smooth the gap before deviceSizes', () => {
+    expect(imageSizes).toContain(512)
   })
 })

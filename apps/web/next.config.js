@@ -21,6 +21,20 @@ const deviceSizes = [
   DEFAULT_DEVICE_SIZES.find((width) => width >= sourceWidth) ?? sourceWidth,
 ]
 
+// The default Next.js imageSizes ladder [16, 32, 48, 64, 96, 128, 256, 384] leaves
+// a wide gap before deviceSizes begins at 640 (a 67% jump). Adding the 512 rung
+// smooths the 384 -> 640 transition (384 -> 512 is +33%, 512 -> 640 is +25%), so cards
+// requiring ~400-512 device pixels avoid overfetching to 640.
+//
+// Trade-off: Adding 512 introduces an additional candidate in srcset strings (and image
+// preload headers) where the sizes attribute permits it, and creates an extra cache
+// entry/variant on the image optimizer per image. Note that full-width (100vw) images
+// prune all rungs below deviceSizes[0] (640), leaving the lower half of imageSizes
+// unreachable for 100vw layouts; however, for fractional viewports (e.g. 50vw or 33vw)
+// where deviceSizes[0] * ratio <= 512, the 512 rung becomes reachable and prevents
+// unnecessary overfetching. See #168.
+const imageSizes = [16, 32, 48, 64, 96, 128, 256, 384, 512]
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Emit a traced, self-contained server bundle so the Docker runtime image
@@ -112,6 +126,7 @@ const nextConfig = {
 
   images: {
     deviceSizes,
+    imageSizes,
   },
   typescript: {
     // !! WARN !!

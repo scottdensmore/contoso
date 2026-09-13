@@ -94,6 +94,10 @@ export default async function CategoryPage({
                     // Written as `100vw / 3` rather than `33.33vw` so that
                     // next/image's /(^|\s)(1?\d?\d)vw/ can still find the
                     // percentage and trim the srcset.
+                    //
+                    // 100vw includes the classic ~15px scrollbar on desktop OSes,
+                    // so the arithmetic slightly over-declares by ~5px (which safely
+                    // selects the correct or next rung without causing image softness).
                     sizes="(min-width: 1280px) 398px, (min-width: 1024px) calc( 100vw / 3 - 24px ), (min-width: 640px) calc( 50vw - 24px ), calc( 100vw - 24px )"
                     // The whole first row, and not because any particular card
                     // is the one that matters. At 1440 three cards share the
