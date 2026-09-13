@@ -135,43 +135,56 @@ export default async function Page({
             i % 2 == 1 ? "lg:flex-row-reverse" : "lg:flex-row"
           )}
         >
-          <Image
-            src={image}
-            // Not `product.name` on all of them, which announced the same
-            // six words once per picture and told a screen-reader user
-            // nothing about any of them. See lib/gallery-alt.ts for why the
-            // wording stays as close to the filename's claim as it does.
-            alt={galleryAlt(product.name, image, i)}
-            width={550}
-            height={550}
-            // `max-w-[550px]` caps the box, so it stops growing once the
-            // container can hold 550 — from 574px of viewport, not from the
-            // lg breakpoint the old value keyed on. Between the two it claimed
-            // the whole viewport for a 550px box and pulled w=1080.
-            //
-            // Spaces inside the parens: next/image finds the viewport
-            // percentage with /(^|\s)(1?\d?\d)vw/ to trim the srcset, and
-            // `calc(100vw` hides it behind a paren.
-            //
-            // 100vw includes the classic ~15px scrollbar on desktop OSes, so
-            // the arithmetic slightly over-declares by ~5px (which safely
-            // selects the correct or next rung without causing image softness).
-            sizes="(min-width: 574px) 550px, calc( 100vw - 24px )"
-            // The first gallery image is what largest-contentful-paint reports
-            // from 834px up, worth 616ms there. At 390 the description fills
-            // the viewport and this image starts exactly at the fold, so the
-            // preload is entirely off-screen and buys nothing -- about 20ms of
-            // FCP for no return, which `next/image` gives no way to avoid at
-            // one width only.
-            //
-            // Only the first. The rest of the gallery is well below the fold on
-            // every viewport, and eager requests there would compete with this
-            // one on equal terms: react-dom preloads any image that is not
-            // `loading="lazy"`, and next/image sets no fetchpriority to break
-            // the tie.
-            priority={i === 0}
-            className="rounded-3xl w-full h-auto max-w-[550px] lg:mr-6"
-          />
+          {/*
+            Product gallery figure (#201):
+            Wrapping the product imagery in a semantic <figure> container decouples
+            it from the neighbouring prose markdown manual section headings (Features,
+            Reviews, FAQ, Return Policy) in the accessibility tree, making it clear
+            to assistive technology that the image is a self-contained product showcase
+            figure rather than an illustration of the adjacent section heading.
+          */}
+          <figure
+            aria-label={`${product.name} product photo ${i + 1}`}
+            className="w-full max-w-[550px] shrink-0 lg:mr-6"
+          >
+            <Image
+              src={image}
+              // Not `product.name` on all of them, which announced the same
+              // six words once per picture and told a screen-reader user
+              // nothing about any of them. See lib/gallery-alt.ts for why the
+              // wording stays as close to the filename's claim as it does.
+              alt={galleryAlt(product.name, image, i)}
+              width={550}
+              height={550}
+              // `max-w-[550px]` caps the box, so it stops growing once the
+              // container can hold 550 — from 574px of viewport, not from the
+              // lg breakpoint the old value keyed on. Between the two it claimed
+              // the whole viewport for a 550px box and pulled w=1080.
+              //
+              // Spaces inside the parens: next/image finds the viewport
+              // percentage with /(^|\s)(1?\d?\d)vw/ to trim the srcset, and
+              // `calc(100vw` hides it behind a paren.
+              //
+              // 100vw includes the classic ~15px scrollbar on desktop OSes, so
+              // the arithmetic slightly over-declares by ~5px (which safely
+              // selects the correct or next rung without causing image softness).
+              sizes="(min-width: 574px) 550px, calc( 100vw - 24px )"
+              // The first gallery image is what largest-contentful-paint reports
+              // from 834px up, worth 616ms there. At 390 the description fills
+              // the viewport and this image starts exactly at the fold, so the
+              // preload is entirely off-screen and buys nothing -- about 20ms of
+              // FCP for no return, which `next/image` gives no way to avoid at
+              // one width only.
+              //
+              // Only the first. The rest of the gallery is well below the fold on
+              // every viewport, and eager requests there would compete with this
+              // one on equal terms: react-dom preloads any image that is not
+              // `loading="lazy"`, and next/image sets no fetchpriority to break
+              // the tie.
+              priority={i === 0}
+              className="rounded-3xl w-full h-auto max-w-[550px]"
+            />
+          </figure>
           <div
             className={clsx(
               // min-w-0: without it a flex child refuses to shrink below its
