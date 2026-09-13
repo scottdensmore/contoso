@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { NavSection } from "@/lib/navigation";
+import { ACTION_FOCUS } from "@/lib/control-classes";
 
 // Shared with `header.tsx`, whose trigger points `aria-controls` here. A
 // constant rather than a prop because the id has to survive the trip through
@@ -13,14 +14,35 @@ export const SIDEBAR_DIALOG_ID = "site-navigation-drawer";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+export type CategoryStatus =
+  | "idle"
+  | "loading"
+  | "failed"
+  | "error"
+  | "loaded"
+  | "success";
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   sections: NavSection[];
+  categoryStatus?: CategoryStatus;
+  onRetryCategories?: () => void;
+  onRetry?: () => void;
 }
 
-export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
+export default function Sidebar({
+  isOpen,
+  onClose,
+  sections,
+  categoryStatus,
+  onRetryCategories,
+  onRetry,
+}: SidebarProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const handleRetry = onRetryCategories || onRetry;
+  const isError = categoryStatus === "failed" || categoryStatus === "error";
+  const isLoading = categoryStatus === "loading";
 
   // Opening left focus on the trigger, so the next Tab continued into the page
   // behind the drawer rather than into it. The panel takes focus rather than
@@ -167,7 +189,7 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
         <div className="flex px-4 pb-2 pt-5">
           <button
             type="button"
-            className="-m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400"
+            className={`-m-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
             onClick={onClose}
             aria-label="Close"
           >
@@ -177,26 +199,44 @@ export default function Sidebar({ isOpen, onClose, sections }: SidebarProps) {
 
         {/* Links */}
         <div className="space-y-6 px-4 py-6">
-          {sections.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
-                {section.title}
-              </h3>
-              <ul className="mt-4 space-y-4">
-                {section.links.map((link) => (
-                  <li key={link.title} className="flow-root">
-                    <Link
-                      href={link.href}
-                      className="-m-2 block p-2 text-gray-500 hover:text-gray-900"
-                      onClick={onClose}
+          {sections.map((section) => {
+            const isShop = section.title.toLowerCase() === "shop";
+            return (
+              <div key={section.title}>
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                  {section.title}
+                </h3>
+                {isShop && isError ? (
+                  <div className="mt-4 space-y-2">
+                    <p className="text-sm text-gray-500">Failed to load categories</p>
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      className={`text-sm font-medium text-indigo-600 hover:text-indigo-500 focus-visible:outline-indigo-600 rounded-md ${ACTION_FOCUS}`}
                     >
-                      {link.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                      Retry
+                    </button>
+                  </div>
+                ) : isShop && isLoading && section.links.length === 0 ? (
+                  <p className="mt-4 text-sm text-gray-500">Loading categories...</p>
+                ) : (
+                  <ul className="mt-4 space-y-4">
+                    {section.links.map((link) => (
+                      <li key={link.title} className="flow-root">
+                        <Link
+                          href={link.href}
+                          className={`-m-2 block rounded-md p-2 text-gray-500 hover:text-gray-900 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
+                          onClick={onClose}
+                        >
+                          {link.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

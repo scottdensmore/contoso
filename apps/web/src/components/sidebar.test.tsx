@@ -4,9 +4,10 @@ import Sidebar from './sidebar'
 
 vi.mock('next/link', () => ({
   __esModule: true,
-  default: ({ children, href, onClick }: any) => (
+  default: ({ children, href, onClick, className }: any) => (
     <a 
       href={href} 
+      className={className}
       onClick={(e) => {
         e.preventDefault();
         if (onClick) onClick(e);
@@ -231,5 +232,66 @@ describe('Sidebar as a modal dialog', () => {
     const backdrop = container.querySelector('button[aria-hidden="true"]')
     expect(backdrop).not.toBeNull()
     expect(backdrop).toHaveAttribute('tabindex', '-1')
+  })
+})
+
+describe('Sidebar Category Status and Focus Rings', () => {
+  it('renders error message and retry button when categoryStatus is failed or error', () => {
+    const onRetry = vi.fn()
+    const sections = [{ title: 'Shop', links: [] }]
+    render(
+      <Sidebar
+        isOpen={true}
+        onClose={() => {}}
+        sections={sections}
+        categoryStatus="failed"
+        onRetryCategories={onRetry}
+      />,
+    )
+    expect(screen.getByText('Failed to load categories')).toBeDefined()
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    expect(retryButton).toBeDefined()
+    fireEvent.click(retryButton)
+    expect(onRetry).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders loading indicator when categoryStatus is loading', () => {
+    const sections = [{ title: 'Shop', links: [] }]
+    render(
+      <Sidebar
+        isOpen={true}
+        onClose={() => {}}
+        sections={sections}
+        categoryStatus="loading"
+      />,
+    )
+    expect(screen.getByText('Loading categories...')).toBeDefined()
+  })
+
+  it('applies ACTION_FOCUS and focus-visible:outline-indigo-600 to close button, links, and retry button', () => {
+    const sections = [{ title: 'Shop', links: [{ title: 'Hiking', href: '/hiking' }] }]
+    const { rerender } = render(
+      <Sidebar isOpen={true} onClose={() => {}} sections={sections} />,
+    )
+    const closeButton = screen.getByRole('button', { name: 'Close' })
+    expect(closeButton.className).toContain('focus-visible:outline-indigo-600')
+    expect(closeButton.className).toContain('focus-visible:outline-2')
+
+    const link = screen.getByText('Hiking')
+    expect(link.className).toContain('focus-visible:outline-indigo-600')
+    expect(link.className).toContain('focus-visible:outline-2')
+
+    rerender(
+      <Sidebar
+        isOpen={true}
+        onClose={() => {}}
+        sections={[{ title: 'Shop', links: [] }]}
+        categoryStatus="failed"
+        onRetryCategories={() => {}}
+      />,
+    )
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    expect(retryButton.className).toContain('focus-visible:outline-indigo-600')
+    expect(retryButton.className).toContain('focus-visible:outline-2')
   })
 })
