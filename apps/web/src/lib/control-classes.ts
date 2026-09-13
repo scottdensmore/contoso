@@ -377,3 +377,14 @@ export const ACTION_FOCUS_WITHIN =
  * form would move the submit down with nothing measuring it.
  */
 export const LAUNCHER_SAFE_COLUMN = 'max-sm:px-4'
+
+/**
+ * The chat/shopper accent colour and its hover state (#197).
+ *
+ * Used inside the chat widget for user bubbles and send buttons so the
+ * panel reads as its own place (#184). Defining them here standardises
+ * the token across components instead of duplicating literal class strings.
+ */
+export const CHAT_ACCENT_BG = 'bg-sky-700'
+export const CHAT_ACCENT_HOVER = 'hover:bg-sky-800'
+

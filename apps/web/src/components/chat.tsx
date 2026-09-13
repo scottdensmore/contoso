@@ -11,7 +11,12 @@ import Turn from "./turn";
 import { ChatTurn } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { sendChatMessage } from "@/lib/messaging";
-import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
+import {
+  ACTION_BOUNDARY,
+  FIELD_BOUNDARY,
+  CHAT_ACCENT_BG,
+  CHAT_ACCENT_HOVER,
+} from "@/lib/control-classes";
 
 interface ChatAction {
   type: "add" | "clear" | "resolve" | "remove";
@@ -59,6 +64,7 @@ export const Chat = () => {
   const { data: session } = useSession();
   const [showChat, setShowChat] = useState(false);
   const [message, setMessage] = useState("");
+  const isSendDisabled = !message.trim();
 
   const [state, dispatch] = useReducer(chatReducer, { turns: [] });
 
@@ -223,6 +229,9 @@ export const Chat = () => {
   // reach what the card covers — 6 of 22 product links at 1440 and 7 of 22 at
   // 1024, at some scroll position — because clicking bare page fires no
   // `focusin` and the panel stays up. That is #187, not this.
+  // Focus landing on `document.body` represents the browser window losing focus,
+  // window blur, or focus reset rather than an intentional user interaction with a
+  // page control that could be obscured (#276). Returning early keeps the card open.
   //
   // Nothing focused can be obscured behind a panel that is gone, and the
   // conversation is not lost — the turns live in the reducer, so reopening
@@ -242,7 +251,7 @@ export const Chat = () => {
     if (!showChat || isCompact) return;
     const onFocusIn = (event: FocusEvent) => {
       const target = event.target as Node | null;
-      if (target && widgetRef.current?.contains(target)) return;
+      if (!target || target === document.body || widgetRef.current?.contains(target)) return;
       // Focus has already moved to where the user asked for it. Say so, or the
       // focus-return effect below reads this as an ordinary close and drags
       // focus back onto the launcher they were leaving.
@@ -251,6 +260,30 @@ export const Chat = () => {
     };
     document.addEventListener("focusin", onFocusIn);
     return () => document.removeEventListener("focusin", onFocusIn);
+  }, [showChat, isCompact]);
+
+  // Pointer dismissal for mouse users at 1024+ (#187):
+  // While close-on-focus-out satisfies WCAG 2.4.11 for keyboard navigation, mouse users
+  // clicking background content or product links fire no `focusin`. Adding a pointerdown
+  // listener on document detects clicks outside both the widget and launcher, dismissing
+  // the card with `closedByFocusOut.current = true` so the card does not permanently obscure
+  // product links and focus is not yanked back to the launcher.
+  useEffect(() => {
+    if (!showChat || isCompact) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (
+        widgetRef.current?.contains(target) ||
+        launcherRef.current?.contains(target)
+      ) {
+        return;
+      }
+      closedByFocusOut.current = true;
+      setShowChat(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [showChat, isCompact]);
 
   useEffect(() => {
@@ -687,6 +720,7 @@ export const Chat = () => {
                 type="button"
                 onClick={sendMessage}
                 aria-label="Send message"
+                aria-disabled={isSendDisabled}
                 // Filled, not outlined. Giving this the same zinc-500 stroke
                 // the input got made the two identical — same weight, same
                 // colour, same radius, same height — so the row read as one
@@ -707,7 +741,16 @@ export const Chat = () => {
                 // target in WCAG 2.5.5, Apple's HIG and Android's guidance, and
                 // this is the primary action of a full-screen sheet at phone
                 // width — a bad place to lose it to a side effect.
-                className={`rounded-md size-11 flex items-center justify-center bg-sky-700 text-white hover:bg-sky-800 hover:cursor-pointer focus-visible:outline-sky-700 ${ACTION_BOUNDARY}`}
+                //
+                // Issue #197: When message is empty or whitespace, mute visual styling
+                // (bg-sky-700/50 text-white/70 cursor-not-allowed) and expose aria-disabled
+                // so it does not look like an active actionable fill while keeping type="button"
+                // to preserve focusability in the tab sequence / focus trap.
+                className={`rounded-md size-11 flex items-center justify-center focus-visible:outline-sky-700 ${
+                  isSendDisabled
+                    ? "bg-sky-700/50 text-white/70 cursor-not-allowed"
+                    : `${CHAT_ACCENT_BG} text-white ${CHAT_ACCENT_HOVER} hover:cursor-pointer`
+                } ${ACTION_BOUNDARY}`}
               >
                 <PaperAirplaneIcon className="w-6" aria-hidden="true" />
               </button>

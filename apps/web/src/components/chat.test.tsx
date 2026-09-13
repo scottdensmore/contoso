@@ -351,6 +351,39 @@ describe('Chat accessibility', () => {
     expect(inputRow?.className).toContain('max-lg:pb-8')
     expect(inputRow?.className).toContain('max-lg:px-4')
   })
+
+  it('disables send button visually and via aria-disabled when input is empty (#197)', () => {
+    // Issue #197: The filled send button is an emphatic no-op on an empty field.
+    // The button must expose aria-disabled="true" and muted styling when empty or whitespace,
+    // and switch to aria-disabled="false" when non-empty text is entered.
+    render(<Chat />)
+    openChat()
+
+    const sendButton = screen.getByRole('button', { name: 'Send message' })
+    const input = screen.getByRole('textbox', { name: 'Message' })
+
+    // Initially empty
+    expect(sendButton).toHaveAttribute('aria-disabled', 'true')
+    expect(sendButton.className).toContain('cursor-not-allowed')
+    expect(sendButton.className).toContain('bg-sky-700/50')
+
+    // Enter whitespace only
+    fireEvent.change(input, { target: { value: '   ' } })
+    expect(sendButton).toHaveAttribute('aria-disabled', 'true')
+    expect(sendButton.className).toContain('cursor-not-allowed')
+
+    // Enter valid text
+    fireEvent.change(input, { target: { value: 'Can you help me?' } })
+    expect(sendButton).toHaveAttribute('aria-disabled', 'false')
+    expect(sendButton.className).not.toContain('cursor-not-allowed')
+    expect(sendButton.className).toContain('hover:cursor-pointer')
+    expect(sendButton.className).toContain('bg-sky-700')
+
+    // Clear text again
+    fireEvent.change(input, { target: { value: '' } })
+    expect(sendButton).toHaveAttribute('aria-disabled', 'true')
+    expect(sendButton.className).toContain('cursor-not-allowed')
+  })
 })
 
 describe('Chat placeholder timing', () => {
@@ -1114,6 +1147,48 @@ describe('Chat modality', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(behind).not.toHaveAttribute('inert')
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open chat' }))
+
+    cleanup()
+  })
+
+  it('dismisses chat card on pointerdown outside the widget at desktop width (#187)', () => {
+    // Issue #187: At lg and up, the non-modal card covers product links.
+    // Pointerdown outside the widget and launcher dismisses the card so mouse users can clear it.
+    useViewport(false)
+    const { parent, cleanup } = renderInLayout()
+    openChat()
+
+    expect(screen.getByRole('dialog', { name: /chat/i })).toBeInTheDocument()
+
+    // Pointerdown inside the chat panel does not dismiss it
+    fireEvent.pointerDown(screen.getByRole('dialog', { name: /chat/i }))
+    expect(screen.getByRole('dialog', { name: /chat/i })).toBeInTheDocument()
+
+    // Pointerdown outside the widget dismisses the chat panel
+    const outside = parent.querySelector('a')! as HTMLElement
+    fireEvent.pointerDown(outside)
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    cleanup()
+  })
+
+  it('does not dismiss chat card when focus lands on document.body (#276)', () => {
+    // Issue #276: Focus landing on document.body represents window blur or focus reset,
+    // not an intentional user interaction with an obscured control. It must not dismiss the chat card.
+    useViewport(false)
+    const { parent, cleanup } = renderInLayout()
+    openChat()
+
+    expect(screen.getByRole('dialog', { name: /chat/i })).toBeInTheDocument()
+
+    // Focus landing on document.body should NOT dismiss the card
+    fireEvent.focusIn(document.body, { target: document.body })
+    expect(screen.getByRole('dialog', { name: /chat/i })).toBeInTheDocument()
+
+    // Conversely, focus moving to an actual outside control DOES dismiss the card
+    const outside = parent.querySelector('a')! as HTMLElement
+    fireEvent.focusIn(outside, { target: outside })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     cleanup()
   })
