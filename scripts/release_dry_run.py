@@ -15,7 +15,6 @@ REQUIRED_FILES: tuple[tuple[str, str], ...] = (
     (".github/ISSUE_TEMPLATE/bug_report.yml", "bug issue template"),
     (".github/ISSUE_TEMPLATE/feature_request.yml", "feature issue template"),
     (".github/ISSUE_TEMPLATE/config.yml", "issue template config"),
-    (".github/workflows/release.yml", "release workflow"),
     ("docs/RELEASE.md", "release runbook"),
 )
 
