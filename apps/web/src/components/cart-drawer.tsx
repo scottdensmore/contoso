@@ -14,6 +14,11 @@ const FOCUSABLE =
 
 export const CART_DRAWER_ID = "cart-drawer";
 
+const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, clearCart, subtotal } = useCart();
   const { status } = useSession();
@@ -82,10 +87,7 @@ export default function CartDrawer() {
 
   if (!isOpen) return null;
 
-  const formattedSubtotal = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(subtotal);
+  const formattedSubtotal = CURRENCY_FORMATTER.format(subtotal);
 
   const handleCheckout = async () => {
     setIsSubmitting(true);
@@ -161,7 +163,7 @@ export default function CartDrawer() {
                 <button
                   type="button"
                   onClick={closeCart}
-                  className={`rounded-md bg-zinc-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 ${ACTION_BOUNDARY} ${ACTION_FOCUS}`}
+                  className={`rounded-md bg-zinc-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700 ${ACTION_BOUNDARY}`}
                 >
                   Continue shopping
                 </button>
@@ -214,18 +216,16 @@ export default function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            disabled={item.quantity >= 99}
                             aria-label={`Increase quantity of ${item.name}`}
-                            className={`p-1 text-zinc-600 hover:bg-zinc-100 ${ACTION_FOCUS}`}
+                            className={`p-1 text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed ${ACTION_FOCUS}`}
                           >
                             <PlusIcon className="h-3 w-3" aria-hidden="true" />
                           </button>
                         </div>
 
                         <span className="font-semibold text-zinc-900">
-                          {new Intl.NumberFormat("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          }).format(item.price * item.quantity)}
+                          {CURRENCY_FORMATTER.format(item.price * item.quantity)}
                         </span>
                       </div>
                     </div>
@@ -249,7 +249,7 @@ export default function CartDrawer() {
                   type="button"
                   onClick={handleCheckout}
                   disabled={isSubmitting}
-                  className={`w-full rounded-md bg-zinc-900 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-60 ${ACTION_BOUNDARY} ${ACTION_FOCUS}`}
+                  className={`w-full rounded-md bg-zinc-900 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-60 ${ACTION_BOUNDARY}`}
                 >
                   {isSubmitting ? "Placing order..." : `Place Order (${formattedSubtotal})`}
                 </button>
@@ -257,7 +257,7 @@ export default function CartDrawer() {
                 <Link
                   href="/login"
                   onClick={closeCart}
-                  className={`block w-full rounded-md bg-zinc-900 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 ${ACTION_BOUNDARY} ${ACTION_FOCUS}`}
+                  className={`block w-full rounded-md bg-zinc-900 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 ${ACTION_BOUNDARY}`}
                 >
                   Sign in to Checkout
                 </Link>

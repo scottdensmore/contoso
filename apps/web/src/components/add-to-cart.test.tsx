@@ -87,6 +87,17 @@ describe("AddToCart", () => {
     expect(input).toHaveValue(42);
   });
 
+  it("allows transient typing with empty string and clamps to min 1 on blur", () => {
+    render(<AddToCart product={product} />);
+    const input = screen.getByLabelText("Quantity");
+
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input).toHaveValue(null);
+
+    fireEvent.blur(input);
+    expect(input).toHaveValue(1);
+  });
+
   it("calls addItem with product and selected quantity on button click", () => {
     render(<AddToCart product={product} />);
     const incBtn = screen.getByRole("button", { name: "Increase quantity" });

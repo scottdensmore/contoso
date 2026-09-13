@@ -17,19 +17,38 @@ export interface AddToCartProps {
 }
 
 export default function AddToCart({ product }: AddToCartProps) {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | "">(1);
   const [announcement, setAnnouncement] = useState("");
   const { addItem } = useCart();
 
   const handleDecrease = () => {
-    setQuantity((q) => Math.max(1, q - 1));
+    setQuantity((q) => {
+      const current = typeof q === "number" ? q : 1;
+      return Math.max(1, current - 1);
+    });
   };
 
   const handleIncrease = () => {
-    setQuantity((q) => Math.min(99, q + 1));
+    setQuantity((q) => {
+      const current = typeof q === "number" ? q : 1;
+      return Math.min(99, current + 1);
+    });
+  };
+
+  const handleBlur = () => {
+    if (quantity === "" || quantity < 1) {
+      setQuantity(1);
+    } else if (quantity > 99) {
+      setQuantity(99);
+    }
   };
 
   const handleAddToCart = () => {
+    const finalQuantity =
+      typeof quantity === "number" && quantity >= 1 ? Math.min(99, quantity) : 1;
+    if (quantity !== finalQuantity) {
+      setQuantity(finalQuantity);
+    }
     const itemImage =
       product.image ??
       (product.images && product.images.length > 0 ? product.images[0] : null);
@@ -41,9 +60,9 @@ export default function AddToCart({ product }: AddToCartProps) {
         price: product.price,
         image: itemImage,
       },
-      quantity
+      finalQuantity
     );
-    setAnnouncement(`Added ${quantity} ${product.name} to your cart.`);
+    setAnnouncement(`Added ${finalQuantity} ${product.name} to your cart.`);
   };
 
   return (
@@ -52,7 +71,7 @@ export default function AddToCart({ product }: AddToCartProps) {
         <button
           type="button"
           onClick={handleDecrease}
-          disabled={quantity <= 1}
+          disabled={typeof quantity === "number" ? quantity <= 1 : true}
           aria-label="Decrease quantity"
           className={`p-2.5 text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 rounded-l-lg ${ACTION_FOCUS}`}
         >
@@ -68,17 +87,22 @@ export default function AddToCart({ product }: AddToCartProps) {
           max="99"
           value={quantity}
           onChange={(e) => {
+            if (e.target.value === "") {
+              setQuantity("");
+              return;
+            }
             const val = parseInt(e.target.value, 10);
             if (!isNaN(val)) {
               setQuantity(Math.max(1, Math.min(99, val)));
             }
           }}
+          onBlur={handleBlur}
           className="w-12 text-center text-base font-semibold text-zinc-800 focus:outline-none"
         />
         <button
           type="button"
           onClick={handleIncrease}
-          disabled={quantity >= 99}
+          disabled={typeof quantity === "number" ? quantity >= 99 : false}
           aria-label="Increase quantity"
           className={`p-2.5 text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 rounded-r-lg ${ACTION_FOCUS}`}
         >
@@ -89,7 +113,7 @@ export default function AddToCart({ product }: AddToCartProps) {
       <button
         type="button"
         onClick={handleAddToCart}
-        className={`inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-6 py-3 text-base font-medium text-white shadow hover:bg-zinc-800 ${ACTION_BOUNDARY} ${ACTION_FOCUS}`}
+        className={`inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-6 py-3 text-base font-medium text-white shadow hover:bg-zinc-800 ${ACTION_BOUNDARY}`}
       >
         <ShoppingBagIcon className="h-5 w-5" aria-hidden="true" />
         Add to Cart

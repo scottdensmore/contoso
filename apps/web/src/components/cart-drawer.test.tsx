@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import CartDrawer from "./cart-drawer";
 import { useCart } from "@/lib/cart-context";
@@ -44,6 +44,10 @@ describe("CartDrawer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useRouter).mockReturnValue({ push: mockPush } as any);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("does not render when cart is closed", () => {
@@ -111,10 +115,10 @@ describe("CartDrawer", () => {
       data: { user: { id: "u1", email: "user@example.com" } },
     } as any);
 
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       json: async () => ({ id: "ord_123" }),
-    });
+    } as any);
 
     render(<CartDrawer />);
     const placeOrderBtn = screen.getByRole("button", { name: /Place Order/i });
@@ -147,10 +151,10 @@ describe("CartDrawer", () => {
       data: { user: { id: "u1", email: "user@example.com" } },
     } as any);
 
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: false,
       json: async () => ({ error: "Inventory exceeded" }),
-    });
+    } as any);
 
     render(<CartDrawer />);
     const placeOrderBtn = screen.getByRole("button", { name: /Place Order/i });
@@ -190,6 +194,25 @@ describe("CartDrawer", () => {
     const incBtn = screen.getByRole("button", { name: "Increase quantity of Tent" });
     fireEvent.click(incBtn);
     expect(mockUpdateQuantity).toHaveBeenCalledWith("p1", 3);
+  });
+
+  it("disables increase quantity button when item quantity is 99 or more", () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 99, image: "/images/tent.webp" },
+      ],
+      subtotal: 9900,
+      closeCart: mockCloseCart,
+      updateQuantity: mockUpdateQuantity,
+      removeItem: mockRemoveItem,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    const incBtn = screen.getByRole("button", { name: "Increase quantity of Tent" });
+    expect(incBtn).toBeDisabled();
   });
 
   it("dismisses on close button click, backdrop click, and Escape key", () => {

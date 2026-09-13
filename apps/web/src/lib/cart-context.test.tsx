@@ -178,5 +178,19 @@ describe("CartContext", () => {
     });
     expect(JSON.parse(localStorage.getItem("contoso_cart") || "[]")).toEqual([]);
   });
+
+  it("maintains stable action handler references across re-renders", () => {
+    const { result, rerender } = renderHook(() => useCart(), { wrapper });
+    const { openCart, closeCart, addItem, removeItem, updateQuantity, clearCart } = result.current;
+
+    rerender();
+
+    expect(result.current.openCart).toBe(openCart);
+    expect(result.current.closeCart).toBe(closeCart);
+    expect(result.current.addItem).toBe(addItem);
+    expect(result.current.removeItem).toBe(removeItem);
+    expect(result.current.updateQuantity).toBe(updateQuantity);
+    expect(result.current.clearCart).toBe(clearCart);
+  });
 });
 
