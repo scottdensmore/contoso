@@ -103,7 +103,7 @@ class embedding_functions:
 '''
 
 
-def run_indexer(fail_at):
+def run_indexer(fail_at, extra_env=None):
     """Run the real indexer against stubbed boundaries. Returns the process."""
     with tempfile.TemporaryDirectory() as temp_dir:
         fixture = Path(temp_dir)
@@ -115,10 +115,13 @@ def run_indexer(fail_at):
 
         record = fixture / "upserted.json"
         env = dict(os.environ)
+        env.pop("INDEX_REQUIRE_PRODUCTS", None)
         env["PYTHONPATH"] = str(stub_root)
         env["STUB_FAIL_AT"] = fail_at
         env["STUB_RECORD"] = str(record)
         env["CHROMA_DB_PATH"] = str(fixture / "chroma_db")
+        if extra_env:
+            env.update(extra_env)
 
         completed = subprocess.run(
             [sys.executable, str(INDEXER)],
@@ -245,6 +248,30 @@ class IndexerExitStatusTests(unittest.TestCase):
         completed, _ = run_indexer("find_many")
         output = completed.stdout + completed.stderr
         self.assertIn("stub: database read failed", output)
+
+    def test_empty_database_with_require_products_exits_nonzero(self):
+        completed, upserted = run_indexer("empty", extra_env={"INDEX_REQUIRE_PRODUCTS": "1"})
+        output = completed.stdout + completed.stderr
+        self.assertIn("No products found in database and INDEX_REQUIRE_PRODUCTS is set.", output)
+        self.assertEqual(
+            completed.returncode,
+            1,
+            f"empty database with INDEX_REQUIRE_PRODUCTS=1 must fail and exit nonzero\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+        )
+        self.assertIsNone(upserted)
+
+    def test_empty_database_without_require_products_warns_and_exits_zero(self):
+        completed, upserted = run_indexer("empty")
+        self.assertEqual(
+            completed.returncode,
+            0,
+            f"empty database without INDEX_REQUIRE_PRODUCTS should exit 0\nstdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+        )
+        self.assertIn(
+            "WARNING: No products found in database. Skipping indexing. Starting chat service with empty vector collection.",
+            completed.stderr,
+        )
+        self.assertIsNone(upserted)
 
 
 class IndexerDeliveryTests(unittest.TestCase):

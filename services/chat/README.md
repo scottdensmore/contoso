@@ -37,7 +37,7 @@ Use profile-oriented smoke commands from repo root:
 
 ```bash
 make e2e-smoke-lite # core/default profile
-make e2e-smoke-full # full local-provider profile
+make e2e-smoke-full # full chat dependency profile (CHAT_INSTALL_LOCAL_STACK=1)
 make local-provider-check # preflight for LLM_PROVIDER=local
 make diagnose-chat-local # full local diagnostics from repo root
 ```

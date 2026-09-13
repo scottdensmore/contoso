@@ -263,7 +263,10 @@ e2e-smoke: | $(VENV_PYTHON) ## Run dockerized end-to-end smoke check (web -> cha
 e2e-smoke-lite: ## Run dockerized contract smoke with minimal chat dependency profile
 	$(MAKE) e2e-smoke CHAT_INSTALL_LOCAL_STACK=0
 
-e2e-smoke-full: ## Run dockerized smoke with full chat dependency profile
+# Validates container builds and smoke verification with the full chat
+# dependency profile installed (CHAT_INSTALL_LOCAL_STACK=1), rather than
+# selecting LLM_PROVIDER=local.
+e2e-smoke-full: ## Run dockerized smoke with full chat dependency profile installed (CHAT_INSTALL_LOCAL_STACK=1)
 	$(MAKE) e2e-smoke CHAT_INSTALL_LOCAL_STACK=1
 
 release-dry-run: | $(VENV_PYTHON) ## Validate release prerequisites without publishing

@@ -22,7 +22,13 @@ async def index_products():
             await db.disconnect()
         
         if not products:
-            print("No products found in database. Skipping indexing.")
+            require_products = os.getenv("INDEX_REQUIRE_PRODUCTS")
+            if require_products and require_products.strip().lower() not in ("0", "false", "no", "off"):
+                raise RuntimeError("No products found in database and INDEX_REQUIRE_PRODUCTS is set.")
+            print(
+                "WARNING: No products found in database. Skipping indexing. Starting chat service with empty vector collection.",
+                file=sys.stderr,
+            )
             return
 
         print(f"Fetched {len(products)} products from database.")

@@ -210,13 +210,19 @@ make setup-chat
 make e2e-smoke-lite
 ```
 
-Use `full` when validating `LLM_PROVIDER=local` behavior:
+Use `full` to install local LLM/vector dependencies or validate full-profile container builds:
 
 ```bash
 make setup-chat-full
 make e2e-smoke-full
+```
+
+When validating `LLM_PROVIDER=local` behavior:
+
+```bash
 ollama serve
 ollama pull gemma3:12b
+make local-provider-check
 ```
 
 CI cadence:

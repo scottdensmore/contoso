@@ -16,7 +16,7 @@ Fast contract-only profile (minimal chat dependency footprint):
 make e2e-smoke-lite
 ```
 
-Full local-provider profile:
+Full chat dependency profile (`CHAT_INSTALL_LOCAL_STACK=1`):
 
 ```bash
 make e2e-smoke-full
@@ -104,7 +104,7 @@ something to absorb.
 ## Profile Selection
 
 - `e2e-smoke-lite`: default for PRs and fast contract validation.
-- `e2e-smoke-full`: use when validating local provider/runtime behavior (`LLM_PROVIDER=local`).
+- `e2e-smoke-full`: validates container builds and smoke verification with the full chat dependency profile installed (`CHAT_INSTALL_LOCAL_STACK=1`), rather than selecting `LLM_PROVIDER=local`.
 
 ## CI Integration Job
 
