@@ -14,7 +14,7 @@ const nextConfig = require('./next.config.js')
 
 const deviceSizes: number[] = nextConfig.images.deviceSizes
 const imageSizes: number[] = nextConfig.images.imageSizes
-const sourceWidth: number = catalogueImages.maxDimension
+const sourceWidth: number = catalogueImages.srcsetCeiling ?? catalogueImages.maxDimension
 
 describe('image deviceSizes', () => {
   it('is a valid ladder', () => {

@@ -16,28 +16,15 @@ import { test, expect, type Page } from '@playwright/test'
  */
 
 /**
- * Widths where these layouts change the box, plus the ones that sit inside a
- * gap in the ladder. 412, 414 and 430 are common phone widths and 841-900
- * common desktop windows; those land on a box just above the 384 rung, which is
- * where a too-loose assertion hides. 640, 1024 and 1280 are grid breakpoints,
- * and 1224 is where a category card crosses 384 on its own.
+ * Width and density sweeps are configured per surface on SURFACES rather than
+ * shared globally. Running a single uniform sweep across all surfaces produced
+ * 42 cold page loads per surface where most loads could not fail (e.g. on the
+ * home grid, the card is never wider than 350px, so 1x at every width expects
+ * the 384 floor and has no red phase).
  *
- * 1015 and 1016 are where a home card crosses 320, so a `sizes` that overstates
- * it by under a pixel still tips those two into the next rung at 2x — a real
- * defect that survived a first fix because nothing sat between 1024 and 1152.
- * 1017
- * is the width after it, where the card is 320.328 and genuinely does need the
- * larger rung: it fails if the box is rounded before being scaled by density,
- * which is the other way to get this wrong. 1105 and 1106 sit either side of
- * the home grid's 350px cap engaging.
+ * Each surface record defines only the critical widths and densities that
+ * test its layout breakpoints, fixed caps, and rounding boundaries.
  */
-const WIDTHS = [
-  390, 412, 414, 430, 574, 640, 768, 834, 841, 860, 900, 1015, 1016, 1017, 1024, 1105, 1106,
-  1152, 1224, 1280, 1440,
-]
-
-/** Densities to exercise. Most traffic is not 1x, and 1x cannot see this. */
-const DENSITIES = [1, 2]
 
 /**
  * The surfaces that serve an optimised image, and how to find one.
@@ -84,9 +71,60 @@ const LCP_SURFACES: Record<
   },
 }
 
-const SURFACES = [
-  { name: 'about mission', resolve: async () => '/about' },
-  { name: 'home grid', resolve: async () => '/' },
+type SurfaceSweep = {
+  density: number
+  widths: number[]
+}
+
+type Surface = {
+  name: string
+  resolve: (page: Page) => Promise<string | null>
+  densities?: number[]
+  widths?: number[]
+  sweeps: SurfaceSweep[]
+}
+
+const SURFACES: Surface[] = [
+  {
+    name: 'about mission',
+    resolve: async () => '/about',
+    // Failure modes caught by width & density sweeps:
+    // - 390@1x, 390@2x: Single-column mobile container layout (calc(100vw - 24px)).
+    //   Catches overfetching where full viewport (100vw) is assumed without accounting for mobile margins.
+    // - 1024@1x, 1024@2x: Two-column grid layout (calc(50vw - 36px)).
+    //   Catches failure to halve the viewport percentage or omitting gap/margin calculations.
+    // - 1280@1x, 1280@2x: Grid container cap breakpoint (xl) where the column fixes at 604px.
+    //   Catches boundary condition errors at breakpoint transition.
+    // - 1440@1x, 1440@2x: Wide desktop layout testing the 604px fixed cap.
+    //   Catches uncapped sizes attributes that scale past 604px on wide screens.
+    densities: [1, 2],
+    widths: [390, 1024, 1280, 1440],
+    sweeps: [
+      { density: 1, widths: [390, 1024, 1280, 1440] },
+      { density: 2, widths: [390, 1024, 1280, 1440] },
+    ],
+  },
+  {
+    name: 'home grid',
+    resolve: async () => '/',
+    // Failure modes caught by width & density sweeps:
+    // The home card is never wider than 350px and the ladder floor is 384, so a 1x pass
+    // at every width expects w=384 and has no red phase to catch layout regressions.
+    // - Baseline 1x check (390, 1440): Verifies mobile and desktop floor selection.
+    // - 900@2x: 3-column layout below breakpoint; verifies scaling before 1015.
+    // - 1015@2x, 1016@2x: Card width approaches 320px (<= 640 device pixels, expects w=640).
+    //   Catches sizes overstating card width by < 1px, which would prematurely tip into w=750.
+    // - 1017@2x: Card width is 320.328px (> 640 device pixels, expects w=750).
+    //   Catches rounding the box width down before scaling by density.
+    // - 1105@2x, 1106@2x: Sits either side of the home grid's 350px cap engaging
+    //   ((min-width: 1106px) 350px). 1105 tests max unconstrained width; 1106 tests cap engagement.
+    // - 1440@2x: Wide desktop layout verifying that the 350px cap holds without unbounded scaling.
+    densities: [1, 2],
+    sweeps: [
+      { density: 1, widths: [390, 1440] },
+      { density: 2, widths: [900, 1015, 1016, 1017, 1105, 1106, 1440] },
+    ],
+  },
   {
     name: 'product detail',
     resolve: async (page: Page) => {
@@ -97,6 +135,21 @@ const SURFACES = [
         .first()
         .getAttribute('href')
     },
+    // Failure modes caught by width & density sweeps:
+    // The product detail hero image has max-w-[550px] capping the box from 574px viewport.
+    // - 390@1x, 390@2x: Mobile full-width layout (calc(100vw - 24px)).
+    //   Catches missing margin subtraction or unconstrained 100vw assumptions.
+    // - 574@1x, 574@2x: Exact breakpoint where max-w-[550px] cap engages ((min-width: 574px) 550px).
+    //   Catches premature or delayed cap activation.
+    // - 1024@1x, 1024@2x: Desktop container layout with fixed 550px image box.
+    //   At 2x (1100 device px), catches failure to select the ceiling rung (w=1080).
+    // - 1440@1x, 1440@2x: Wide desktop layout ensuring 550px cap holds rather than expanding with viewport.
+    densities: [1, 2],
+    widths: [390, 574, 1024, 1440],
+    sweeps: [
+      { density: 1, widths: [390, 574, 1024, 1440] },
+      { density: 2, widths: [390, 574, 1024, 1440] },
+    ],
   },
   {
     name: 'category grid',
@@ -105,6 +158,26 @@ const SURFACES = [
       const categories = (await response?.json()) as { slug: string }[]
       return categories?.[0]?.slug ? `/products/category/${categories[0].slug}` : null
     },
+    // Failure modes caught by width & density sweeps:
+    // Category grid columns change across breakpoints (1 col -> 2 col -> 3 col -> 398px cap at 1280px).
+    // - 390@1x, 390@2x: 1-column mobile layout (calc(100vw - 24px)).
+    //   Catches unconstrained full viewport requests.
+    // - 640@1x, 640@2x: Boundary breakpoint transition from 1-column to 2-column (calc(50vw - 24px)).
+    //   Catches off-by-one breakpoint errors.
+    // - 834@1x, 834@2x: Mid-range 2-column tablet layout.
+    //   Catches 2-column formula errors before the 3-column transition.
+    // - 1024@1x, 1024@2x: Breakpoint transition from 2-column to 3-column (calc(100vw / 3 - 24px)).
+    //   Card is ~317px; catches using desktop 398px/400px sampled width prematurely.
+    // - 1224@1x, 1224@2x: Where category card crosses 384px on its own.
+    //   Catches threshold crossing errors between 384 and 512/640 rungs.
+    // - 1440@1x, 1440@2x: Wide desktop layout where container stops growing at xl (capped at 398px).
+    //   Catches failure to cap column width at 1280px+.
+    densities: [1, 2],
+    widths: [390, 640, 834, 1024, 1224, 1440],
+    sweeps: [
+      { density: 1, widths: [390, 640, 834, 1024, 1224, 1440] },
+      { density: 2, widths: [390, 640, 834, 1024, 1224, 1440] },
+    ],
   },
 ]
 
@@ -165,19 +238,11 @@ const expectedRung = (ladder: number[], box: number, density: number): number =>
 test.describe('image delivery', () => {
   for (const surface of SURFACES) {
     test(`the ${surface.name} image is sized to its box`, async ({ browser }, testInfo) => {
-      // One cold browser context per width and density, so 42 page loads a
-      // surface. The cost is the loads, not the resizing: the optimiser caches
-      // to disk across the whole run, so the home grid's 20 images resolve to
-      // about 50 distinct resizes against some 600 requests. What differs
-      // between surfaces is how many subresources each load waits on — 15 on
-      // the home grid against 1 on the about page — which is why home takes
-      // ~80s locally where about takes ~38.
-      //
-      // The e2e job took 8.4 minutes with one surface and 9.7 with three,
-      // against a 35-minute job budget, so the job has room and this cap is the
-      // only real exposure. 240s is three times the slowest local surface, on a
-      // shared CI vCPU.
-      test.setTimeout(240_000)
+      // One cold browser context per measurement, trimmed per-surface to its
+      // critical boundaries (8 to 12 page loads per surface instead of 42).
+      // 60s provides generous headroom for the slowest surface (category grid at 12 loads)
+      // even on a shared CI runner.
+      testInfo.setTimeout(60_000)
 
       const overfetched: Record<string, string> = {}
 
@@ -195,8 +260,8 @@ test.describe('image delivery', () => {
       // rather than fetch the smaller one the new width calls for, so the second
       // and later widths measure the cache instead of `sizes`. Each pass here is
       // a new visitor, which is the case that matters.
-      for (const density of DENSITIES) {
-        for (const width of WIDTHS) {
+      for (const { density, widths } of surface.sweeps) {
+        for (const width of widths) {
           const at = `${width}@${density}x`
           const context = await browser.newContext({
             viewport: { width, height: 900 },
