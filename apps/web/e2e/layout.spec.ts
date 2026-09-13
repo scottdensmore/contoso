@@ -194,10 +194,11 @@ test.describe('no vertical collision', () => {
     // carries that residual and the measurements; it needs `min-h-80`
     // revisited, not a bigger type step.
     //
-    // Both sizes earn their place -- reverting only the h1 is caught at 844x390
-    // and passes at 667x375; reverting only the subhead and body is caught at
-    // 667x375 and passes at 844x390.
+    // Sizes earn their place -- 568x320 covers short landscape viewports (#192);
+    // reverting only the h1 is caught at 844x390 and passes at 667x375;
+    // reverting only the subhead and body is caught at 667x375 and passes at 844x390.
     const LANDSCAPE = [
+      { width: 568, height: 320 },
       { width: 667, height: 375 },
       { width: 844, height: 390 },
     ]

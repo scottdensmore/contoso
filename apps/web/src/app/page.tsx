@@ -30,11 +30,11 @@ export default async function Home() {
         // so the 1024x450 image tiled: already visible as a vertical seam past
         // 1024px wide, and a horizontal one as soon as the band grows taller
         // than 450px, which min-h-80 lets it do.
-        outerClassName="bg-blend-multiply bg-center bg-cover bg-no-repeat bg-hero-image min-h-80 bg-neutral-600"
-        // One owner for the band's vertical rhythm. It used to be two: `pt-12`
-        // on the h1 and `pb-8` out here on the full-bleed outer, which meant
-        // restyling the heading could silently take the top padding with it.
-        innerClassName="py-12"
+        outerClassName="bg-blend-multiply bg-center bg-cover bg-no-repeat bg-hero-image min-h-64 sm:min-h-80 landscape:min-h-0 lg:landscape:min-h-80 bg-neutral-600"
+        // One owner for the band's vertical rhythm. Responsive py-6 sm:py-12
+        // landscape:py-6 lg:landscape:py-12 keeps the hero band from pushing
+        // category content off-screen in landscape viewports (#192).
+        innerClassName="py-6 sm:py-12 landscape:py-6 lg:landscape:py-12"
       >
         {/*
           Fixed 72px type was the whole of #162. At 320 the word "Company"
@@ -65,18 +65,11 @@ export default async function Home() {
           Exploring the Unseen!
         </div>
         {/*
-          `w-2/3` applied at every width, so on a 320px screen this paragraph
-          was a 197px column — three words a line, and the tallest single
-          contributor to the band. The two-thirds measure is there to stop the
-          line running the full width of a desktop, which is not a problem a
-          phone has.
-
-          It comes back at `md` rather than `lg`. Held off to `lg`, the line
-          ran 95 characters at 768 and 131 at 1023 — the fraction was doing no
-          work exactly where the viewport had grown enough to need it. From
-          768 two thirds is 496px, about 55 characters.
+          A measure constraint (`max-w-prose`, 65ch) keeps the comfortable
+          45-75 character range on desktop (1280px, 1440px+), replacing
+          `w-full md:w-2/3` which ran 95+ characters at desktop widths (#191).
         */}
-        <div className="text-zinc-100 mt-2 text-base lg:text-lg w-full md:w-2/3">
+        <div className="text-zinc-100 mt-2 text-base lg:text-lg max-w-prose">
           Choose from a variety of products to help you explore the outdoors.
           From camping to hiking, we have you covered with the best gear and the
           best prices.
@@ -135,6 +128,10 @@ export default async function Home() {
                     // reads 100vw, drops every rung below 640, and a 175px phone
                     // card fetches w=640. The middle clause's `100vw` is
                     // harmless only because this one is here.
+                    //
+                    // 100vw includes the classic ~15px scrollbar on desktop OSes,
+                    // so the arithmetic slightly over-declares by ~5px (which safely
+                    // selects the correct or next rung without causing image softness).
                     sizes="(min-width: 1106px) 350px, (min-width: 640px) calc( ( 100vw - 56px ) / 3 ), calc( 50vw - 20px )"
                   />
                   <div className="text-center mt-2 text-base sm:text-xl md:text-2xl font-semibold break-words">

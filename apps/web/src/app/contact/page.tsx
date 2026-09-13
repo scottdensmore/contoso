@@ -9,7 +9,8 @@ export default function ContactPage() {
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700"
         style={{ backgroundImage: "url('/images/contact-bg.webp')" }}
       >
-        <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-transparent" />
       </div>
 
       {/* Content */}
@@ -18,7 +19,7 @@ export default function ContactPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl drop-shadow-md">
             Get in Touch
           </h1>
-          <p className="mt-4 text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-xs">
+          <p className="mt-4 text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-md">
             Ready for your next adventure? Our team is here to help you gear up.
           </p>
         </div>
