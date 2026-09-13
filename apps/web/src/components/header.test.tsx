@@ -2,12 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import Header from './header'
 import { useSession } from 'next-auth/react'
+import { useCart } from '@/lib/cart-context'
 
 vi.mock('next-auth/react', () => ({
   useSession: vi.fn(),
   signOut: vi.fn(),
   signIn: vi.fn(),
 }))
+
+vi.mock('@/lib/cart-context', () => ({
+  useCart: vi.fn(),
+}))
+
+const mockOpenCart = vi.fn()
 
 describe('Header', () => {
   beforeEach(() => {
@@ -16,6 +23,18 @@ describe('Header', () => {
       ok: true,
       json: async () => [],
     } as any))
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
   })
 
   it('renders login/signup links when unauthenticated', async () => {
@@ -146,4 +165,97 @@ describe('Header', () => {
 
     expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
   })
+
+  it('renders cart trigger button and calls openCart on click', async () => {
+    vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
+    await act(async () => {
+      render(<Header />)
+    })
+
+    const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
+    expect(cartButton).toBeDefined()
+    expect(cartButton).toHaveAttribute('aria-expanded', 'false')
+
+    await act(async () => {
+      fireEvent.click(cartButton)
+    })
+    expect(mockOpenCart).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders badge and announces item count when totalItems > 0', async () => {
+    vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 3,
+      subtotal: 150,
+    })
+
+    await act(async () => {
+      render(<Header />)
+    })
+
+    const cartButton = screen.getByRole('button', { name: 'Shopping cart with 3 items' })
+    expect(cartButton).toBeDefined()
+    expect(screen.getByText('3')).toBeDefined()
+  })
+
+  it('returns focus to the cart trigger when the cart drawer closes', async () => {
+    vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+
+    const { rerender } = render(<Header />)
+    const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
+    const focusSpy = vi.spyOn(cartButton, 'focus')
+
+    // Drawer opens
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: true,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+    rerender(<Header />)
+
+    // Drawer closes
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+    rerender(<Header />)
+
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
+  })
 })
+

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Chat from "@/components/chat";
 import Block from "@/components/block";
 import Providers from "@/components/providers";
+import CartDrawer from "@/components/cart-drawer";
 
 export const metadata: Metadata = {
   title: "Contoso Outdoors Company",
@@ -32,6 +33,7 @@ export default async function RootLayout({
               </Block>
             </main>
             <Chat />
+            <CartDrawer />
           </div>
         </Providers>
       </body>

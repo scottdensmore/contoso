@@ -14,6 +14,12 @@ vi.mock('next/navigation', () => ({
   }),
 }))
 
+vi.mock('@/components/header', () => ({
+  __esModule: true,
+  default: () => <div data-testid="header" />,
+}))
+
+
 describe('Profile Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
