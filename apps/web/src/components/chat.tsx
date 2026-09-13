@@ -101,6 +101,18 @@ export const Chat = () => {
   // contracts rather than stranding it half-way — `aria-modal` without a trap
   // tells assistive technology something false, and a trap without `inert`
   // leaves the covered controls clickable.
+  //
+  // Modal Sheet Contract (Issue #316):
+  // Below `lg`, the chat panel is an intentional modal sheet dialog:
+  // - `aria-modal="true"` signals to assistive tech that content outside is inert.
+  // - Sibling DOM elements (the entire page, including the header and its navigation drawer)
+  //   are marked `inert` to prevent clicks, taps, or keyboard focus on obscured controls (WCAG 2.4.11).
+  // - Keyboard focus is trapped within the widget so Tab cannot leak into background content.
+  // - Body scrolling is locked (`overflow: hidden`).
+  // Because of this contract, the navigation drawer is intentionally unreachable while the chat
+  // panel is open at phone/compact width. Activating clean dismissal controls (the header Close
+  // button or the Escape key) dismisses the modal, removes `inert` from siblings, unlocks scrolling,
+  // and returns focus cleanly to the launcher, restoring full access to the navigation drawer.
 
   // Everything beside the widget, found through the DOM rather than by tag: the
   // widget's siblings are whatever the root layout puts next to it, and naming
@@ -293,6 +305,10 @@ export const Chat = () => {
   // panel, but scoped to events originating within it. Unscoped, Escape while
   // the site's nav drawer was open dismissed the chat underneath it and left
   // the drawer up — closing the layer the user was not interacting with.
+  //
+  // Below `lg`, pressing Escape cleanly dismisses the modal sheet, lifting
+  // modal isolation and returning focus to the launcher, which re-enables
+  // access to the site navigation drawer and background content (#316).
   useEffect(() => {
     if (!showChat) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -701,12 +717,17 @@ export const Chat = () => {
             // Every other control in the widget styles its focus ring; this one
             // was left on the browser default, and the focus trap makes it a
             // stop that keyboard users land on every cycle.
-            // The edge without `ACTION_FOCUS`'s offset: #190 gave this one
-            // offset-4 so the ring clears the photography behind it. Its
-            // three-ring `shadow-[...]` is a box-shadow, which forced colors
+            // Its three-ring `shadow-[...]` is a box-shadow, which forced colors
             // strips outright -- measured 1.00:1 there, a bare glyph with no
             // disc at all.
-            className="bg-indigo-600 text-white rounded-full p-2 shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#18181b,0_10px_15px_-3px_#0000001a] hover:bg-indigo-500 hover:cursor-pointer forced-colors:border-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+            //
+            // Issue #194: On dark hero photography, `focus-visible:outline-indigo-600`
+            // alone sat around 2.89-3.01:1 contrast, right on the edge of WCAG 2.2 1.4.11 (>= 3:1).
+            // A two-tone high-contrast indicator pairing an inner white ring
+            // (`focus-visible:ring-2 focus-visible:ring-white`) with an outer indigo
+            // outline (`focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600`)
+            // ensures high contrast (> 3:1) against both dark photography and light backgrounds.
+            className="bg-indigo-600 text-white rounded-full p-2 shadow-[0_0_0_2px_#ffffff,0_0_0_3px_#18181b,0_10px_15px_-3px_#0000001a] hover:bg-indigo-500 hover:cursor-pointer forced-colors:border-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 focus-visible:ring-2 focus-visible:ring-white"
             onClick={toggleChat}
             aria-label={showChat ? "Close chat" : "Open chat"}
           >

@@ -199,8 +199,8 @@ export const FIELD_BOUNDARY =
  *
  * The outline width and offset are here; the colour is not. `outline-2` and
  * `outline-offset-2` are right for anything sitting on a page — the chat
- * launcher is the exception, at `outline-offset-4`, because it sits on
- * photography and #190 gave it the extra air deliberately. Every call site
+ * launcher pairs `outline-offset-2` with `ring-2 ring-white` so its two-tone
+ * indicator exceeds 3:1 against dark photography (#194). Every call site
  * should already
  * pair this with its own `focus-visible:outline-indigo-600` or
  * `-outline-sky-700`. Six controls carried no focus treatment at all before
@@ -227,8 +227,7 @@ export const ACTION_FOCUS =
  * there — so taking `border-2` would put it at 2px beside the filled `Sign In`
  * and render the two as identical declarations, which is the distinction
  * `border-2` exists to restore. The chat launcher needs the opposite: the edge,
- * but not `outline-offset-2`, since #190 gave it offset-4 to clear the
- * photography behind it.
+ * but pairs its outline with an inner white ring for two-tone contrast (#194).
  *
  * Both wrote their classes out longhand before this split. That is the failure
  * this file exists to prevent — six literal classes copied by the next outlined

@@ -70,6 +70,20 @@ describe('Chat accessibility', () => {
     expect(screen.getByRole('textbox', { name: 'Message' })).toBeDefined()
   })
 
+  it('provides a two-tone high-contrast focus indicator on the chat launcher (#194)', () => {
+    // Issue #194: An indigo-600 outline alone sits on the 3:1 boundary against
+    // dark photography. A two-tone indicator pairing an inner white ring with an
+    // outer indigo-600 outline ensures high contrast (> 3:1) against both light
+    // and dark backgrounds.
+    render(<Chat />)
+    const launcher = screen.getByRole('button', { name: 'Open chat' })
+    expect(launcher.className).toContain('focus-visible:ring-2')
+    expect(launcher.className).toContain('focus-visible:ring-white')
+    expect(launcher.className).toContain('focus-visible:outline-2')
+    expect(launcher.className).toContain('focus-visible:outline-offset-2')
+    expect(launcher.className).toContain('focus-visible:outline-indigo-600')
+  })
+
   it('announces conversation updates to assistive technology', () => {
     // A probe at three viewports found zero aria-live/role=log/status/alert
     // anywhere on the page, so turns mutated silently.
@@ -945,6 +959,29 @@ describe('Chat modality', () => {
     viewport.resizeTo(false)
     expect(behind).not.toHaveAttribute('inert')
     expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-modal')
+
+    cleanup()
+  })
+
+  it('enforces intentional modal isolation below lg and restores background navigation on dismissal (#316)', () => {
+    // Issue #316: At phone width an open chat panel makes the navigation drawer
+    // unreachable. This is the intentional modal sheet contract: below `lg`, the
+    // sheet is a modal dialog (`aria-modal="true"`) that inerts sibling DOM
+    // elements (including <main> and header nav) so obscured controls cannot be
+    // reached or focused. Dismissing via close controls or Escape cleanly removes
+    // inert and restores access to the navigation drawer.
+    useViewport(true)
+    const { behind, cleanup } = renderInLayout()
+    openChat()
+
+    // Sibling content containing site navigation is inert while modal sheet is open
+    expect(behind).toHaveAttribute('inert')
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
+
+    // Escape dismisses the modal and restores navigation interactivity
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(behind).not.toHaveAttribute('inert')
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open chat' }))
 
     cleanup()
   })
