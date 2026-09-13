@@ -117,4 +117,66 @@ describe("CartContext", () => {
     });
     expect(result.current.isOpen).toBe(false);
   });
+
+  it("hydrates items from localStorage on mount", () => {
+    localStorage.setItem(
+      "contoso_cart",
+      JSON.stringify([
+        {
+          productId: "p1",
+          slug: "tent-1",
+          name: "Trailmaster Tent",
+          price: 100,
+          image: "/images/tent.webp",
+          quantity: 2,
+        },
+      ])
+    );
+
+    const { result } = renderHook(() => useCart(), { wrapper });
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].productId).toBe("p1");
+    expect(result.current.totalItems).toBe(2);
+    expect(result.current.subtotal).toBe(200);
+  });
+
+  it("filters out invalid items from localStorage on mount without crashing", () => {
+    localStorage.setItem(
+      "contoso_cart",
+      JSON.stringify([
+        null,
+        { productId: "bad-1" },
+        { productId: "p2", slug: "bag", name: "Bag", price: 30, quantity: 1 },
+        "not-an-item",
+      ])
+    );
+
+    const { result } = renderHook(() => useCart(), { wrapper });
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0].productId).toBe("p2");
+    expect(result.current.totalItems).toBe(1);
+    expect(result.current.subtotal).toBe(30);
+  });
+
+  it("persists items to localStorage when adding, updating, and removing items", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 50 }, 1);
+    });
+    expect(JSON.parse(localStorage.getItem("contoso_cart") || "[]")).toEqual([
+      { productId: "p1", slug: "tent", name: "Tent", price: 50, quantity: 1 },
+    ]);
+
+    act(() => {
+      result.current.updateQuantity("p1", 3);
+    });
+    expect(JSON.parse(localStorage.getItem("contoso_cart") || "[]")[0].quantity).toBe(3);
+
+    act(() => {
+      result.current.removeItem("p1");
+    });
+    expect(JSON.parse(localStorage.getItem("contoso_cart") || "[]")).toEqual([]);
+  });
 });
+

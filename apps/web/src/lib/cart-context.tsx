@@ -39,8 +39,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
+          const validItems = parsed.filter(
+            (item): item is CartItem =>
+              Boolean(
+                item &&
+                  typeof item === "object" &&
+                  typeof item.productId === "string" &&
+                  typeof item.slug === "string" &&
+                  typeof item.name === "string" &&
+                  typeof item.price === "number" &&
+                  typeof item.quantity === "number"
+              )
+          );
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setItems(parsed);
+          setItems(validItems);
         }
       }
     } catch {
