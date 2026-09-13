@@ -6,8 +6,9 @@ export interface ChatTurn {
   name: string;
   avatar: string;
   message: string;
-  status: "waiting" | "done";
+  status: "waiting" | "done" | "error";
   type: "user" | "assistant";
+  query?: string;
 };
 
 export interface Product {

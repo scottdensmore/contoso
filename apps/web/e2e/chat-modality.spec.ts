@@ -112,7 +112,7 @@ test.describe('chat panel modality', () => {
     // A sheet that has covered the whole site has to say what it is. The panel
     // carried no heading at all while the document behind it had eight.
     await expect(
-      dialog.getByRole('heading', { name: 'Chat with Jane Doe' }),
+      dialog.getByRole('heading', { name: /Chat/ }),
       'the sheet has no visible title',
     ).toBeVisible()
 

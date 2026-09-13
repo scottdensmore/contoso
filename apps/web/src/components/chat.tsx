@@ -14,9 +14,10 @@ import { sendChatMessage } from "@/lib/messaging";
 import { ACTION_BOUNDARY, FIELD_BOUNDARY } from "@/lib/control-classes";
 
 interface ChatAction {
-  type: "add" | "clear" | "resolve";
+  type: "add" | "clear" | "resolve" | "remove";
   payload?: ChatTurn;
   id?: string;
+  index?: number;
 }
 
 interface ChatState {
@@ -38,6 +39,16 @@ function chatReducer(state: ChatState, action: ChatAction) {
       const turns = [...state.turns];
       turns[index] = action.payload!;
       return { turns };
+    }
+    case "remove": {
+      if (action.id) {
+        const filtered = state.turns.filter((turn) => turn.id !== action.id);
+        if (filtered.length !== state.turns.length) return { turns: filtered };
+      }
+      if (typeof action.index === "number") {
+        return { turns: state.turns.filter((_, idx) => idx !== action.index) };
+      }
+      return state;
     }
     default:
       throw new Error();
@@ -62,6 +73,7 @@ export const Chat = () => {
   // Whether the panel is open *now*, for callbacks that were created while it
   // was. A reply outlives the send that started it.
   const showChatRef = useRef(false);
+  const pendingCounter = useRef(0);
 
   // Below `lg` the panel is a full-screen sheet, so it really does contain the
   // user and says so. At `lg` and up it occupies a corner, the rest of the page
@@ -365,31 +377,12 @@ export const Chat = () => {
     inputRef.current?.focus();
   };
 
-  const sendMessage = () => {
-    // Trimmed: the guard was `message === ""`, so three spaces and Enter fired
-    // a real request and rendered an empty bubble. Before anything is minted —
-    // registering a pending id for a send that never happens leaves an entry
-    // nothing can remove, so the set stops meaning "replies still wanted".
-    const question = message.trim();
-    if (question === "") return;
-
-    const userName = session?.user?.name || "Guest";
-    const userAvatar = (session?.user as any)?.image || "";
+  const sendTurn = (userTurn: ChatTurn, pendingId: string) => {
     const customerId = (session?.user as any)?.id;
-
-    const newTurn: ChatTurn = {
-      name: userName,
-      message: question,
-      status: "done",
-      type: "user",
-      avatar: userAvatar,
-    };
-
     // Each send owns a placeholder identified by id. Positional replacement
     // breaks as soon as two sends overlap, because "the last turn" may belong
     // to the other request — the reply then overwrites a turn it does not own
     // and the other placeholder spins forever.
-    const pendingId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     pendingIds.current.add(pendingId);
 
     const showPlaceholder = () =>
@@ -419,7 +412,16 @@ export const Chat = () => {
       // behind changes no behaviour, it just accumulates for the lifetime of
       // the panel, which is mounted once in the root layout.
       if (!pendingIds.current.delete(pendingId)) return;
-      dispatch({ type: "resolve", id: pendingId, payload: responseTurn });
+
+      // Issue #185: Distinguish error turns with status="error" and store query for retry
+      const isErrorReply =
+        responseTurn.status === "error" ||
+        responseTurn.message === "Sorry, something went wrong. Please try again.";
+      const payload: ChatTurn = isErrorReply
+        ? { ...responseTurn, status: "error", query: userTurn.message }
+        : responseTurn;
+
+      dispatch({ type: "resolve", id: pendingId, payload });
 
       // The panel's `role="log"` is what tells a screen-reader user an answer
       // arrived, and closing on focus-out unmounts it mid-request. The turn
@@ -427,10 +429,6 @@ export const Chat = () => {
       // and asking a question then tabbing back into the page to keep browsing
       // is what a non-modal panel is for. This change made that reachable, so
       // it has to cover it.
-      //
-      // Here rather than in an effect watching `state.turns`: this is the
-      // moment a reply arrives, so there is no "did it arrive while closed?"
-      // to reconstruct, and no `setState` in an effect body to cascade from.
       if (!showChatRef.current) {
         setAnnouncement("Jane Doe replied. Open chat to read the answer.");
       }
@@ -438,6 +436,7 @@ export const Chat = () => {
 
     // sendChatMessage resolves with an error turn rather than rejecting, but a
     // rejection would otherwise leave the placeholder spinning with no message.
+    // Issue #185: When an error occurs, set status="error" and attach user query for Retry.
     const settleWithError =
       (timer: ReturnType<typeof setTimeout>) => (error: unknown) => {
         console.error("Chat request failed:", error);
@@ -445,9 +444,10 @@ export const Chat = () => {
           id: pendingId,
           name: "Jane Doe",
           message: "Sorry, something went wrong. Please try again.",
-          status: "done",
+          status: "error",
           type: "assistant",
           avatar: "",
+          query: userTurn.message,
         });
       };
 
@@ -456,10 +456,61 @@ export const Chat = () => {
       request.then(settle(timer)).catch(settleWithError(timer));
     };
 
-    dispatch({ type: "add", payload: newTurn });
-    send(sendChatMessage(newTurn, customerId));
+    send(sendChatMessage(userTurn, customerId));
+  };
 
+  const sendMessage = () => {
+    // Trimmed: the guard was `message === ""`, so three spaces and Enter fired
+    // a real request and rendered an empty bubble. Before anything is minted —
+    // registering a pending id for a send that never happens leaves an entry
+    // nothing can remove, so the set stops meaning "replies still wanted".
+    const question = message.trim();
+    if (question === "") return;
+
+    const userName = session?.user?.name || "Guest";
+    const userAvatar = (session?.user as any)?.image || "";
+
+    const newTurn: ChatTurn = {
+      name: userName,
+      message: question,
+      status: "done",
+      type: "user",
+      avatar: userAvatar,
+    };
+
+    pendingCounter.current += 1;
+    const pendingId = `pending-${pendingCounter.current}`;
+    dispatch({ type: "add", payload: newTurn });
     setMessage("");
+    sendTurn(newTurn, pendingId);
+  };
+
+  const handleRetry = (turn: ChatTurn, index: number) => {
+    // Issue #185: Retry affordance that allows resending the failed query
+    const query =
+      turn.query ||
+      state.turns
+        .slice(0, index)
+        .reverse()
+        .find((t) => t.type === "user")?.message;
+    if (!query) return;
+
+    dispatch({ type: "remove", id: turn.id, index });
+
+    const userName = session?.user?.name || "Guest";
+    const userAvatar = (session?.user as any)?.image || "";
+
+    const userTurn: ChatTurn = {
+      name: userName,
+      message: query,
+      status: "done",
+      type: "user",
+      avatar: userAvatar,
+    };
+
+    pendingCounter.current += 1;
+    const pendingId = `pending-${pendingCounter.current}`;
+    sendTurn(userTurn, pendingId);
   };
 
   const toggleChat = () => {
@@ -521,21 +572,21 @@ export const Chat = () => {
           >
             <div className="p-2 flex items-center gap-1 mx-auto w-full max-w-2xl max-lg:border-b max-lg:border-zinc-200">
               {/*
-                A sheet has to introduce itself. A corner card can borrow
-                identity from the page around it; this one has covered that
-                page, and without a title the whole surface carried no heading
-                at all while the document behind it had eight.
+                Issue #188: Render the title Chat consistently across all screen sizes
+                (including lg and 1024px) so the chat panel is always titled.
               */}
-              {isCompact && (
-                <h2 className="pl-2 grow text-base font-semibold text-zinc-900">
-                  Chat with Jane Doe
-                </h2>
-              )}
+              <h2 className="pl-2 grow text-lg font-semibold text-zinc-900">
+                Chat
+              </h2>
+              {/*
+                Issue #188: Align header button target sizes (Clear conversation and Close
+                buttons) to size-10 (40x40) to match Send button proportions and target sizes.
+              */}
               <button
                 type="button"
                 onClick={reset}
                 aria-label="Clear conversation"
-                className="ml-auto p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                className="ml-auto size-10 flex items-center justify-center rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
               >
                 <ArrowPathIcon className="w-5 stroke-zinc-500" aria-hidden="true" />
               </button>
@@ -557,7 +608,7 @@ export const Chat = () => {
                   type="button"
                   onClick={toggleChat}
                   aria-label="Close chat"
-                  className="p-2 rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+                  className="size-10 flex items-center justify-center rounded-md hover:bg-zinc-100 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
                 >
                   <XMarkIcon className="w-5 stroke-zinc-500" aria-hidden="true" />
                 </button>
@@ -581,12 +632,26 @@ export const Chat = () => {
             >
               <div className="flex flex-col gap-4">
                 {state.turns.map((turn, i) => (
-                  <Turn key={i} turn={turn} />
+                  <Turn
+                    key={turn.id || i}
+                    turn={turn}
+                    onRetry={
+                      turn.status === "error" ||
+                      turn.message === "Sorry, something went wrong. Please try again."
+                        ? () => handleRetry(turn, i)
+                        : undefined
+                    }
+                  />
                 ))}
               </div>
             </div>
-            {/* chat input section */}
-            <div className="p-3 flex gap-3 mx-auto w-full max-w-2xl">
+            {/*
+              Issue #289: On the phone/compact sheet, add bottom padding (max-lg:pb-8 max-lg:px-4)
+              to offset the input row and Send button from the launcher's physical coordinates
+              (bottom: 16px, right: 16px), preventing an accidental double-tap on the launcher
+              from triggering Send.
+            */}
+            <div className="p-3 max-lg:pb-8 max-lg:px-4 flex gap-3 mx-auto w-full max-w-2xl">
               <input
                 id="chat"
                 name="chat"

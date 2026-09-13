@@ -295,6 +295,62 @@ describe('Chat accessibility', () => {
       undefined,
     )
   })
+
+  it('renders the Chat title heading consistently across screen sizes (#188)', () => {
+    // Issue #188: Render the title Chat consistently across all screen sizes
+    // (including lg and 1024px) so the chat panel is always titled.
+    render(<Chat />)
+    openChat()
+
+    const heading = screen.getByRole('heading', { name: 'Chat' })
+    expect(heading).toBeInTheDocument()
+    expect(heading.tagName).toBe('H2')
+  })
+
+  it('aligns header button target sizes to match Send button proportions (#188)', () => {
+    // Issue #188: Align header button target sizes (size-10 / 40x40) to match
+    // Send button proportions and target sizes (size-11 / 44x44).
+    render(<Chat />)
+    openChat()
+
+    const clearButton = screen.getByRole('button', { name: 'Clear conversation' })
+    expect(clearButton.className).toContain('size-10')
+
+    const sendButton = screen.getByRole('button', { name: 'Send message' })
+    expect(sendButton.className).toContain('size-11')
+  })
+
+  it('aligns compact header close button target size to size-10 (#188)', () => {
+    // Issue #188: Below lg, the sheet header Close button should have size-10 target size.
+    window.matchMedia = ((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })) as unknown as typeof window.matchMedia
+
+    render(<Chat />)
+    openChat()
+
+    const closeButton = screen.getByRole('button', { name: 'Close chat' })
+    expect(closeButton.className).toContain('size-10')
+  })
+
+  it('offsets the compact sheet bottom input row to prevent accidental double-tap on Send (#289)', () => {
+    // Issue #289: On the phone sheet, ensure the Send button doesn't sit at the
+    // exact physical coordinates of the launcher button.
+    render(<Chat />)
+    openChat()
+
+    const sendButton = screen.getByRole('button', { name: 'Send message' })
+    const inputRow = sendButton.parentElement
+    expect(inputRow?.className).toContain('max-lg:pb-8')
+    expect(inputRow?.className).toContain('max-lg:px-4')
+  })
 })
 
 describe('Chat placeholder timing', () => {
@@ -411,6 +467,82 @@ describe('Chat placeholder timing', () => {
       { timeout: 2000 },
     )
     expect(screen.queryByText('Let me see what I can find...')).toBeNull()
+  })
+
+  it('distinguishes error turns with alert role, error border, and a retry button (#185)', async () => {
+    // Issue #185: Distinguish error replies visually and semantically
+    sendChatMessage.mockRejectedValue(new Error('network down'))
+
+    render(<Chat />)
+    openChatAndSend('find waterproof tent')
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toContain('Sorry, something went wrong. Please try again.')
+    expect(alert.className).toContain('border-red-200')
+    expect(alert.className).toContain('bg-red-50/50')
+
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    expect(retryButton).toBeInTheDocument()
+  })
+
+  it('resends the failed query when Retry button is clicked (#185)', async () => {
+    // Issue #185: Provide a Retry affordance that allows resending the failed query
+    sendChatMessage.mockRejectedValueOnce(new Error('temporary timeout'))
+
+    render(<Chat />)
+    openChatAndSend('recommend sleeping bag')
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    sendChatMessage.mockResolvedValueOnce({
+      name: 'Jane Doe',
+      message: 'The Alpine Cozy is warm and lightweight.',
+      status: 'done',
+      type: 'assistant',
+      avatar: '',
+    })
+
+    const retryButton = screen.getByRole('button', { name: 'Retry' })
+    fireEvent.click(retryButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('The Alpine Cozy is warm and lightweight.')).toBeInTheDocument()
+    })
+
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(sendChatMessage).toHaveBeenCalledTimes(2)
+    expect(sendChatMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ message: 'recommend sleeping bag' }),
+      undefined,
+    )
+  })
+
+  it('distinguishes turn as an error when response resolves with error message (#185)', async () => {
+    // Issue #185: sendChatMessage resolves with generic error string on upstream failure
+    sendChatMessage.mockResolvedValueOnce({
+      name: 'Jane Doe',
+      message: 'Sorry, something went wrong. Please try again.',
+      status: 'done',
+      type: 'assistant',
+      avatar: '',
+    })
+
+    render(<Chat />)
+    openChatAndSend('check store inventory')
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+    })
+
+    const alert = screen.getByRole('alert')
+    expect(alert.className).toContain('border-red-200')
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
   it('drops a reply that arrives after the thread was reset', async () => {

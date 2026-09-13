@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import {
   UserCircleIcon,
   BuildingStorefrontIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 import { useRemark } from "react-remark";
@@ -11,9 +13,10 @@ import { ChatTurn } from "@/lib/types";
 
 type Props = {
   turn: ChatTurn;
+  onRetry?: () => void;
 };
 
-export const Turn = ({ turn }: Props) => {
+export const Turn = ({ turn, onRetry }: Props) => {
   const [reactContent, setMarkdownSource] = useRemark({
     //@ts-ignore
     remarkPlugins: [remarkGemoji],
@@ -86,6 +89,11 @@ export const Turn = ({ turn }: Props) => {
   // 834 as assistant 228–649 against user 185–606. Main-end is the left for the
   // row-reverse assistant row and the right for the user row, so one class puts
   // each turn on the side every chat interface puts it.
+  // Issue #185: Distinguish error turns visually and semantically.
+  const isError =
+    turn.status === "error" ||
+    turn.message === "Sorry, something went wrong. Please try again.";
+
   if (turn.type === "user") {
     return (
       <div className="ml-8 sm:ml-24 flex justify-end gap-1">
@@ -94,6 +102,38 @@ export const Turn = ({ turn }: Props) => {
         </div>
         <div>
           <UserCircleIcon className="w-6 stroke-zinc-500" />
+        </div>
+      </div>
+    );
+  } else if (isError) {
+    return (
+      <div className="flex flex-row-reverse justify-end gap-1 mr-8 sm:mr-24">
+        <div
+          role="alert"
+          className="grow min-w-0 max-w-[46ch] break-words border border-red-200 bg-red-50/50 text-red-900 p-2.5 rounded-md"
+        >
+          <div className="flex items-start gap-2">
+            <ExclamationCircleIcon
+              className="w-5 h-5 text-red-600 shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="grow">
+              <div className="text-sm font-medium">{turn.message}</div>
+              {onRetry && (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded border border-red-300 bg-white text-red-700 shadow-xs hover:bg-red-50 hover:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                >
+                  <ArrowPathIcon className="w-3.5 h-3.5" aria-hidden="true" />
+                  Retry
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <div>
+          <BuildingStorefrontIcon className="w-6 stroke-red-400" />
         </div>
       </div>
     );
