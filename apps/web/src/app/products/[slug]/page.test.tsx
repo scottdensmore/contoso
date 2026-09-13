@@ -16,6 +16,11 @@ vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header" />,
 }))
 
+vi.mock('@/components/add-to-cart', () => ({
+  __esModule: true,
+  default: () => <div data-testid="add-to-cart" />,
+}))
+
 vi.mock('@/components/block', () => ({
   __esModule: true,
   default: ({
@@ -43,6 +48,7 @@ describe('Product detail page', () => {
     const { container } = render(page)
 
     expect(screen.getByText('TrailMaster X4 Tent')).toBeDefined()
+    expect(screen.getByTestId('add-to-cart')).toBeDefined()
 
     // Each gallery image should be wrapped in a <figure> element with aria-label
     const figures = container.querySelectorAll('figure')

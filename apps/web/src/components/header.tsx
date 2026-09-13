@@ -2,18 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import Block from "@/components/block";
-import { Bars3Icon } from "@heroicons/react/24/outline";
+import { Bars3Icon, ShoppingBagIcon } from "@heroicons/react/24/outline";
 import { useSession, signOut } from "next-auth/react";
+import { useCart } from "@/lib/cart-context";
 import Link from "next/link";
 import SidebarWrapper from "./sidebar-wrapper";
 import { SIDEBAR_DIALOG_ID } from "./sidebar";
+import { CART_DRAWER_ID } from "./cart-drawer";
 import { Suspense } from "react";
 import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 
 export const Header = () => {
   const { data: session, status } = useSession();
+  const { totalItems, openCart, isOpen: isCartOpen } = useCart();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const cartTriggerRef = useRef<HTMLButtonElement>(null);
+  const openedByHeaderRef = useRef(false);
 
   // Focus return, after the close rather than during it, because the drawer
   // moves focus into itself on open and closing would otherwise drop it on
@@ -36,6 +41,15 @@ export const Header = () => {
     }
     wasOpen.current = isSidebarOpen;
   }, [isSidebarOpen]);
+
+  const wasCartOpen = useRef(false);
+  useEffect(() => {
+    if (wasCartOpen.current && !isCartOpen && openedByHeaderRef.current) {
+      cartTriggerRef.current?.focus({ preventScroll: true });
+      openedByHeaderRef.current = false;
+    }
+    wasCartOpen.current = isCartOpen;
+  }, [isCartOpen]);
 
   return (
     <>
@@ -68,6 +82,28 @@ export const Header = () => {
         </div>
         <div className="grow">&nbsp;</div>
         <div className="flex flex-row items-center gap-3">
+          <button
+            ref={cartTriggerRef}
+            type="button"
+            className={`relative inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:text-gray-900 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
+            onClick={() => {
+              openedByHeaderRef.current = true;
+              openCart();
+            }}
+            aria-label={totalItems > 0 ? `Shopping cart with ${totalItems} items` : "Shopping cart"}
+            aria-expanded={isCartOpen}
+            aria-controls={CART_DRAWER_ID}
+          >
+            <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
+            {totalItems > 0 && (
+              <span
+                className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1 text-xs font-bold text-white"
+                aria-hidden="true"
+              >
+                {totalItems}
+              </span>
+            )}
+          </button>
           {status === "authenticated" ? (
             <>
               <Link href="/profile" className="flex flex-row items-center gap-3 hover:bg-gray-50 p-1 rounded-md transition-colors" title="Profile Settings">

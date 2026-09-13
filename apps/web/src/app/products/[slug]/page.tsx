@@ -5,6 +5,7 @@ import { Product } from "@/lib/types";
 import { promises as fs } from "fs";
 import { marked } from "marked";
 import Header from "@/components/header";
+import AddToCart from "@/components/add-to-cart";
 import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
 
@@ -135,6 +136,7 @@ export default async function Page({
         >
           {product.description}
         </div>
+        <AddToCart product={product} />
       </Block>
       {product.images.map((image, i) => (
         <Block
