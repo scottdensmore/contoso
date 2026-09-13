@@ -38,9 +38,20 @@ cd apps/web && npx prisma migrate dev --name <migration-name> --schema prisma/sc
 ```
 
 ### 3. Database Tools (psql, pgAdmin)
-- **Host:** `localhost`
-- **Port:** `5432`
-- **User:** `prismauser` (get password from `terraform output db_password`)
+- **Local Docker Compose:**
+  - **Host:** `localhost`
+  - **Port:** `55432` (deliberately mapped away from 5432 to avoid host collisions; see `docker-compose.yml`)
+  - **User:** `postgres`
+  - **Password:** `postgres`
+  - **Database:** `contoso-db`
+- **Cloud SQL Proxy:**
+  - **Host:** `localhost`
+  - **Port:** `5432`
+  - **User:** `prismauser` (get password from `terraform output db_password`)
+  - **Database:** `contoso-db`
+- **Container-to-Container (Compose network):**
+  - **Host:** `db`
+  - **Port:** `5432`
 
 ## Multi-Service Integration
 

@@ -11,8 +11,8 @@
 Paste command output snippets or concise summaries for what you actually ran.
 
 ### Required
-- [ ] `make quick-ci-changed`
-- [ ] Applicable merge-gate command(s) from the `AGENTS.md` Verification Map
+- [ ] `make quick-ci-changed` or `make ci`
+- [ ] Applicable merge-gate command(s) from `CONTRIBUTING.md`
 - [ ] `make test-scripts` (for runtime/scripts/docs automation changes)
 
 ### Optional / Contextual
@@ -21,7 +21,8 @@ Paste command output snippets or concise summaries for what you actually ran.
 
 ### Before merge
 - [ ] Pull request head still matches the reviewed SHA
-- [ ] GitHub reports a clean merge state and all configured checks pass
+- [ ] Full local verification (`make ci`) passed
+- [ ] Ready for squash merge into `main`
 
 ## Release and Ops Impact
 - Env contract change: yes / no

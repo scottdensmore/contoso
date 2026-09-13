@@ -225,11 +225,12 @@ ollama pull gemma3:12b
 make local-provider-check
 ```
 
-CI cadence:
+Local Verification & CI:
 
-- PR/manual fast path: `e2e-smoke-lite`
-- Weekly scheduled full path: `e2e-smoke-full` (Mondays 09:00 UTC)
-- Scheduled full-path alerts keep one open issue per alert class, append updates while failing, and auto-close on recovery.
+- Fast contract check: `make e2e-smoke-lite`
+- Full-profile validation: `make e2e-smoke-full`
+- Changed-scope checks for fast iteration: `make quick-ci-changed`
+- Full test and build suite: `make ci`
 
 Service-owned command surface:
 
@@ -244,7 +245,7 @@ make -C services/chat dev
 make -C services/chat ci
 ```
 
-PR CI uses changed-scope checks (same detector logic as `make quick-ci-changed`), while pushes to `main` run full `make ci`.
+All contributions land on `main` via squash-merged Pull Requests after passing `make ci` locally. GitHub Actions is disabled to preserve action minutes; local execution is the primary verification surface.
 
 ## Bootstrap Troubleshooting
 
@@ -273,8 +274,8 @@ Ensure all of the following:
 `CHAT_INSTALL_LOCAL_STACK=1` (docker image profile),
 `OLLAMA_BASE_URL=http://host.docker.internal:11434` (docker chat),
 `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`.
-- Full-profile smoke failure in CI:
-Inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts (see `docs/INTEGRATION.md`).
+- Full-profile smoke failure:
+Run `make e2e-smoke-full KEEP_STACK=1` and inspect `docker compose logs --no-color chat` (see `docs/INTEGRATION.md`).
 - `make agent-doctor` reports missing env files/keys:
 Run `make env-init`, then fill required values in `.env` and `services/chat/.env`.
 - `next build` fails in restricted sandbox with `listen EPERM`:

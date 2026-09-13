@@ -93,9 +93,8 @@ First run needs the browser:
 make -C apps/web install-e2e-browsers
 ```
 
-In CI they run inside `Integration E2E Smoke`, after the smoke, against the
-stack `KEEP_STACK` leaves behind. Traces and screenshots for a failed journey
-are uploaded as the `e2e-journey-artifacts` artifact.
+Journeys run after smoke brings up the stack with `KEEP_STACK=1`. Traces
+and screenshots for a failed journey are saved locally in `apps/web/test-results/`.
 
 Retries are deliberately off. A retried failure is a failure that gets
 ignored; if a journey is flaky, that is a finding to chase rather than
@@ -106,41 +105,42 @@ something to absorb.
 - `e2e-smoke-lite`: default for PRs and fast contract validation.
 - `e2e-smoke-full`: validates container builds and smoke verification with the full chat dependency profile installed (`CHAT_INSTALL_LOCAL_STACK=1`), rather than selecting `LLM_PROVIDER=local`.
 
-## CI Integration Job
+## Integration Verification Workflow
 
-Workflow: `.github/workflows/ci.yml`  
-Job: `Integration E2E Smoke`
+Integration verification runs locally via Make and Docker Compose (GitHub Actions workflows are disabled to preserve action minutes):
+
+### Fast Contract Verification (Lite Profile)
+
+```bash
+make e2e-smoke-lite KEEP_STACK=1
+make test-e2e
+docker compose down
+```
 
 Behavior:
 
-1. runs on PR/manual events when `web`, `chat`, or `runtime` surfaces change
-2. prebuilds `contoso-web` and `contoso-chat` with Buildx cache
-3. executes `make e2e-smoke-lite KEEP_STACK=1`
-4. captures compose logs to `e2e-compose.log`
-5. captures dependency health snapshot to `e2e-dependencies-health.json`
-6. captures duration/image-size metrics to `e2e-metrics.txt`
-7. compares against previous successful baseline and writes `e2e-metrics-summary.md`
-8. stores rolling metrics history in cache (`.ci-metrics/lite-history.json`)
-9. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
-10. uploads logs, raw metrics, summary, and history artifact `e2e-compose-logs-<run_id>`
-11. tears down the stack
+1. builds `contoso-web` and `contoso-chat` images locally with Docker Compose
+2. boots `db`, `chat`, and `web` containers
+3. verifies `/health` and `/health/dependencies`
+4. validates web proxy and response contract (`answer` or `response` string)
+5. executes Playwright end-to-end journey tests against the running stack
+6. enforces smoke budgets (duration <= 420s, chat image <= 2.5GB, web image <= 1.5GB)
+7. tears down the stack
 
-Manual full-profile validation:
+### Full Chat Profile Verification
 
-1. run `Continuous Integration` via `workflow_dispatch`
-2. set input `run_full_profile_smoke=true`
-3. job `Integration E2E Smoke (Full Chat Profile)` runs `make e2e-smoke-full`
-4. enforces full-profile budgets (duration <= 600s, chat image <= 2.0GB, web image <= 1.5GB)
-5. captures dependency health snapshot `e2e-full-dependencies-health.json` and gates on `local_provider.ready=true`
+```bash
+make e2e-smoke-full KEEP_STACK=1
+make test-e2e
+docker compose down
+```
 
-Scheduled full-profile validation:
+Behavior:
 
-1. same job also runs weekly via cron (`0 9 * * 1`, Mondays 09:00 UTC)
-2. schedule runs full-profile smoke only (changed-scope jobs remain skipped)
-3. workflow compares full-profile metrics against previous successful full-profile baseline
-4. if scheduled run fails, exceeds budget, or regresses significantly, CI creates or updates one open issue per alert class
-5. if a later scheduled run is healthy, CI auto-closes open full-profile smoke alert issues
-6. workflow writes `e2e-full-alert-state.md` summarizing issue lifecycle action for the run
+1. builds `contoso-chat` with the full dependency profile (`CHAT_INSTALL_LOCAL_STACK=1`)
+2. boots the stack and gates on `local_provider.ready=true` when configured
+3. enforces full-profile budgets (duration <= 600s, chat image <= 2.0GB, web image <= 1.5GB)
+4. executes full Playwright journeys against the stack
 
 ## Budget Baselines
 
@@ -161,29 +161,27 @@ Current enforced budgets:
 
 If smoke fails:
 
-1. inspect `e2e-compose.log` artifact from CI
-2. check `db` startup and chat dependency health output
-3. rerun locally with stack retained:
+1. check `db` startup and chat dependency health output in console logs
+2. rerun locally with stack retained:
    `make e2e-smoke KEEP_STACK=1`
    (or `make e2e-smoke-lite KEEP_STACK=1` for contract-only validation)
-4. inspect services:
+3. inspect services:
    `docker compose ps`
    `docker compose logs --no-color db chat web`
-5. retry smoke only:
+4. retry smoke only:
    `python scripts/e2e_smoke.py --web-url http://127.0.0.1:3100 --chat-url http://127.0.0.1:8100`
 
 For full-profile failures:
 
-1. inspect `e2e-full-compose.log`, `e2e-full-metrics.txt`, `e2e-full-metrics-summary.md`, `e2e-full-dependencies-health.json`, and `e2e-full-alert-state.md` artifacts
-2. look for `warning=` lines in metrics output to identify budget class
-3. rerun locally with:
+1. inspect compose logs: `docker compose logs --no-color chat`
+2. rerun locally with:
    `make e2e-smoke-full KEEP_STACK=1`
-4. if dependency install is slow/failing, inspect chat build logs for `requirements-local.txt` packages
-5. if chat fails fast during startup in local-provider mode, verify:
+3. if dependency install is slow/failing, inspect chat build logs for `requirements-local.txt` packages
+4. if chat fails fast during startup in local-provider mode, verify:
    `CHAT_INSTALL_LOCAL_STACK=1`, `OLLAMA_BASE_URL=http://host.docker.internal:11434`, `ollama serve`, and `ollama pull <LOCAL_MODEL_NAME>`
    then run `make local-provider-check` to confirm prerequisites
    and `make diagnose-chat-local` for full local diagnostics
-6. if chat starts but request path fails, verify `LLM_PROVIDER`/local-provider envs and optional dependency imports
+5. if chat starts but request path fails, verify `LLM_PROVIDER`/local-provider envs and optional dependency imports
 
 ## Common Failure Classes
 
