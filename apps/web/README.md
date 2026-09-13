@@ -48,3 +48,10 @@ make -C apps/web ci
 ## Prisma
 
 The web app schema and migrations live in `apps/web/prisma/`.
+
+## TypeScript & ESLint Compatibility Tracking (#90)
+
+- TypeScript is pinned to `^5` in `apps/web/package.json`.
+- `eslint-config-next@16.3.3` bundles `typescript-eslint@^8.46.0`, which enforces a peer dependency of `typescript@">=4.8.4 <6.1.0"`.
+- Upstream support for TypeScript 7+ is tracked at `typescript-eslint#10940`. Bumping to TypeScript 7 will be revisited once `typescript-eslint` and `eslint-config-next` officially support TypeScript >= 7.1.
+

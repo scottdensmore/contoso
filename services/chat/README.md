@@ -128,3 +128,15 @@ or build Docker chat with `CHAT_INSTALL_LOCAL_STACK=1`.
 
 - Docker chat container: `http://host.docker.internal:11434`
 - Direct Python chat run on host: `http://localhost:11434`
+
+## Vertex AI & Dependency Migration Tracking (#313)
+
+- `google-cloud-aiplatform` is pinned at `2.1.0` in `constraints.txt`.
+- Five files in the chat service import `vertexai.generative_models`:
+  - `services/chat/src/api/contoso_chat/chat_request.py`
+  - `services/chat/src/api/evaluators/custom_evals/coherence.py`
+  - `services/chat/src/api/evaluators/custom_evals/fluency.py`
+  - `services/chat/src/api/evaluators/custom_evals/groundedness.py`
+  - `services/chat/src/api/evaluators/custom_evals/relevance.py`
+- Upstream Google Cloud AI Platform has announced eventual deprecation of `vertexai.generative_models` in favor of the `google-genai` SDK. Upgrades beyond `google-cloud-aiplatform` 2.x must be coordinated with a migration to `google-genai` across these five modules.
+
