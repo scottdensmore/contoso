@@ -152,8 +152,16 @@ export default function ShippingAddressForm({ initialAddress }: { initialAddress
         </div>
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-500 text-sm">{success}</p>}
+      {error && (
+        <p role="alert" className="text-red-700 text-sm">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p role="status" aria-live="polite" className="text-emerald-700 text-sm">
+          {success}
+        </p>
+      )}
 
       <button
         type="submit"

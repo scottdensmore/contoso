@@ -113,10 +113,14 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
         
         <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+          <div role="tablist" aria-label="Profile sections" className="-mb-px flex space-x-8">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                aria-controls={`panel-${tab.id.toLowerCase()}`}
+                id={`tab-${tab.id.toLowerCase()}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm
@@ -128,12 +132,17 @@ export default function ProfilePage() {
                 {tab.name}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
         <div className="mt-6">
           {activeTab === "general" && (
-            <div>
+            <div
+              role="tabpanel"
+              id="panel-general"
+              aria-labelledby="tab-general"
+              tabIndex={0}
+            >
               <h2 className="text-xl font-semibold mb-4">General Settings</h2>
               <AvatarUpload 
                 initialAvatar={profileData?.avatar || session?.user?.image || ""} 
@@ -142,13 +151,23 @@ export default function ProfilePage() {
             </div>
           )}
           {activeTab === "security" && (
-            <div>
+            <div
+              role="tabpanel"
+              id="panel-security"
+              aria-labelledby="tab-security"
+              tabIndex={0}
+            >
               <h2 className="text-xl font-semibold mb-4">Change Password</h2>
               <PasswordChangeForm />
             </div>
           )}
           {activeTab === "shipping" && (
-            <div>
+            <div
+              role="tabpanel"
+              id="panel-shipping"
+              aria-labelledby="tab-shipping"
+              tabIndex={0}
+            >
               <h2 className="text-xl font-semibold mb-4">Shipping Address</h2>
               <ShippingAddressForm initialAddress={{
                 name: profileData?.name || session?.user?.name || "",

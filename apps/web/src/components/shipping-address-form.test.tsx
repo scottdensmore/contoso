@@ -41,7 +41,29 @@ describe('ShippingAddressForm', () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith('/api/profile/address', expect.any(Object))
-      expect(screen.getByText(/address saved successfully/i)).toBeDefined()
+      const successEl = screen.getByText(/address saved successfully/i)
+      expect(successEl).toBeDefined()
+      expect(successEl.classList.contains('text-emerald-700')).toBe(true)
+      expect(successEl.getAttribute('role')).toBe('status')
+    })
+  })
+
+  it('renders error message with role="alert" and text-red-700 on failure', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      json: async () => ({ message: 'Invalid address data' }),
+    } as any)
+
+    render(<ShippingAddressForm initialAddress={{}} />)
+
+    const form = screen.getByRole('button', { name: /save address/i }).closest('form')
+    fireEvent.submit(form!)
+
+    await waitFor(() => {
+      const errorEl = screen.getByRole('alert')
+      expect(errorEl).toBeDefined()
+      expect(errorEl.textContent).toBe('Invalid address data')
+      expect(errorEl.classList.contains('text-red-700')).toBe(true)
     })
   })
 })

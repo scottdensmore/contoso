@@ -45,7 +45,7 @@ export async function openProfileTab(page: Page, tab: string) {
     await page.context().addCookies(cached.cookies)
     await page.goto('/profile')
     await expect(page).toHaveURL(/\/profile/)
-    await page.getByRole('button', { name: tab }).click()
+    await page.getByRole('tab', { name: tab }).or(page.getByRole('button', { name: tab })).click()
     return
   }
 
@@ -87,6 +87,6 @@ export async function openProfileTab(page: Page, tab: string) {
   await page.unroute('**/_next/image**')
   cached = await page.context().storageState()
 
-  await page.getByRole('button', { name: tab }).click()
+  await page.getByRole('tab', { name: tab }).or(page.getByRole('button', { name: tab })).click()
 }
 

@@ -50,10 +50,33 @@ describe('Profile Page', () => {
     render(<ProfilePage />)
     
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /General/i })).toBeDefined()
+      expect(screen.getByRole('tablist', { name: 'Profile sections' })).toBeDefined()
     })
-    expect(screen.getByRole('button', { name: /Security/i })).toBeDefined()
-    expect(screen.getByRole('button', { name: /Shipping/i })).toBeDefined()
+
+    const generalTab = screen.getByRole('tab', { name: /General/i })
+    const securityTab = screen.getByRole('tab', { name: /Security/i })
+    const shippingTab = screen.getByRole('tab', { name: /Shipping/i })
+
+    expect(generalTab).toBeDefined()
+    expect(securityTab).toBeDefined()
+    expect(shippingTab).toBeDefined()
+
+    expect(generalTab.getAttribute('aria-selected')).toBe('true')
+    expect(generalTab.getAttribute('aria-controls')).toBe('panel-general')
+    expect(generalTab.getAttribute('id')).toBe('tab-general')
+
+    expect(securityTab.getAttribute('aria-selected')).toBe('false')
+    expect(securityTab.getAttribute('aria-controls')).toBe('panel-security')
+    expect(securityTab.getAttribute('id')).toBe('tab-security')
+
+    expect(shippingTab.getAttribute('aria-selected')).toBe('false')
+    expect(shippingTab.getAttribute('aria-controls')).toBe('panel-shipping')
+    expect(shippingTab.getAttribute('id')).toBe('tab-shipping')
+
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.getAttribute('id')).toBe('panel-general')
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-general')
+    expect(panel.tabIndex).toBe(0)
   })
 
   it('switches tabs on click', async () => {
@@ -69,13 +92,32 @@ describe('Profile Page', () => {
     render(<ProfilePage />)
     
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Security/i })).toBeDefined()
+      expect(screen.getByRole('tab', { name: /Security/i })).toBeDefined()
     })
     
-    const securityTab = screen.getByRole('button', { name: /Security/i })
+    const securityTab = screen.getByRole('tab', { name: /Security/i })
     fireEvent.click(securityTab)
 
     expect(screen.getByText(/Change Password/i)).toBeDefined()
+    expect(securityTab.getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tab', { name: /General/i }).getAttribute('aria-selected')).toBe('false')
+
+    const securityPanel = screen.getByRole('tabpanel')
+    expect(securityPanel.getAttribute('id')).toBe('panel-security')
+    expect(securityPanel.getAttribute('aria-labelledby')).toBe('tab-security')
+    expect(securityPanel.tabIndex).toBe(0)
+
+    const shippingTab = screen.getByRole('tab', { name: /Shipping/i })
+    fireEvent.click(shippingTab)
+
+    expect(screen.getByText(/Shipping Address/i)).toBeDefined()
+    expect(shippingTab.getAttribute('aria-selected')).toBe('true')
+    expect(securityTab.getAttribute('aria-selected')).toBe('false')
+
+    const shippingPanel = screen.getByRole('tabpanel')
+    expect(shippingPanel.getAttribute('id')).toBe('panel-shipping')
+    expect(shippingPanel.getAttribute('aria-labelledby')).toBe('tab-shipping')
+    expect(shippingPanel.tabIndex).toBe(0)
   })
 
   it('stays on screen while the session refreshes behind it', async () => {

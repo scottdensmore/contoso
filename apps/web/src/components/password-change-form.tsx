@@ -61,6 +61,8 @@ export default function PasswordChangeForm() {
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={error ? "password-error" : undefined}
           className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
@@ -77,6 +79,8 @@ export default function PasswordChangeForm() {
           required
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={error ? "password-error" : undefined}
           className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
@@ -93,12 +97,22 @@ export default function PasswordChangeForm() {
           required
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={error ? "password-error" : undefined}
           className={`mt-1 block w-full rounded-md shadow-xs p-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
         />
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      {success && <p className="text-green-500 text-sm">{success}</p>}
+      {error && (
+        <p id="password-error" role="alert" className="text-red-700 text-sm">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p role="status" aria-live="polite" className="text-emerald-700 text-sm">
+          {success}
+        </p>
+      )}
 
       <button
         type="submit"
