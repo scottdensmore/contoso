@@ -207,6 +207,10 @@ class JourneyWiringTests(unittest.TestCase):
 
         If a journey is flaky that is a finding. Turning on retries here would
         hide exactly the intermittent breakage these journeys exist to surface.
+
+        This test guards the declared `retries: 0` in `playwright.config.ts`
+        (the static configuration text). The live runner value resolved at
+        execution time is verified by `apps/web/e2e/runner-policy.spec.ts`.
         """
         config = read("apps/web/playwright.config.ts")
         self.assertRegex(config, re.compile(r"retries:\s*0"))

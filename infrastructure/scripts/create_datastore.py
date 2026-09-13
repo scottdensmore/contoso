@@ -3,6 +3,7 @@
 Create Discovery Engine datastore using Python API
 """
 import os
+
 from google.cloud import discoveryengine_v1
 
 PROJECT_ID = os.environ.get("PROJECT_ID", "contoso-outdoor")
@@ -30,7 +31,7 @@ def create_datastore():
         result = operation.result()
         print(f"✅ Created datastore: {result.name}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         if "already exists" in str(e):
             print(f"✅ Datastore {DATASTORE_ID} already exists")
             return True

@@ -191,16 +191,16 @@ test: ## Run web tests and chat unit tests
 	$(MAKE) test-web
 	$(MAKE) test-chat
 
-lint-scripts: | $(VENV_PYTHON) ## Lint root scripts
-	$(VENV_DIR)/bin/ruff check scripts/
+lint-scripts: | $(VENV_PYTHON) ## Lint root and infrastructure scripts
+	$(VENV_DIR)/bin/ruff check scripts/ infrastructure/scripts/ tests/scripts/test_gcp_seed_deployment.py
 
 typecheck-scripts: | $(VENV_PYTHON) ## Type-check root scripts
 	$(VENV_DIR)/bin/mypy scripts/
 
-check-scripts: lint-scripts typecheck-scripts ## Lint and type-check root scripts
+check-scripts: lint-scripts typecheck-scripts ## Lint and type-check root and infrastructure scripts
 
 test-scripts: | $(VENV_PYTHON) ## Run root script guardrail tests
-	@if [ -x "$(VENV_DIR)/bin/ruff" ]; then $(VENV_DIR)/bin/ruff check scripts/; fi
+	@if [ -x "$(VENV_DIR)/bin/ruff" ]; then $(VENV_DIR)/bin/ruff check scripts/ infrastructure/scripts/ tests/scripts/test_gcp_seed_deployment.py; fi
 	@if [ -x "$(VENV_DIR)/bin/mypy" ]; then $(VENV_DIR)/bin/mypy scripts/; fi
 	$(PYTHON) -m unittest discover -s tests/scripts -p "test_*.py" -v
 

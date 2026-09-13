@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Orchestrate product seeding into Google Cloud Platform."""
 
-import os
-import sys
 import logging
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 # Configure logging
@@ -36,7 +36,8 @@ def run_script(script_path: Path, script_name: str) -> bool:
             [sys.executable, str(script_path)],
             capture_output=True,
             text=True,
-            cwd=script_path.parent
+            cwd=script_path.parent,
+            check=False,
         )
 
         if result.returncode == 0:
@@ -52,7 +53,7 @@ def run_script(script_path: Path, script_name: str) -> bool:
                 logger.info(f"{script_name} output:\n{result.stdout}")
             return False
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Error running {script_name}: {e}")
         return False
 
@@ -60,10 +61,10 @@ def check_gcp_auth():
     """Check if GCP authentication is configured."""
     try:
         from google.auth import default
-        credentials, project = default()
+        _credentials, project = default()
         logger.info(f"✅ GCP authentication configured for project: {project}")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"❌ GCP authentication not configured: {e}")
         logger.error("Please run: gcloud auth application-default login")
         return False
@@ -86,7 +87,7 @@ def verify_infrastructure():
         datastore_client.get_data_store(name=datastore_name)
         logger.info("✅ Discovery Engine datastore accessible")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"❌ Cannot access Discovery Engine datastore: {e}")
         logger.error("Please ensure Terraform has been applied and Discovery Engine is configured")
         return False

@@ -4,17 +4,16 @@ Idempotent script to seed product data into Google Cloud Discovery Engine.
 This script creates the search datastore, uploads documents, and configures embeddings.
 """
 
-import os
-import sys
-import csv
 import json
 import logging
-from typing import Dict, List, Any
+import os
+import sys
 from pathlib import Path
+from typing import Any
 
-from google.cloud import discoveryengine_v1
-from google.api_core import exceptions
 import vertexai
+from google.api_core import exceptions
+from google.cloud import discoveryengine_v1
 from vertexai.language_models import TextEmbeddingModel
 
 # Configure logging
@@ -49,11 +48,11 @@ class ProductSeeder:
         except exceptions.NotFound:
             logger.warning(f"Datastore {self.datastore_id} not found")
             return False
-        except Exception as e:
+        except (exceptions.GoogleAPICallError, Exception) as e:  # noqa: BLE001
             logger.error(f"Error checking datastore: {e}")
             return False
 
-    def load_products_from_json(self, json_path: str) -> List[Dict[str, Any]]:
+    def load_products_from_json(self, json_path: str) -> list[dict[str, Any]]:
         """Load products from JSON file."""
         products = []
         try:
@@ -78,16 +77,16 @@ class ProductSeeder:
             logger.error(f"Error loading products from JSON: {e}")
             raise
 
-    def generate_embeddings(self, text: str) -> List[float]:
+    def generate_embeddings(self, text: str) -> list[float]:
         """Generate embeddings for the given text."""
         try:
             embeddings = self.embedding_model.get_embeddings([text])
             return embeddings[0].values
-        except Exception as e:
+        except (exceptions.GoogleAPICallError, Exception) as e:  # noqa: BLE001
             logger.error(f"Error generating embeddings: {e}")
             return []
 
-    def create_document(self, product: Dict[str, Any]) -> discoveryengine_v1.Document:
+    def create_document(self, product: dict[str, Any]) -> discoveryengine_v1.Document:
         """Create a Discovery Engine document from product data."""
         doc_id = f"product_{product['id']}"
 
@@ -137,7 +136,7 @@ class ProductSeeder:
             return True
         except exceptions.NotFound:
             return False
-        except Exception as e:
+        except (exceptions.GoogleAPICallError, Exception) as e:  # noqa: BLE001
             logger.error(f"Error checking document existence: {e}")
             return False
 
@@ -158,15 +157,15 @@ class ProductSeeder:
                 document_id=doc_id
             )
 
-            response = self.client.create_document(request=request)
+            self.client.create_document(request=request)
             logger.info(f"Successfully uploaded document: {doc_id}")
             return True
 
-        except Exception as e:
+        except (exceptions.GoogleAPICallError, Exception) as e:  # noqa: BLE001
             logger.error(f"Error uploading document {document.id}: {e}")
             return False
 
-    def batch_upload_documents(self, documents: List[discoveryengine_v1.Document]) -> Dict[str, int]:
+    def batch_upload_documents(self, documents: list[discoveryengine_v1.Document]) -> dict[str, int]:
         """Upload documents in batches with idempotency checks."""
         results = {"uploaded": 0, "skipped": 0, "failed": 0}
 
@@ -179,7 +178,7 @@ class ProductSeeder:
                         results["uploaded"] += 1
                 else:
                     results["failed"] += 1
-            except Exception as e:
+            except (exceptions.GoogleAPICallError, Exception) as e:  # noqa: BLE001
                 logger.error(f"Error processing document {document.id}: {e}")
                 results["failed"] += 1
 
@@ -218,7 +217,7 @@ class ProductSeeder:
             logger.info("Product seeding completed successfully")
             return True
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error seeding products: {e}")
             return False
 

@@ -31,12 +31,18 @@
     }
   },
   "include": [
+    // Next.js environment declarations
     "next-env.d.ts",
+    // Application TypeScript and React source files
     "src/**/*.ts",
     "src/**/*.tsx",
+    // Database schema and Prisma client definitions
     "prisma/**/*.ts",
+    // Next.js build-time generated types
     ".next/types/**/*.ts",
+    // Next.js dev-time generated types (issue #275: single .next/dev/types, avoiding doubled dev/dev)
     ".next/dev/types/**/*.ts",
+    // Root-level unit and integration test files
     "*.test.ts"
   ],
   "exclude": [

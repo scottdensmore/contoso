@@ -3,13 +3,13 @@
 Integration and Smoke tests for Contoso Outdoor deployment.
 """
 
-import os
-import sys
 import json
 import logging
-import requests
+import os
 import subprocess
-from typing import Dict, List, Any
+import sys
+
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -26,7 +26,7 @@ def test_web_app_health(url: str):
         else:
             logger.error(f"❌ Web App returned status {response.status_code}")
             return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"❌ Failed to connect to Web App: {e}")
         return False
 
@@ -41,7 +41,7 @@ def test_chat_service_health(url: str):
         else:
             logger.error(f"❌ Chat Service returned status {response.status_code}")
             return False
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"❌ Failed to connect to Chat Service: {e}")
         return False
 
@@ -58,7 +58,7 @@ def verify_gcp_resources():
     for service in services:
         result = subprocess.run(
             ["gcloud", "run", "services", "describe", service, "--project", project_id, "--region", "us-central1", "--format", "json"],
-            capture_output=True, text=True
+            capture_output=True, text=True, check=False
         )
         if result.returncode == 0:
             logger.info(f"✅ Cloud Run service '{service}' exists")
@@ -69,7 +69,7 @@ def verify_gcp_resources():
     # Check Cloud SQL instance
     result = subprocess.run(
         ["gcloud", "sql", "instances", "list", "--project", project_id, "--format", "json"],
-        capture_output=True, text=True
+        capture_output=True, text=True, check=False
     )
     if result.returncode == 0:
         instances = json.loads(result.stdout)
@@ -92,17 +92,14 @@ def main():
 
     success = True
 
-    if project_id:
-        if not verify_gcp_resources():
-            success = False
-    
-    if web_url:
-        if not test_web_app_health(web_url):
-            success = False
-            
-    if chat_url:
-        if not test_chat_service_health(chat_url):
-            success = False
+    if project_id and not verify_gcp_resources():
+        success = False
+
+    if web_url and not test_web_app_health(web_url):
+        success = False
+
+    if chat_url and not test_chat_service_health(chat_url):
+        success = False
 
     if success:
         logger.info("🎉 All deployment tests passed!")

@@ -1,10 +1,11 @@
+import asyncio
 import os
 import sys
-import asyncio
 import traceback
-from prisma import Prisma
+
 import chromadb
 from chromadb.utils import embedding_functions
+from prisma import Prisma
 
 # Path to ChromaDB persistence directory
 CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", os.path.join(os.path.dirname(__file__), '../data/chroma_db'))
@@ -82,7 +83,7 @@ async def index_products():
 if __name__ == "__main__":
     try:
         asyncio.run(index_products())
-    except Exception:
+    except Exception:  # noqa: BLE001
         # chat-entrypoint.sh retries this command while it exits nonzero, so a
         # failed attempt has to be visible as one.
         sys.exit(1)
