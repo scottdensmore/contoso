@@ -14,13 +14,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src/api'))
 class TestEvaluators:
     """Test the evaluator functions"""
 
-    @patch('evaluators.custom_evals.relevance.GenerativeModel')
-    def test_relevance_evaluation(self, mock_model):
+    @patch('evaluators.custom_evals.relevance.genai.Client')
+    def test_relevance_evaluation(self, mock_client_class):
         """Test relevance evaluation"""
         # Mock the model response
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.text = "5"
-        mock_model.return_value.generate_content.return_value = mock_response
+        mock_client.models.generate_content.return_value = mock_response
 
         from evaluators.custom_evals.relevance import relevance_evaluation
 
@@ -32,13 +34,15 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('evaluators.custom_evals.fluency.GenerativeModel')
-    def test_fluency_evaluation(self, mock_model):
+    @patch('evaluators.custom_evals.fluency.genai.Client')
+    def test_fluency_evaluation(self, mock_client_class):
         """Test fluency evaluation"""
         # Mock the model response
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.text = "5"
-        mock_model.return_value.generate_content.return_value = mock_response
+        mock_client.models.generate_content.return_value = mock_response
 
         from evaluators.custom_evals.fluency import fluency_evaluation
 
@@ -50,13 +54,15 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('evaluators.custom_evals.coherence.GenerativeModel')
-    def test_coherence_evaluation(self, mock_model):
+    @patch('evaluators.custom_evals.coherence.genai.Client')
+    def test_coherence_evaluation(self, mock_client_class):
         """Test coherence evaluation"""
         # Mock the model response
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.text = "5"
-        mock_model.return_value.generate_content.return_value = mock_response
+        mock_client.models.generate_content.return_value = mock_response
 
         from evaluators.custom_evals.coherence import coherence_evaluation
 
@@ -68,13 +74,15 @@ class TestEvaluators:
 
         assert result == "5"
 
-    @patch('evaluators.custom_evals.groundedness.GenerativeModel')
-    def test_groundedness_evaluation(self, mock_model):
+    @patch('evaluators.custom_evals.groundedness.genai.Client')
+    def test_groundedness_evaluation(self, mock_client_class):
         """Test groundedness evaluation"""
         # Mock the model response
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
         mock_response = MagicMock()
         mock_response.text = "5"
-        mock_model.return_value.generate_content.return_value = mock_response
+        mock_client.models.generate_content.return_value = mock_response
 
         from evaluators.custom_evals.groundedness import groundedness_evaluation
 

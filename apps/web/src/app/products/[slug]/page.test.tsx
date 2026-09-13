@@ -57,6 +57,15 @@ describe('Product detail page', () => {
     })
   })
 
+  it('renders formatted price with accessible labelling near title and description', async () => {
+    const page = await Page({ params: Promise.resolve({ slug: 'trailmaster-x4-tent' }) })
+    render(page)
+
+    const priceElement = screen.getByLabelText(/price: \$250\.00/i)
+    expect(priceElement).toBeDefined()
+    expect(priceElement.textContent).toContain('$250.00')
+  })
+
   it('invokes notFound when slug does not match any product', async () => {
     await expect(
       Page({ params: Promise.resolve({ slug: 'non-existent-product-slug-12345' }) })

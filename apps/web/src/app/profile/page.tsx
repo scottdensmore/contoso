@@ -14,6 +14,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("general");
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [orders, setOrders] = useState<any[] | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -29,6 +30,20 @@ export default function ProfilePage() {
         });
     }
   }, [status]);
+
+  useEffect(() => {
+    if (status === "authenticated" && activeTab === "orders" && orders === null) {
+      fetch("/api/profile/orders")
+        .then((res) => res.json())
+        .then((data) => {
+          setOrders(Array.isArray(data) ? data : []);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch orders", err);
+          setOrders([]);
+        });
+    }
+  }, [status, activeTab, orders]);
 
   // `!profileData` and not `status === "loading"` on its own. `update()` puts
   // the session back into `loading` every time it refreshes, and this branch
@@ -104,6 +119,7 @@ export default function ProfilePage() {
     { id: "general", name: "General" },
     { id: "security", name: "Security" },
     { id: "shipping", name: "Shipping" },
+    { id: "orders", name: "Orders" },
   ];
 
   return (
@@ -179,6 +195,84 @@ export default function ProfilePage() {
                 country: profileData?.country || "",
                 phoneNumber: profileData?.phoneNumber || "",
               }} />
+            </div>
+          )}
+          {activeTab === "orders" && (
+            <div
+              role="tabpanel"
+              id="panel-orders"
+              aria-labelledby="tab-orders"
+              tabIndex={0}
+            >
+              <h2 className="text-xl font-semibold mb-4">Order History</h2>
+              {orders === null ? (
+                <p role="status">Loading orders...</p>
+              ) : orders.length === 0 ? (
+                <p className="text-gray-500">No orders placed yet</p>
+              ) : (
+                <div className="space-y-6">
+                  {orders.map((order) => {
+                    const formattedDate = new Date(order.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    });
+                    const formattedTotal = new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format(order.total);
+                    const statusText = order.status || "Completed";
+
+                    return (
+                      <div
+                        key={order.id}
+                        className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm"
+                      >
+                        <div className="flex flex-wrap justify-between items-center border-b border-gray-100 pb-4 mb-4 gap-2">
+                          <div>
+                            <p className="text-sm text-gray-500">Order Placed</p>
+                            <p className="font-medium text-gray-900">{formattedDate}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Total</p>
+                            <p className="font-medium text-gray-900">{formattedTotal}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Status</p>
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {statusText}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold text-gray-700">Items</h3>
+                          <ul className="divide-y divide-gray-100">
+                            {order.items?.map((item: any) => (
+                              <li
+                                key={item.id}
+                                className="py-2 flex justify-between items-center text-sm"
+                              >
+                                <div>
+                                  <p className="font-medium text-gray-800">
+                                    {item.product?.name || `Product #${item.productId}`}
+                                  </p>
+                                  <p className="text-gray-500">Quantity: {item.quantity}</p>
+                                </div>
+                                <p className="font-medium text-gray-900">
+                                  {new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: "USD",
+                                  }).format(item.price)}
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

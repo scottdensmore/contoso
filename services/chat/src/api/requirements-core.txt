@@ -26,10 +26,9 @@ uvicorn[standard]
 # Issue #312: google-cloud-storage is an unpinned transitive dependency that
 # aiplatform announced it will drop. google-cloud-aiplatform 2.1.0 currently
 # installs google-cloud-storage >= 3.0.0 (3.1.0), satisfying 3.x compatibility.
-# Issue #313: vertexai.generative_models module is deprecated upstream in
-# favor of google-genai SDK. google-cloud-aiplatform is pinned at 2.1.0 in
-# constraints.txt to guard the five consumer files (chat_request.py and 4
-# custom evaluators) until a dedicated SDK migration is performed.
+# Issue #313: vertexai.generative_models module was deprecated upstream in
+# favor of the google-genai SDK. The five consumer files (chat_request.py and 4
+# custom evaluators) have been migrated to the google-genai SDK.
 google-cloud-aiplatform
 google-cloud-discoveryengine
 google-auth

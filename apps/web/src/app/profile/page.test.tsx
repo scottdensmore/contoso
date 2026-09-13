@@ -73,6 +73,12 @@ describe('Profile Page', () => {
     expect(shippingTab.getAttribute('aria-controls')).toBe('panel-shipping')
     expect(shippingTab.getAttribute('id')).toBe('tab-shipping')
 
+    const ordersTab = screen.getByRole('tab', { name: /Orders/i })
+    expect(ordersTab).toBeDefined()
+    expect(ordersTab.getAttribute('aria-selected')).toBe('false')
+    expect(ordersTab.getAttribute('aria-controls')).toBe('panel-orders')
+    expect(ordersTab.getAttribute('id')).toBe('tab-orders')
+
     const panel = screen.getByRole('tabpanel')
     expect(panel.getAttribute('id')).toBe('panel-general')
     expect(panel.getAttribute('aria-labelledby')).toBe('tab-general')
@@ -118,6 +124,97 @@ describe('Profile Page', () => {
     expect(shippingPanel.getAttribute('id')).toBe('panel-shipping')
     expect(shippingPanel.getAttribute('aria-labelledby')).toBe('tab-shipping')
     expect(shippingPanel.tabIndex).toBe(0)
+  })
+
+  it('renders order history when orders tab is clicked', async () => {
+    vi.mocked(useSession).mockReturnValue({ 
+      status: 'authenticated', 
+      data: { user: { name: 'Test User' } } 
+    } as any)
+
+    const mockOrders = [
+      {
+        id: 'order_1',
+        date: '2023-02-10T00:00:00.000Z',
+        total: 700.0,
+        status: 'Delivered',
+        items: [
+          {
+            id: 'item_1',
+            productId: 'prod_1',
+            quantity: 2,
+            price: 350.0,
+            product: { name: 'Alpine Explorer Tent' },
+          },
+        ],
+      },
+    ]
+
+    vi.mocked(fetch).mockImplementation((url: any) => {
+      if (String(url).includes('/api/profile/orders')) {
+        return Promise.resolve({
+          json: async () => mockOrders,
+        }) as any
+      }
+      return Promise.resolve({
+        json: async () => ({ name: 'Test User' }),
+      }) as any
+    })
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Orders/i })).toBeDefined()
+    })
+
+    const ordersTab = screen.getByRole('tab', { name: /Orders/i })
+    fireEvent.click(ordersTab)
+
+    expect(ordersTab.getAttribute('aria-selected')).toBe('true')
+
+    await waitFor(() => {
+      const ordersPanel = screen.getByRole('tabpanel')
+      expect(ordersPanel.getAttribute('id')).toBe('panel-orders')
+      expect(ordersPanel.getAttribute('aria-labelledby')).toBe('tab-orders')
+      expect(ordersPanel.tabIndex).toBe(0)
+    })
+
+    expect(screen.getByText('Delivered')).toBeDefined()
+    expect(screen.getByText('$700.00')).toBeDefined()
+    expect(screen.getByText('Alpine Explorer Tent')).toBeDefined()
+    expect(screen.getByText(/quantity:\s*2/i)).toBeDefined()
+    expect(screen.getByText('$350.00')).toBeDefined()
+  })
+
+  it('renders empty state when orders list is empty', async () => {
+    vi.mocked(useSession).mockReturnValue({ 
+      status: 'authenticated', 
+      data: { user: { name: 'Test User' } } 
+    } as any)
+
+    vi.mocked(fetch).mockImplementation((url: any) => {
+      if (String(url).includes('/api/profile/orders')) {
+        return Promise.resolve({
+          json: async () => [],
+        }) as any
+      }
+      return Promise.resolve({
+        json: async () => ({ name: 'Test User' }),
+      }) as any
+    })
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Orders/i })).toBeDefined()
+    })
+
+    const ordersTab = screen.getByRole('tab', { name: /Orders/i })
+    fireEvent.click(ordersTab)
+
+    await waitFor(() => {
+      expect(screen.getByText('No orders placed yet')).toBeDefined()
+    })
   })
 
   it('stays on screen while the session refreshes behind it', async () => {
