@@ -8,6 +8,7 @@ import { useCart } from "@/lib/cart-context";
 import Link from "next/link";
 import SidebarWrapper from "./sidebar-wrapper";
 import { SIDEBAR_DIALOG_ID } from "./sidebar";
+import { CART_DRAWER_ID } from "./cart-drawer";
 import { Suspense } from "react";
 import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 
@@ -17,6 +18,7 @@ export const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
+  const openedByHeaderRef = useRef(false);
 
   // Focus return, after the close rather than during it, because the drawer
   // moves focus into itself on open and closing would otherwise drop it on
@@ -42,8 +44,9 @@ export const Header = () => {
 
   const wasCartOpen = useRef(false);
   useEffect(() => {
-    if (wasCartOpen.current && !isCartOpen) {
+    if (wasCartOpen.current && !isCartOpen && openedByHeaderRef.current) {
       cartTriggerRef.current?.focus({ preventScroll: true });
+      openedByHeaderRef.current = false;
     }
     wasCartOpen.current = isCartOpen;
   }, [isCartOpen]);
@@ -83,9 +86,13 @@ export const Header = () => {
             ref={cartTriggerRef}
             type="button"
             className={`relative inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:text-gray-900 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
-            onClick={() => openCart()}
+            onClick={() => {
+              openedByHeaderRef.current = true;
+              openCart();
+            }}
             aria-label={totalItems > 0 ? `Shopping cart with ${totalItems} items` : "Shopping cart"}
             aria-expanded={isCartOpen}
+            aria-controls={CART_DRAWER_ID}
           >
             <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
             {totalItems > 0 && (

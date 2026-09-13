@@ -175,6 +175,7 @@ describe('Header', () => {
     const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
     expect(cartButton).toBeDefined()
     expect(cartButton).toHaveAttribute('aria-expanded', 'false')
+    expect(cartButton).toHaveAttribute('aria-controls', 'cart-drawer')
 
     await act(async () => {
       fireEvent.click(cartButton)
@@ -206,7 +207,7 @@ describe('Header', () => {
     expect(screen.getByText('3')).toBeDefined()
   })
 
-  it('returns focus to the cart trigger when the cart drawer closes', async () => {
+  it('returns focus to the cart trigger when the cart drawer closes after being opened from header', async () => {
     vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
     vi.mocked(useCart).mockReturnValue({
       items: [],
@@ -224,6 +225,11 @@ describe('Header', () => {
     const { rerender } = render(<Header />)
     const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
     const focusSpy = vi.spyOn(cartButton, 'focus')
+
+    // User clicks cart button in header
+    await act(async () => {
+      fireEvent.click(cartButton)
+    })
 
     // Drawer opens
     vi.mocked(useCart).mockReturnValue({
@@ -256,6 +262,58 @@ describe('Header', () => {
     rerender(<Header />)
 
     expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
+  })
+
+  it('does not steal focus on cart drawer close if not opened by header', async () => {
+    vi.mocked(useSession).mockReturnValue({ status: 'unauthenticated' } as any)
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+
+    const { rerender } = render(<Header />)
+    const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
+    const focusSpy = vi.spyOn(cartButton, 'focus')
+
+    // Drawer opened elsewhere (cartButton not clicked)
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: true,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+    rerender(<Header />)
+
+    // Drawer closes
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: mockOpenCart,
+      closeCart: vi.fn(),
+      addItem: vi.fn(),
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
+    rerender(<Header />)
+
+    expect(focusSpy).not.toHaveBeenCalled()
   })
 })
 

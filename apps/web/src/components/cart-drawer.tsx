@@ -12,6 +12,8 @@ import { XMarkIcon, TrashIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/o
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+export const CART_DRAWER_ID = "cart-drawer";
+
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, clearCart, subtotal } = useCart();
   const { status } = useSession();
@@ -116,7 +118,7 @@ export default function CartDrawer() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="cart-heading">
+    <div id={CART_DRAWER_ID} className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="cart-heading">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 transition-opacity backdrop-blur-sm"
