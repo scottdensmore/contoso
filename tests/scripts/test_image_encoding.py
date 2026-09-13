@@ -46,7 +46,7 @@ CONFIG = json.loads((REPO_ROOT / "config/catalogue_images.json").read_text())
 #
 # Listed rather than pattern-matched, so a new exemption has to say so.
 RETINA_EXEMPT = set(CONFIG.get("retinaExempt", CONFIG.get("fullBleed", [])))
-FULL_BLEED = RETINA_EXEMPT
+FULL_BLEED = set(CONFIG.get("fullBleed", ["hero.webp"])) | {"hero.webp"}
 
 MAX_DIMENSION = CONFIG["maxDimension"]
 
@@ -233,6 +233,40 @@ class CatalogueEncodingTests(unittest.TestCase):
             "images that cannot use them -- while the background gains nothing, "
             "because a CSS background-image never reaches the optimiser. That needs "
             "the two ceilings separated first",
+        )
+
+    def test_catalogue_images_are_square(self):
+        """Two surfaces depend on catalogue images being square.
+
+        Two surfaces (`products/category/[slug]/page.tsx` with `aspect-square object-cover`
+        and `listing-image.tsx` with `aspect-square`) assume square images, and a
+        non-square image would silently crop or letterbox. See #262.
+        """
+        self.assertTrue(
+            CONFIG.get("square"),
+            "config/catalogue_images.json must declare square: true",
+        )
+        non_square = {}
+        for path in catalogue_images():
+            if path.suffix.lower() != ".webp":
+                continue
+            rel_path = path.relative_to(IMAGES_DIR).as_posix()
+            if rel_path in RETINA_EXEMPT or rel_path in FULL_BLEED:
+                continue
+            try:
+                width, height = webp_dimensions(path.read_bytes())
+            except ValueError as error:
+                non_square[rel_path] = f"unreadable: {error}"
+                continue
+            if width != height:
+                non_square[rel_path] = f"{width}x{height}"
+        self.assertEqual(
+            non_square,
+            {},
+            "catalogue images must be square: two surfaces "
+            "(`products/category/[slug]/page.tsx` with `aspect-square object-cover` "
+            "and `listing-image.tsx` with `aspect-square`) assume square images, "
+            "and a non-square image would silently crop or letterbox. See #262",
         )
 
     def test_no_catalogue_image_exceeds_the_outlier_ceiling(self):

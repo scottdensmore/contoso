@@ -55,6 +55,10 @@ test.describe('browsing', () => {
     // CSS backgrounds are fetched by path, so matching on extension alone
     // watched the three assets this catalogue change does not touch and none of
     // the 852 it does.
+    //
+    // All routes carrying background images are visited: '/', '/contact',
+    // '/contact/thanks', and '/about'. Watching only '/' left background images
+    // like `contact-bg.webp` unguarded at runtime (#177).
     const IMAGE_REQUEST = /\/_next\/image\?|\.(png|jpe?g|webp|gif|svg)(\?|$)/i
     const failed: string[] = []
     let optimised = 0
@@ -67,35 +71,46 @@ test.describe('browsing', () => {
       }
     })
 
-    await page.goto('/')
+    const routes = ['/', '/contact', '/contact/thanks', '/about']
+    for (const route of routes) {
+      await page.goto(route)
 
-    const images = page.locator('img')
-    await expect(images.first()).toBeVisible()
+      const images = page.locator('img')
+      if ((await images.count()) > 0) {
+        await expect(images.first()).toBeVisible()
 
-    // next/image lazy-loads below the fold, so scroll the page to make the rest
-    // actually request. Without this the check only ever sees the hero.
-    await page.evaluate(async () => {
-      for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
-        window.scrollTo(0, y)
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        // next/image lazy-loads below the fold, so scroll the page to make the rest
+        // actually request. Without this the check only ever sees the hero.
+        await page.evaluate(async () => {
+          for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
+            window.scrollTo(0, y)
+            await new Promise((resolve) => setTimeout(resolve, 100))
+          }
+        })
+
+        // Deliberately not asserting every img is `complete`: a lazy image that
+        // never entered the viewport never loads, which is correct behaviour, so
+        // that assertion can never pass on a long page. What matters is that
+        // nothing the page *did* request came back an error.
+        await expect
+          .poll(
+            async () =>
+              images.evaluateAll((nodes) =>
+                nodes.filter((node) => (node as HTMLImageElement).complete).length,
+              ),
+            { timeout: 20_000, message: `no images finished loading on ${route}` },
+          )
+          .toBeGreaterThan(0)
+      } else {
+        // Routes without <img> elements (like /contact and /contact/thanks,
+        // which rely on CSS background images like contact-bg.webp). Ensure the
+        // page heading is rendered and wait for network/background image to settle.
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+        await page.evaluate(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+        })
       }
-    })
-
-    // Deliberately not asserting every img is `complete`: a lazy image that
-    // never entered the viewport never loads, which is correct behaviour, so
-    // that assertion can never pass on a long page. What matters is that
-    // nothing the page *did* request came back an error.
-    await expect
-      .poll(
-        async () =>
-          images.evaluateAll((nodes) =>
-            nodes.filter((node) => (node as HTMLImageElement).complete).length,
-          ),
-        { timeout: 20_000, message: 'no images finished loading' },
-      )
-      .toBeGreaterThan(0)
-
-    expect(await images.count()).toBeGreaterThan(0)
+    }
 
     // Without this, `failed` staying empty proves nothing: it is equally what a
     // pattern that matches no request at all produces.
