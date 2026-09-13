@@ -17,6 +17,23 @@ vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
 }));
 
+vi.mock("next/link", () => ({
+  __esModule: true,
+  default: ({ children, href, onClick, className, ...rest }: any) => (
+    <a
+      href={href}
+      className={className}
+      onClick={(e) => {
+        e.preventDefault();
+        if (onClick) onClick(e);
+      }}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
+}));
+
 describe("CartDrawer", () => {
   const mockCloseCart = vi.fn();
   const mockRemoveItem = vi.fn();
@@ -201,5 +218,115 @@ describe("CartDrawer", () => {
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(mockCloseCart).toHaveBeenCalledTimes(3);
+  });
+
+  it("moves initial focus into the drawer upon opening and restores focus to triggering element upon dismissal", () => {
+    const trigger = document.createElement("button");
+    document.body.appendChild(trigger);
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: false,
+      items: [],
+      closeCart: mockCloseCart,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    const { rerender } = render(<CartDrawer />);
+    expect(document.activeElement).toBe(trigger);
+
+    // Open drawer
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [],
+      closeCart: mockCloseCart,
+    } as any);
+
+    rerender(<CartDrawer />);
+    const dialog = screen.getByRole("dialog");
+    const panel = dialog.querySelector('div[tabindex="-1"]');
+    expect(document.activeElement).toBe(panel);
+
+    // Close drawer
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: false,
+      items: [],
+      closeCart: mockCloseCart,
+    } as any);
+
+    rerender(<CartDrawer />);
+    expect(document.activeElement).toBe(trigger);
+
+    trigger.remove();
+  });
+
+  it("wraps focus with Tab key within the drawer", () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 1, image: "/images/tent.webp" },
+      ],
+      subtotal: 100,
+      closeCart: mockCloseCart,
+      updateQuantity: mockUpdateQuantity,
+      removeItem: mockRemoveItem,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({
+      status: "authenticated",
+      data: { user: { id: "u1" } },
+    } as any);
+
+    const { container } = render(<CartDrawer />);
+    const panel = container.querySelector('div[tabindex="-1"]') as HTMLElement;
+    expect(panel).not.toBeNull();
+
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    expect(first).not.toBe(last);
+
+    // Tab from last wraps to first
+    last.focus();
+    fireEvent.keyDown(last, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+
+    // Shift+Tab from first wraps to last
+    first.focus();
+    fireEvent.keyDown(first, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+
+    // Shift+Tab from panel wraps to last
+    panel.focus();
+    fireEvent.keyDown(panel, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("calls closeCart when clicking the product link or Sign in to Checkout link", () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 1, image: "/images/tent.webp" },
+      ],
+      subtotal: 100,
+      closeCart: mockCloseCart,
+      updateQuantity: mockUpdateQuantity,
+      removeItem: mockRemoveItem,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    const productLink = screen.getByRole("link", { name: "Tent" });
+    fireEvent.click(productLink);
+    expect(mockCloseCart).toHaveBeenCalledTimes(1);
+
+    const signInLink = screen.getByRole("link", { name: /Sign in to Checkout/i });
+    fireEvent.click(signInLink);
+    expect(mockCloseCart).toHaveBeenCalledTimes(2);
   });
 });

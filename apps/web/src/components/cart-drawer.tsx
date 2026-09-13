@@ -9,6 +9,9 @@ import { useCart } from "@/lib/cart-context";
 import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 import { XMarkIcon, TrashIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function CartDrawer() {
   const { items, isOpen, closeCart, updateQuantity, removeItem, clearCart, subtotal } = useCart();
   const { status } = useSession();
@@ -16,15 +19,63 @@ export default function CartDrawer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        closeCart();
+    if (isOpen && !wasOpen.current) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      drawerRef.current?.focus({ preventScroll: true });
+    } else if (!isOpen && wasOpen.current) {
+      lastFocusedRef.current?.focus({ preventScroll: true });
+    }
+    wasOpen.current = isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (wasOpen.current) {
+        lastFocusedRef.current?.focus({ preventScroll: true });
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeCart();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const panel = drawerRef.current;
+      if (!panel) return;
+      const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      // Focus outside the panel entirely
+      if (!panel.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
+
+      if (event.shiftKey && (active === panel || active === first)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, closeCart]);
 
   if (!isOpen) return null;
@@ -76,7 +127,8 @@ export default function CartDrawer() {
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
         <div
           ref={drawerRef}
-          className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between"
+          tabIndex={-1}
+          className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between focus:outline-none"
         >
           {/* Header */}
           <div className="p-6 border-b border-zinc-200 flex items-center justify-between">
