@@ -57,6 +57,40 @@ describe("POST /api/orders", () => {
     expect(body.error).toBe("Unauthorized");
   });
 
+  it("returns 400 when request body contains invalid JSON", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "invalid-json{",
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Invalid JSON request body");
+  });
+
+  it("returns 400 when request body is null or not an object", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(null),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("Cart items are required");
+  });
+
   it("returns 400 when items payload is empty or invalid", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "u1", email: "user@example.com" },
@@ -74,6 +108,23 @@ describe("POST /api/orders", () => {
     expect(body.error).toContain("Cart items are required");
   });
 
+  it("returns 400 when an item in items array is null or non-object", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [null] }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("Invalid item payload");
+  });
+
   it("returns 400 when an item has non-positive quantity or missing productId", async () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "u1", email: "user@example.com" },
@@ -83,6 +134,40 @@ describe("POST /api/orders", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: [{ productId: "p1", quantity: 0 }] }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("Invalid item payload");
+  });
+
+  it("returns 400 when an item quantity is not an integer", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [{ productId: "p1", quantity: 2.5 }] }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("Invalid item payload");
+  });
+
+  it("returns 400 when an item productId is empty or whitespace", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [{ productId: "   ", quantity: 1 }] }),
     });
 
     const res = await POST(req);

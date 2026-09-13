@@ -16,9 +16,17 @@ export async function POST(request: Request) {
     }
 
     const userId = (session.user as any).id as string;
-    const body = await request.json();
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON request body" },
+        { status: 400 }
+      );
+    }
 
-    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
+    if (!body || typeof body !== "object" || !Array.isArray(body.items) || body.items.length === 0) {
       return NextResponse.json(
         { error: "Cart items are required to place an order" },
         { status: 400 }
@@ -29,9 +37,17 @@ export async function POST(request: Request) {
 
     // Validate structure and quantities
     for (const item of itemsInput) {
-      if (!item.productId || typeof item.productId !== "string" || !item.quantity || item.quantity <= 0) {
+      if (
+        !item ||
+        typeof item !== "object" ||
+        typeof item.productId !== "string" ||
+        !item.productId.trim() ||
+        typeof item.quantity !== "number" ||
+        !Number.isInteger(item.quantity) ||
+        item.quantity <= 0
+      ) {
         return NextResponse.json(
-          { error: "Invalid item payload: productId and positive quantity are required" },
+          { error: "Invalid item payload: productId and positive integer quantity are required" },
           { status: 400 }
         );
       }
