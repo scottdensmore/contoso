@@ -196,3 +196,8 @@ For full-profile failures:
    response contract drift between web consumer and chat provider.
 4. full-profile dependency install timeout/failure:
    heavy optional dependencies (`torch`, `chromadb`, `sentence-transformers`) failed or exceeded budget.
+5. `image optimizer hang / wedged variant` (#270):
+   Next.js image optimizer can hang indefinitely on specific `(image, width)` variants if `.next/cache/images` is deleted under a running container or if concurrent test runners execute against the same container simultaneously.
+   Symptom: requests to `/_next/image?url=...` hang with HTTP 000 / timeout while neighbouring variants return HTTP 200 in milliseconds.
+   Recovery: `docker compose restart web`.
+   Prevention: do not mutate or delete the image cache directory in a running container, and avoid running parallel end-to-end suites against the same composed stack.
