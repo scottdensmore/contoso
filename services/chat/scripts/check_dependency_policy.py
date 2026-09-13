@@ -6,6 +6,8 @@ Policy:
 - Every package referenced in requirement manifests must exist in `constraints.txt`.
 - Every pin in `constraints.txt` must be required by some requirement manifest.
 - Requirement manifests must use bare package names only.
+- Every imported third-party package in the service source must be declared in
+  a requirement manifest.
 
 Versions live in exactly one place. A package pinned in both a requirement
 manifest and `constraints.txt` gives Dependabot two places to edit; it updates
@@ -19,11 +21,22 @@ how `httpx` disappeared — it was pinned here but declared in no manifest,
 arriving only as a transitive dependency of `prisma-client-py`. Removing that
 package silently dropped `httpx`, and the failure surfaced later and elsewhere,
 as `starlette` failing at test collection over `httpx2`.
+
+Transitive dependencies:
+- Issue #312: `google-cloud-storage` is an unpinned transitive dependency that
+  `google-cloud-aiplatform` announced it will drop in a future release.
+  `google-cloud-aiplatform==2.1.0` in `constraints.txt` installs
+  `google-cloud-storage` >= 3.0.0 (currently 3.1.0), satisfying 3.x
+  compatibility. Future upgrades should verify this transitive dependency
+  remains satisfied, or declare and pin it directly if direct storage access
+  is introduced.
 """
 
 from __future__ import annotations
 
+import ast
 import re
+import sys
 from pathlib import Path
 
 REQUIREMENT_FILES = (
@@ -33,8 +46,64 @@ REQUIREMENT_FILES = (
     Path("requirements-dev.txt"),
 )
 CONSTRAINTS_FILE = Path("constraints.txt")
+SERVICE_SOURCE_DIR = Path("src/api")
 
 REQ_LINE_RE = re.compile(r"^([A-Za-z0-9_.-]+)(?:\[[^\]]+\])?\s*([<>=!~]{1,2})?\s*(.*)$")
+
+IMPORT_TO_DISTRIBUTION: dict[str, str] = {
+    "asyncpg": "asyncpg",
+    "chromadb": "chromadb",
+    "dotenv": "python-dotenv",
+    "fastapi": "fastapi",
+    "google": "google-cloud-aiplatform",
+    "jsonlines": "jsonlines",
+    "litellm": "litellm",
+    "opentelemetry": "opentelemetry-api",
+    "pandas": "pandas",
+    "prompty": "prompty",
+    "pydantic": "pydantic",
+    "pytest": "pytest",
+    "requests": "requests",
+    "sentence_transformers": "sentence-transformers",
+    "starlette": "starlette",
+    "tabulate": "tabulate",
+    "torch": "torch",
+    "uvicorn": "uvicorn",
+    "vertexai": "google-cloud-aiplatform",
+    "yaml": "pyyaml",
+}
+
+KNOWN_FIRST_PARTY: frozenset[str] = frozenset({
+    "chat_request",
+    "contoso_chat",
+    "db",
+    "evaluate",
+    "evaluators",
+    "local_provider_health",
+    "main",
+    "models",
+    "search_service",
+    "telemetry",
+    "tracing",
+})
+
+STDLIB_MODULE_NAMES: frozenset[str] = getattr(
+    sys,
+    "stdlib_module_names",
+    frozenset({
+        "__future__", "_thread", "abc", "argparse", "array", "ast", "asyncio",
+        "atexit", "base64", "builtins", "calendar", "collections", "contextlib",
+        "copy", "csv", "dataclasses", "datetime", "decimal", "difflib", "dis",
+        "email", "enum", "errno", "fnmatch", "functools", "gc", "hashlib",
+        "http", "importlib", "inspect", "io", "itertools", "json", "logging",
+        "math", "mimetypes", "multiprocessing", "operator", "os", "pathlib",
+        "pickle", "platform", "pprint", "queue", "random", "re", "shutil",
+        "signal", "socket", "sqlite3", "ssl", "stat", "string", "subprocess",
+        "sys", "tempfile", "textwrap", "threading", "time", "traceback",
+        "types", "typing", "unittest", "urllib", "uuid", "warnings", "weakref",
+        "xml", "zipfile", "zoneinfo",
+    }),
+)
 
 
 def normalize_package_name(name: str) -> str:
@@ -138,6 +207,122 @@ def check_requirements(requirement_files: tuple[Path, ...], constraints: dict[st
     return errors
 
 
+def _is_test_file(path: Path) -> bool:
+    if path.name.startswith("test_") or path.name.endswith("_test.py"):
+        return True
+    parts = set(path.parts)
+    return "tests" in parts or "test" in parts
+
+
+def _find_first_party_modules(service_source_dir: Path) -> set[str]:
+    first_party = set(KNOWN_FIRST_PARTY)
+    if service_source_dir.is_dir():
+        for item in service_source_dir.iterdir():
+            if item.is_dir() and not item.name.startswith("."):
+                first_party.add(item.name)
+            elif item.suffix == ".py":
+                first_party.add(item.stem)
+        for py_path in service_source_dir.rglob("*.py"):
+            first_party.add(py_path.stem)
+            for parent in py_path.relative_to(service_source_dir).parents:
+                if parent.name:
+                    first_party.add(parent.name)
+    elif service_source_dir.is_file() and service_source_dir.suffix == ".py":
+        first_party.add(service_source_dir.stem)
+    return first_party
+
+
+def map_import_to_distribution(module: str) -> str:
+    parts = module.split(".")
+    for i in range(len(parts), 0, -1):
+        prefix = ".".join(parts[:i])
+        if prefix in IMPORT_TO_DISTRIBUTION:
+            return IMPORT_TO_DISTRIBUTION[prefix]
+    top_level = parts[0]
+    return normalize_package_name(top_level)
+
+
+def check_service_imports_are_declared(
+    service_source_dir: Path | str,
+    requirement_files: tuple[Path, ...] | list[Path],
+    constraints: dict[str, str] | None = None,
+) -> list[str]:
+    """Flag third-party imports in service code that have no manifest entry.
+
+    Every third-party module imported by service source files must map to a
+    package explicitly declared in requirement manifests. Transitive-only
+    dependencies that are imported directly will be caught here.
+    """
+    source_dir = Path(service_source_dir)
+    if not source_dir.exists():
+        return [f"{source_dir}: service source directory does not exist"]
+
+    declared_packages: set[str] = set()
+    for req_file in requirement_files:
+        path = Path(req_file)
+        if not path.is_file():
+            continue
+        for idx, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            parsed = parse_line(raw, path, idx)
+            if parsed is not None:
+                declared_packages.add(parsed[0])
+
+    first_party = _find_first_party_modules(source_dir)
+    stdlib = STDLIB_MODULE_NAMES
+
+    if source_dir.is_file():
+        py_files = [source_dir]
+    else:
+        py_files = [p for p in sorted(source_dir.rglob("*.py")) if not _is_test_file(p)]
+
+    errors: list[str] = []
+    for py_file in py_files:
+        try:
+            content = py_file.read_text(encoding="utf-8")
+        except Exception as exc:
+            errors.append(f"{py_file}: cannot read file: {exc}")
+            continue
+
+        try:
+            tree = ast.parse(content, filename=str(py_file))
+        except SyntaxError as exc:
+            errors.append(f"{py_file}:{exc.lineno}: syntax error: {exc}")
+            continue
+
+        try:
+            display_path = py_file.relative_to(Path.cwd())
+        except ValueError:
+            display_path = py_file
+
+        seen_in_file: set[tuple[int, str]] = set()
+
+        for node in ast.walk(tree):
+            imported: list[tuple[str, int]] = []
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    imported.append((alias.name, node.lineno))
+            elif isinstance(node, ast.ImportFrom):
+                if node.level > 0 or not node.module:
+                    continue
+                imported.append((node.module, node.lineno))
+
+            for module_name, lineno in imported:
+                top_level = module_name.split(".")[0]
+                if top_level in stdlib or top_level in first_party:
+                    continue
+
+                dist = map_import_to_distribution(module_name)
+                if dist not in declared_packages:
+                    if (lineno, dist) not in seen_in_file:
+                        seen_in_file.add((lineno, dist))
+                        errors.append(
+                            f"{display_path}:{lineno}: undeclared dependency '{dist}' "
+                            f"(imported as '{module_name}'); add it to a requirements manifest"
+                        )
+
+    return errors
+
+
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
     original_cwd = Path.cwd()
@@ -152,6 +337,11 @@ def main() -> int:
         constraints, errors = load_constraints(CONSTRAINTS_FILE)
         errors.extend(check_requirements(REQUIREMENT_FILES, constraints))
         errors.extend(check_unused_constraints(REQUIREMENT_FILES, constraints))
+        errors.extend(
+            check_service_imports_are_declared(
+                SERVICE_SOURCE_DIR, REQUIREMENT_FILES, constraints
+            )
+        )
 
         if errors:
             print("Dependency policy check failed:")

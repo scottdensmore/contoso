@@ -23,6 +23,9 @@ uvicorn[standard]
 # The standalone `vertexai` package is deliberately absent: it pins
 # google-cloud-aiplatform to an exact version, which blocks every aiplatform
 # bump. google-cloud-aiplatform ships the `vertexai` module itself.
+# Issue #312: google-cloud-storage is an unpinned transitive dependency that
+# aiplatform announced it will drop. google-cloud-aiplatform 2.1.0 currently
+# installs google-cloud-storage >= 3.0.0 (3.1.0), satisfying 3.x compatibility.
 google-cloud-aiplatform
 google-cloud-discoveryengine
 google-auth
