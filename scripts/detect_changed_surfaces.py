@@ -47,9 +47,9 @@ RUNTIME_PATTERNS = (
     "scripts/e2e_smoke.py",
     "scripts/ci_smoke_metrics.py",
     "tests/scripts/**",
-    # Compose is web+chat, but the guard that protects its startup ordering
-    # lives in tests/scripts. Without this, a change dropping the healthcheck
-    # would never run that guard.
+    # docker-compose.yml defines and orchestrates the full multi-service runtime
+    # stack (web, chat, db), so changes to compose are explicitly classified as
+    # runtime surface changes.
     "docker-compose.yml",
     "apps/web/package-lock.json",
     "apps/web/package.json",

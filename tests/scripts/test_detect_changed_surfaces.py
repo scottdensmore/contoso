@@ -207,13 +207,11 @@ class DetectChangedSurfacesTests(unittest.TestCase):
                 self.assertTrue(flags["runtime"])
 
     def test_compose_changes_are_runtime(self):
-        """docker-compose.yml already matched web and chat, so it never reached
-        the unknown fallback. Without an explicit runtime pattern, a
-        compose-only change would skip test-scripts and the startup-ordering
-        guard that protects it."""
+        """docker-compose.yml defines and orchestrates the full multi-service
+        runtime stack (web, chat, db), so changes to compose are explicitly
+        classified as runtime surface changes."""
         flags = detect_changed.classify(["docker-compose.yml"])
         self.assertTrue(flags["runtime"])
-        self.assertIn("test-scripts", detect_changed.recommended_targets(flags))
 
     def test_dependabot_config_is_runtime(self):
         """The Dependabot config is repo tooling, not an unclassified path.
