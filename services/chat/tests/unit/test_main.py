@@ -190,3 +190,81 @@ def test_cors_headers():
     response = client.get("/")
     # Check that CORS headers are present in response
     assert response.status_code == 200
+
+
+@patch("main.get_response_stream")
+def test_stream_endpoint(mock_get_response_stream):
+    """Test POST /api/create_response/stream in real mode"""
+    async def fake_stream(customer_id, question, chat_history):
+        yield "Hello "
+        yield "world!"
+
+    mock_get_response_stream.side_effect = fake_stream
+
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        response = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "What are the best tents?",
+                "customer_id": "1",
+                "chat_history": "[]",
+            },
+        )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+        body = response.text
+        assert "data: {\"chunk\": \"Hello \"}\n\n" in body
+        assert "data: {\"chunk\": \"world!\"}\n\n" in body
+        assert "data: [DONE]\n\n" in body
+
+
+def test_stream_endpoint_mock_mode():
+    """Test POST /api/create_response/stream in mock mode"""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        response = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "What are the best tents?",
+                "customer_id": "1",
+                "chat_history": "[]",
+            },
+        )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+        body = response.text
+        assert "data: {" in body
+        assert "data: [DONE]\n\n" in body
+
+
+@patch("main.get_response_stream")
+def test_stream_endpoint_error_handling(mock_get_response_stream):
+    """Test error handling mid-stream in POST /api/create_response/stream"""
+    async def failing_stream(customer_id, question, chat_history):
+        yield "First chunk "
+        raise RuntimeError("Stream failure mid-stream")
+
+    mock_get_response_stream.side_effect = failing_stream
+
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        response = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "What are the best tents?",
+                "customer_id": "1",
+                "chat_history": "[]",
+            },
+        )
+        assert response.status_code == 200
+        assert "text/event-stream" in response.headers.get("content-type", "")
+        body = response.text
+        assert "data: {\"chunk\": \"First chunk \"}\n\n" in body
+        assert "data: {\"error\": \"Stream failure mid-stream\"}\n\n" in body
+
+
+def test_stream_endpoint_validation_error():
+    """Test validation error for POST /api/create_response/stream"""
+    response = client.post(
+        "/api/create_response/stream",
+        json={"customer_id": "1"},
+    )
+    assert response.status_code == 422

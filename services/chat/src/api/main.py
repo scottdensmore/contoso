@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -7,12 +8,13 @@ from typing import Any, Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from local_provider_health import evaluate_local_provider_health
 from pydantic import BaseModel, ConfigDict
 
 # Import our real chat logic (simplified)
 try:
-    from contoso_chat.chat_request import get_response
+    from contoso_chat.chat_request import get_response, get_response_stream
     REAL_CHAT_AVAILABLE = True
 except ImportError:
     REAL_CHAT_AVAILABLE = False
@@ -189,3 +191,50 @@ async def create_response(request: ChatRequest):
             "error": str(e),
             "fallback": True
         }
+
+
+@app.post("/api/create_response/stream")
+async def create_response_stream(request: ChatRequest):
+    logger.info(
+        "Chat streaming request received",
+        extra={
+            "customer_id": request.customer_id,
+            "question_length": len(request.question),
+            "has_chat_history": len(str(request.chat_history or "")) > 2,
+            "real_chat_available": REAL_CHAT_AVAILABLE,
+        },
+    )
+
+    async def streamer():
+        try:
+            if REAL_CHAT_AVAILABLE:
+                logger.info("Processing streaming request with real chat logic")
+                async for chunk in get_response_stream(
+                    request.customer_id, request.question, request.chat_history
+                ):
+                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            else:
+                logger.warning(
+                    "Using mock streaming response - real chat logic not available"
+                )
+                mock_chunks = [
+                    f"Mock response: You asked about '{request.question}'. ",
+                    "This is a test response from Contoso Chat ",
+                    "running on Google Cloud Platform!",
+                ]
+                for chunk in mock_chunks:
+                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            logger.error(
+                "Error processing streaming chat request",
+                extra={
+                    "customer_id": request.customer_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+                exc_info=True,
+            )
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(streamer(), media_type="text/event-stream")
