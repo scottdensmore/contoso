@@ -17,10 +17,16 @@
  * the frame. It is the right inference and a mild one, but it is an inference,
  * and the alternatives either over-claim or say nothing.
  *
- * Twenty of the 210 products have UUID filenames and no label at all. There is
- * nothing to translate for those, so their images beyond the first are marked
- * decorative rather than given a description invented here.
+ * Twenty of the 210 products have UUID filenames. A sidecar mapping
+ * (`gallery-shot-types.json`) maps their photography to shot types (`main`,
+ * `angle`, `detail`, `lifestyle`, `packed`), providing equivalent rich
+ * screen-reader descriptions as the rest of the catalogue (#203). Unmapped or
+ * unlabelled imagery falls back to decorative.
  */
+
+import galleryShotTypes from './gallery-shot-types.json'
+
+const SHOT_TYPES = galleryShotTypes as Record<string, string>
 
 /**
  * Shot type to the phrase that follows the product name.
@@ -51,13 +57,14 @@ export function galleryAlt(
 ): string {
   const file = imagePath.split('/').pop() ?? ''
   const stem = file.replace(/\.[^.]+$/, '')
+  const role = Object.hasOwn(SHOT_TYPES, stem) ? SHOT_TYPES[stem] : stem
 
   // `Object.hasOwn`, not `in`: `in` walks the prototype chain, so an image
   // called `toString.webp` would be announced as "…, function toString() {
   // [native code] }". No such file exists, and the sweep uses the same lookup
   // so it could not have seen one either.
-  if (Object.hasOwn(GALLERY_ROLES, stem)) {
-    const phrase = GALLERY_ROLES[stem]
+  if (Object.hasOwn(GALLERY_ROLES, role)) {
+    const phrase = GALLERY_ROLES[role]
     return phrase ? `${productName}, ${phrase}` : productName
   }
 

@@ -113,16 +113,49 @@ describe('galleryAlt', () => {
     )
   })
 
-  it('falls back to decorative when the catalogue labels nothing', () => {
-    // The 20 products whose files are UUIDs. The first still names the product;
-    // the rest are marked decorative rather than described, because there is
-    // nothing here that knows what they show.
-    const name = 'Adventurer Pro Backpack'
-    const uuid = '/images/2/0b0e0e52-e3bf-4bf7-b1e1-3989c91d51a9.webp'
-    const other = '/images/2/5b73df27-5275-4437-b7cf-45b1eee175fb.webp'
-    expect(galleryAlt(name, uuid, 0)).toBe(name)
-    expect(galleryAlt(name, other, 1)).toBe('')
-    expect(galleryAlt(name, other, 4)).toBe('')
+  it('describes the 20 storefront products with shot types via the sidecar (#203)', () => {
+    const name = 'TrailMaster X4 Tent'
+    expect(
+      galleryAlt(name, '/images/1/242e7165-7c79-4f97-8e63-280f9f8982e2.webp', 0),
+    ).toBe(name)
+    expect(
+      galleryAlt(name, '/images/1/42614d79-4013-4303-9750-7c48f3fb61a9.webp', 1),
+    ).toBe(`${name}, another angle`)
+    expect(
+      galleryAlt(name, '/images/1/6a3111b5-3803-473b-a3dd-12056becea0a.webp', 2),
+    ).toBe(`${name}, detail view`)
+    expect(
+      galleryAlt(name, '/images/1/cb803f98-9bfa-4156-b0ee-df0581ae2862.webp', 3),
+    ).toBe(`${name}, in use`)
+    expect(
+      galleryAlt(name, '/images/1/ff681635-0ce2-4c9a-b227-58de609e3a4e.webp', 4),
+    ).toBe(`${name}, packed for carrying`)
+  })
+
+  it('covers every product in the first 20 with non-empty shot types for all images beyond index 0 (#203)', async () => {
+    const products = await catalogue()
+    const first20 = products.slice(0, 20)
+    for (const product of first20) {
+      // Index 0 is always the product name
+      expect(galleryAlt(product.name, product.images[0], 0)).toBe(product.name)
+      // Images 1-4 should be described with non-empty shot phrases
+      for (let i = 1; i < Math.min(product.images.length, 5); i++) {
+        const spoken = galleryAlt(product.name, product.images[i], i)
+        expect(spoken).not.toBe('')
+        expect(spoken).toContain(product.name)
+      }
+    }
+  })
+
+  it('falls back to decorative when the catalogue labels nothing and no sidecar mapping exists', () => {
+    // Images that have no label in the path and no sidecar mapping fall back to
+    // decorative beyond the first image.
+    const name = 'Unknown Item'
+    const unknownMain = '/images/unknown/00000000-0000-0000-0000-000000000000.webp'
+    const unknownOther = '/images/unknown/11111111-1111-1111-1111-111111111111.webp'
+    expect(galleryAlt(name, unknownMain, 0)).toBe(name)
+    expect(galleryAlt(name, unknownOther, 1)).toBe('')
+    expect(galleryAlt(name, unknownOther, 4)).toBe('')
   })
 
   it('is not fooled by a filename matching an inherited property', () => {
