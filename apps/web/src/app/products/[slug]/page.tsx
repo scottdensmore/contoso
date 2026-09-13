@@ -108,13 +108,26 @@ export default async function Page({
     "[&_h3]:text-xl [&_h3]:font-bold [&_h3]:pt-3 [&_h3]:pb-3" +
     "[&_h4]:text-lg [&_h4]:font-semibold [&_h4]:pt-3 [&_h4]:pb-3" +
     "[&_ol]:list-decimal [&_ol]:list-outside [&_ul]:list-outside";
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(product.price);
+
   return (
     <>
       <Header />
       <Block innerClassName="pt-6 pb-6">
-        <h1 className="text-6xl pb-5 pt-8 subpixel-antialiased font-serif ">
+        <h1 className="text-6xl pb-3 pt-8 subpixel-antialiased font-serif ">
           {product.name}
         </h1>
+        <p
+          className="text-2xl font-semibold text-zinc-900 pb-5"
+          aria-label={`Price: ${formattedPrice}`}
+        >
+          <span className="sr-only">Price: </span>
+          <span>{formattedPrice}</span>
+        </p>
         <div
           className="first-line:uppercase first-line:tracking-widest
                   first-letter:text-8xl first-letter:font-bold first-letter:text-slate-900

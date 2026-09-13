@@ -104,20 +104,11 @@ async def test_generate_llm_response_local_provider_requires_optional_dependenci
 
 @pytest.mark.anyio
 async def test_generate_llm_response_gcp_provider():
-    mock_init = MagicMock()
-    mock_model_instance = MagicMock()
-    mock_model_instance.generate_content.return_value = SimpleNamespace(text="gcp answer")
-    mock_model_class = MagicMock(return_value=mock_model_instance)
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp answer")
+    mock_client_class = MagicMock(return_value=mock_client)
 
-    with patch.dict(
-        sys.modules,
-        {
-            "vertexai": SimpleNamespace(init=mock_init),
-            "vertexai.generative_models": SimpleNamespace(
-                GenerativeModel=mock_model_class,
-            ),
-        },
-    ):
+    with patch("google.genai.Client", mock_client_class):
         result = await generate_llm_response(
             prompt="Best tent?",
             context='[{"sku":"abc123"}]',
@@ -129,10 +120,13 @@ async def test_generate_llm_response_gcp_provider():
         )
 
     assert result == "gcp answer"
-    mock_init.assert_called_once_with(project="project-1", location="us-central1")
-    mock_model_class.assert_called_once_with("gemini-2.5-flash")
-    mock_model_instance.generate_content.assert_called_once()
-    sent_prompt = mock_model_instance.generate_content.call_args.args[0]
+    mock_client_class.assert_called_once_with(
+        vertexai=True, project="project-1", location="us-central1"
+    )
+    mock_client.models.generate_content.assert_called_once()
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    assert kwargs["model"] == "gemini-2.5-flash"
+    sent_prompt = kwargs["contents"]
     assert isinstance(sent_prompt, str)
     assert "Best tent?" in sent_prompt
     assert "abc123" in sent_prompt

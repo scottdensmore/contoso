@@ -1,9 +1,8 @@
 import json
 import os
 
-import vertexai
 from dotenv import load_dotenv
-from vertexai.generative_models import GenerativeModel
+from google import genai
 
 load_dotenv()
 
@@ -20,7 +19,7 @@ def fluency_evaluation(question, context, answer) -> str:
     if not project_id:
         raise ValueError("PROJECT_ID environment variable is required")
 
-    vertexai.init(project=project_id, location=region)
+    client = genai.Client(vertexai=True, project=project_id, location=region)
 
     # Create the evaluation prompt
     prompt = f"""You are an AI assistant. You will be given the definition of an evaluation metric for assessing the quality of an answer in a question-answering task. Your job is to compute an accurate evaluation score using the provided evaluation metric. You should return a single integer value between 1 to 5 representing the evaluation metric. You will include no other text or information.
@@ -38,12 +37,12 @@ question: {question}
 answer: {answer}
 stars:"""
 
-    # Use Gemini 2.5 Flash model
-    model = GenerativeModel("gemini-2.5-flash")
-
     try:
-        response = model.generate_content(prompt)
-        result = response.text.strip()
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        result = (response.text or "").strip()
 
         # Validate that result is a number between 1-5
         try:
