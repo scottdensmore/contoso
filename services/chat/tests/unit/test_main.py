@@ -1195,3 +1195,150 @@ def test_export_endpoints_400_on_invalid_format():
         json={"format": "unsupported"},
     )
     assert res_post.status_code == 400
+
+
+def test_get_policies_endpoint():
+    res = client.get("/api/policies")
+    assert res.status_code == 200
+    policies = res.json()
+    assert isinstance(policies, list)
+    assert len(policies) == 5
+    ids = {p["id"] for p in policies}
+    assert ids == {"returns", "price_match", "shipping", "warranty", "privacy"}
+
+
+def test_get_policy_by_id_endpoint_valid():
+    res = client.get("/api/policies/price_match")
+    assert res.status_code == 200
+    policy = res.json()
+    assert policy["id"] == "price_match"
+    assert "Price-Match" in policy["title"]
+    assert "14-day" in policy["summary"] or "14" in policy["summary"]
+
+    res_upper = client.get("/api/policies/RETURNS")
+    assert res_upper.status_code == 200
+    assert res_upper.json()["id"] == "returns"
+
+
+def test_get_policy_by_id_endpoint_not_found():
+    res = client.get("/api/policies/unknown_policy")
+    assert res.status_code == 404
+    assert "not found" in res.json()["detail"].lower()
+
+
+def test_inquire_policy_endpoint_matched():
+    res = client.post("/api/policies/inquire", json={"query": "Can you match competitor price from REI?"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["is_policy_query"] is True
+    assert data["policy_type"] == "price_match"
+    assert data["matched_policy"] is not None
+    assert data["matched_policy"]["id"] == "price_match"
+    assert data["confidence"] > 0.0
+
+
+def test_inquire_policy_endpoint_unmatched():
+    res = client.post("/api/policies/inquire", json={"query": "tell me about sleeping bags"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["is_policy_query"] is False
+    assert data["policy_type"] is None
+    assert data["matched_policy"] is None
+    assert data["confidence"] == 0.0
+
+
+def test_create_response_mock_mode_with_policy():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "Can you match a lower price from REI?"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "policy" in data
+        policy = data["policy"]
+        assert isinstance(policy, dict)
+        assert policy["id"] == "price_match"
+        assert "price-match" in data["answer"].lower() or "guarantee" in data["answer"].lower() or "policy" in data["answer"].lower()
+
+
+def test_create_response_mock_mode_without_policy():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "hello"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "policy" not in data or data.get("policy") is None
+
+
+def test_create_response_stream_mock_mode_emits_policy_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "What is your return policy?"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        policy_event = next((e for e in events if e.get("event") == "policy"), None)
+        assert policy_event is not None
+        assert "policy" in policy_event
+        assert policy_event["policy"]["id"] == "returns"
+
+
+def test_create_response_stream_mock_mode_omits_policy_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "hello"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        policy_event = next((e for e in events if e.get("event") == "policy"), None)
+        assert policy_event is None
+
+
+@patch("main.get_response")
+def test_create_response_real_mode_includes_policy(mock_get_response):
+    expected_policy = {
+        "id": "price_match",
+        "title": "Price-Match Guarantee",
+        "summary": "14-day price-match guarantee against authorized outdoor retailers for identical in-stock items.",
+    }
+    mock_get_response.return_value = {
+        "answer": "Yes, we match prices!",
+        "context": [],
+        "policy": expected_policy,
+    }
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Can you match price from REI?", "customer_id": "cust-1"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get("policy") == expected_policy
+
+
+@patch("main.get_response_stream")
+def test_create_response_stream_real_mode_emits_policy_event(mock_get_response_stream):
+    expected_policy = {
+        "id": "returns",
+        "title": "Returns & Refunds Policy",
+        "summary": "30-day return policy, full refund in original packaging, free return shipping for members.",
+    }
+
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {json.dumps({'event': 'citations', 'citations': []})}\n\n"
+        yield f"data: {json.dumps({'event': 'policy', 'policy': expected_policy})}\n\n"
+        yield f"data: {json.dumps({'chunk': 'Our return policy is 30 days.'})}\n\n"
+
+    mock_get_response_stream.side_effect = fake_stream
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post("/api/create_response/stream", json={"question": "What is your return policy?"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        policy_event = next((e for e in events if e.get("event") == "policy"), None)
+        assert policy_event is not None
+        assert policy_event["policy"] == expected_policy
