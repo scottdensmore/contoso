@@ -8,6 +8,11 @@ from .order_tracking import (
     detect_order_tracking_intent,
     lookup_order_tracking,
 )
+from .promotions import (
+    build_promo_prompt,
+    detect_promo_intent,
+    get_active_promotions,
+)
 from .search_service import get_search_service
 
 
@@ -225,6 +230,7 @@ async def generate_llm_response(
     customer_profile: dict[str, Any] | None = None,
     profile_prompt: str = "",
     order_tracking_prompt: str = "",
+    promo_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -261,8 +267,12 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{profile_prompt}"
         if order_tracking_prompt:
             local_system = f"{local_system}\n\n{order_tracking_prompt}"
+        if promo_prompt:
+            local_system = f"{local_system}\n\n{promo_prompt}"
         if order_tracking_prompt:
             local_system = f"{local_system}\n\n{order_tracking_prompt}"
+        if promo_prompt:
+            local_system = f"{local_system}\n\n{promo_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -288,6 +298,8 @@ async def generate_llm_response(
             prompt_parts.append(profile_prompt)
         if order_tracking_prompt:
             prompt_parts.append(order_tracking_prompt)
+        if promo_prompt:
+            prompt_parts.append(promo_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -456,12 +468,19 @@ async def get_response(customer_id, question, chat_history: Any = None):
         )
         order_tracking_prompt = build_order_tracking_prompt(tracking_info, question)
 
+    promo_intent = detect_promo_intent(question)
+    promo_prompt = ""
+    if promo_intent.get("is_promo_intent"):
+        promo_prompt = build_promo_prompt(promo_intent, question)
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
     }
     if order_tracking_prompt:
         llm_kwargs["order_tracking_prompt"] = order_tracking_prompt
+    if promo_prompt:
+        llm_kwargs["promo_prompt"] = promo_prompt
 
     answer = await generate_llm_response(
         question,
@@ -490,6 +509,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
     }
     if tracking_intent.get("is_tracking_intent"):
         response_payload["order_tracking"] = tracking_info
+    if promo_intent.get("is_promo_intent"):
+        response_payload["promotions"] = get_active_promotions()
 
     return response_payload
 
@@ -506,6 +527,7 @@ def generate_llm_response_stream(
     customer_profile: dict[str, Any] | None = None,
     profile_prompt: str = "",
     order_tracking_prompt: str = "",
+    promo_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -568,6 +590,8 @@ def generate_llm_response_stream(
             prompt_parts.append(profile_prompt)
         if order_tracking_prompt:
             prompt_parts.append(order_tracking_prompt)
+        if promo_prompt:
+            prompt_parts.append(promo_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -616,12 +640,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         )
         order_tracking_prompt = build_order_tracking_prompt(tracking_info, question)
 
-    # Initial SSE frames with citations, handoff, customer profile, and order tracking
+    promo_intent = detect_promo_intent(question)
+    promo_prompt = ""
+    if promo_intent.get("is_promo_intent"):
+        promo_prompt = build_promo_prompt(promo_intent, question)
+
+    # Initial SSE frames with citations, handoff, customer profile, order tracking, and promotions
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
     yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': profile['membership'], 'past_purchases_count': len(profile['past_purchases'])}})}\n\n"
     if tracking_intent.get("is_tracking_intent"):
         yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': tracking_info})}\n\n"
+    if promo_intent.get("is_promo_intent"):
+        yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -629,6 +660,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     }
     if order_tracking_prompt:
         stream_kwargs["order_tracking_prompt"] = order_tracking_prompt
+    if promo_prompt:
+        stream_kwargs["promo_prompt"] = promo_prompt
 
     for chunk in generate_llm_response_stream(
         question,
