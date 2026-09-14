@@ -350,6 +350,8 @@ async def test_get_response_stream():
 
     expected_profile = build_customer_profile_context({"firstName": "Taylor"})
     assert chunks == [
+        f"data: {json.dumps({'event': 'status', 'status': 'searching_catalog', 'message': 'Searching product catalog...'})}\n\n",
+        f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n",
         f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': None, 'price': None, 'image': None, 'category': None}]})}\n\n",
         f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n",
         f"data: {json.dumps({'event': 'profile', 'profile': {'membership': None, 'past_purchases_count': 0}})}\n\n",
@@ -512,12 +514,14 @@ async def test_get_response_stream_emits_citations_event():
         stream = get_response_stream("cust-1", "Best tent?", "[]")
         events = [chunk async for chunk in stream]
 
-    assert len(events) == 5
-    assert events[0] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
-    assert events[1] == f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n"
-    assert events[2] == f"data: {json.dumps({'event': 'profile', 'profile': {'membership': None, 'past_purchases_count': 0}})}\n\n"
-    assert events[3] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
-    assert events[4] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
+    assert len(events) == 7
+    assert events[0] == f"data: {json.dumps({'event': 'status', 'status': 'searching_catalog', 'message': 'Searching product catalog...'})}\n\n"
+    assert events[1] == f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n"
+    assert events[2] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
+    assert events[3] == f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n"
+    assert events[4] == f"data: {json.dumps({'event': 'profile', 'profile': {'membership': None, 'past_purchases_count': 0}})}\n\n"
+    assert events[5] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
+    assert events[6] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
 
 
 def test_format_chat_history_with_json_string_role_content():
@@ -961,11 +965,19 @@ async def test_get_response_stream_yields_handoff_frame():
         stream = get_response_stream("cust-1", "I want a refund for my broken tent", "[]")
         frames = [f async for f in stream]
 
-    assert len(frames) >= 2
-    citations_data = json.loads(frames[0].removeprefix("data: "))
+    assert len(frames) >= 4
+    citations_data = next(
+        json.loads(f.removeprefix("data: "))
+        for f in frames
+        if json.loads(f.removeprefix("data: ")).get("event") == "citations"
+    )
     assert citations_data.get("event") == "citations"
 
-    handoff_data = json.loads(frames[1].removeprefix("data: "))
+    handoff_data = next(
+        json.loads(f.removeprefix("data: "))
+        for f in frames
+        if json.loads(f.removeprefix("data: ")).get("event") == "handoff"
+    )
     assert handoff_data.get("event") == "handoff"
     assert handoff_data["handoff"]["requested"] is True
     assert handoff_data["handoff"]["reason"] == "dispute_or_refund"
@@ -1774,3 +1786,55 @@ async def test_generate_llm_response_gcp_provider_includes_policy_prompt():
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Store Policy Grounding: Returns Policy" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_emits_status_events():
+    product_context = [{'sku': 'sku-1', 'name': 'Trailmaster X4'}]
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = product_context
+
+    with patch(
+        'contoso_chat.chat_request.get_customer_from_postgres',
+        new=AsyncMock(return_value={'firstName': 'Taylor', 'membership': 'Gold', 'orders': []}),
+    ), patch(
+        'contoso_chat.chat_request.get_search_service',
+        return_value=mock_search_service,
+    ), patch(
+        'contoso_chat.chat_request.generate_llm_response_stream',
+        return_value=iter(['streamed ', 'tokens']),
+    ), patch.dict(
+        'os.environ',
+        {'PROJECT_ID': 'project-1', 'REGION': 'us-central1'},
+        clear=True,
+    ):
+        stream = get_response_stream('cust-1', 'Best tent?', '[]')
+        chunks = [chunk async for chunk in stream]
+
+    parsed_events = [
+        json.loads(c.removeprefix('data: '))
+        for c in chunks
+        if c.startswith('data: ')
+    ]
+
+    status_events = [e for e in parsed_events if e.get('event') == 'status']
+    assert len(status_events) == 2
+    assert status_events[0] == {
+        'event': 'status',
+        'status': 'searching_catalog',
+        'message': 'Searching product catalog...',
+    }
+    assert status_events[1] == {
+        'event': 'status',
+        'status': 'generating_response',
+        'message': 'Generating response...',
+    }
+
+    citations_idx = next(i for i, e in enumerate(parsed_events) if e.get('event') == 'citations')
+    first_chunk_idx = next(i for i, e in enumerate(parsed_events) if 'chunk' in e)
+    assert parsed_events[0]['event'] == 'status'
+    assert parsed_events[0]['status'] == 'searching_catalog'
+    assert parsed_events[1]['event'] == 'status'
+    assert parsed_events[1]['status'] == 'generating_response'
+    assert citations_idx > 1
+    assert first_chunk_idx > citations_idx

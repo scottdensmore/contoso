@@ -629,6 +629,8 @@ def generate_llm_response_stream(
 
 async def get_response_stream(customer_id: str, question: str, chat_history: Any = None):
     """Generates a streaming response using the RAG pattern."""
+    yield f"data: {json.dumps({'event': 'status', 'status': 'searching_catalog', 'message': 'Searching product catalog...'})}\n\n"
+
     project_id = os.environ.get("PROJECT_ID")
     location = os.environ.get("REGION")
 
@@ -640,6 +642,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     # 2. Retrieve relevant product documentation (restored to 5 results)
     search_service = get_search_service()
     product_context = search_service.search(question, limit=5)
+
+    yield f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n"
 
     # 3. Generate a response stream
     provider = os.environ.get("LLM_PROVIDER", "gcp")
