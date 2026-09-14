@@ -315,5 +315,13 @@ describe('Header', () => {
 
     expect(focusSpy).not.toHaveBeenCalled()
   })
+
+  it("renders global product search", async () => {
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any)
+    await act(async () => {
+      render(<Header />)
+    })
+    expect(screen.getByRole("combobox", { name: /search products/i })).toBeDefined()
+  })
 })
 
