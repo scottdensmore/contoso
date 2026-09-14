@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import { Chat } from './chat'
+import { Chat, chatReducer } from './chat'
+import type { ChatTurn } from '@/lib/types'
+import type { StreamCallbacks } from '@/lib/messaging'
 
 vi.mock('next-auth/react', () => ({
   useSession: () => ({ data: { user: { name: 'Ada' } } }),
@@ -29,11 +31,20 @@ beforeEach(() => {
     removeListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })) as unknown as typeof window.matchMedia
+
+  streamChatMessage.mockReset()
+  streamChatMessage.mockImplementation(() => {
+    throw new Error("Streaming not configured in test")
+  })
 })
 
 const sendChatMessage = vi.fn()
+const streamChatMessage = vi.fn<
+  (turn: ChatTurn, callbacks: StreamCallbacks, customerId?: string) => Promise<ChatTurn>
+>()
 vi.mock('@/lib/messaging', () => ({
   sendChatMessage: (...args: unknown[]) => sendChatMessage(...args),
+  streamChatMessage: (...args: unknown[]) => (streamChatMessage as any)(...args),
 }))
 
 function clickReset() {
@@ -1191,5 +1202,93 @@ describe('Chat modality', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     cleanup()
+  })
+})
+
+describe('Chat SSE streaming', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    streamChatMessage.mockReset()
+  })
+
+  it('updates turn message on stream_chunk', () => {
+    const initialState = {
+      turns: [
+        {
+          id: 'turn-1',
+          name: 'Jane Doe',
+          message: 'Let me see what I can find...',
+          status: 'waiting' as const,
+          type: 'assistant' as const,
+          avatar: '',
+        },
+      ],
+    }
+
+    const nextState = chatReducer(initialState, {
+      type: 'stream_chunk',
+      id: 'turn-1',
+      payload: {
+        id: 'turn-1',
+        name: 'Jane Doe',
+        message: 'Streaming partial response',
+        status: 'waiting',
+        type: 'assistant',
+        avatar: '',
+      },
+    })
+
+    expect(nextState.turns[0].message).toBe('Streaming partial response')
+    expect(nextState.turns[0].status).toBe('waiting')
+  })
+
+  it('renders incoming streamed tokens and finalizes with product links', async () => {
+    streamChatMessage.mockImplementation(async (_turn, callbacks) => {
+      callbacks.onChunk('Recommending ')
+      callbacks.onChunk('Recommending the Alpine Explorer.')
+      return {
+        id: 'streamed-turn',
+        name: 'Jane Doe',
+        message: 'Recommending the Alpine Explorer.\n\n**Product links:**\n- [Alpine Explorer](/products/alpine-explorer)',
+        status: 'done',
+        type: 'assistant',
+        avatar: '',
+      }
+    })
+
+    render(<Chat />)
+    openChatAndSend('recommend a tent')
+
+    await waitFor(() => {
+      expect(screen.getByText(/Recommending the Alpine Explorer/)).toBeInTheDocument()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/Product links:/)).toBeInTheDocument()
+      expect(screen.getByText(/Alpine Explorer/)).toBeInTheDocument()
+    })
+  })
+
+  it('falls back to standard sendChatMessage when streaming fails', async () => {
+    streamChatMessage.mockRejectedValue(new Error('SSE connection failed'))
+    sendChatMessage.mockResolvedValue({
+      name: 'Jane Doe',
+      message: 'Fallback reply from standard chat',
+      status: 'done',
+      type: 'assistant',
+      avatar: '',
+    })
+
+    render(<Chat />)
+    openChatAndSend('any sleeping bags?')
+
+    await waitFor(() => {
+      expect(screen.getByText('Fallback reply from standard chat')).toBeInTheDocument()
+    })
+
+    expect(sendChatMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'any sleeping bags?' }),
+      undefined,
+    )
   })
 })

@@ -10,7 +10,7 @@ import {
 import Turn from "./turn";
 import { ChatTurn } from "@/lib/types";
 import { useSession } from "next-auth/react";
-import { sendChatMessage } from "@/lib/messaging";
+import { sendChatMessage, streamChatMessage } from "@/lib/messaging";
 import {
   ACTION_BOUNDARY,
   FIELD_BOUNDARY,
@@ -18,23 +18,30 @@ import {
   CHAT_ACCENT_HOVER,
 } from "@/lib/control-classes";
 
-interface ChatAction {
-  type: "add" | "clear" | "resolve" | "remove";
+export interface ChatAction {
+  type: "add" | "clear" | "resolve" | "remove" | "stream_chunk";
   payload?: ChatTurn;
   id?: string;
   index?: number;
 }
 
-interface ChatState {
+export interface ChatState {
   turns: ChatTurn[];
 }
 
-function chatReducer(state: ChatState, action: ChatAction) {
+export function chatReducer(state: ChatState, action: ChatAction) {
   switch (action.type) {
     case "add":
       return { turns: [...state.turns, action.payload!] };
     case "clear":
       return { turns: [] };
+    case "stream_chunk": {
+      const index = state.turns.findIndex((t) => t.id === action.id);
+      if (index === -1) return state;
+      const turns = [...state.turns];
+      turns[index] = { ...turns[index], message: action.payload!.message };
+      return { turns };
+    }
     case "resolve": {
       // Replace the placeholder this reply owns. If it is not present — the
       // thread was reset, or it never appeared because the reply was fast —
@@ -436,8 +443,8 @@ export const Chat = () => {
         });
       }, 400);
 
-    const settle = (timer: ReturnType<typeof setTimeout>) => (responseTurn: ChatTurn) => {
-      clearTimeout(timer);
+    const settle = (timer?: ReturnType<typeof setTimeout>) => (responseTurn: ChatTurn) => {
+      if (timer) clearTimeout(timer);
       // Two jobs in one call. The return value is the guard: a reset between
       // the request and its reply removed the id, so the reply is dropped
       // rather than appended into the cleared thread as an answer to nothing.
@@ -471,7 +478,7 @@ export const Chat = () => {
     // rejection would otherwise leave the placeholder spinning with no message.
     // Issue #185: When an error occurs, set status="error" and attach user query for Retry.
     const settleWithError =
-      (timer: ReturnType<typeof setTimeout>) => (error: unknown) => {
+      (timer?: ReturnType<typeof setTimeout>) => (error: unknown) => {
         console.error("Chat request failed:", error);
         settle(timer)({
           id: pendingId,
@@ -484,12 +491,63 @@ export const Chat = () => {
         });
       };
 
-    const send = (request: Promise<ChatTurn>) => {
+    const fallbackToStandardChat = () => {
+      dispatch({ type: "remove", id: pendingId });
       const timer = showPlaceholder();
-      request.then(settle(timer)).catch(settleWithError(timer));
+      sendChatMessage(userTurn, customerId)
+        .then(settle(timer))
+        .catch(settleWithError(timer));
     };
 
-    send(sendChatMessage(userTurn, customerId));
+    // Add placeholder turn for streaming
+    dispatch({
+      type: "add",
+      payload: {
+        id: pendingId,
+        name: "Jane Doe",
+        message: "Let me see what I can find...",
+        status: "waiting",
+        type: "assistant",
+        avatar: "",
+      },
+    });
+
+    try {
+      const maybePromise = streamChatMessage(
+        userTurn,
+        {
+          onChunk: (accumulated) => {
+            dispatch({
+              type: "stream_chunk",
+              id: pendingId,
+              payload: {
+                id: pendingId,
+                name: "Jane Doe",
+                message: accumulated,
+                status: "waiting",
+                type: "assistant",
+                avatar: "",
+              },
+            });
+          },
+        },
+        customerId,
+      );
+
+      if (!maybePromise || typeof maybePromise.then !== "function") {
+        fallbackToStandardChat();
+      } else {
+        maybePromise
+          .then(settle())
+          .catch((err) => {
+            console.warn("Streaming error, falling back to standard sendChatMessage:", err);
+            fallbackToStandardChat();
+          });
+      }
+    } catch (err) {
+      console.warn("Synchronous streaming failure, falling back to sendChatMessage:", err);
+      fallbackToStandardChat();
+    }
   };
 
   const sendMessage = () => {
