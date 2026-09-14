@@ -102,4 +102,12 @@ describe('Product detail page', () => {
     expect(wishlistButton).toBeDefined()
     expect(wishlistButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
   })
+
+  it("renders customer reviews section with interactive review component", async () => {
+    const page = await Page({ params: Promise.resolve({ slug: "trailmaster-x4-tent" }) })
+    render(page)
+
+    expect(screen.getByRole("heading", { level: 2, name: /reviews/i })).toBeDefined()
+    expect(screen.getByRole("button", { name: /write a review/i })).toBeDefined()
+  })
 })
