@@ -146,7 +146,8 @@ describe('OrderDetailPage', () => {
     expect(backLink.getAttribute('href')).toBe('/profile')
 
     // Order Header info
-    expect(screen.getByText('Completed')).toBeDefined()
+    expect(screen.getByLabelText('Order status: Delivered')).toBeDefined()
+    expect(screen.getByRole('button', { name: /request return/i })).toBeDefined()
     expect(screen.getByText(/September 1, 2026/i)).toBeDefined()
 
     // Shipping Address
@@ -173,5 +174,39 @@ describe('OrderDetailPage', () => {
     expect(printButton).toBeDefined()
     fireEvent.click(printButton)
     expect(window.print).toHaveBeenCalledTimes(1)
+  })
+  it('renders cancel action for recent orders and opens cancellation modal', async () => {
+    vi.mocked(useSession).mockReturnValue({
+      status: 'authenticated',
+      data: { user: { id: 'user_123' } },
+    } as any)
+
+    const recentOrder = {
+      id: 'order_recent',
+      userId: 'user_123',
+      date: new Date(Date.now() - 3600000).toISOString(), // 1 hr ago
+      total: 50.0,
+      user: { name: 'Jane Doe' },
+      items: [{ id: 'item_1', productId: 'p1', quantity: 1, price: 50.0, product: { name: 'Cap' } }],
+    }
+
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => recentOrder,
+    } as any)
+
+    render(<OrderDetailPage />)
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Order status: Processing')).toBeDefined()
+    })
+
+    const cancelBtn = screen.getByRole('button', { name: /cancel order/i })
+    expect(cancelBtn).toBeDefined()
+    fireEvent.click(cancelBtn)
+
+    expect(screen.getByRole('dialog')).toBeDefined()
+    expect(screen.getByRole('button', { name: /confirm cancellation/i })).toBeDefined()
   })
 })
