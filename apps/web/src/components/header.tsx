@@ -10,6 +10,7 @@ import SidebarWrapper from "./sidebar-wrapper";
 import { SIDEBAR_DIALOG_ID } from "./sidebar";
 import { CART_DRAWER_ID } from "./cart-drawer";
 import { Suspense } from "react";
+import GlobalSearch from "./global-search";
 import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 
 export const Header = () => {
@@ -80,7 +81,9 @@ export const Header = () => {
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
-        <div className="grow">&nbsp;</div>
+        <div className="flex-1 flex justify-center px-2 sm:px-4">
+          <GlobalSearch />
+        </div>
         <div className="flex flex-row items-center gap-3">
           <button
             ref={cartTriggerRef}
