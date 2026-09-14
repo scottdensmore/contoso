@@ -283,15 +283,19 @@ def test_create_response_and_stream_endpoints_include_citations():
         assert len(data["citations"]) > 0
         assert "slug" in data["citations"][0]
 
-    # 2. Mock mode: create_response/stream emits citations event first
+    # 2. Mock mode: create_response/stream emits citations event
     with patch("main.REAL_CHAT_AVAILABLE", False):
         res = client.post("/api/create_response/stream", json={"question": "tent"})
         assert res.status_code == 200
-        events = [line for line in res.text.split("\n\n") if line.strip()]
-        first_event = json.loads(events[0].removeprefix("data: "))
-        assert first_event.get("event") == "citations"
-        assert isinstance(first_event.get("citations"), list)
-        assert len(first_event["citations"]) > 0
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        citations_event = next((e for e in events if e.get("event") == "citations"), None)
+        assert citations_event is not None
+        assert isinstance(citations_event.get("citations"), list)
+        assert len(citations_event["citations"]) > 0
 
     # 3. Real mode: create_response includes citations returned by get_response
     expected_citations = [
@@ -419,17 +423,19 @@ def test_create_response_stream_mock_mode_emits_handoff_event():
             json={"question": "I want a refund for my broken tent"},
         )
         assert res.status_code == 200
-        events = [line for line in res.text.split("\n\n") if line.strip()]
-        # First event is citations
-        first_event = json.loads(events[0].removeprefix("data: "))
-        assert first_event.get("event") == "citations"
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        citations_event = next((e for e in events if e.get("event") == "citations"), None)
+        assert citations_event is not None
 
-        # Second event should be handoff
-        second_event = json.loads(events[1].removeprefix("data: "))
-        assert second_event.get("event") == "handoff"
-        assert second_event["handoff"]["requested"] is True
-        assert second_event["handoff"]["reason"] == "dispute_or_refund"
-        assert second_event["handoff"]["suggested_action"] == "support_ticket"
+        handoff_event = next((e for e in events if e.get("event") == "handoff"), None)
+        assert handoff_event is not None
+        assert handoff_event["handoff"]["requested"] is True
+        assert handoff_event["handoff"]["reason"] == "dispute_or_refund"
+        assert handoff_event["handoff"]["suggested_action"] == "support_ticket"
 
 
 def test_create_response_real_mode_includes_handoff():
@@ -1342,3 +1348,70 @@ def test_create_response_stream_real_mode_emits_policy_event(mock_get_response_s
         policy_event = next((e for e in events if e.get("event") == "policy"), None)
         assert policy_event is not None
         assert policy_event["policy"] == expected_policy
+
+
+def test_chat_status_endpoint():
+    """Test GET /api/chat/status endpoint returns diagnostics and supported events."""
+    res = client.get("/api/chat/status")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "online"
+    assert "real_chat_available" in data
+    assert "model_provider" in data
+    assert "model_name" in data
+    assert data["supported_events"] == [
+        "status",
+        "citations",
+        "profile",
+        "handoff",
+        "order_tracking",
+        "promotions",
+        "policy",
+        "session",
+    ]
+
+
+def test_chat_status_endpoint_respects_provider_and_model():
+    """Test GET /api/chat/status with local vs gcp provider."""
+    with patch.dict("os.environ", {"LLM_PROVIDER": "local", "LOCAL_MODEL_NAME": "custom-local:latest"}):
+        res = client.get("/api/chat/status")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["model_provider"] == "local"
+        assert data["model_name"] == "custom-local:latest"
+
+    with patch.dict("os.environ", {"LLM_PROVIDER": "gcp", "GEMINI_MODEL_NAME": "gemini-custom"}):
+        res = client.get("/api/chat/status")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["model_provider"] == "gcp"
+        assert data["model_name"] == "gemini-custom"
+
+
+def test_create_response_stream_mock_mode_emits_status_events():
+    """Test that mock streaming emits analyzing_query, searching_catalog, and generating_response."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "hiking boots"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split(chr(10) + chr(10))
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        status_events = [e for e in events if e.get("event") == "status"]
+        assert len(status_events) == 3
+        assert status_events[0] == {
+            "event": "status",
+            "status": "analyzing_query",
+            "message": "Analyzing question...",
+        }
+        assert status_events[1] == {
+            "event": "status",
+            "status": "searching_catalog",
+            "message": "Searching catalog...",
+        }
+        assert status_events[2] == {
+            "event": "status",
+            "status": "generating_response",
+            "message": "Generating response...",
+        }

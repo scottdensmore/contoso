@@ -85,6 +85,13 @@ MOCK_CITATIONS = [
 base = Path(__file__).resolve().parent
 load_dotenv()
 
+CHAT_SERVICE_PROVIDER = os.environ.get("LLM_PROVIDER", "gcp")
+CHAT_SERVICE_MODEL = (
+    os.environ.get("LOCAL_MODEL_NAME", "gemma3:12b")
+    if CHAT_SERVICE_PROVIDER == "local"
+    else os.environ.get("GEMINI_MODEL_NAME", "gemini-2.5-flash")
+)
+
 # Configure structured logging for Cloud Logging
 logging.basicConfig(
     level=logging.INFO,
@@ -195,6 +202,42 @@ async def check_database_connection() -> tuple[bool, str | None]:
         return await check_connection()
     except Exception as exc:  # noqa: BLE001
         return False, str(exc)
+
+
+@app.get("/api/chat/status")
+async def get_chat_status() -> dict[str, Any]:
+    logger.info("Chat status diagnostics endpoint accessed")
+    provider = CHAT_SERVICE_PROVIDER
+    if "LLM_PROVIDER" in os.environ:
+        provider = os.environ["LLM_PROVIDER"]
+
+    if provider == "local":
+        model = os.environ.get("LOCAL_MODEL_NAME", "gemma3:12b")
+    else:
+        model = os.environ.get("GEMINI_MODEL_NAME", "gemini-2.5-flash")
+    if (
+        "LOCAL_MODEL_NAME" not in os.environ
+        and "GEMINI_MODEL_NAME" not in os.environ
+        and CHAT_SERVICE_MODEL not in ("gemma3:12b", "gemini-2.5-flash")
+    ):
+        model = CHAT_SERVICE_MODEL
+
+    return {
+        "status": "online",
+        "real_chat_available": REAL_CHAT_AVAILABLE,
+        "model_provider": provider,
+        "model_name": model,
+        "supported_events": [
+            "status",
+            "citations",
+            "profile",
+            "handoff",
+            "order_tracking",
+            "promotions",
+            "policy",
+            "session",
+        ],
+    }
 
 
 @app.get("/health/dependencies")
@@ -400,6 +443,9 @@ async def create_response_stream(request: ChatRequest):
                 logger.warning(
                     "Using mock streaming response - real chat logic not available"
                 )
+                yield f"data: {json.dumps({'event': 'status', 'status': 'analyzing_query', 'message': 'Analyzing question...'})}\n\n"
+                yield f"data: {json.dumps({'event': 'status', 'status': 'searching_catalog', 'message': 'Searching catalog...'})}\n\n"
+                yield f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n"
                 handoff = detect_handoff_intent(request.question, chat_history)
                 tracking_intent = detect_order_tracking_intent(request.question)
                 promo_intent = detect_promo_intent(request.question)
