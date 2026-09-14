@@ -14,11 +14,23 @@ from pydantic import BaseModel, ConfigDict
 
 # Import our real chat logic (simplified)
 try:
-    from contoso_chat.chat_request import get_response, get_response_stream
+    from contoso_chat.chat_request import (
+        detect_handoff_intent,
+        get_response,
+        get_response_stream,
+    )
     REAL_CHAT_AVAILABLE = True
 except ImportError:
     REAL_CHAT_AVAILABLE = False
     print("Warning: Real chat logic not available, using mock response")
+
+    def detect_handoff_intent(question: str, chat_history: Any = None) -> dict:
+        return {
+            "requested": False,
+            "reason": None,
+            "suggested_action": None,
+            "support_contact": None,
+        }
 
 MOCK_CITATIONS = [
     {
@@ -176,12 +188,14 @@ async def create_response(request: ChatRequest):
         else:
             # Mock response for testing
             logger.warning("Using mock response - real chat logic not available")
+            handoff = detect_handoff_intent(request.question, request.chat_history)
             return {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
                 "chat_history": request.chat_history,
                 "mock": True,
                 "citations": MOCK_CITATIONS,
+                "handoff": handoff,
             }
     except Exception as e:
         # Log the error for debugging
@@ -196,12 +210,14 @@ async def create_response(request: ChatRequest):
         )
 
         # Fallback response if real chat fails
+        handoff = detect_handoff_intent(request.question, request.chat_history)
         return {
             "answer": f"I'm having trouble processing your request about '{request.question}' right now. Please try again later.",
             "customer_id": request.customer_id,
             "chat_history": request.chat_history,
             "error": str(e),
-            "fallback": True
+            "fallback": True,
+            "handoff": handoff,
         }
 
 
@@ -232,7 +248,9 @@ async def create_response_stream(request: ChatRequest):
                 logger.warning(
                     "Using mock streaming response - real chat logic not available"
                 )
+                handoff = detect_handoff_intent(request.question, request.chat_history)
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
+                yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
                 mock_chunks = [
                     f"Mock response: You asked about '{request.question}'. ",
                     "This is a test response from Contoso Chat ",

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Any
 
 from .search_service import get_search_service
@@ -209,6 +210,131 @@ async def generate_llm_response(
         return response.text
 
 
+
+SUPPORT_CONTACT = {
+    "email": "support@contosooutdoor.com",
+    "phone": "1-800-555-0199",
+    "hours": "Mon-Fri 8am-8pm EST",
+}
+
+AGENT_PATTERNS = [
+    r"\bhuman\b",
+    r"\bhumans\b",
+    r"\bagent\b",
+    r"\bagents\b",
+    r"\breal person\b",
+    r"\brepresentative\b",
+    r"\brepresentatives\b",
+    r"\boperator\b",
+    r"\boperators\b",
+    r"\btalk to someone\b",
+    r"\bspeak to someone\b",
+    r"\bspeak with someone\b",
+    r"\btalk to a person\b",
+    r"\bspeak to a person\b",
+    r"\bspeak with a person\b",
+    r"\btalk to a human\b",
+    r"\bspeak to a human\b",
+    r"\bspeak with a human\b",
+    r"\bcustomer service representative\b",
+    r"\bcustomer service rep\b",
+    r"\blive agent\b",
+    r"\bsupport agent\b",
+]
+
+DISPUTE_PATTERNS = [
+    r"\bcancel (?:my |the )?order\b",
+    r"\bcancellation\b",
+    r"\brefund (?:my )?money\b",
+    r"\brefund\b",
+    r"\brefunds\b",
+    r"\bdispute (?:a |the )?charge\b",
+    r"\bdispute\b",
+    r"\bdisputes\b",
+    r"\bbroken item\b",
+    r"\bbroken\b",
+    r"\bdefective item\b",
+    r"\bdefective\b",
+    r"\bstolen package\b",
+    r"\bnever arrived\b",
+    r"\bspeak to (?:a )?manager\b",
+    r"\btalk to (?:a )?manager\b",
+    r"\bspeak with (?:a )?manager\b",
+    r"\btalk with (?:a )?manager\b",
+    r"\bsupervisor\b",
+    r"\bsupervisors\b",
+    r"\bchargeback\b",
+    r"\bchargebacks\b",
+]
+
+FRUSTRATION_PATTERNS = [
+    r"\byou are useless\b",
+    r"\byou're useless\b",
+    r"\buseless\b",
+    r"\bnot helping\b",
+    r"\bstop repeating\b",
+    r"\bthis is ridiculous\b",
+    r"\bridiculous\b",
+    r"\bterrible service\b",
+    r"\bhorrible service\b",
+    r"\bawful service\b",
+    r"\bworst service\b",
+    r"\bcompletely unhelpful\b",
+    r"\bunhelpful\b",
+    r"\bwaste of time\b",
+]
+
+
+def detect_handoff_intent(question: str, chat_history: Any = None) -> dict:
+    """Evaluates user question (and recent history if applicable) for escalation or handoff intent."""
+    texts_to_check: list[str] = []
+
+    if isinstance(question, str) and question.strip():
+        texts_to_check.append(question.strip())
+
+    if not texts_to_check and chat_history is not None:
+        history = format_chat_history(chat_history)
+        for turn in reversed(history):
+            if turn.get("role") == "user" and turn.get("content"):
+                texts_to_check.append(turn["content"])
+                break
+
+    for text in texts_to_check:
+        for pattern in AGENT_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                return {
+                    "requested": True,
+                    "reason": "agent_requested",
+                    "suggested_action": "live_agent_transfer",
+                    "support_contact": SUPPORT_CONTACT,
+                }
+
+        for pattern in DISPUTE_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                return {
+                    "requested": True,
+                    "reason": "dispute_or_refund",
+                    "suggested_action": "support_ticket",
+                    "support_contact": SUPPORT_CONTACT,
+                }
+
+        for pattern in FRUSTRATION_PATTERNS:
+            if re.search(pattern, text, re.IGNORECASE):
+                return {
+                    "requested": True,
+                    "reason": "user_frustration",
+                    "suggested_action": "contact_support",
+                    "support_contact": SUPPORT_CONTACT,
+                }
+
+    return {
+        "requested": False,
+        "reason": None,
+        "suggested_action": None,
+        "support_contact": None,
+    }
+
+
 async def get_response(customer_id, question, chat_history: Any = None):
     """Generates a response using the RAG pattern."""
     project_id = os.environ.get("PROJECT_ID")
@@ -241,12 +367,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
     )
 
     citations = extract_product_citations(product_context)
+    handoff = detect_handoff_intent(question, chat_history)
 
     return {
         "question": question,
         "answer": answer,
         "context": product_context,
         "citations": citations,
+        "handoff": handoff,
     }
 
 
@@ -340,9 +468,11 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     context_str = json.dumps(product_context, indent=2)
 
     citations = extract_product_citations(product_context)
+    handoff = detect_handoff_intent(question, chat_history)
 
     # Initial SSE frame with citations
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
+    yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
 
     for chunk in generate_llm_response_stream(
         question,
