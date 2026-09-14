@@ -111,6 +111,68 @@ def format_chat_history(chat_history: Any, max_turns: int = 10) -> list[dict[str
     return turns
 
 
+def build_customer_profile_context(customer: dict[str, Any] | None) -> dict[str, Any]:
+    """Builds customer profile context for personalized recommendations."""
+    if customer is None:
+        return {
+            "user_name": "Guest",
+            "membership": None,
+            "past_purchases": [],
+            "profile_prompt": "",
+        }
+
+    user_name = customer.get("firstName") or customer.get("name") or "Valued Customer"
+    membership = customer.get("membership")
+
+    seen: set[str] = set()
+    past_purchases: list[str] = []
+
+    for order in customer.get("orders", []) or []:
+        if not isinstance(order, dict):
+            continue
+        for item in order.get("items", []) or []:
+            if not isinstance(item, dict):
+                continue
+            product = item.get("product")
+            name = None
+            if isinstance(product, dict):
+                name = (
+                    product.get("name")
+                    or product.get("title")
+                    or product.get("category")
+                    or product.get("categoryName")
+                )
+            elif isinstance(product, str):
+                name = product
+            elif not product:
+                name = (
+                    item.get("name")
+                    or item.get("product_name")
+                    or item.get("category")
+                    or item.get("categoryName")
+                )
+
+            if name and isinstance(name, str) and name.strip() and name.strip() not in seen:
+                seen.add(name.strip())
+                past_purchases.append(name.strip())
+
+    purchases_str = ", ".join(past_purchases) if past_purchases else "None"
+    profile_prompt = (
+        f"Customer Profile:\n"
+        f"- Name: {user_name}\n"
+        f"- Membership Tier: {membership}\n"
+        f"- Past Purchases: {purchases_str}\n"
+        f"- Recommendation Guidelines: Tailor product suggestions to complement the customer's existing gear and acknowledge their membership status when relevant."
+    )
+
+    return {
+        "user_name": user_name,
+        "membership": membership,
+        "past_purchases": past_purchases,
+        "profile_prompt": profile_prompt,
+    }
+
+
 def format_chat_history_prompt(formatted_history: list[dict[str, str]]) -> str:
     """Formats history turns into readable text block.
 
@@ -155,6 +217,8 @@ async def generate_llm_response(
     location: str | None,
     model_name: str,
     chat_history: Any = None,
+    customer_profile: dict[str, Any] | None = None,
+    profile_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -167,6 +231,10 @@ async def generate_llm_response(
     - Be professional, helpful, and conversational.
     - If the catalog doesn't contain the answer, politely let the user know and suggest the closest alternative.
     """
+
+    if customer_profile and isinstance(customer_profile, dict):
+        if not profile_prompt:
+            profile_prompt = customer_profile.get("profile_prompt", "")
 
     history = format_chat_history(chat_history)
     history_prompt = format_chat_history_prompt(history)
@@ -182,8 +250,12 @@ async def generate_llm_response(
         api_base = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
         local_model = os.getenv("LOCAL_MODEL_NAME", "gemma3:12b")
 
+        local_system = system_instruction
+        if profile_prompt:
+            local_system = f"{local_system}\n\n{profile_prompt}"
+
         messages = [
-            {"role": "system", "content": system_instruction},
+            {"role": "system", "content": local_system},
             *[{"role": turn["role"], "content": turn["content"]} for turn in history],
             {"role": "user", "content": f"Catalog Context:\n{context}\n\nUser Question: {prompt}"},
         ]
@@ -199,10 +271,14 @@ async def generate_llm_response(
         from google import genai
 
         client = genai.Client(vertexai=True, project=project_id, location=location)
+        prompt_parts = [system_instruction]
         if history_prompt:
-            full_prompt = f"{system_instruction}\n\n{history_prompt}\n\nCatalog Context:\n{context}\n\nUser Question: {prompt}"
-        else:
-            full_prompt = f"{system_instruction}\n\nCatalog Context:\n{context}\n\nUser Question: {prompt}"
+            prompt_parts.append(history_prompt)
+        if profile_prompt:
+            prompt_parts.append(profile_prompt)
+        prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
+        full_prompt = "\n\n".join(prompt_parts)
+
         response = client.models.generate_content(
             model=model_name,
             contents=full_prompt,
@@ -342,7 +418,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
 
     # 1. Retrieve customer data
     customer = await get_customer_from_postgres(customer_id)
-    user_name = customer["firstName"] if customer else "Guest"
+    profile = build_customer_profile_context(customer)
+    user_name = profile["user_name"]
 
     # 2. Retrieve relevant product documentation (restored to 5 results)
     search_service = get_search_service()
@@ -364,6 +441,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
         location,
         model_name,
         chat_history=chat_history,
+        customer_profile=profile,
     )
 
     citations = extract_product_citations(product_context)
@@ -375,6 +453,10 @@ async def get_response(customer_id, question, chat_history: Any = None):
         "context": product_context,
         "citations": citations,
         "handoff": handoff,
+        "customer_profile": {
+            "membership": profile["membership"],
+            "past_purchases_count": len(profile["past_purchases"]),
+        },
     }
 
 
@@ -387,6 +469,8 @@ def generate_llm_response_stream(
     location: str | None,
     model_name: str,
     chat_history: Any = None,
+    customer_profile: dict[str, Any] | None = None,
+    profile_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -399,6 +483,10 @@ def generate_llm_response_stream(
     - Be professional, helpful, and conversational.
     - If the catalog doesn't contain the answer, politely let the user know and suggest the closest alternative.
     """
+
+    if customer_profile and isinstance(customer_profile, dict):
+        if not profile_prompt:
+            profile_prompt = customer_profile.get("profile_prompt", "")
 
     history = format_chat_history(chat_history)
     history_prompt = format_chat_history_prompt(history)
@@ -414,8 +502,12 @@ def generate_llm_response_stream(
         api_base = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
         local_model = os.getenv("LOCAL_MODEL_NAME", "gemma3:12b")
 
+        local_system = system_instruction
+        if profile_prompt:
+            local_system = f"{local_system}\n\n{profile_prompt}"
+
         messages = [
-            {"role": "system", "content": system_instruction},
+            {"role": "system", "content": local_system},
             *[{"role": turn["role"], "content": turn["content"]} for turn in history],
             {"role": "user", "content": f"Catalog Context:\n{context}\n\nUser Question: {prompt}"},
         ]
@@ -434,10 +526,14 @@ def generate_llm_response_stream(
         from google import genai
 
         client = genai.Client(vertexai=True, project=project_id, location=location)
+        prompt_parts = [system_instruction]
         if history_prompt:
-            full_prompt = f"{system_instruction}\n\n{history_prompt}\n\nCatalog Context:\n{context}\n\nUser Question: {prompt}"
-        else:
-            full_prompt = f"{system_instruction}\n\nCatalog Context:\n{context}\n\nUser Question: {prompt}"
+            prompt_parts.append(history_prompt)
+        if profile_prompt:
+            prompt_parts.append(profile_prompt)
+        prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
+        full_prompt = "\n\n".join(prompt_parts)
+
         response = client.models.generate_content_stream(
             model=model_name,
             contents=full_prompt,
@@ -454,7 +550,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
 
     # 1. Retrieve customer data
     customer = await get_customer_from_postgres(customer_id)
-    user_name = customer["firstName"] if customer else "Guest"
+    profile = build_customer_profile_context(customer)
+    user_name = profile["user_name"]
 
     # 2. Retrieve relevant product documentation (restored to 5 results)
     search_service = get_search_service()
@@ -470,9 +567,10 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     citations = extract_product_citations(product_context)
     handoff = detect_handoff_intent(question, chat_history)
 
-    # Initial SSE frame with citations
+    # Initial SSE frames with citations, handoff, and customer profile
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
+    yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': profile['membership'], 'past_purchases_count': len(profile['past_purchases'])}})}\n\n"
 
     for chunk in generate_llm_response_stream(
         question,
@@ -483,5 +581,6 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         location,
         model_name,
         chat_history=chat_history,
+        customer_profile=profile,
     ):
         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
