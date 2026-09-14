@@ -1,3 +1,5 @@
+import ProductReviews from "@/components/product-reviews";
+import { parseManualReviews } from "@/lib/reviews";
 import Block from "@/components/block";
 import clsx from "clsx";
 import Image from "next/image";
@@ -61,6 +63,7 @@ export default async function Page({
   }
 
   const manual = await getManual(product.manual);
+  const initialReviews = parseManualReviews(manual, product.slug);
   const mitems = manual.split("\n");
 
   const sections = [
@@ -206,16 +209,31 @@ export default async function Page({
               className="rounded-3xl w-full h-auto max-w-[550px]"
             />
           </figure>
-          <div
-            className={clsx(
-              // min-w-0: without it a flex child refuses to shrink below its
-              // content, so long words push the row past the viewport.
-              "text-left mt-2 grow min-w-0 text-lg",
-              extraclasses,
-              i % 2 == 1 ? "lg:mr-8" : "lg:ml-8"
-            )}
-            dangerouslySetInnerHTML={{ __html: getSection(i) }}
-          />
+          {i === 1 ? (
+            <div
+              className={clsx(
+                "text-left mt-2 grow min-w-0 text-lg",
+                i % 2 == 1 ? "lg:mr-8" : "lg:ml-8"
+              )}
+            >
+              <ProductReviews
+                slug={product.slug}
+                productName={product.name}
+                initialReviews={initialReviews}
+              />
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                // min-w-0: without it a flex child refuses to shrink below its
+                // content, so long words push the row past the viewport.
+                "text-left mt-2 grow min-w-0 text-lg",
+                extraclasses,
+                i % 2 == 1 ? "lg:mr-8" : "lg:ml-8"
+              )}
+              dangerouslySetInnerHTML={{ __html: getSection(i) }}
+            />
+          )}
         </Block>
       ))}
       <Block innerClassName={clsx("p-4 flex items-start")}>
