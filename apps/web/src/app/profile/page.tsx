@@ -7,7 +7,118 @@ import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
 import PasswordChangeForm from "@/components/password-change-form";
 import ShippingAddressForm from "@/components/shipping-address-form";
-import { ACTION_BOUNDARY } from "@/lib/control-classes";
+import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
+import { useWishlist, WishlistItem } from "@/lib/wishlist-context";
+import { useCart } from "@/lib/cart-context";
+import Image from "next/image";
+
+function WishlistTab() {
+  const wishlist = useWishlist();
+  const cart = useCart();
+
+  const handleMoveToCart = (item: WishlistItem) => {
+    cart.addItem(
+      {
+        productId: item.id,
+        slug: item.slug,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+      },
+      1
+    );
+    wishlist.removeItem(item.id);
+  };
+
+  return (
+    <div
+      role="tabpanel"
+      id="panel-wishlist"
+      aria-labelledby="tab-wishlist"
+      tabIndex={0}
+    >
+      <h2 className="text-xl font-semibold mb-4">My Wishlist</h2>
+      {wishlist.items.length === 0 ? (
+        <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg p-6 bg-white">
+          <p className="text-gray-600 mb-4">
+            Your wishlist is empty. Explore our catalog to save your favorite gear.
+          </p>
+          <Link
+            href="/"
+            className={`inline-flex items-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 ${ACTION_BOUNDARY}`}
+          >
+            Explore Catalog
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {wishlist.items.map((item) => {
+            const formattedPrice = new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            }).format(item.price);
+
+            return (
+              <div
+                key={item.id}
+                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-50">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-xs text-gray-400">
+                        No image
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Link
+                      href={`/products/${item.slug}`}
+                      className={`text-base font-semibold text-gray-900 hover:text-indigo-600 ${ACTION_FOCUS}`}
+                    >
+                      {item.name}
+                    </Link>
+                    {item.categoryName && (
+                      <p className="text-xs text-gray-500">{item.categoryName}</p>
+                    )}
+                    <p className="text-sm font-medium text-gray-900 mt-1">
+                      {formattedPrice}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-center">
+                  <button
+                    type="button"
+                    onClick={() => handleMoveToCart(item)}
+                    className={`inline-flex items-center rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800 ${ACTION_BOUNDARY}`}
+                  >
+                    Move to Cart
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => wishlist.removeItem(item.id)}
+                    aria-label={`Remove ${item.name} from wishlist`}
+                    className={`inline-flex items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 hover:text-zinc-900 ${ACTION_FOCUS}`}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -120,6 +231,7 @@ export default function ProfilePage() {
     { id: "security", name: "Security" },
     { id: "shipping", name: "Shipping" },
     { id: "orders", name: "Orders" },
+    { id: "wishlist", name: "Wishlist" },
   ];
 
   return (
@@ -283,6 +395,7 @@ export default function ProfilePage() {
               )}
             </div>
           )}
+          {activeTab === "wishlist" && <WishlistTab />}
         </div>
       </div>
     </>

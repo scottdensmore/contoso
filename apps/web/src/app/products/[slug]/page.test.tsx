@@ -21,6 +21,15 @@ vi.mock('@/components/add-to-cart', () => ({
   default: () => <div data-testid="add-to-cart" />,
 }))
 
+vi.mock('@/components/wishlist-button', () => ({
+  __esModule: true,
+  default: ({ product }: any) => (
+    <button data-testid="wishlist-button" aria-label={`Add ${product.name} to wishlist`}>
+      Wishlist
+    </button>
+  ),
+}))
+
 vi.mock('@/components/block', () => ({
   __esModule: true,
   default: ({
@@ -83,5 +92,14 @@ describe('Product detail page', () => {
     const paths = await generateStaticParams()
     expect(paths.length).toBeGreaterThan(0)
     expect(paths).toContainEqual({ slug: 'trailmaster-x4-tent' })
+  })
+  it('renders WishlistButton alongside AddToCart', async () => {
+    const page = await Page({ params: Promise.resolve({ slug: 'trailmaster-x4-tent' }) })
+    render(page)
+
+    expect(screen.getByTestId('add-to-cart')).toBeDefined()
+    const wishlistButton = screen.getByTestId('wishlist-button')
+    expect(wishlistButton).toBeDefined()
+    expect(wishlistButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
   })
 })
