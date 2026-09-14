@@ -12,6 +12,7 @@ import WishlistButton from "@/components/wishlist-button";
 import CompareButton from "@/components/compare-button";
 import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
+import RecentlyViewed, { RecentlyViewedTracker } from "@/components/recently-viewed";
 
 // This function gets called at build time
 export async function generateStaticParams() {
@@ -138,6 +139,16 @@ export default async function Page({
   return (
     <>
       <Header />
+      <RecentlyViewedTracker
+        product={{
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          image: product.image,
+          categoryName: product.category?.name,
+        }}
+      />
       <Block innerClassName="pt-6 pb-6">
         <h1 className="text-6xl pb-3 pt-8 subpixel-antialiased font-serif ">
           {product.name}
@@ -272,6 +283,7 @@ export default async function Page({
           dangerouslySetInnerHTML={{ __html: getSection(5) }}
         />
       </Block>
+      <RecentlyViewed currentSlug={product.slug} />
     </>
   );
 }
