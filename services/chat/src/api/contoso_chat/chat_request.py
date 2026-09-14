@@ -8,6 +8,10 @@ from .order_tracking import (
     detect_order_tracking_intent,
     lookup_order_tracking,
 )
+from .policies import (
+    build_policy_prompt,
+    detect_policy_intent,
+)
 from .promotions import (
     build_promo_prompt,
     detect_promo_intent,
@@ -231,6 +235,7 @@ async def generate_llm_response(
     profile_prompt: str = "",
     order_tracking_prompt: str = "",
     promo_prompt: str = "",
+    policy_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -269,10 +274,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{order_tracking_prompt}"
         if promo_prompt:
             local_system = f"{local_system}\n\n{promo_prompt}"
-        if order_tracking_prompt:
-            local_system = f"{local_system}\n\n{order_tracking_prompt}"
-        if promo_prompt:
-            local_system = f"{local_system}\n\n{promo_prompt}"
+        if policy_prompt:
+            local_system = f"{local_system}\n\n{policy_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -300,6 +303,8 @@ async def generate_llm_response(
             prompt_parts.append(order_tracking_prompt)
         if promo_prompt:
             prompt_parts.append(promo_prompt)
+        if policy_prompt:
+            prompt_parts.append(policy_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -473,6 +478,11 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if promo_intent.get("is_promo_intent"):
         promo_prompt = build_promo_prompt(promo_intent, question)
 
+    policy_intent = detect_policy_intent(question)
+    policy_prompt = ""
+    if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+        policy_prompt = build_policy_prompt(policy_intent["matched_policy"])
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -481,6 +491,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["order_tracking_prompt"] = order_tracking_prompt
     if promo_prompt:
         llm_kwargs["promo_prompt"] = promo_prompt
+    if policy_prompt:
+        llm_kwargs["policy_prompt"] = policy_prompt
 
     answer = await generate_llm_response(
         question,
@@ -511,6 +523,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["order_tracking"] = tracking_info
     if promo_intent.get("is_promo_intent"):
         response_payload["promotions"] = get_active_promotions()
+    if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+        response_payload["policy"] = policy_intent["matched_policy"]
 
     return response_payload
 
@@ -528,6 +542,7 @@ def generate_llm_response_stream(
     profile_prompt: str = "",
     order_tracking_prompt: str = "",
     promo_prompt: str = "",
+    policy_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -562,6 +577,12 @@ def generate_llm_response_stream(
         local_system = system_instruction
         if profile_prompt:
             local_system = f"{local_system}\n\n{profile_prompt}"
+        if order_tracking_prompt:
+            local_system = f"{local_system}\n\n{order_tracking_prompt}"
+        if promo_prompt:
+            local_system = f"{local_system}\n\n{promo_prompt}"
+        if policy_prompt:
+            local_system = f"{local_system}\n\n{policy_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -592,6 +613,8 @@ def generate_llm_response_stream(
             prompt_parts.append(order_tracking_prompt)
         if promo_prompt:
             prompt_parts.append(promo_prompt)
+        if policy_prompt:
+            prompt_parts.append(policy_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -645,7 +668,12 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if promo_intent.get("is_promo_intent"):
         promo_prompt = build_promo_prompt(promo_intent, question)
 
-    # Initial SSE frames with citations, handoff, customer profile, order tracking, and promotions
+    policy_intent = detect_policy_intent(question)
+    policy_prompt = ""
+    if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+        policy_prompt = build_policy_prompt(policy_intent["matched_policy"])
+
+    # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
     yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': profile['membership'], 'past_purchases_count': len(profile['past_purchases'])}})}\n\n"
@@ -653,6 +681,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': tracking_info})}\n\n"
     if promo_intent.get("is_promo_intent"):
         yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
+    if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+        yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -662,6 +692,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["order_tracking_prompt"] = order_tracking_prompt
     if promo_prompt:
         stream_kwargs["promo_prompt"] = promo_prompt
+    if policy_prompt:
+        stream_kwargs["policy_prompt"] = policy_prompt
 
     for chunk in generate_llm_response_stream(
         question,

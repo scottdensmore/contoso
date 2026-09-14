@@ -12,6 +12,11 @@ from contoso_chat.feedback import (
     record_feedback,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.policies import (
+    detect_policy_intent,
+    get_policy_by_id,
+    get_store_policies,
+)
 from contoso_chat.promotions import (
     detect_promo_intent,
     get_active_promotions,
@@ -142,6 +147,10 @@ app.add_middleware(
 
 
 # Request model
+class PolicyInquiryRequest(BaseModel):
+    query: str
+
+
 class PromoValidateRequest(BaseModel):
     code: str
 
@@ -258,6 +267,7 @@ async def create_response(request: ChatRequest):
             handoff = detect_handoff_intent(request.question, chat_history)
             tracking_intent = detect_order_tracking_intent(request.question)
             promo_intent = detect_promo_intent(request.question)
+            policy_intent = detect_policy_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -281,6 +291,13 @@ async def create_response(request: ChatRequest):
                     "Mock response: We have great promotions available! "
                     "Use code WELCOME20 for 20% off your order, OUTDOORS10 for 10% off site-wide, "
                     "or TRAIL15 for 15% off trail equipment. Apply them in your cart drawer at checkout!"
+                )
+            if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+                mock_payload["policy"] = policy_intent["matched_policy"]
+                p_obj = policy_intent["matched_policy"]
+                mock_payload["answer"] = (
+                    f"Mock response: Regarding our {p_obj.get('title', 'policy')}: "
+                    f"{p_obj.get('details', p_obj.get('summary', ''))}"
                 )
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -386,6 +403,7 @@ async def create_response_stream(request: ChatRequest):
                 handoff = detect_handoff_intent(request.question, chat_history)
                 tracking_intent = detect_order_tracking_intent(request.question)
                 promo_intent = detect_promo_intent(request.question)
+                policy_intent = detect_policy_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -395,6 +413,8 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
                 if promo_intent.get("is_promo_intent"):
                     yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
+                if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+                    yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
                 if tracking_intent.get("is_tracking_intent"):
                     mock_chunks = [
                         f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
@@ -407,6 +427,12 @@ async def create_response_stream(request: ChatRequest):
                         "Mock response: We have great promotions available! ",
                         "Use code WELCOME20 for 20% off, OUTDOORS10 for 10% off, or TRAIL15 for 15% off. ",
                         "Apply them in your shopping cart drawer at checkout!",
+                    ]
+                elif policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+                    p_obj = policy_intent["matched_policy"]
+                    mock_chunks = [
+                        f"Mock response: Regarding our {p_obj.get('title', 'policy')}: ",
+                        f"{p_obj.get('details', p_obj.get('summary', ''))}",
                     ]
                 else:
                     mock_chunks = [
@@ -539,3 +565,28 @@ async def validate_promotion(request: PromoValidateRequest) -> dict[str, Any]:
     logger.info("Promo validation requested", extra={"code": request.code})
     return validate_promo_code(request.code)
 
+
+
+@app.get("/api/policies")
+async def get_policies() -> list[dict[str, Any]]:
+    logger.info("Policies endpoint accessed")
+    return get_store_policies()
+
+
+@app.get("/api/policies/{policy_id}")
+async def get_policy(policy_id: str) -> dict[str, Any]:
+    logger.info("Policy detail requested", extra={"policy_id": policy_id})
+    policy = get_policy_by_id(policy_id)
+    if not policy:
+        raise HTTPException(status_code=404, detail=f"Policy '{policy_id}' not found")
+    return policy
+
+
+@app.post("/api/policies/inquire")
+async def inquire_policy(request: PolicyInquiryRequest) -> dict[str, Any]:
+    logger.info("Policy inquiry requested", extra={"query": request.query})
+    match_result = detect_policy_intent(request.query)
+    response = dict(match_result)
+    if "policy" not in response and response.get("matched_policy"):
+        response["policy"] = response["matched_policy"]
+    return response

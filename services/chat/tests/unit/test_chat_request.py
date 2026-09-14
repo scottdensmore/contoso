@@ -1605,3 +1605,172 @@ async def test_generate_llm_response_gcp_provider_includes_promo_prompt():
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Promotions: Use code WELCOME20" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_with_policy_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="We offer a 14-day price-match guarantee against authorized outdoor retailers!"),
+    ) as mock_llm:
+        result = await get_response("cust-1", "Can you match a lower price from REI?", "[]")
+
+    assert "policy" in result
+    policy = result["policy"]
+    assert isinstance(policy, dict)
+    assert policy["id"] == "price_match"
+
+    mock_llm.assert_awaited_once()
+    call_kwargs = mock_llm.await_args.kwargs
+    assert "policy_prompt" in call_kwargs or any(
+        "Price-Match" in str(arg) for arg in mock_llm.await_args.args
+    ) or "Price-Match" in str(call_kwargs.get("policy_prompt", ""))
+
+
+@pytest.mark.anyio
+async def test_get_response_without_policy_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="We have great tents."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent", "[]")
+
+    assert result.get("policy") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_policy_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "What is your return policy?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    policy_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "policy":
+                    policy_frame = data
+
+    assert "policy" in event_types
+    assert policy_frame is not None
+    assert policy_frame["policy"]["id"] == "returns"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_policy_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a tent", "[]")
+        frames = [f async for f in stream]
+
+    event_types = [
+        json.loads(f.removeprefix("data: "))["event"]
+        for f in frames
+        if f.startswith("data: ") and "event" in json.loads(f.removeprefix("data: "))
+    ]
+    assert "policy" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_policy_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local policy answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="What is your return policy?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            policy_prompt="Store Policy Grounding: Returns Policy",
+        )
+
+    assert result == "local policy answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_message = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Store Policy Grounding: Returns Policy" in system_message
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_policy_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp policy answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="What is your return policy?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            policy_prompt="Store Policy Grounding: Returns Policy",
+        )
+
+    assert result == "gcp policy answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Store Policy Grounding: Returns Policy" in sent_prompt
