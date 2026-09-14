@@ -5,6 +5,11 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from contoso_chat.carrier_tracking import (
+    CarrierTrackingInfo,
+    detect_carrier_tracking_intent,
+    lookup_carrier_tracking,
+)
 from contoso_chat.feedback import (
     FeedbackRequest,
     FeedbackResponse,
@@ -64,6 +69,11 @@ except ImportError:
             "suggested_action": None,
             "support_contact": None,
         }
+
+_DEFAULT_CARRIER_INFO = lookup_carrier_tracking("CTSO-TRK-DEMO123")
+MOCK_CARRIER_TRACKING = (
+    _DEFAULT_CARRIER_INFO.model_dump() if _DEFAULT_CARRIER_INFO else {}
+)
 
 MOCK_ORDER_TRACKING = {
     "order_id": "ord_mock_123",
@@ -321,6 +331,7 @@ async def create_response(request: ChatRequest):
             logger.warning("Using mock response - real chat logic not available")
             handoff = detect_handoff_intent(request.question, chat_history)
             tracking_intent = detect_order_tracking_intent(request.question)
+            carrier_intent = detect_carrier_tracking_intent(request.question)
             promo_intent = detect_promo_intent(request.question)
             policy_intent = detect_policy_intent(request.question)
             store_intent = detect_store_intent(request.question)
@@ -333,7 +344,31 @@ async def create_response(request: ChatRequest):
                 "handoff": handoff,
                 "customer_profile": {"membership": "Gold", "past_purchases_count": 2},
             }
-            if tracking_intent.get("is_tracking_intent"):
+            if carrier_intent.get("is_carrier_intent"):
+                ext_id = carrier_intent.get("extracted_identifier")
+                c_info = lookup_carrier_tracking(ext_id) if ext_id else None
+                if c_info:
+                    mock_payload["carrier_tracking"] = c_info.model_dump()
+                    mock_payload["answer"] = (
+                        f"Mock response: Your package ({c_info.tracking_number}) is currently "
+                        f"{c_info.status} with {c_info.carrier}. "
+                        f"Current location: {c_info.current_location}. "
+                        f"Estimated delivery: {c_info.estimated_delivery}."
+                    )
+                elif ext_id:
+                    mock_payload["answer"] = (
+                        f"Mock response: Tracking information not found for identifier: {ext_id}. "
+                        "Please verify your tracking number and try again."
+                    )
+                else:
+                    mock_payload["carrier_tracking"] = MOCK_CARRIER_TRACKING
+                    mock_payload["answer"] = (
+                        f"Mock response: Your package ({MOCK_CARRIER_TRACKING['tracking_number']}) is currently "
+                        f"{MOCK_CARRIER_TRACKING['status']} with {MOCK_CARRIER_TRACKING['carrier']}. "
+                        f"Current location: {MOCK_CARRIER_TRACKING['current_location']}. "
+                        f"Estimated delivery: {MOCK_CARRIER_TRACKING['estimated_delivery']}."
+                    )
+            elif tracking_intent.get("is_tracking_intent"):
                 mock_payload["order_tracking"] = MOCK_ORDER_TRACKING
                 mock_payload["answer"] = (
                     f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} is currently "
@@ -487,6 +522,7 @@ async def create_response_stream(request: ChatRequest):
                 yield f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n"
                 handoff = detect_handoff_intent(request.question, chat_history)
                 tracking_intent = detect_order_tracking_intent(request.question)
+                carrier_intent = detect_carrier_tracking_intent(request.question)
                 promo_intent = detect_promo_intent(request.question)
                 policy_intent = detect_policy_intent(request.question)
                 store_intent = detect_store_intent(request.question)
@@ -494,6 +530,17 @@ async def create_response_stream(request: ChatRequest):
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
                 yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Gold', 'past_purchases_count': 2}})}\n\n"
+                captured_carrier_tracking: Optional[dict[str, Any]] = None
+                if carrier_intent.get("is_carrier_intent"):
+                    ext_id = carrier_intent.get("extracted_identifier")
+                    c_info = lookup_carrier_tracking(ext_id) if ext_id else None
+                    if c_info:
+                        captured_carrier_tracking = c_info.model_dump()
+                    elif not ext_id:
+                        captured_carrier_tracking = MOCK_CARRIER_TRACKING
+
+                    if captured_carrier_tracking:
+                        yield f"data: {json.dumps({'event': 'carrier_tracking', 'carrier_tracking': captured_carrier_tracking})}\n\n"
                 if tracking_intent.get("is_tracking_intent"):
                     captured_order_tracking = MOCK_ORDER_TRACKING
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
@@ -503,7 +550,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
                 if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                     yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
-                if tracking_intent.get("is_tracking_intent"):
+                if carrier_intent.get("is_carrier_intent"):
+                    if captured_carrier_tracking:
+                        mock_chunks = [
+                            f"Mock response: Your package ({captured_carrier_tracking['tracking_number']}) ",
+                            f"is currently {captured_carrier_tracking['status']} with {captured_carrier_tracking['carrier']}. ",
+                            f"Current location: {captured_carrier_tracking['current_location']}. ",
+                            f"Estimated delivery: {captured_carrier_tracking['estimated_delivery']}.",
+                        ]
+                    else:
+                        mock_chunks = [
+                            f"Mock response: Tracking information not found for identifier: {carrier_intent.get('extracted_identifier')}. ",
+                            "Please check your tracking number and try again.",
+                        ]
+                elif tracking_intent.get("is_tracking_intent"):
                     mock_chunks = [
                         f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
                         f"is currently {MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. ",
@@ -724,3 +784,22 @@ async def search_store_locations(request: StoreSearchRequest) -> list[dict[str, 
         extra={"query": request.query, "has_pickup": request.has_pickup},
     )
     return search_stores(request.query, has_pickup=request.has_pickup)
+
+
+@app.get(
+    "/api/tracking/{identifier}",
+    response_model=CarrierTrackingInfo,
+    responses={
+        200: {"description": "Carrier tracking details retrieved"},
+        404: {"description": "Tracking information not found"},
+    },
+)
+async def get_tracking_info(identifier: str) -> CarrierTrackingInfo:
+    logger.info("Carrier tracking detail requested", extra={"identifier": identifier})
+    info = lookup_carrier_tracking(identifier)
+    if not info:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Tracking information not found for identifier: {identifier}",
+        )
+    return info

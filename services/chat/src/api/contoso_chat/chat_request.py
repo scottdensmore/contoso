@@ -3,6 +3,11 @@ import os
 import re
 from typing import Any
 
+from .carrier_tracking import (
+    build_carrier_milestone_prompt,
+    detect_carrier_tracking_intent,
+    lookup_carrier_tracking,
+)
 from .order_tracking import (
     build_order_tracking_prompt,
     detect_order_tracking_intent,
@@ -241,6 +246,7 @@ async def generate_llm_response(
     promo_prompt: str = "",
     policy_prompt: str = "",
     store_prompt: str = "",
+    carrier_tracking_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -283,8 +289,12 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{policy_prompt}"
         if store_prompt:
             local_system = f"{local_system}\n\n{store_prompt}"
+        if carrier_tracking_prompt:
+            local_system = f"{local_system}\n\n{carrier_tracking_prompt}"
         if store_prompt:
             local_system = f"{local_system}\n\n{store_prompt}"
+        if carrier_tracking_prompt:
+            local_system = f"{local_system}\n\n{carrier_tracking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -316,6 +326,8 @@ async def generate_llm_response(
             prompt_parts.append(policy_prompt)
         if store_prompt:
             prompt_parts.append(store_prompt)
+        if carrier_tracking_prompt:
+            prompt_parts.append(carrier_tracking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -501,6 +513,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
             store_intent["matched_stores"], store_intent.get("intent_type", "general")
         )
 
+    carrier_intent = detect_carrier_tracking_intent(question)
+    carrier_tracking_info = None
+    carrier_tracking_prompt = ""
+    if carrier_intent.get("is_carrier_intent") and carrier_intent.get("extracted_identifier"):
+        carrier_tracking_info = lookup_carrier_tracking(carrier_intent["extracted_identifier"])
+        if carrier_tracking_info:
+            carrier_tracking_prompt = build_carrier_milestone_prompt(carrier_tracking_info, question)
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -513,6 +533,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["policy_prompt"] = policy_prompt
     if store_prompt:
         llm_kwargs["store_prompt"] = store_prompt
+    if carrier_tracking_prompt:
+        llm_kwargs["carrier_tracking_prompt"] = carrier_tracking_prompt
 
     answer = await generate_llm_response(
         question,
@@ -547,6 +569,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["policy"] = policy_intent["matched_policy"]
     if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
         response_payload["stores"] = store_intent["matched_stores"]
+    if carrier_tracking_info:
+        response_payload["carrier_tracking"] = carrier_tracking_info.model_dump()
 
     return response_payload
 
@@ -566,6 +590,7 @@ def generate_llm_response_stream(
     promo_prompt: str = "",
     policy_prompt: str = "",
     store_prompt: str = "",
+    carrier_tracking_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -640,6 +665,8 @@ def generate_llm_response_stream(
             prompt_parts.append(policy_prompt)
         if store_prompt:
             prompt_parts.append(store_prompt)
+        if carrier_tracking_prompt:
+            prompt_parts.append(carrier_tracking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -709,6 +736,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             store_intent["matched_stores"], store_intent.get("intent_type", "general")
         )
 
+    carrier_intent = detect_carrier_tracking_intent(question)
+    carrier_tracking_info = None
+    carrier_tracking_prompt = ""
+    if carrier_intent.get("is_carrier_intent") and carrier_intent.get("extracted_identifier"):
+        carrier_tracking_info = lookup_carrier_tracking(carrier_intent["extracted_identifier"])
+        if carrier_tracking_info:
+            carrier_tracking_prompt = build_carrier_milestone_prompt(carrier_tracking_info, question)
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -721,6 +756,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
     if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
         yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
+    if carrier_tracking_info:
+        yield f"data: {json.dumps({'event': 'carrier_tracking', 'carrier_tracking': carrier_tracking_info.model_dump()})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -734,6 +771,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["policy_prompt"] = policy_prompt
     if store_prompt:
         stream_kwargs["store_prompt"] = store_prompt
+    if carrier_tracking_prompt:
+        stream_kwargs["carrier_tracking_prompt"] = carrier_tracking_prompt
 
     for chunk in generate_llm_response_stream(
         question,
