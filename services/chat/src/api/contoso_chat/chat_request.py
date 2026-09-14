@@ -5,6 +5,51 @@ from typing import Any
 from .search_service import get_search_service
 
 
+def extract_product_citations(product_context: list) -> list[dict]:
+    """Extracts clean product citations from product_context, deduplicated by slug."""
+    citations: list[dict] = []
+    seen_slugs: set[str] = set()
+
+    for item in product_context or []:
+        if not isinstance(item, dict):
+            continue
+
+        nested = (
+            item.get("structData")
+            or item.get("struct_data")
+            or item.get("derivedStructData")
+            or item.get("derived_struct_data")
+            or {}
+        )
+        if not isinstance(nested, dict):
+            nested = {}
+
+        name = item.get("name") or item.get("title") or nested.get("name") or nested.get("title")
+        slug = item.get("slug") or nested.get("slug")
+        price = item.get("price") if item.get("price") is not None else nested.get("price")
+        image = item.get("image") or nested.get("image")
+        category = (
+            item.get("category")
+            or item.get("categoryName")
+            or nested.get("category")
+            or nested.get("categoryName")
+        )
+
+        if slug and slug in seen_slugs:
+            continue
+        if slug:
+            seen_slugs.add(slug)
+
+        citations.append({
+            "name": name,
+            "slug": slug,
+            "price": price,
+            "image": image,
+            "category": category,
+        })
+
+    return citations
+
 async def get_customer_from_postgres(customer_id: str):
     """Retrieves a customer's data from PostgreSQL."""
     if not customer_id:
@@ -88,10 +133,13 @@ async def get_response(customer_id, question, chat_history):
     
     answer = await generate_llm_response(question, context_str, user_name, provider, project_id, location, model_name)
     
+    citations = extract_product_citations(product_context)
+
     return {
         "question": question,
         "answer": answer,
-        "context": product_context
+        "context": product_context,
+        "citations": citations,
     }
 
 
@@ -174,7 +222,12 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     # Provide richer context to the more capable model
     context_str = json.dumps(product_context, indent=2)
 
+    citations = extract_product_citations(product_context)
+
+    # Initial SSE frame with citations
+    yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
+
     for chunk in generate_llm_response_stream(
         question, context_str, user_name, provider, project_id, location, model_name
     ):
-        yield chunk
+        yield f"data: {json.dumps({'chunk': chunk})}\n\n"

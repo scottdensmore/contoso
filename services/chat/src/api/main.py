@@ -20,6 +20,17 @@ except ImportError:
     REAL_CHAT_AVAILABLE = False
     print("Warning: Real chat logic not available, using mock response")
 
+MOCK_CITATIONS = [
+    {
+        "name": "Alpine Explorer Tent",
+        "slug": "alpine-explorer-tent",
+        "price": 350.0,
+        "image": "/images/8/3a9b1875-9114-4a53-adeb-4a79bf63c29f.webp",
+        "category": "Tents",
+    },
+]
+
+
 base = Path(__file__).resolve().parent
 load_dotenv()
 
@@ -169,7 +180,8 @@ async def create_response(request: ChatRequest):
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
                 "chat_history": request.chat_history,
-                "mock": True
+                "mock": True,
+                "citations": MOCK_CITATIONS,
             }
     except Exception as e:
         # Log the error for debugging
@@ -212,11 +224,15 @@ async def create_response_stream(request: ChatRequest):
                 async for chunk in get_response_stream(
                     request.customer_id, request.question, request.chat_history
                 ):
-                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+                    if chunk.startswith("data: "):
+                        yield chunk
+                    else:
+                        yield f"data: {json.dumps({'chunk': chunk})}\n\n"
             else:
                 logger.warning(
                     "Using mock streaming response - real chat logic not available"
                 )
+                yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 mock_chunks = [
                     f"Mock response: You asked about '{request.question}'. ",
                     "This is a test response from Contoso Chat ",
