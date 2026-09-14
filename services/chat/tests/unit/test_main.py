@@ -381,3 +381,118 @@ def test_stream_endpoint_accepts_chat_history_list(mock_get_response_stream):
         )
         assert response.status_code == 200
         mock_get_response_stream.assert_called_once_with("cust-1", "follow up question", history)
+
+
+def test_create_response_mock_mode_includes_handoff():
+    # Handoff requested
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Can I speak to a human agent?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "handoff" in data
+        assert data["handoff"]["requested"] is True
+        assert data["handoff"]["reason"] == "agent_requested"
+        assert data["handoff"]["suggested_action"] == "live_agent_transfer"
+        assert data["handoff"]["support_contact"] is not None
+        assert data["handoff"]["support_contact"]["email"] == "support@contosooutdoor.com"
+
+    # Handoff not requested
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What is the weight of the TrailMaster tent?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "handoff" in data
+        assert data["handoff"]["requested"] is False
+        assert data["handoff"]["reason"] is None
+
+
+def test_create_response_stream_mock_mode_emits_handoff_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "I want a refund for my broken tent"},
+        )
+        assert res.status_code == 200
+        events = [line for line in res.text.split("\n\n") if line.strip()]
+        # First event is citations
+        first_event = json.loads(events[0].removeprefix("data: "))
+        assert first_event.get("event") == "citations"
+
+        # Second event should be handoff
+        second_event = json.loads(events[1].removeprefix("data: "))
+        assert second_event.get("event") == "handoff"
+        assert second_event["handoff"]["requested"] is True
+        assert second_event["handoff"]["reason"] == "dispute_or_refund"
+        assert second_event["handoff"]["suggested_action"] == "support_ticket"
+
+
+def test_create_response_real_mode_includes_handoff():
+    expected_handoff = {
+        "requested": True,
+        "reason": "user_frustration",
+        "suggested_action": "contact_support",
+        "support_contact": {
+            "email": "support@contosooutdoor.com",
+            "phone": "1-800-555-0199",
+            "hours": "Mon-Fri 8am-8pm EST",
+        },
+    }
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch(
+        "main.get_response",
+        new=AsyncMock(return_value={
+            "question": "You are completely unhelpful",
+            "answer": "I apologize for the trouble.",
+            "context": [],
+            "citations": [],
+            "handoff": expected_handoff,
+        }),
+    ):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "You are completely unhelpful"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get("handoff") == expected_handoff
+
+
+def test_create_response_stream_real_mode_emits_handoff_event():
+    expected_handoff = {
+        "requested": True,
+        "reason": "agent_requested",
+        "suggested_action": "live_agent_transfer",
+        "support_contact": {
+            "email": "support@contosooutdoor.com",
+            "phone": "1-800-555-0199",
+            "hours": "Mon-Fri 8am-8pm EST",
+        },
+    }
+
+    citations_payload = json.dumps({"event": "citations", "citations": []})
+    handoff_payload = json.dumps({"event": "handoff", "handoff": expected_handoff})
+    chunk_payload = json.dumps({"chunk": "Connecting you now..."})
+
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {citations_payload}\n\n"
+        yield f"data: {handoff_payload}\n\n"
+        yield f"data: {chunk_payload}\n\n"
+
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch(
+        "main.get_response_stream",
+        side_effect=fake_stream,
+    ):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Can I speak to a human?"},
+        )
+        assert res.status_code == 200
+        events = [line for line in res.text.split("\n\n") if line.strip()]
+        assert len(events) >= 3
+        handoff_event = json.loads(events[1].removeprefix("data: "))
+        assert handoff_event == {"event": "handoff", "handoff": expected_handoff}

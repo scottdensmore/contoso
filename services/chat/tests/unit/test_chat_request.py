@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from contoso_chat.chat_request import (
+    detect_handoff_intent,
     extract_product_citations,
     format_chat_history,
     format_chat_history_prompt,
@@ -178,6 +179,12 @@ async def test_get_response_uses_customer_name_and_env_settings():
                 "category": None,
             }
         ],
+        "handoff": {
+            "requested": False,
+            "reason": None,
+            "suggested_action": None,
+            "support_contact": None,
+        },
     }
     mock_get_customer.assert_awaited_once_with("cust-1")
     mock_get_search_service.assert_called_once_with()
@@ -335,6 +342,7 @@ async def test_get_response_stream():
 
     assert chunks == [
         f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': None, 'price': None, 'image': None, 'category': None}]})}\n\n",
+        f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n",
         f"data: {json.dumps({'chunk': 'streamed '})}\n\n",
         f"data: {json.dumps({'chunk': 'tokens'})}\n\n",
     ]
@@ -493,10 +501,11 @@ async def test_get_response_stream_emits_citations_event():
         stream = get_response_stream("cust-1", "Best tent?", "[]")
         events = [chunk async for chunk in stream]
 
-    assert len(events) == 3
+    assert len(events) == 4
     assert events[0] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
-    assert events[1] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
-    assert events[2] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
+    assert events[1] == f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n"
+    assert events[2] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
+    assert events[3] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
 
 
 def test_format_chat_history_with_json_string_role_content():
@@ -782,3 +791,170 @@ async def test_get_response_stream_passes_chat_history_to_generate_llm_response_
     assert mock_generate_stream.call_args.kwargs.get("chat_history") == chat_history or (
         len(mock_generate_stream.call_args.args) >= 8 and mock_generate_stream.call_args.args[7] == chat_history
     )
+
+
+def test_detect_handoff_intent_agent_requested():
+    result = detect_handoff_intent("Can I talk to a human agent?")
+    assert result["requested"] is True
+    assert result["reason"] == "agent_requested"
+    assert result["suggested_action"] == "live_agent_transfer"
+    assert result["support_contact"] == {
+        "email": "support@contosooutdoor.com",
+        "phone": "1-800-555-0199",
+        "hours": "Mon-Fri 8am-8pm EST",
+    }
+
+    # Additional human agent request phrases
+    for phrase in [
+        "I need a real person",
+        "Please connect me to an operator",
+        "Can I speak with a customer service representative?",
+        "I want to talk to someone",
+        "speak with a person",
+    ]:
+        res = detect_handoff_intent(phrase)
+        assert res["requested"] is True
+        assert res["reason"] == "agent_requested"
+        assert res["suggested_action"] == "live_agent_transfer"
+
+
+def test_detect_handoff_intent_dispute_or_refund():
+    result = detect_handoff_intent("I want a refund for my broken tent")
+    assert result["requested"] is True
+    assert result["reason"] == "dispute_or_refund"
+    assert result["suggested_action"] == "support_ticket"
+    assert result["support_contact"] == {
+        "email": "support@contosooutdoor.com",
+        "phone": "1-800-555-0199",
+        "hours": "Mon-Fri 8am-8pm EST",
+    }
+
+    # Additional dispute phrases
+    for phrase in [
+        "cancel my order immediately",
+        "I need to dispute charge on my card",
+        "The item is defective item",
+        "My stolen package never arrived",
+        "I want to speak to manager",
+        "Get me your supervisor",
+    ]:
+        res = detect_handoff_intent(phrase)
+        assert res["requested"] is True
+        assert res["reason"] == "dispute_or_refund"
+        assert res["suggested_action"] == "support_ticket"
+
+
+def test_detect_handoff_intent_user_frustration():
+    result = detect_handoff_intent("You are completely unhelpful")
+    assert result["requested"] is True
+    assert result["reason"] == "user_frustration"
+    assert result["suggested_action"] == "contact_support"
+    assert result["support_contact"] == {
+        "email": "support@contosooutdoor.com",
+        "phone": "1-800-555-0199",
+        "hours": "Mon-Fri 8am-8pm EST",
+    }
+
+    # Additional frustration phrases
+    for phrase in [
+        "you are useless",
+        "This bot is not helping at all",
+        "stop repeating the same thing",
+        "this is ridiculous",
+        "terrible service from Contoso",
+    ]:
+        res = detect_handoff_intent(phrase)
+        assert res["requested"] is True
+        assert res["reason"] == "user_frustration"
+        assert res["suggested_action"] == "contact_support"
+
+
+def test_detect_handoff_intent_product_inquiry_not_requested():
+    for query in [
+        "What is the weight of the TrailMaster tent?",
+        "Do you have sleeping bags rated for freezing temperatures?",
+        "How much is the Alpine Explorer?",
+        "Can you recommend hiking boots for beginners?",
+    ]:
+        res = detect_handoff_intent(query)
+        assert res == {
+            "requested": False,
+            "reason": None,
+            "suggested_action": None,
+            "support_contact": None,
+        }
+
+
+def test_detect_handoff_intent_empty_and_null_inputs():
+    expected = {
+        "requested": False,
+        "reason": None,
+        "suggested_action": None,
+        "support_contact": None,
+    }
+    assert detect_handoff_intent("") == expected
+    assert detect_handoff_intent(None) == expected
+    assert detect_handoff_intent("   ", None) == expected
+    assert detect_handoff_intent(123) == expected
+
+
+def test_detect_handoff_intent_from_chat_history():
+    history = [
+        {"role": "user", "content": "I need to talk to a human agent"},
+        {"role": "assistant", "content": "I can help connect you."},
+    ]
+    res = detect_handoff_intent("", history)
+    assert res["requested"] is True
+    assert res["reason"] == "agent_requested"
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_handoff_structure():
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=None),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Support transfer initiated."),
+    ):
+        result = await get_response("cust-1", "I need to talk to a human agent", "[]")
+
+    assert "handoff" in result
+    assert result["handoff"]["requested"] is True
+    assert result["handoff"]["reason"] == "agent_requested"
+    assert result["handoff"]["suggested_action"] == "live_agent_transfer"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_handoff_frame():
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=None),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "I want a refund for my broken tent", "[]")
+        frames = [f async for f in stream]
+
+    assert len(frames) >= 2
+    citations_data = json.loads(frames[0].removeprefix("data: "))
+    assert citations_data.get("event") == "citations"
+
+    handoff_data = json.loads(frames[1].removeprefix("data: "))
+    assert handoff_data.get("event") == "handoff"
+    assert handoff_data["handoff"]["requested"] is True
+    assert handoff_data["handoff"]["reason"] == "dispute_or_refund"
+    assert handoff_data["handoff"]["suggested_action"] == "support_ticket"
