@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from contoso_chat.chat_request import (
+    build_customer_profile_context,
     detect_handoff_intent,
     extract_product_citations,
     format_chat_history,
@@ -166,6 +167,7 @@ async def test_get_response_uses_customer_name_and_env_settings():
     ):
         result = await get_response("cust-1", "Best tent?", "[]")
 
+    expected_profile = build_customer_profile_context({"firstName": "Taylor"})
     assert result == {
         "question": "Best tent?",
         "answer": "answer text",
@@ -185,6 +187,10 @@ async def test_get_response_uses_customer_name_and_env_settings():
             "suggested_action": None,
             "support_contact": None,
         },
+        "customer_profile": {
+            "membership": None,
+            "past_purchases_count": 0,
+        },
     }
     mock_get_customer.assert_awaited_once_with("cust-1")
     mock_get_search_service.assert_called_once_with()
@@ -198,6 +204,7 @@ async def test_get_response_uses_customer_name_and_env_settings():
         "us-central1",
         "custom-model",
         chat_history="[]",
+        customer_profile=expected_profile,
     )
 
 
@@ -229,6 +236,7 @@ async def test_get_response_defaults_to_guest_and_default_model():
         None,
         "gemini-2.5-flash",
         chat_history="[]",
+        customer_profile=build_customer_profile_context(None),
     )
 
 
@@ -340,9 +348,11 @@ async def test_get_response_stream():
         stream = get_response_stream("cust-1", "Best tent?", "[]")
         chunks = [chunk async for chunk in stream]
 
+    expected_profile = build_customer_profile_context({"firstName": "Taylor"})
     assert chunks == [
         f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': None, 'price': None, 'image': None, 'category': None}]})}\n\n",
         f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n",
+        f"data: {json.dumps({'event': 'profile', 'profile': {'membership': None, 'past_purchases_count': 0}})}\n\n",
         f"data: {json.dumps({'chunk': 'streamed '})}\n\n",
         f"data: {json.dumps({'chunk': 'tokens'})}\n\n",
     ]
@@ -358,6 +368,7 @@ async def test_get_response_stream():
         "us-central1",
         "custom-model",
         chat_history="[]",
+        customer_profile=expected_profile,
     )
 
 @pytest.mark.anyio
@@ -501,11 +512,12 @@ async def test_get_response_stream_emits_citations_event():
         stream = get_response_stream("cust-1", "Best tent?", "[]")
         events = [chunk async for chunk in stream]
 
-    assert len(events) == 4
+    assert len(events) == 5
     assert events[0] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
     assert events[1] == f"data: {json.dumps({'event': 'handoff', 'handoff': {'requested': False, 'reason': None, 'suggested_action': None, 'support_contact': None}})}\n\n"
-    assert events[2] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
-    assert events[3] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
+    assert events[2] == f"data: {json.dumps({'event': 'profile', 'profile': {'membership': None, 'past_purchases_count': 0}})}\n\n"
+    assert events[3] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
+    assert events[4] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
 
 
 def test_format_chat_history_with_json_string_role_content():
@@ -958,3 +970,295 @@ async def test_get_response_stream_yields_handoff_frame():
     assert handoff_data["handoff"]["requested"] is True
     assert handoff_data["handoff"]["reason"] == "dispute_or_refund"
     assert handoff_data["handoff"]["suggested_action"] == "support_ticket"
+
+
+
+def test_build_customer_profile_context_none():
+    result = build_customer_profile_context(None)
+    assert result == {
+        "user_name": "Guest",
+        "membership": None,
+        "past_purchases": [],
+        "profile_prompt": "",
+    }
+
+
+def test_build_customer_profile_context_no_orders():
+    customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+    result = build_customer_profile_context(customer)
+    assert result["user_name"] == "Taylor"
+    assert result["membership"] == "Gold"
+    assert result["past_purchases"] == []
+    expected_prompt = (
+        "Customer Profile:\n"
+        "- Name: Taylor\n"
+        "- Membership Tier: Gold\n"
+        "- Past Purchases: None\n"
+        "- Recommendation Guidelines: Tailor product suggestions to complement the customer's existing gear and acknowledge their membership status when relevant."
+    )
+    assert result["profile_prompt"] == expected_prompt
+
+
+def test_build_customer_profile_context_user_name_fallbacks():
+    c1 = {"name": "Jordan Rivers", "membership": "Silver"}
+    res1 = build_customer_profile_context(c1)
+    assert res1["user_name"] == "Jordan Rivers"
+
+    c2 = {"membership": "Bronze"}
+    res2 = build_customer_profile_context(c2)
+    assert res2["user_name"] == "Valued Customer"
+
+
+def test_build_customer_profile_context_multiple_orders_deduplication_and_categories():
+    customer = {
+        "firstName": "Alex",
+        "membership": "Platinum",
+        "orders": [
+            {
+                "items": [
+                    {
+                        "product": {
+                            "name": "Alpine Explorer Tent",
+                            "category": "Tents",
+                        }
+                    },
+                    {
+                        "product": {
+                            "name": "TrailMaster Sleeping Bag",
+                            "category": "Sleeping Bags",
+                        }
+                    },
+                ]
+            },
+            {
+                "items": [
+                    {
+                        "product": {
+                            "name": "Alpine Explorer Tent",  # duplicate product name
+                            "category": "Tents",            # duplicate category
+                        }
+                    },
+                    {
+                        "product": {
+                            "name": "Summit Hiking Backpack",
+                            "category": "Backpacks",
+                        }
+                    },
+                ]
+            },
+        ],
+    }
+    result = build_customer_profile_context(customer)
+    assert result["user_name"] == "Alex"
+    assert result["membership"] == "Platinum"
+    assert "Alpine Explorer Tent" in result["past_purchases"]
+    assert "TrailMaster Sleeping Bag" in result["past_purchases"]
+    assert "Summit Hiking Backpack" in result["past_purchases"]
+    assert len(result["past_purchases"]) == len(set(result["past_purchases"]))
+
+    prompt = result["profile_prompt"]
+    assert "Customer Profile:" in prompt
+    assert "- Name: Alex" in prompt
+    assert "- Membership Tier: Platinum" in prompt
+    assert "- Past Purchases: " in prompt
+    assert "Alpine Explorer Tent" in prompt
+    assert "- Recommendation Guidelines: Tailor product suggestions to complement the customer's existing gear and acknowledge their membership status when relevant." in prompt
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_injects_profile_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="recommended answer"))]
+        )
+    )
+    profile_prompt = (
+        "Customer Profile:\n"
+        "- Name: Taylor\n"
+        "- Membership Tier: Gold\n"
+        "- Past Purchases: Tent\n"
+        "- Recommendation Guidelines: Tailor product suggestions to complement the customer's existing gear and acknowledge their membership status when relevant."
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="Best boots?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            customer_profile={"profile_prompt": profile_prompt},
+        )
+
+    assert result == "recommended answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = messages[0]["content"]
+    assert profile_prompt in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_injects_profile_prompt():
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.text = "gcp recommended answer"
+    mock_client.models.generate_content.return_value = mock_response
+
+    profile_prompt = "Customer Profile:\n- Name: Taylor\n- Membership Tier: Gold"
+
+    with patch("google.genai.Client", return_value=mock_client):
+        result = await generate_llm_response(
+            prompt="Best boots?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="proj",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            customer_profile={"profile_prompt": profile_prompt},
+        )
+
+    assert result == "gcp recommended answer"
+    contents = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert profile_prompt in contents
+    assert contents.index(profile_prompt) < contents.index("Catalog Context:")
+
+
+def test_generate_llm_response_stream_local_injects_profile_prompt():
+    chunk = SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="streamed"))])
+    mock_completion = MagicMock(return_value=iter([chunk]))
+    profile_prompt = "Customer Profile:\n- Name: Jordan"
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        chunks = list(
+            generate_llm_response_stream(
+                prompt="Any boots?",
+                context="[]",
+                user_name="Jordan",
+                provider="local",
+                project_id="unused",
+                location="unused",
+                model_name="unused",
+                customer_profile={"profile_prompt": profile_prompt},
+            )
+        )
+
+    assert chunks == ["streamed"]
+    messages = mock_completion.call_args.kwargs["messages"]
+    assert profile_prompt in messages[0]["content"]
+
+
+def test_generate_llm_response_stream_gcp_injects_profile_prompt():
+    mock_client = MagicMock()
+    mock_chunk = MagicMock(text="gcp stream chunk")
+    mock_client.models.generate_content_stream.return_value = iter([mock_chunk])
+    profile_prompt = "Customer Profile:\n- Name: Jordan"
+
+    with patch("google.genai.Client", return_value=mock_client):
+        chunks = list(
+            generate_llm_response_stream(
+                prompt="Any boots?",
+                context="[]",
+                user_name="Jordan",
+                provider="gcp",
+                project_id="proj",
+                location="us-central1",
+                model_name="gemini-2.5-flash",
+                profile_prompt=profile_prompt,
+            )
+        )
+
+    assert chunks == ["gcp stream chunk"]
+    contents = mock_client.models.generate_content_stream.call_args.kwargs["contents"]
+    assert profile_prompt in contents
+    assert contents.index(profile_prompt) < contents.index("Catalog Context:")
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_customer_profile():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {
+        "firstName": "Morgan",
+        "membership": "Gold",
+        "orders": [
+            {"items": [{"product": {"name": "Tent", "category": "Tents"}}]},
+            {"items": [{"product": {"name": "Boots", "category": "Footwear"}}]},
+        ],
+    }
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Answer with profile"),
+    ) as mock_llm:
+        result = await get_response("cust-1", "Recommend gear", "[]")
+
+    assert "customer_profile" in result
+    assert result["customer_profile"]["membership"] == "Gold"
+    assert result["customer_profile"]["past_purchases_count"] == 2
+    mock_llm.assert_awaited_once()
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_profile_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {
+        "firstName": "Morgan",
+        "membership": "Gold",
+        "orders": [
+            {"items": [{"product": {"name": "Tent", "category": "Tents"}}]},
+            {"items": [{"product": {"name": "Boots", "category": "Footwear"}}]},
+        ],
+    }
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend gear", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    profile_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "profile":
+                    profile_frame = data
+
+    assert "citations" in event_types
+    assert "handoff" in event_types
+    assert "profile" in event_types
+    assert profile_frame is not None
+    assert profile_frame["profile"]["membership"] == "Gold"
+    assert profile_frame["profile"]["past_purchases_count"] == 2

@@ -196,6 +196,7 @@ async def create_response(request: ChatRequest):
                 "mock": True,
                 "citations": MOCK_CITATIONS,
                 "handoff": handoff,
+                "customer_profile": {"membership": "Gold", "past_purchases_count": 2},
             }
     except Exception as e:
         # Log the error for debugging
@@ -251,6 +252,7 @@ async def create_response_stream(request: ChatRequest):
                 handoff = detect_handoff_intent(request.question, request.chat_history)
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
+                yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Gold', 'past_purchases_count': 2}})}\n\n"
                 mock_chunks = [
                     f"Mock response: You asked about '{request.question}'. ",
                     "This is a test response from Contoso Chat ",

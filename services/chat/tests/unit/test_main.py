@@ -496,3 +496,65 @@ def test_create_response_stream_real_mode_emits_handoff_event():
         assert len(events) >= 3
         handoff_event = json.loads(events[1].removeprefix("data: "))
         assert handoff_event == {"event": "handoff", "handoff": expected_handoff}
+
+
+
+def test_create_response_mock_mode_includes_customer_profile():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "hello"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "customer_profile" in data
+        assert data["customer_profile"] == {"membership": "Gold", "past_purchases_count": 2}
+
+
+def test_create_response_stream_mock_mode_emits_profile_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "hello"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        profile_event = next((e for e in events if e.get("event") == "profile"), None)
+        assert profile_event is not None
+        assert profile_event["profile"] == {"membership": "Gold", "past_purchases_count": 2}
+
+
+@patch("main.get_response")
+def test_create_response_real_mode_includes_customer_profile(mock_get_response):
+    mock_get_response.return_value = {
+        "answer": "Here is recommendation",
+        "context": [],
+        "customer_profile": {"membership": "Gold", "past_purchases_count": 3},
+    }
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "gear", "customer_id": "cust-1"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["customer_profile"] == {"membership": "Gold", "past_purchases_count": 3}
+
+
+@patch("main.get_response_stream")
+def test_create_response_stream_real_mode_emits_profile_event(mock_get_response_stream):
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {json.dumps({'event': 'citations', 'citations': []})}\n\n"
+        yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Platinum', 'past_purchases_count': 5}})}\n\n"
+        yield f"data: {json.dumps({'chunk': 'hello'})}\n\n"
+
+    mock_get_response_stream.side_effect = fake_stream
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post("/api/create_response/stream", json={"question": "gear"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        profile_event = next((e for e in events if e.get("event") == "profile"), None)
+        assert profile_event is not None
+        assert profile_event["profile"] == {"membership": "Platinum", "past_purchases_count": 5}
