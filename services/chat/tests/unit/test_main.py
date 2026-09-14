@@ -1367,6 +1367,7 @@ def test_chat_status_endpoint():
         "order_tracking",
         "promotions",
         "policy",
+        "stores",
         "session",
     ]
 
@@ -1415,3 +1416,120 @@ def test_create_response_stream_mock_mode_emits_status_events():
             "status": "generating_response",
             "message": "Generating response...",
         }
+
+
+def test_get_stores_endpoint():
+    """Test GET /api/stores returns all 5 retail stores."""
+    res = client.get("/api/stores")
+    assert res.status_code == 200
+    stores = res.json()
+    assert isinstance(stores, list)
+    assert len(stores) == 5
+    ids = {s["id"] for s in stores}
+    assert ids == {"seattle", "denver", "portland", "salt-lake-city", "san-francisco"}
+
+
+def test_get_store_by_id_endpoint_valid():
+    """Test GET /api/stores/{store_id} returns store details for valid store_id."""
+    res = client.get("/api/stores/denver")
+    assert res.status_code == 200
+    store = res.json()
+    assert store["id"] == "denver"
+    assert store["name"] == "Denver Mountain Outpost"
+    assert "hours" in store
+    assert "saturday" in store["hours"]
+
+
+def test_get_store_by_id_endpoint_not_found():
+    """Test GET /api/stores/{store_id} returns 404 for unknown store."""
+    res = client.get("/api/stores/nonexistent_store")
+    assert res.status_code == 404
+    assert "not found" in res.json()["detail"].lower()
+
+
+def test_search_stores_endpoint():
+    """Test POST /api/stores/search returns matching stores."""
+    res = client.post("/api/stores/search", json={"query": "Seattle"})
+    assert res.status_code == 200
+    results = res.json()
+    assert isinstance(results, list)
+    assert len(results) == 1
+    assert results[0]["id"] == "seattle"
+
+    # Search with pickup filter
+    res_pickup = client.post("/api/stores/search", json={"query": "Oregon", "has_pickup": True})
+    assert res_pickup.status_code == 200
+    results_pickup = res_pickup.json()
+    assert len(results_pickup) == 1
+    assert results_pickup[0]["id"] == "portland"
+
+
+def test_create_response_mock_mode_with_store():
+    """Test POST /api/create_response includes store citations and grounded answer in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What time does the Denver store close on Saturday?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "stores" in data
+        stores = data["stores"]
+        assert isinstance(stores, list)
+        assert len(stores) >= 1
+        assert any(s["id"] == "denver" for s in stores)
+        answer = data["answer"].lower()
+        assert "denver" in answer or "7:00 pm" in answer or "outpost" in answer or "saturday" in answer
+
+
+def test_create_response_mock_mode_without_store():
+    """Test POST /api/create_response omits stores for non-store questions in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Tell me about lightweight tents"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "stores" not in data or data.get("stores") is None
+
+
+def test_create_response_stream_mock_mode_emits_stores_event():
+    """Test POST /api/create_response/stream emits event: stores SSE frame in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Do you have stores in Oregon with in-store pickup?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        stores_event = next((e for e in events if e.get("event") == "stores"), None)
+        assert stores_event is not None
+        assert "stores" in stores_event
+        assert any(s["id"] == "portland" for s in stores_event["stores"])
+
+        # Frame ordering: status events -> metadata (citations, handoff, profile, stores) -> token chunks
+        first_chunk_idx = next(i for i, e in enumerate(events) if "chunk" in e)
+        stores_idx = next(i for i, e in enumerate(events) if e.get("event") == "stores")
+        assert stores_idx < first_chunk_idx
+
+
+def test_create_response_stream_mock_mode_omits_stores_event_when_no_intent():
+    """Test POST /api/create_response/stream omits event: stores for non-store questions in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about hiking boots"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        stores_event = next((e for e in events if e.get("event") == "stores"), None)
+        assert stores_event is None

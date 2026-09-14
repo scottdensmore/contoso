@@ -18,6 +18,10 @@ from .promotions import (
     get_active_promotions,
 )
 from .search_service import get_search_service
+from .stores import (
+    build_store_prompt,
+    detect_store_intent,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -236,6 +240,7 @@ async def generate_llm_response(
     order_tracking_prompt: str = "",
     promo_prompt: str = "",
     policy_prompt: str = "",
+    store_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -276,6 +281,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{promo_prompt}"
         if policy_prompt:
             local_system = f"{local_system}\n\n{policy_prompt}"
+        if store_prompt:
+            local_system = f"{local_system}\n\n{store_prompt}"
+        if store_prompt:
+            local_system = f"{local_system}\n\n{store_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -305,6 +314,8 @@ async def generate_llm_response(
             prompt_parts.append(promo_prompt)
         if policy_prompt:
             prompt_parts.append(policy_prompt)
+        if store_prompt:
+            prompt_parts.append(store_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -483,6 +494,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
         policy_prompt = build_policy_prompt(policy_intent["matched_policy"])
 
+    store_intent = detect_store_intent(question)
+    store_prompt = ""
+    if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+        store_prompt = build_store_prompt(
+            store_intent["matched_stores"], store_intent.get("intent_type", "general")
+        )
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -493,6 +511,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["promo_prompt"] = promo_prompt
     if policy_prompt:
         llm_kwargs["policy_prompt"] = policy_prompt
+    if store_prompt:
+        llm_kwargs["store_prompt"] = store_prompt
 
     answer = await generate_llm_response(
         question,
@@ -525,6 +545,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["promotions"] = get_active_promotions()
     if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
         response_payload["policy"] = policy_intent["matched_policy"]
+    if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+        response_payload["stores"] = store_intent["matched_stores"]
 
     return response_payload
 
@@ -543,6 +565,7 @@ def generate_llm_response_stream(
     order_tracking_prompt: str = "",
     promo_prompt: str = "",
     policy_prompt: str = "",
+    store_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -615,6 +638,8 @@ def generate_llm_response_stream(
             prompt_parts.append(promo_prompt)
         if policy_prompt:
             prompt_parts.append(policy_prompt)
+        if store_prompt:
+            prompt_parts.append(store_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -677,6 +702,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
         policy_prompt = build_policy_prompt(policy_intent["matched_policy"])
 
+    store_intent = detect_store_intent(question)
+    store_prompt = ""
+    if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+        store_prompt = build_store_prompt(
+            store_intent["matched_stores"], store_intent.get("intent_type", "general")
+        )
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -687,6 +719,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
     if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
         yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
+    if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+        yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -698,6 +732,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["promo_prompt"] = promo_prompt
     if policy_prompt:
         stream_kwargs["policy_prompt"] = policy_prompt
+    if store_prompt:
+        stream_kwargs["store_prompt"] = store_prompt
 
     for chunk in generate_llm_response_stream(
         question,
