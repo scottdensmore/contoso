@@ -15,12 +15,13 @@ export interface Product {
   id: number;
   name: string;
   price: number;
-  category: string;
-  brand: string;
+  category: any;
+  brand: any;
   description: string;
   slug: string;
   manual: string;
   images: string[];
+  image?: string | null;
 };
 
 export interface ProductGroup {
