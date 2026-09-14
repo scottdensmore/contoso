@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from contoso_chat.chat_request import (
+    extract_product_citations,
     generate_llm_response,
     generate_llm_response_stream,
     get_customer_from_postgres,
@@ -166,6 +167,15 @@ async def test_get_response_uses_customer_name_and_env_settings():
         "question": "Best tent?",
         "answer": "answer text",
         "context": product_context,
+        "citations": [
+            {
+                "name": "Trailmaster X4",
+                "slug": None,
+                "price": None,
+                "image": None,
+                "category": None,
+            }
+        ],
     }
     mock_get_customer.assert_awaited_once_with("cust-1")
     mock_get_search_service.assert_called_once_with()
@@ -319,7 +329,11 @@ async def test_get_response_stream():
         stream = get_response_stream("cust-1", "Best tent?", "[]")
         chunks = [chunk async for chunk in stream]
 
-    assert chunks == ["streamed ", "tokens"]
+    assert chunks == [
+        f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': None, 'price': None, 'image': None, 'category': None}]})}\n\n",
+        f"data: {json.dumps({'chunk': 'streamed '})}\n\n",
+        f"data: {json.dumps({'chunk': 'tokens'})}\n\n",
+    ]
     mock_get_customer.assert_awaited_once_with("cust-1")
     mock_get_search_service.assert_called_once_with()
     mock_search_service.search.assert_called_once_with("Best tent?", limit=5)
@@ -351,3 +365,130 @@ async def test_generate_llm_response_stream_local_provider_requires_optional_dep
                     model_name="unused-model",
                 )
             )
+
+
+def test_extract_product_citations():
+    raw_context = [
+        {
+            "name": "Alpine Explorer Tent",
+            "slug": "alpine-explorer-tent",
+            "price": 350,
+            "image": "/images/tent.webp",
+            "category": "Tents",
+        },
+        {
+            "title": "Summit Climber Backpack",
+            "slug": "summit-climber-backpack",
+            "price": 120,
+            "image": "/images/backpack.webp",
+            "categoryName": "Backpacks",
+        },
+        {
+            # Duplicate slug with different name or metadata - should be deduplicated
+            "name": "Alpine Explorer Tent Duplicate",
+            "slug": "alpine-explorer-tent",
+            "price": 350,
+            "image": "/images/tent_alt.webp",
+            "category": "Tents",
+        },
+    ]
+
+    citations = extract_product_citations(raw_context)
+
+    assert len(citations) == 2
+    assert citations[0] == {
+        "name": "Alpine Explorer Tent",
+        "slug": "alpine-explorer-tent",
+        "price": 350,
+        "image": "/images/tent.webp",
+        "category": "Tents",
+    }
+    assert citations[1] == {
+        "name": "Summit Climber Backpack",
+        "slug": "summit-climber-backpack",
+        "price": 120,
+        "image": "/images/backpack.webp",
+        "category": "Backpacks",
+    }
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_citations():
+    product_context = [
+        {
+            "name": "Trailmaster X4",
+            "slug": "trailmaster-x4",
+            "price": 150,
+            "image": "/images/trailmaster.webp",
+            "category": "Tents",
+        }
+    ]
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = product_context
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value={"firstName": "Taylor"}),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="answer text"),
+    ), patch.dict(
+        "os.environ",
+        {"PROJECT_ID": "project-1", "REGION": "us-central1"},
+        clear=True,
+    ):
+        result = await get_response("cust-1", "Best tent?", "[]")
+
+    assert "citations" in result
+    assert result["citations"] == [
+        {
+            "name": "Trailmaster X4",
+            "slug": "trailmaster-x4",
+            "price": 150,
+            "image": "/images/trailmaster.webp",
+            "category": "Tents",
+        }
+    ]
+    assert result["answer"] == "answer text"
+    assert result["question"] == "Best tent?"
+    assert result["context"] == product_context
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_emits_citations_event():
+    product_context = [
+        {
+            "name": "Trailmaster X4",
+            "slug": "trailmaster-x4",
+            "price": 150,
+            "image": "/images/trailmaster.webp",
+            "category": "Tents",
+        }
+    ]
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = product_context
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value={"firstName": "Taylor"}),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1 ", "chunk 2"]),
+    ), patch.dict(
+        "os.environ",
+        {"PROJECT_ID": "project-1", "REGION": "us-central1"},
+        clear=True,
+    ):
+        stream = get_response_stream("cust-1", "Best tent?", "[]")
+        events = [chunk async for chunk in stream]
+
+    assert len(events) == 3
+    assert events[0] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
+    assert events[1] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
+    assert events[2] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"

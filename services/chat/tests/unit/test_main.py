@@ -1,6 +1,7 @@
+import json
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -268,3 +269,68 @@ def test_stream_endpoint_validation_error():
         json={"customer_id": "1"},
     )
     assert response.status_code == 422
+
+
+def test_create_response_and_stream_endpoints_include_citations():
+    """Verify POST /api/create_response and /api/create_response/stream output citations in real and mock modes."""
+    # 1. Mock mode: create_response includes citations
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "tent"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "citations" in data
+        assert isinstance(data["citations"], list)
+        assert len(data["citations"]) > 0
+        assert "slug" in data["citations"][0]
+
+    # 2. Mock mode: create_response/stream emits citations event first
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "tent"})
+        assert res.status_code == 200
+        events = [line for line in res.text.split("\n\n") if line.strip()]
+        first_event = json.loads(events[0].removeprefix("data: "))
+        assert first_event.get("event") == "citations"
+        assert isinstance(first_event.get("citations"), list)
+        assert len(first_event["citations"]) > 0
+
+    # 3. Real mode: create_response includes citations returned by get_response
+    expected_citations = [
+        {
+            "name": "Alpine Tent",
+            "slug": "alpine-tent",
+            "price": 199.99,
+            "image": None,
+            "category": "Tents",
+        }
+    ]
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch(
+        "main.get_response",
+        new=AsyncMock(return_value={
+            "question": "tent",
+            "answer": "Here is a tent",
+            "context": [],
+            "citations": expected_citations,
+        }),
+    ):
+        res = client.post("/api/create_response", json={"question": "tent"})
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get("citations") == expected_citations
+
+    # 4. Real mode: create_response/stream streams citations event first
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {json.dumps({'event': 'citations', 'citations': expected_citations})}\n\n"
+        yield f"data: {json.dumps({'chunk': 'Hello '})}\n\n"
+
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch(
+        "main.get_response_stream",
+        side_effect=fake_stream,
+    ):
+        res = client.post("/api/create_response/stream", json={"question": "tent"})
+        assert res.status_code == 200
+        events = [line for line in res.text.split("\n\n") if line.strip()]
+        first_event = json.loads(events[0].removeprefix("data: "))
+        assert first_event == {"event": "citations", "citations": expected_citations}
+        second_event = json.loads(events[1].removeprefix("data: "))
+        assert second_event == {"chunk": "Hello "}
+        assert events[2] == "data: [DONE]"
