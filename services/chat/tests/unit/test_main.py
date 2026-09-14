@@ -558,3 +558,114 @@ def test_create_response_stream_real_mode_emits_profile_event(mock_get_response_
         profile_event = next((e for e in events if e.get("event") == "profile"), None)
         assert profile_event is not None
         assert profile_event["profile"] == {"membership": "Platinum", "past_purchases_count": 5}
+
+
+def test_feedback_thumbs_up():
+    response = client.post(
+        "/api/feedback",
+        json={
+            "turn_id": "turn-100",
+            "customer_id": "cust-200",
+            "question": "What tents do you recommend?",
+            "answer": "The Alpine Explorer Tent is great.",
+            "feedback_type": "thumbs_up",
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "success"
+    assert "feedback_id" in data
+    assert "created_at" in data
+    assert data["message"]
+
+
+def test_feedback_thumbs_down():
+    response = client.post(
+        "/api/feedback",
+        json={
+            "feedback_type": "thumbs_down",
+            "comment": "Did not answer my question",
+            "tags": ["unhelpful"],
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "success"
+    assert "feedback_id" in data
+    assert "created_at" in data
+
+
+def test_feedback_stars_with_comments():
+    response = client.post(
+        "/api/feedback",
+        json={
+            "feedback_type": "stars",
+            "rating": 5,
+            "comment": "Outstanding recommendation!",
+            "tags": ["accurate", "friendly"],
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "success"
+    assert "feedback_id" in data
+
+
+def test_feedback_validation_error_invalid_rating():
+    # rating 6 is out of bounds for stars
+    res = client.post(
+        "/api/feedback",
+        json={"feedback_type": "stars", "rating": 6},
+    )
+    assert res.status_code == 422
+
+    # rating 0 is out of bounds for stars
+    res = client.post(
+        "/api/feedback",
+        json={"feedback_type": "stars", "rating": 0},
+    )
+    assert res.status_code == 422
+
+    # missing rating for stars
+    res = client.post(
+        "/api/feedback",
+        json={"feedback_type": "stars"},
+    )
+    assert res.status_code == 422
+
+    # invalid rating for thumbs_up
+    res = client.post(
+        "/api/feedback",
+        json={"feedback_type": "thumbs_up", "rating": -1},
+    )
+    assert res.status_code == 422
+
+    # missing feedback_type
+    res = client.post(
+        "/api/feedback",
+        json={"comment": "No type provided"},
+    )
+    assert res.status_code == 422
+
+
+def test_feedback_summary_endpoint():
+    try:
+        from contoso_chat.feedback import clear_feedback_store
+        clear_feedback_store()
+    except ImportError:
+        pass
+
+    # Submit feedback items
+    client.post("/api/feedback", json={"feedback_type": "thumbs_up", "tags": ["fast"]})
+    client.post("/api/feedback", json={"feedback_type": "thumbs_up", "tags": ["fast", "helpful"]})
+    client.post("/api/feedback", json={"feedback_type": "thumbs_down", "tags": ["slow"]})
+    client.post("/api/feedback", json={"feedback_type": "stars", "rating": 4, "tags": ["helpful"]})
+
+    res = client.get("/api/feedback/summary")
+    assert res.status_code == 200
+    summary = res.json()
+    assert summary["total_count"] == 4
+    assert summary["thumbs_up_count"] == 2
+    assert summary["thumbs_down_count"] == 1
+    assert summary["average_star_rating"] == 4.0
+    assert summary["tags_distribution"] == {"fast": 2, "helpful": 2, "slow": 1}
