@@ -11,6 +11,12 @@ interface ProductLink {
   href: string;
 }
 
+export interface StreamCallbacks {
+  onChunk: (text: string) => void;
+  onDone?: (finalMessage: string) => void;
+  onError?: (err: Error) => void;
+}
+
 const PRODUCTS_PATH_PREFIX = "/products/";
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
@@ -126,9 +132,9 @@ export const sendChatMessage = async (
   customerId?: string
 ): Promise<ChatTurn> => {
   const body = {
-    chat_history: "[]",
     question: turn.message,
     customer_id: customerId ? customerId.toString() : null,
+    chat_history: "[]",
   };
 
   try {
@@ -168,5 +174,151 @@ export const sendChatMessage = async (
       type: "assistant",
       avatar: "",
     };
+  }
+};
+
+export const streamChatMessage = async (
+  turn: ChatTurn,
+  callbacks: StreamCallbacks,
+  customerId?: string
+): Promise<ChatTurn> => {
+  const body = {
+    question: turn.message,
+    customer_id: customerId ? customerId.toString() : null,
+    chat_history: "[]",
+  };
+
+  try {
+    const response = await fetch("/api/chat/service?stream=true", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    if (!response.body) {
+      throw new Error("No response body received from chat service");
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+
+    let accumulatedText = "";
+    const accumulatedLinks: ProductLink[] = [];
+    let buffer = "";
+
+    const processEventData = (dataStr: string) => {
+      const trimmed = dataStr.trim();
+      if (trimmed === "[DONE]") {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && typeof parsed === "object") {
+          if (parsed.error) {
+            throw new Error(String(parsed.error));
+          }
+
+          if (parsed.context) {
+            accumulatedLinks.push(...extractProductLinks(parsed.context));
+          }
+          if (parsed.citations) {
+            accumulatedLinks.push(...extractProductLinks(parsed.citations));
+          }
+          if (parsed.products) {
+            accumulatedLinks.push(...extractProductLinks(parsed.products));
+          }
+
+          const chunkText =
+            typeof parsed.chunk === "string"
+              ? parsed.chunk
+              : typeof parsed.text === "string"
+              ? parsed.text
+              : typeof parsed.content === "string"
+              ? parsed.content
+              : typeof parsed.delta === "string"
+              ? parsed.delta
+              : typeof parsed.delta?.content === "string"
+              ? parsed.delta.content
+              : null;
+
+          if (chunkText !== null) {
+            accumulatedText += chunkText;
+            callbacks.onChunk(accumulatedText);
+          }
+          return;
+        }
+      } catch (err) {
+        if (
+          err instanceof Error &&
+          !err.message.includes("Unexpected token") &&
+          !err.message.includes("is not valid JSON") &&
+          !err.message.includes("JSON")
+        ) {
+          throw err;
+        }
+        if (trimmed.length > 0) {
+          accumulatedText += trimmed;
+          callbacks.onChunk(accumulatedText);
+        }
+      }
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() || "";
+
+      for (const part of parts) {
+        const lines = part.split("\n");
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith("data:")) {
+            const dataContent = trimmedLine.slice(5).trim();
+            processEventData(dataContent);
+          }
+        }
+      }
+    }
+
+    if (buffer.trim().length > 0) {
+      const lines = buffer.split("\n");
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith("data:")) {
+          const dataContent = trimmedLine.slice(5).trim();
+          processEventData(dataContent);
+        }
+      }
+    }
+
+    const answer = accumulatedText || "I received an empty response from the server.";
+    const message = appendProductLinks(answer, accumulatedLinks);
+
+    callbacks.onDone?.(message);
+
+    return {
+      name: "Jane Doe",
+      message,
+      status: "done",
+      type: "assistant",
+      avatar: "",
+    };
+  } catch (error) {
+    console.error("Error streaming chat message:", error);
+    const err = error instanceof Error ? error : new Error(String(error));
+    callbacks.onError?.(err);
+    throw err;
   }
 };
