@@ -85,6 +85,12 @@ export const Header = () => {
           <GlobalSearch />
         </div>
         <div className="flex flex-row items-center gap-3">
+          <Link
+            href="/stores"
+            className={`text-sm font-semibold text-gray-700 hover:text-gray-900 focus-visible:outline-indigo-600 rounded-md px-2 py-1.5 ${ACTION_FOCUS}`}
+          >
+            Stores
+          </Link>
           <button
             ref={cartTriggerRef}
             type="button"

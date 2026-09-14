@@ -323,5 +323,15 @@ describe('Header', () => {
     })
     expect(screen.getByRole("combobox", { name: /search products/i })).toBeDefined()
   })
+
+  it("renders navigation link to /stores", async () => {
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any)
+    await act(async () => {
+      render(<Header />)
+    })
+    const storesLink = screen.getByRole("link", { name: "Stores" })
+    expect(storesLink).toBeDefined()
+    expect(storesLink.getAttribute("href")).toBe("/stores")
+  })
 })
 
