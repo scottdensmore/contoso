@@ -6,6 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from contoso_chat.chat_request import (
     extract_product_citations,
+    format_chat_history,
+    format_chat_history_prompt,
     generate_llm_response,
     generate_llm_response_stream,
     get_customer_from_postgres,
@@ -188,6 +190,7 @@ async def test_get_response_uses_customer_name_and_env_settings():
         "project-1",
         "us-central1",
         "custom-model",
+        chat_history="[]",
     )
 
 
@@ -218,6 +221,7 @@ async def test_get_response_defaults_to_guest_and_default_model():
         None,
         None,
         "gemini-2.5-flash",
+        chat_history="[]",
     )
 
 
@@ -345,6 +349,7 @@ async def test_get_response_stream():
         "project-1",
         "us-central1",
         "custom-model",
+        chat_history="[]",
     )
 
 @pytest.mark.anyio
@@ -492,3 +497,288 @@ async def test_get_response_stream_emits_citations_event():
     assert events[0] == f"data: {json.dumps({'event': 'citations', 'citations': [{'name': 'Trailmaster X4', 'slug': 'trailmaster-x4', 'price': 150, 'image': '/images/trailmaster.webp', 'category': 'Tents'}]})}\n\n"
     assert events[1] == f"data: {json.dumps({'chunk': 'chunk 1 '})}\n\n"
     assert events[2] == f"data: {json.dumps({'chunk': 'chunk 2'})}\n\n"
+
+
+def test_format_chat_history_with_json_string_role_content():
+    history_json = json.dumps([
+        {"role": "user", "content": "What sleeping bags do you have?"},
+        {"role": "assistant", "content": "We have the Alpine Down sleeping bag."},
+    ])
+    result = format_chat_history(history_json)
+    assert result == [
+        {"role": "user", "content": "What sleeping bags do you have?"},
+        {"role": "assistant", "content": "We have the Alpine Down sleeping bag."},
+    ]
+
+
+def test_format_chat_history_with_json_string_role_message():
+    history_json = json.dumps([
+        {"role": "user", "message": "Can I use it in winter?"},
+        {"role": "assistant", "message": "Yes, it is rated down to 0 degrees."},
+    ])
+    result = format_chat_history(history_json)
+    assert result == [
+        {"role": "user", "content": "Can I use it in winter?"},
+        {"role": "assistant", "content": "Yes, it is rated down to 0 degrees."},
+    ]
+
+
+def test_format_chat_history_with_list_qa_format():
+    qa_list = [
+        {
+            "question": "What tents do you recommend?",
+            "answer": "The Trailmaster X4 is great for camping.",
+        },
+        {
+            "question": "Is it waterproof?",
+            "answer": "Yes, it has a 3000mm hydrostatic head rating.",
+        },
+    ]
+    result = format_chat_history(qa_list)
+    assert result == [
+        {"role": "user", "content": "What tents do you recommend?"},
+        {"role": "assistant", "content": "The Trailmaster X4 is great for camping."},
+        {"role": "user", "content": "Is it waterproof?"},
+        {"role": "assistant", "content": "Yes, it has a 3000mm hydrostatic head rating."},
+    ]
+
+
+def test_format_chat_history_truncates_to_max_turns():
+    qa_list = [
+        {"question": f"Q{i}", "answer": f"A{i}"}
+        for i in range(6)
+    ]
+    result = format_chat_history(qa_list, max_turns=4)
+    assert len(result) == 4
+    assert result == [
+        {"role": "user", "content": "Q4"},
+        {"role": "assistant", "content": "A4"},
+        {"role": "user", "content": "Q5"},
+        {"role": "assistant", "content": "A5"},
+    ]
+
+
+def test_format_chat_history_default_max_turns_ten():
+    qa_list = [
+        {"question": f"Q{i}", "answer": f"A{i}"}
+        for i in range(7)
+    ]
+    result = format_chat_history(qa_list)
+    assert len(result) == 10
+    assert result[0] == {"role": "user", "content": "Q2"}
+    assert result[-1] == {"role": "assistant", "content": "A6"}
+
+
+def test_format_chat_history_invalid_inputs():
+    assert format_chat_history(None) == []
+    assert format_chat_history(12345) == []
+    assert format_chat_history("invalid json") == []
+    assert format_chat_history("{\"key\": \"value\"}") == []
+    assert format_chat_history("42") == []
+    assert format_chat_history([None, "string", 123]) == []
+    assert format_chat_history([{"foo": "bar"}]) == []
+    assert format_chat_history([{"role": "user"}]) == []
+    assert format_chat_history([{"content": "hello"}]) == []
+    assert format_chat_history([{"role": "user", "content": ""}]) == []
+    assert format_chat_history([{"question": "", "answer": "hi"}]) == []
+    assert format_chat_history([{"question": "hi", "answer": ""}]) == []
+
+
+def test_format_chat_history_prompt_non_empty():
+    history = [
+        {"role": "user", "content": "Do you have hiking boots?"},
+        {"role": "assistant", "content": "Yes, we recommend Trail Walker boots."},
+    ]
+    prompt_text = format_chat_history_prompt(history)
+    expected = "Conversation History:\nUser: Do you have hiking boots?\nAssistant: Yes, we recommend Trail Walker boots."
+    assert prompt_text == expected
+
+
+def test_format_chat_history_prompt_empty():
+    assert format_chat_history_prompt([]) == ""
+    assert format_chat_history_prompt(None) == ""
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_history():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local response with history"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        history = [
+            {"role": "user", "content": "I like lightweight gear."},
+            {"role": "assistant", "content": "Got it, ultralight is a great choice."},
+        ]
+        result = await generate_llm_response(
+            prompt="Which tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            chat_history=history,
+        )
+
+    assert result == "local response with history"
+    mock_completion.assert_called_once()
+    kwargs = mock_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    assert len(messages) == 4
+    assert messages[0]["role"] == "system"
+    assert messages[1] == {"role": "user", "content": "I like lightweight gear."}
+    assert messages[2] == {"role": "assistant", "content": "Got it, ultralight is a great choice."}
+    assert messages[3]["role"] == "user"
+    assert "Which tent?" in messages[3]["content"]
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_history():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp answer with history")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        history = [
+            {"role": "user", "content": "I like lightweight gear."},
+            {"role": "assistant", "content": "Got it, ultralight is a great choice."},
+        ]
+        result = await generate_llm_response(
+            prompt="Which tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            chat_history=history,
+        )
+
+    assert result == "gcp answer with history"
+    mock_client.models.generate_content.assert_called_once()
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Conversation History:" in sent_prompt
+    assert "User: I like lightweight gear." in sent_prompt
+    assert "Assistant: Got it, ultralight is a great choice." in sent_prompt
+    assert "Catalog Context:" in sent_prompt
+    assert "User Question: Which tent?" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_stream_local_includes_history():
+    mock_chunks = [
+        SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="streamed"))]),
+    ]
+    mock_completion = MagicMock(return_value=mock_chunks)
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        history = [{"role": "user", "content": "Prior question"}]
+        stream = generate_llm_response_stream(
+            prompt="Best tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            chat_history=history,
+        )
+        chunks = list(stream)
+
+    assert chunks == ["streamed"]
+    kwargs = mock_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    assert len(messages) == 3
+    assert messages[1] == {"role": "user", "content": "Prior question"}
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_stream_gcp_includes_history():
+    mock_chunks = [SimpleNamespace(text="streamed")]
+    mock_client = MagicMock()
+    mock_client.models.generate_content_stream.return_value = mock_chunks
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        history = [{"role": "user", "content": "Prior question"}]
+        stream = generate_llm_response_stream(
+            prompt="Best tent?",
+            context='[{"sku":"abc123"}]',
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            chat_history=history,
+        )
+        chunks = list(stream)
+
+    assert chunks == ["streamed"]
+    kwargs = mock_client.models.generate_content_stream.call_args.kwargs
+    assert "Conversation History:" in kwargs["contents"]
+    assert "User: Prior question" in kwargs["contents"]
+
+
+@pytest.mark.anyio
+async def test_get_response_passes_chat_history_to_generate_llm_response():
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = []
+    chat_history = [{"role": "user", "content": "previous question"}]
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value={"firstName": "Taylor"}),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="answer text"),
+    ) as mock_generate:
+        await get_response("cust-1", "follow up question", chat_history)
+
+    assert mock_generate.call_args.kwargs.get("chat_history") == chat_history or (
+        len(mock_generate.call_args.args) >= 8 and mock_generate.call_args.args[7] == chat_history
+    )
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_passes_chat_history_to_generate_llm_response_stream():
+    mock_search_service = MagicMock()
+    mock_search_service.search.return_value = []
+    chat_history = [{"role": "user", "content": "previous question"}]
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value={"firstName": "Taylor"}),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search_service,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk"]),
+    ) as mock_generate_stream:
+        stream = get_response_stream("cust-1", "follow up question", chat_history)
+        _ = [chunk async for chunk in stream]
+
+    assert mock_generate_stream.call_args.kwargs.get("chat_history") == chat_history or (
+        len(mock_generate_stream.call_args.args) >= 8 and mock_generate_stream.call_args.args[7] == chat_history
+    )

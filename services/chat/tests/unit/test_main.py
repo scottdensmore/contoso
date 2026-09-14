@@ -334,3 +334,50 @@ def test_create_response_and_stream_endpoints_include_citations():
         second_event = json.loads(events[1].removeprefix("data: "))
         assert second_event == {"chunk": "Hello "}
         assert events[2] == "data: [DONE]"
+
+
+@patch("main.get_response")
+def test_create_response_accepts_chat_history_list(mock_get_response):
+    mock_get_response.return_value = {
+        "answer": "Response with history",
+        "context": [],
+        "customer_id": "cust-1",
+    }
+    history = [
+        {"role": "user", "content": "previous question"},
+        {"role": "assistant", "content": "previous answer"},
+    ]
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        response = client.post(
+            "/api/create_response",
+            json={
+                "question": "follow up question",
+                "customer_id": "cust-1",
+                "chat_history": history,
+            },
+        )
+        assert response.status_code == 200
+        mock_get_response.assert_called_once_with("cust-1", "follow up question", history)
+
+
+@patch("main.get_response_stream")
+def test_stream_endpoint_accepts_chat_history_list(mock_get_response_stream):
+    async def fake_stream(customer_id, question, chat_history):
+        yield "Streamed with history"
+
+    mock_get_response_stream.side_effect = fake_stream
+    history = [
+        {"role": "user", "content": "previous question"},
+        {"role": "assistant", "content": "previous answer"},
+    ]
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        response = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "follow up question",
+                "customer_id": "cust-1",
+                "chat_history": history,
+            },
+        )
+        assert response.status_code == 200
+        mock_get_response_stream.assert_called_once_with("cust-1", "follow up question", history)
