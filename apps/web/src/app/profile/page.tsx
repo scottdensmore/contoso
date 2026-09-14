@@ -243,6 +243,14 @@ export default function ProfilePage() {
                               {statusText}
                             </span>
                           </div>
+                          <div>
+                            <Link
+                              href={`/profile/orders/${order.id}`}
+                              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                            >
+                              View Details & Receipt
+                            </Link>
+                          </div>
                         </div>
                         <div className="space-y-3">
                           <h3 className="text-sm font-semibold text-gray-700">Items</h3>

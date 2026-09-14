@@ -190,6 +190,9 @@ describe('Profile Page', () => {
     expect(screen.getByText('Alpine Explorer Tent')).toBeDefined()
     expect(screen.getByText(/quantity:\s*2/i)).toBeDefined()
     expect(screen.getByText('$350.00')).toBeDefined()
+    const detailsLink = screen.getByRole('link', { name: /view details & receipt/i })
+    expect(detailsLink).toBeDefined()
+    expect(detailsLink.getAttribute('href')).toBe('/profile/orders/order_1')
   })
 
   it('renders empty state when orders list is empty', async () => {
