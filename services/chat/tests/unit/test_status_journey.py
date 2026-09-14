@@ -31,6 +31,7 @@ def test_chat_status_diagnostics_endpoint():
         "order_tracking",
         "promotions",
         "policy",
+        "stores",
         "session",
     ]
 

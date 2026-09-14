@@ -1838,3 +1838,202 @@ async def test_get_response_stream_emits_status_events():
     assert parsed_events[1]['status'] == 'generating_response'
     assert citations_idx > 1
     assert first_chunk_idx > citations_idx
+
+
+@pytest.mark.anyio
+async def test_get_response_with_store_hours_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="The Denver Mountain Outpost closes at 7:00 PM on Saturday."),
+    ) as mock_llm:
+        result = await get_response("cust-1", "What time does the Denver store close on Saturday?", "[]")
+
+    assert "stores" in result
+    stores = result["stores"]
+    assert isinstance(stores, list)
+    assert len(stores) >= 1
+    assert any(s["id"] == "denver" for s in stores)
+
+    mock_llm.assert_awaited_once()
+    call_kwargs = mock_llm.await_args.kwargs
+    assert "store_prompt" in call_kwargs or any(
+        "Denver" in str(arg) for arg in mock_llm.await_args.args
+    ) or "Denver" in str(call_kwargs.get("store_prompt", ""))
+
+
+@pytest.mark.anyio
+async def test_get_response_with_store_location_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Our Seattle Flagship is located at 220 Pike Street."),
+    ):
+        result = await get_response("cust-1", "Where is your store in Seattle?", "[]")
+
+    assert "stores" in result
+    stores = result["stores"]
+    assert isinstance(stores, list)
+    assert any(s["id"] == "seattle" for s in stores)
+
+
+@pytest.mark.anyio
+async def test_get_response_without_store_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="We have great tents."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent", "[]")
+
+    assert result.get("stores") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_stores_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Do you have stores in Oregon with in-store pickup?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    stores_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "stores":
+                    stores_frame = data
+
+    assert "stores" in event_types
+    assert stores_frame is not None
+    assert isinstance(stores_frame["stores"], list)
+    assert any(s["id"] == "portland" for s in stores_frame["stores"])
+
+    stores_idx = next(i for i, e in enumerate(event_types) if e == "stores")
+    first_chunk_idx = next(i for i, f in enumerate(frames) if "chunk" in json.loads(f.removeprefix("data: ")))
+    assert stores_idx < first_chunk_idx
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_stores_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a tent", "[]")
+        frames = [f async for f in stream]
+
+    event_types = [
+        json.loads(f.removeprefix("data: "))["event"]
+        for f in frames
+        if f.startswith("data: ") and "event" in json.loads(f.removeprefix("data: "))
+    ]
+    assert "stores" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_store_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local store answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="What time does Denver store close on Saturday?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            store_prompt="Store Locations & Hours Grounding: Denver Mountain Outpost",
+        )
+
+    assert result == "local store answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_message = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Store Locations & Hours Grounding: Denver Mountain Outpost" in system_message
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_store_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp store answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="What time does Denver store close on Saturday?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            store_prompt="Store Locations & Hours Grounding: Denver Mountain Outpost",
+        )
+
+    assert result == "gcp store answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Store Locations & Hours Grounding: Denver Mountain Outpost" in sent_prompt

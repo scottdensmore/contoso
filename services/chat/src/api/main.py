@@ -31,6 +31,12 @@ from contoso_chat.session_store import (
     get_session,
     list_sessions,
 )
+from contoso_chat.stores import (
+    detect_store_intent,
+    get_all_stores,
+    get_store_by_id,
+    search_stores,
+)
 from contoso_chat.transcript_export import export_transcript
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -154,6 +160,11 @@ app.add_middleware(
 
 
 # Request model
+class StoreSearchRequest(BaseModel):
+    query: str
+    has_pickup: Optional[bool] = None
+
+
 class PolicyInquiryRequest(BaseModel):
     query: str
 
@@ -235,6 +246,7 @@ async def get_chat_status() -> dict[str, Any]:
             "order_tracking",
             "promotions",
             "policy",
+            "stores",
             "session",
         ],
     }
@@ -311,6 +323,7 @@ async def create_response(request: ChatRequest):
             tracking_intent = detect_order_tracking_intent(request.question)
             promo_intent = detect_promo_intent(request.question)
             policy_intent = detect_policy_intent(request.question)
+            store_intent = detect_store_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -342,6 +355,32 @@ async def create_response(request: ChatRequest):
                     f"Mock response: Regarding our {p_obj.get('title', 'policy')}: "
                     f"{p_obj.get('details', p_obj.get('summary', ''))}"
                 )
+            if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+                mock_payload["stores"] = store_intent["matched_stores"]
+                matched = store_intent["matched_stores"]
+                store_names = ", ".join(s.get("name", "Contoso Store") for s in matched)
+                if store_intent.get("intent_type") == "hours":
+                    hours_details = "; ".join(
+                        f"{s.get('name')}: {s.get('hours', {}).get('summary', s.get('hours', {}).get('weekday', ''))}"
+                        for s in matched
+                    )
+                    mock_payload["answer"] = (
+                        f"Mock response: Here are the store hours for {store_names}: {hours_details}."
+                    )
+                elif store_intent.get("intent_type") == "pickup":
+                    mock_payload["answer"] = (
+                        f"Mock response: In-store pickup is available at {store_names}. "
+                        f"Services include: {', '.join(matched[0].get('services', []))}."
+                    )
+                elif store_intent.get("intent_type") == "location":
+                    locations = "; ".join(f"{s.get('name')} at {s.get('address')}" for s in matched)
+                    mock_payload["answer"] = (
+                        f"Mock response: We have store locations at: {locations}."
+                    )
+                else:
+                    mock_payload["answer"] = (
+                        f"Mock response: Information for {store_names}: located at {matched[0].get('address')}."
+                    )
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -450,6 +489,7 @@ async def create_response_stream(request: ChatRequest):
                 tracking_intent = detect_order_tracking_intent(request.question)
                 promo_intent = detect_promo_intent(request.question)
                 policy_intent = detect_policy_intent(request.question)
+                store_intent = detect_store_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -461,6 +501,8 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
                 if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
                     yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
+                if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+                    yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
                 if tracking_intent.get("is_tracking_intent"):
                     mock_chunks = [
                         f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
@@ -480,6 +522,28 @@ async def create_response_stream(request: ChatRequest):
                         f"Mock response: Regarding our {p_obj.get('title', 'policy')}: ",
                         f"{p_obj.get('details', p_obj.get('summary', ''))}",
                     ]
+                elif store_intent.get("is_store_query") and store_intent.get("matched_stores"):
+                    matched = store_intent["matched_stores"]
+                    store_names = ", ".join(s.get("name", "Contoso Store") for s in matched)
+                    if store_intent.get("intent_type") == "hours":
+                        hours_details = "; ".join(
+                            f"{s.get('name')}: {s.get('hours', {}).get('summary', s.get('hours', {}).get('weekday', ''))}"
+                            for s in matched
+                        )
+                        mock_chunks = [
+                            f"Mock response: Here are the store hours for {store_names}: ",
+                            f"{hours_details}.",
+                        ]
+                    elif store_intent.get("intent_type") == "pickup":
+                        mock_chunks = [
+                            f"Mock response: Yes! In-store pickup is available at {store_names}. ",
+                            f"Available services include: {', '.join(matched[0].get('services', []))}.",
+                        ]
+                    else:
+                        mock_chunks = [
+                            f"Mock response: Contoso Outdoors retail store: {store_names} ",
+                            f"located at {matched[0].get('address')}.",
+                        ]
                 else:
                     mock_chunks = [
                         f"Mock response: You asked about '{request.question}'. ",
@@ -636,3 +700,27 @@ async def inquire_policy(request: PolicyInquiryRequest) -> dict[str, Any]:
     if "policy" not in response and response.get("matched_policy"):
         response["policy"] = response["matched_policy"]
     return response
+
+
+@app.get("/api/stores")
+async def get_stores() -> list[dict[str, Any]]:
+    logger.info("Stores catalog endpoint accessed")
+    return get_all_stores()
+
+
+@app.get("/api/stores/{store_id}")
+async def get_store(store_id: str) -> dict[str, Any]:
+    logger.info("Store detail requested", extra={"store_id": store_id})
+    store = get_store_by_id(store_id)
+    if not store:
+        raise HTTPException(status_code=404, detail=f"Store '{store_id}' not found")
+    return store
+
+
+@app.post("/api/stores/search")
+async def search_store_locations(request: StoreSearchRequest) -> list[dict[str, Any]]:
+    logger.info(
+        "Store search requested",
+        extra={"query": request.query, "has_pickup": request.has_pickup},
+    )
+    return search_stores(request.query, has_pickup=request.has_pickup)
