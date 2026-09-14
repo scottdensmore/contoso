@@ -9,6 +9,7 @@ import { marked } from "marked";
 import Header from "@/components/header";
 import AddToCart from "@/components/add-to-cart";
 import WishlistButton from "@/components/wishlist-button";
+import CompareButton from "@/components/compare-button";
 import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
 
@@ -33,6 +34,21 @@ async function getData(slug: string): Promise<Product | undefined> {
   );
   const data: Product[] = JSON.parse(file);
   const product = data.find((p) => p.slug === slug);
+  if (product) {
+    if (!product.image && product.images && product.images.length > 0) {
+      product.image = product.images[0];
+    }
+    if (typeof product.category === "string") {
+      product.category = Object.assign(new String(product.category), {
+        name: product.category,
+      });
+    }
+    if (typeof product.brand === "string") {
+      product.brand = Object.assign(new String(product.brand), {
+        name: product.brand,
+      });
+    }
+  }
   return product;
 }
 
@@ -142,8 +158,9 @@ export default async function Page({
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <AddToCart product={product} />
-          <div className="mt-6 flex items-center">
+          <div className="mt-6 flex items-center gap-2">
             <WishlistButton product={product} />
+            <CompareButton product={{ id: product.id, name: product.name, slug: product.slug, price: product.price, image: product.image, categoryName: product.category?.name, brandName: product.brand?.name, description: product.description }} />
           </div>
         </div>
       </Block>

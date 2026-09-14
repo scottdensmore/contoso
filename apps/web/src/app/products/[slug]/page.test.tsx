@@ -30,6 +30,15 @@ vi.mock('@/components/wishlist-button', () => ({
   ),
 }))
 
+vi.mock('@/components/compare-button', () => ({
+  __esModule: true,
+  default: ({ product }: any) => (
+    <button data-testid="compare-button" aria-label={`Add ${product.name} to comparison`}>
+      Compare
+    </button>
+  ),
+}))
+
 vi.mock('@/components/block', () => ({
   __esModule: true,
   default: ({
@@ -93,6 +102,7 @@ describe('Product detail page', () => {
     expect(paths.length).toBeGreaterThan(0)
     expect(paths).toContainEqual({ slug: 'trailmaster-x4-tent' })
   })
+
   it('renders WishlistButton alongside AddToCart', async () => {
     const page = await Page({ params: Promise.resolve({ slug: 'trailmaster-x4-tent' }) })
     render(page)
@@ -101,6 +111,17 @@ describe('Product detail page', () => {
     const wishlistButton = screen.getByTestId('wishlist-button')
     expect(wishlistButton).toBeDefined()
     expect(wishlistButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
+  })
+
+  it('renders CompareButton alongside AddToCart and WishlistButton', async () => {
+    const page = await Page({ params: Promise.resolve({ slug: 'trailmaster-x4-tent' }) })
+    render(page)
+
+    expect(screen.getByTestId('add-to-cart')).toBeDefined()
+    expect(screen.getByTestId('wishlist-button')).toBeDefined()
+    const compareButton = screen.getByTestId('compare-button')
+    expect(compareButton).toBeDefined()
+    expect(compareButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
   })
 
   it("renders customer reviews section with interactive review component", async () => {
