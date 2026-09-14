@@ -312,6 +312,13 @@ export const Chat = () => {
     if (greetingTimer.current) clearTimeout(greetingTimer.current);
   }, [showChat]);
 
+  // Clean up greeting timer on unmount
+  useEffect(() => {
+    return () => {
+      if (greetingTimer.current) clearTimeout(greetingTimer.current);
+    };
+  }, []);
+
   // Opening the panel left focus on the launcher, so the next Tab continued
   // into the page behind it rather than into the conversation.
   useEffect(() => {
@@ -623,7 +630,9 @@ export const Chat = () => {
     scrollChat();
     if (state.turns.length === 0) {
       greetingTimer.current = setTimeout(() => {
-        dispatch({ type: "add", payload: greeting() });
+        if (typeof window !== "undefined") {
+          dispatch({ type: "add", payload: greeting() });
+        }
       }, 400);
     }
   };
