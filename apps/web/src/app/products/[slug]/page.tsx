@@ -6,6 +6,7 @@ import { promises as fs } from "fs";
 import { marked } from "marked";
 import Header from "@/components/header";
 import AddToCart from "@/components/add-to-cart";
+import WishlistButton from "@/components/wishlist-button";
 import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
 
@@ -136,7 +137,12 @@ export default async function Page({
         >
           {product.description}
         </div>
-        <AddToCart product={product} />
+        <div className="flex flex-wrap items-center gap-4">
+          <AddToCart product={product} />
+          <div className="mt-6 flex items-center">
+            <WishlistButton product={product} />
+          </div>
+        </div>
       </Block>
       {product.images.map((image, i) => (
         <Block

@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ProfilePage from './page'
 import { useSession } from 'next-auth/react'
+import { useWishlist } from '@/lib/wishlist-context'
+import { useCart } from '@/lib/cart-context'
 
 vi.mock('next-auth/react', () => ({
   useSession: vi.fn(),
@@ -19,11 +21,45 @@ vi.mock('@/components/header', () => ({
   default: () => <div data-testid="header" />,
 }))
 
+vi.mock('@/lib/wishlist-context', () => ({
+  useWishlist: vi.fn(),
+}))
+
+vi.mock('@/lib/cart-context', () => ({
+  useCart: vi.fn(),
+}))
+
 
 describe('Profile Page', () => {
+  const mockCartAddItem = vi.fn()
+  const mockWishlistAddItem = vi.fn()
+  const mockWishlistRemoveItem = vi.fn()
+
   beforeEach(() => {
+    vi.unstubAllGlobals()
     vi.clearAllMocks()
     vi.stubGlobal('fetch', vi.fn())
+    vi.mocked(useWishlist).mockReturnValue({
+      items: [],
+      totalWishlistItems: 0,
+      addItem: mockWishlistAddItem,
+      removeItem: mockWishlistRemoveItem,
+      isInWishlist: vi.fn(),
+      clearWishlist: vi.fn(),
+      announcement: "",
+    })
+    vi.mocked(useCart).mockReturnValue({
+      items: [],
+      isOpen: false,
+      openCart: vi.fn(),
+      closeCart: vi.fn(),
+      addItem: mockCartAddItem,
+      removeItem: vi.fn(),
+      updateQuantity: vi.fn(),
+      clearCart: vi.fn(),
+      totalItems: 0,
+      subtotal: 0,
+    })
   })
 
   it('renders loading state if loading', () => {
@@ -84,6 +120,12 @@ describe('Profile Page', () => {
     expect(ordersTab.getAttribute('aria-selected')).toBe('false')
     expect(ordersTab.getAttribute('aria-controls')).toBe('panel-orders')
     expect(ordersTab.getAttribute('id')).toBe('tab-orders')
+
+    const wishlistTab = screen.getByRole('tab', { name: /Wishlist/i })
+    expect(wishlistTab).toBeDefined()
+    expect(wishlistTab.getAttribute('aria-selected')).toBe('false')
+    expect(wishlistTab.getAttribute('aria-controls')).toBe('panel-wishlist')
+    expect(wishlistTab.getAttribute('id')).toBe('tab-wishlist')
 
     const panel = screen.getByRole('tabpanel')
     expect(panel.getAttribute('id')).toBe('panel-general')
@@ -323,4 +365,100 @@ describe('Profile Page', () => {
       expect(screen.getByText(/not saved/i)).toBeDefined()
     })
   })
-})
+  it("renders empty state when wishlist tab is clicked and wishlist is empty", async () => {
+    vi.mocked(useSession).mockReturnValue({
+      status: "authenticated",
+      data: { user: { name: "Test User" } },
+    } as any);
+
+    vi.mocked(fetch).mockResolvedValue({
+      json: async () => ({ name: "Test User" }),
+    } as any);
+
+    render(<ProfilePage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /Wishlist/i })).toBeDefined();
+    });
+
+    const wishlistTab = screen.getByRole("tab", { name: /Wishlist/i });
+    fireEvent.click(wishlistTab);
+
+    expect(wishlistTab.getAttribute("aria-selected")).toBe("true");
+
+    const wishlistPanel = screen.getByRole("tabpanel");
+    expect(wishlistPanel.getAttribute("id")).toBe("panel-wishlist");
+    expect(wishlistPanel.getAttribute("aria-labelledby")).toBe("tab-wishlist");
+    expect(wishlistPanel.tabIndex).toBe(0);
+
+    expect(
+      screen.getByText(/Your wishlist is empty. Explore our catalog to save your favorite gear./i)
+    ).toBeDefined();
+    const exploreLink = screen.getByRole("link", { name: /explore|shop/i });
+    expect(exploreLink).toBeDefined();
+  });
+
+  it("renders saved wishlist items and supports moving to cart and removing", async () => {
+    vi.mocked(useSession).mockReturnValue({
+      status: "authenticated",
+      data: { user: { name: "Test User" } },
+    } as any);
+
+    vi.mocked(fetch).mockResolvedValue({
+      json: async () => ({ name: "Test User" }),
+    } as any);
+
+    const mockItem = {
+      id: "prod-1",
+      name: "Trailmaster Tent",
+      price: 299.99,
+      image: "/images/tent.jpg",
+      slug: "trailmaster-tent",
+      categoryName: "Camping",
+    };
+
+    vi.mocked(useWishlist).mockReturnValue({
+      items: [mockItem],
+      totalWishlistItems: 1,
+      addItem: mockWishlistAddItem,
+      removeItem: mockWishlistRemoveItem,
+      isInWishlist: vi.fn(),
+      clearWishlist: vi.fn(),
+      announcement: "",
+    });
+
+    render(<ProfilePage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("tab", { name: /Wishlist/i })).toBeDefined();
+    });
+
+    const wishlistTab = screen.getByRole("tab", { name: /Wishlist/i });
+    fireEvent.click(wishlistTab);
+
+    expect(screen.getByText("Trailmaster Tent")).toBeDefined();
+    expect(screen.getByText("$299.99")).toBeDefined();
+
+    const productLink = screen.getByRole("link", { name: "Trailmaster Tent" });
+    expect(productLink.getAttribute("href")).toBe("/products/trailmaster-tent");
+
+    const moveToCartButton = screen.getByRole("button", { name: /Move to Cart/i });
+    fireEvent.click(moveToCartButton);
+
+    expect(mockCartAddItem).toHaveBeenCalledWith(
+      {
+        productId: "prod-1",
+        slug: "trailmaster-tent",
+        name: "Trailmaster Tent",
+        price: 299.99,
+        image: "/images/tent.jpg",
+      },
+      1
+    );
+    expect(mockWishlistRemoveItem).toHaveBeenCalledWith("prod-1");
+
+    const removeButton = screen.getByRole("button", { name: /Remove/i });
+    fireEvent.click(removeButton);
+    expect(mockWishlistRemoveItem).toHaveBeenCalledWith("prod-1");
+  });
+});
