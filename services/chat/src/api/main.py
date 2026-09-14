@@ -12,8 +12,17 @@ from contoso_chat.feedback import (
     record_feedback,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.session_store import (
+    ChatSession,
+    append_message,
+    create_or_get_session,
+    delete_session,
+    get_history_for_llm,
+    get_session,
+    list_sessions,
+)
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from local_provider_health import evaluate_local_provider_health
@@ -68,7 +77,7 @@ load_dotenv()
 # Configure structured logging for Cloud Logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -121,7 +130,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
@@ -133,6 +142,7 @@ class ChatRequest(BaseModel):
     question: str
     customer_id: Optional[str] = None
     chat_history: Optional[Any] = "[]"
+    session_id: Optional[str] = None
 
 @app.get("/")
 async def root():
@@ -182,17 +192,25 @@ async def create_response(request: ChatRequest):
         "Chat request received",
         extra={
             "customer_id": request.customer_id,
+            "session_id": request.session_id,
             "question_length": len(request.question),
             "has_chat_history": len(str(request.chat_history or "")) > 2,
             "real_chat_available": REAL_CHAT_AVAILABLE
         }
     )
 
+    chat_history = request.chat_history
+    if request.session_id:
+        create_or_get_session(request.session_id, customer_id=request.customer_id)
+        if chat_history is None or chat_history == "" or chat_history == "[]" or chat_history == []:
+            chat_history = get_history_for_llm(request.session_id)
+        append_message(session_id=request.session_id, role="user", content=request.question)
+
     try:
         if REAL_CHAT_AVAILABLE:
             # Use real chat logic
             logger.info("Processing request with real chat logic")
-            result = await get_response(request.customer_id, request.question, request.chat_history)
+            result = await get_response(request.customer_id, request.question, chat_history)
 
             logger.info(
                 "Chat response generated",
@@ -203,16 +221,27 @@ async def create_response(request: ChatRequest):
                     "success": True
                 }
             )
+            if request.session_id:
+                result["session_id"] = request.session_id
+                res_citations = result.get("citations")
+                res_tracking = result.get("order_tracking")
+                append_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content=str(result.get("answer", "")),
+                    citations=res_citations if isinstance(res_citations, list) else None,
+                    order_tracking=res_tracking if isinstance(res_tracking, dict) else None,
+                )
             return result
         else:
             # Mock response for testing
             logger.warning("Using mock response - real chat logic not available")
-            handoff = detect_handoff_intent(request.question, request.chat_history)
+            handoff = detect_handoff_intent(request.question, chat_history)
             tracking_intent = detect_order_tracking_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
-                "chat_history": request.chat_history,
+                "chat_history": chat_history,
                 "mock": True,
                 "citations": MOCK_CITATIONS,
                 "handoff": handoff,
@@ -225,6 +254,19 @@ async def create_response(request: ChatRequest):
                     f"{MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. "
                     f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. "
                     f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}."
+                )
+            if request.session_id:
+                mock_payload["session_id"] = request.session_id
+                mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
+                mock_tracking: dict[str, Any] | None = (
+                    MOCK_ORDER_TRACKING if tracking_intent.get("is_tracking_intent") else None
+                )
+                append_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content=str(mock_payload.get("answer", "")),
+                    citations=mock_citations,
+                    order_tracking=mock_tracking,
                 )
             return mock_payload
     except Exception as e:
@@ -240,15 +282,25 @@ async def create_response(request: ChatRequest):
         )
 
         # Fallback response if real chat fails
-        handoff = detect_handoff_intent(request.question, request.chat_history)
-        return {
+        handoff = detect_handoff_intent(request.question, chat_history)
+        fallback_payload = {
             "answer": f"I'm having trouble processing your request about '{request.question}' right now. Please try again later.",
             "customer_id": request.customer_id,
-            "chat_history": request.chat_history,
+            "chat_history": chat_history,
             "error": str(e),
             "fallback": True,
             "handoff": handoff,
         }
+        if request.session_id:
+            fallback_payload["session_id"] = request.session_id
+            append_message(
+                session_id=request.session_id,
+                role="assistant",
+                content=str(fallback_payload["answer"]),
+                citations=None,
+                order_tracking=None,
+            )
+        return fallback_payload
 
 
 @app.post("/api/create_response/stream")
@@ -257,6 +309,7 @@ async def create_response_stream(request: ChatRequest):
         "Chat streaming request received",
         extra={
             "customer_id": request.customer_id,
+            "session_id": request.session_id,
             "question_length": len(request.question),
             "has_chat_history": len(str(request.chat_history or "")) > 2,
             "real_chat_available": REAL_CHAT_AVAILABLE,
@@ -264,26 +317,53 @@ async def create_response_stream(request: ChatRequest):
     )
 
     async def streamer():
+        chat_history = request.chat_history
+        if request.session_id:
+            create_or_get_session(request.session_id, customer_id=request.customer_id)
+            if chat_history is None or chat_history == "" or chat_history == "[]" or chat_history == []:
+                chat_history = get_history_for_llm(request.session_id)
+            append_message(session_id=request.session_id, role="user", content=request.question)
+            yield f"data: {json.dumps({'event': 'session', 'session_id': request.session_id})}\n\n"
+
+        accumulated_chunks: list[str] = []
+        captured_citations: Optional[list[dict[str, Any]]] = None
+        captured_order_tracking: Optional[dict[str, Any]] = None
+
         try:
             if REAL_CHAT_AVAILABLE:
                 logger.info("Processing streaming request with real chat logic")
                 async for chunk in get_response_stream(
-                    request.customer_id, request.question, request.chat_history
+                    request.customer_id, request.question, chat_history
                 ):
                     if chunk.startswith("data: "):
+                        payload_str = chunk.removeprefix("data: ").strip()
+                        try:
+                            event_data = json.loads(payload_str)
+                            if isinstance(event_data, dict):
+                                if "chunk" in event_data:
+                                    accumulated_chunks.append(str(event_data["chunk"]))
+                                if event_data.get("event") == "citations":
+                                    captured_citations = event_data.get("citations")
+                                if event_data.get("event") == "order_tracking":
+                                    captured_order_tracking = event_data.get("order_tracking")
+                        except (json.JSONDecodeError, TypeError):
+                            pass
                         yield chunk
                     else:
+                        accumulated_chunks.append(chunk)
                         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
             else:
                 logger.warning(
                     "Using mock streaming response - real chat logic not available"
                 )
-                handoff = detect_handoff_intent(request.question, request.chat_history)
+                handoff = detect_handoff_intent(request.question, chat_history)
                 tracking_intent = detect_order_tracking_intent(request.question)
+                captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
                 yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Gold', 'past_purchases_count': 2}})}\n\n"
                 if tracking_intent.get("is_tracking_intent"):
+                    captured_order_tracking = MOCK_ORDER_TRACKING
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
                     mock_chunks = [
                         f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
@@ -298,7 +378,19 @@ async def create_response_stream(request: ChatRequest):
                         "running on Google Cloud Platform!",
                     ]
                 for chunk in mock_chunks:
+                    accumulated_chunks.append(chunk)
                     yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+
+            if request.session_id:
+                final_content = "".join(accumulated_chunks)
+                append_message(
+                    session_id=request.session_id,
+                    role="assistant",
+                    content=final_content,
+                    citations=captured_citations,
+                    order_tracking=captured_order_tracking,
+                )
+
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(
@@ -313,6 +405,27 @@ async def create_response_stream(request: ChatRequest):
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(streamer(), media_type="text/event-stream")
+
+
+@app.get("/api/sessions", response_model=list[ChatSession])
+async def get_sessions(customer_id: Optional[str] = None) -> list[ChatSession]:
+    return list_sessions(customer_id=customer_id)
+
+
+@app.get("/api/sessions/{session_id}", response_model=ChatSession)
+async def get_session_by_id(session_id: str) -> ChatSession:
+    session = get_session(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+
+@app.delete("/api/sessions/{session_id}")
+async def delete_session_by_id(session_id: str) -> dict[str, str]:
+    deleted = delete_session(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {"status": "deleted", "session_id": session_id}
 
 
 @app.post("/api/feedback", response_model=FeedbackResponse, status_code=201)
