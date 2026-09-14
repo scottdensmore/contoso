@@ -333,5 +333,15 @@ describe('Header', () => {
     expect(storesLink).toBeDefined()
     expect(storesLink.getAttribute("href")).toBe("/stores")
   })
+
+  it("renders navigation link to /track", async () => {
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any)
+    await act(async () => {
+      render(<Header />)
+    })
+    const trackLink = screen.getByRole("link", { name: "Track Order" })
+    expect(trackLink).toBeDefined()
+    expect(trackLink.getAttribute("href")).toBe("/track")
+  })
 })
 

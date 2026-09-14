@@ -91,6 +91,12 @@ export const Header = () => {
           >
             Stores
           </Link>
+          <Link
+            href="/track"
+            className={`text-sm font-semibold text-gray-700 hover:text-gray-900 focus-visible:outline-indigo-600 rounded-md px-2 py-1.5 ${ACTION_FOCUS}`}
+          >
+            Track Order
+          </Link>
           <button
             ref={cartTriggerRef}
             type="button"
