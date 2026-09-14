@@ -7,6 +7,7 @@ import Header from "@/components/header";
 import AvatarUpload from "@/components/avatar-upload";
 import PasswordChangeForm from "@/components/password-change-form";
 import ShippingAddressForm from "@/components/shipping-address-form";
+import NotificationPreferencesForm from "@/components/notification-preferences";
 import { ACTION_BOUNDARY, ACTION_FOCUS } from "@/lib/control-classes";
 import { useWishlist, WishlistItem } from "@/lib/wishlist-context";
 import { useCart } from "@/lib/cart-context";
@@ -232,6 +233,7 @@ export default function ProfilePage() {
     { id: "shipping", name: "Shipping" },
     { id: "orders", name: "Orders" },
     { id: "wishlist", name: "Wishlist" },
+    { id: "notifications", name: "Notifications" },
   ];
 
   return (
@@ -396,6 +398,19 @@ export default function ProfilePage() {
             </div>
           )}
           {activeTab === "wishlist" && <WishlistTab />}
+          {activeTab === "notifications" && (
+            <div
+              role="tabpanel"
+              id="panel-notifications"
+              aria-labelledby="tab-notifications"
+              tabIndex={0}
+            >
+              <NotificationPreferencesForm
+                userId={session?.user?.id}
+                initialPhone={profileData?.phoneNumber || ""}
+              />
+            </div>
+          )}
         </div>
       </div>
     </>
