@@ -39,6 +39,16 @@ vi.mock('@/components/compare-button', () => ({
   ),
 }))
 
+vi.mock("@/components/recently-viewed", () => ({
+  __esModule: true,
+  default: ({ currentSlug }: { currentSlug?: string }) => (
+    <div data-testid="recently-viewed" data-current-slug={currentSlug} />
+  ),
+  RecentlyViewedTracker: ({ product }: any) => (
+    <div data-testid="recently-viewed-tracker" data-product-slug={product?.slug} />
+  ),
+}))
+
 vi.mock('@/components/block', () => ({
   __esModule: true,
   default: ({
@@ -122,6 +132,19 @@ describe('Product detail page', () => {
     const compareButton = screen.getByTestId('compare-button')
     expect(compareButton).toBeDefined()
     expect(compareButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
+  })
+
+  it("renders RecentlyViewed tracker and shelf with current product slug", async () => {
+    const page = await Page({ params: Promise.resolve({ slug: "trailmaster-x4-tent" }) })
+    render(page)
+
+    const tracker = screen.getByTestId("recently-viewed-tracker")
+    expect(tracker).toBeDefined()
+    expect(tracker.getAttribute("data-product-slug")).toBe("trailmaster-x4-tent")
+
+    const shelf = screen.getByTestId("recently-viewed")
+    expect(shelf).toBeDefined()
+    expect(shelf.getAttribute("data-current-slug")).toBe("trailmaster-x4-tent")
   })
 
   it("renders customer reviews section with interactive review component", async () => {
