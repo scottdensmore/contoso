@@ -1262,3 +1262,177 @@ async def test_get_response_stream_yields_profile_frame():
     assert profile_frame is not None
     assert profile_frame["profile"]["membership"] == "Gold"
     assert profile_frame["profile"]["past_purchases_count"] == 2
+
+
+@pytest.mark.anyio
+async def test_get_response_with_order_tracking_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {
+        "firstName": "Taylor",
+        "membership": "Gold",
+        "orders": [
+            {
+                "id": "CTSO-ORD-001",
+                "date": "2026-09-12T10:00:00Z",
+                "total": 129.99,
+                "items": [{"id": 1}],
+            }
+        ],
+    }
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Your order CTSO-ORD-001 has shipped."),
+    ) as mock_llm:
+        result = await get_response("cust-1", "where is my order", "[]")
+
+    assert "order_tracking" in result
+    tracking = result["order_tracking"]
+    assert tracking is not None
+    assert tracking["order_id"] == "CTSO-ORD-001"
+    assert "status" in tracking
+    # Verify tracking guidance was passed to LLM
+    mock_llm.assert_awaited_once()
+    call_kwargs = mock_llm.await_args.kwargs
+    assert "order_tracking_prompt" in call_kwargs or any(
+        "CTSO-ORD-001" in str(arg) for arg in mock_llm.await_args.args
+    ) or "CTSO-ORD-001" in str(call_kwargs.get("order_tracking_prompt", ""))
+
+
+@pytest.mark.anyio
+async def test_get_response_with_specific_order_id():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {
+        "firstName": "Taylor",
+        "membership": "Gold",
+        "orders": [
+            {
+                "id": "CTSO-ORD-999",
+                "date": "2026-09-13T09:00:00Z",
+                "total": 50.0,
+                "items": [],
+            },
+            {
+                "id": "CTSO-ORD-123",
+                "date": "2026-09-10T10:00:00Z",
+                "total": 200.0,
+                "items": [],
+            },
+        ],
+    }
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Your order CTSO-ORD-123 is delivered."),
+    ):
+        result = await get_response("cust-1", "track order CTSO-ORD-123", "[]")
+
+    assert "order_tracking" in result
+    assert result["order_tracking"]["order_id"] == "CTSO-ORD-123"
+
+
+@pytest.mark.anyio
+async def test_get_response_without_order_tracking_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="We have great tents."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent", "[]")
+
+    assert result.get("order_tracking") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_order_tracking_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {
+        "firstName": "Taylor",
+        "membership": "Gold",
+        "orders": [
+            {
+                "id": "CTSO-ORD-001",
+                "date": "2026-09-12T10:00:00Z",
+                "total": 129.99,
+                "items": [{"id": 1}],
+            }
+        ],
+    }
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "where is my order", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    tracking_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "order_tracking":
+                    tracking_frame = data
+
+    assert "order_tracking" in event_types
+    assert tracking_frame is not None
+    assert tracking_frame["order_tracking"]["order_id"] == "CTSO-ORD-001"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_order_tracking_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a tent", "[]")
+        frames = [f async for f in stream]
+
+    event_types = [
+        json.loads(f.removeprefix("data: "))["event"]
+        for f in frames
+        if f.startswith("data: ") and "event" in json.loads(f.removeprefix("data: "))
+    ]
+    assert "order_tracking" not in event_types

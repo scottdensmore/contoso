@@ -669,3 +669,111 @@ def test_feedback_summary_endpoint():
     assert summary["thumbs_down_count"] == 1
     assert summary["average_star_rating"] == 4.0
     assert summary["tags_distribution"] == {"fast": 2, "helpful": 2, "slow": 1}
+
+
+def test_create_response_mock_mode_with_order_tracking():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "where is my order"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "order_tracking" in data
+        tracking = data["order_tracking"]
+        assert tracking["order_id"] == "ord_mock_123"
+        assert tracking["status"] == "Shipped"
+        assert tracking["carrier"] == "FedEx Ground"
+        assert tracking["tracking_number"] == "CTSO-TRK-MOCK123"
+        assert tracking["estimated_delivery"] == "In 2 business days"
+        assert "order" in data["answer"].lower()
+        assert "ord_mock_123" in data["answer"] or "CTSO-TRK-MOCK123" in data["answer"] or "shipped" in data["answer"].lower()
+
+
+def test_create_response_mock_mode_without_order_tracking():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "hello"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "order_tracking" not in data or data.get("order_tracking") is None
+
+
+def test_create_response_stream_mock_mode_emits_order_tracking_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "where is my order"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        tracking_event = next((e for e in events if e.get("event") == "order_tracking"), None)
+        assert tracking_event is not None
+        assert tracking_event["order_tracking"]["order_id"] == "ord_mock_123"
+        assert tracking_event["order_tracking"]["status"] == "Shipped"
+        assert tracking_event["order_tracking"]["carrier"] == "FedEx Ground"
+        assert tracking_event["order_tracking"]["tracking_number"] == "CTSO-TRK-MOCK123"
+        assert tracking_event["order_tracking"]["estimated_delivery"] == "In 2 business days"
+
+
+def test_create_response_stream_mock_mode_omits_order_tracking_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "hello"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        tracking_event = next((e for e in events if e.get("event") == "order_tracking"), None)
+        assert tracking_event is None
+
+
+@patch("main.get_response")
+def test_create_response_real_mode_includes_order_tracking(mock_get_response):
+    expected_tracking = {
+        "order_id": "CTSO-101",
+        "status": "Shipped",
+        "carrier": "FedEx Ground",
+        "tracking_number": "CTSO-TRK-CTSO-101",
+        "estimated_delivery": "In 2 business days",
+    }
+    mock_get_response.return_value = {
+        "answer": "Your order CTSO-101 is on its way!",
+        "context": [],
+        "order_tracking": expected_tracking,
+    }
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "track order CTSO-101", "customer_id": "cust-1"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get("order_tracking") == expected_tracking
+
+
+@patch("main.get_response_stream")
+def test_create_response_stream_real_mode_emits_order_tracking_event(mock_get_response_stream):
+    expected_tracking = {
+        "order_id": "CTSO-101",
+        "status": "Shipped",
+        "carrier": "FedEx Ground",
+        "tracking_number": "CTSO-TRK-CTSO-101",
+        "estimated_delivery": "In 2 business days",
+    }
+
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {json.dumps({'event': 'citations', 'citations': []})}\n\n"
+        yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': expected_tracking})}\n\n"
+        yield f"data: {json.dumps({'chunk': 'Your package is en route.'})}\n\n"
+
+    mock_get_response_stream.side_effect = fake_stream
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post("/api/create_response/stream", json={"question": "track order CTSO-101"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        tracking_event = next((e for e in events if e.get("event") == "order_tracking"), None)
+        assert tracking_event is not None
+        assert tracking_event["order_tracking"] == expected_tracking

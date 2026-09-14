@@ -11,6 +11,7 @@ from contoso_chat.feedback import (
     get_feedback_summary,
     record_feedback,
 )
+from contoso_chat.order_tracking import detect_order_tracking_intent
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +38,18 @@ except ImportError:
             "suggested_action": None,
             "support_contact": None,
         }
+
+MOCK_ORDER_TRACKING = {
+    "order_id": "ord_mock_123",
+    "date": "2026-09-12T12:00:00Z",
+    "status": "Shipped",
+    "carrier": "FedEx Ground",
+    "tracking_number": "CTSO-TRK-MOCK123",
+    "estimated_delivery": "In 2 business days",
+    "status_message": "In transit with carrier",
+    "items_count": 1,
+    "total": 350.0,
+}
 
 MOCK_CITATIONS = [
     {
@@ -195,7 +208,8 @@ async def create_response(request: ChatRequest):
             # Mock response for testing
             logger.warning("Using mock response - real chat logic not available")
             handoff = detect_handoff_intent(request.question, request.chat_history)
-            return {
+            tracking_intent = detect_order_tracking_intent(request.question)
+            mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
                 "chat_history": request.chat_history,
@@ -204,6 +218,15 @@ async def create_response(request: ChatRequest):
                 "handoff": handoff,
                 "customer_profile": {"membership": "Gold", "past_purchases_count": 2},
             }
+            if tracking_intent.get("is_tracking_intent"):
+                mock_payload["order_tracking"] = MOCK_ORDER_TRACKING
+                mock_payload["answer"] = (
+                    f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} is currently "
+                    f"{MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. "
+                    f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. "
+                    f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}."
+                )
+            return mock_payload
     except Exception as e:
         # Log the error for debugging
         logger.error(
@@ -256,14 +279,24 @@ async def create_response_stream(request: ChatRequest):
                     "Using mock streaming response - real chat logic not available"
                 )
                 handoff = detect_handoff_intent(request.question, request.chat_history)
+                tracking_intent = detect_order_tracking_intent(request.question)
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
                 yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Gold', 'past_purchases_count': 2}})}\n\n"
-                mock_chunks = [
-                    f"Mock response: You asked about '{request.question}'. ",
-                    "This is a test response from Contoso Chat ",
-                    "running on Google Cloud Platform!",
-                ]
+                if tracking_intent.get("is_tracking_intent"):
+                    yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
+                    mock_chunks = [
+                        f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
+                        f"is currently {MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. ",
+                        f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. ",
+                        f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}.",
+                    ]
+                else:
+                    mock_chunks = [
+                        f"Mock response: You asked about '{request.question}'. ",
+                        "This is a test response from Contoso Chat ",
+                        "running on Google Cloud Platform!",
+                    ]
                 for chunk in mock_chunks:
                     yield f"data: {json.dumps({'chunk': chunk})}\n\n"
             yield "data: [DONE]\n\n"
