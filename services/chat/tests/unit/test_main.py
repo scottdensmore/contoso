@@ -777,3 +777,208 @@ def test_create_response_stream_real_mode_emits_order_tracking_event(mock_get_re
         tracking_event = next((e for e in events if e.get("event") == "order_tracking"), None)
         assert tracking_event is not None
         assert tracking_event["order_tracking"] == expected_tracking
+
+def test_create_response_with_session_id_persists_turns_and_loads_history():
+    from contoso_chat.session_store import clear_session_store, get_session
+    clear_session_store()
+
+    # Turn 1: mock mode with session_id
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res1 = client.post(
+            "/api/create_response",
+            json={
+                "question": "What tents do you have?",
+                "session_id": "sess-test-1",
+                "customer_id": "cust-99",
+            },
+        )
+        assert res1.status_code == 200
+        data1 = res1.json()
+        assert data1.get("session_id") == "sess-test-1"
+
+        # Check session store
+        session = get_session("sess-test-1")
+        assert session is not None
+        assert session.customer_id == "cust-99"
+        assert len(session.messages) == 2
+        assert session.messages[0].role == "user"
+        assert session.messages[0].content == "What tents do you have?"
+        assert session.messages[1].role == "assistant"
+        assert session.messages[1].content == data1["answer"]
+        assert session.messages[1].citations is not None
+
+    # Turn 2: real mode with mock_get_response to verify history is passed to LLM
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch("main.get_response") as mock_get_response:
+        mock_get_response.return_value = {
+            "answer": "The Alpine Explorer is $350.",
+            "citations": [],
+            "context": [],
+        }
+        res2 = client.post(
+            "/api/create_response",
+            json={
+                "question": "How much is the Alpine Explorer?",
+                "session_id": "sess-test-1",
+                "customer_id": "cust-99",
+            },
+        )
+        assert res2.status_code == 200
+        data2 = res2.json()
+        assert data2.get("session_id") == "sess-test-1"
+
+        # Verify prior 2 turns were loaded and passed as chat_history to get_response
+        mock_get_response.assert_called_once_with(
+            "cust-99",
+            "How much is the Alpine Explorer?",
+            [
+                {"role": "user", "content": "What tents do you have?"},
+                {"role": "assistant", "content": data1["answer"]},
+            ],
+        )
+
+        session = get_session("sess-test-1")
+        assert session is not None
+        assert len(session.messages) == 4
+        assert session.messages[2].role == "user"
+        assert session.messages[2].content == "How much is the Alpine Explorer?"
+        assert session.messages[3].role == "assistant"
+        assert session.messages[3].content == "The Alpine Explorer is $350."
+
+
+def test_create_response_stream_with_session_id():
+    from contoso_chat.session_store import clear_session_store, get_session
+    clear_session_store()
+
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "Where is my order?",
+                "session_id": "sess-stream-1",
+                "customer_id": "cust-stream",
+            },
+        )
+        assert res.status_code == 200
+        events = [line for line in res.text.split("\n\n") if line.strip()]
+        # First event must be the session event
+        first_event = json.loads(events[0].removeprefix("data: "))
+        assert first_event == {"event": "session", "session_id": "sess-stream-1"}
+
+        # Session should have user turn and accumulated assistant response
+        session = get_session("sess-stream-1")
+        assert session is not None
+        assert len(session.messages) == 2
+        assert session.messages[0].role == "user"
+        assert session.messages[0].content == "Where is my order?"
+        assert session.messages[1].role == "assistant"
+        assert len(session.messages[1].content) > 0
+        assert "ord_mock_123" in session.messages[1].content
+
+
+def test_create_response_stream_loads_history_from_session():
+    from contoso_chat.session_store import (
+        append_message,
+        clear_session_store,
+        create_or_get_session,
+    )
+    clear_session_store()
+
+    create_or_get_session("sess-stream-hist", customer_id="cust-1")
+    append_message("sess-stream-hist", "user", "Hi")
+    append_message("sess-stream-hist", "assistant", "Hello! How can I help?")
+
+    async def fake_stream(customer_id, question, chat_history):
+        yield "I can help with tents."
+
+    with patch("main.REAL_CHAT_AVAILABLE", True), patch(
+        "main.get_response_stream",
+        side_effect=fake_stream,
+    ) as mock_stream:
+        res = client.post(
+            "/api/create_response/stream",
+            json={
+                "question": "Tents please",
+                "session_id": "sess-stream-hist",
+                "customer_id": "cust-1",
+            },
+        )
+        assert res.status_code == 200
+        mock_stream.assert_called_once_with(
+            "cust-1",
+            "Tents please",
+            [
+                {"role": "user", "content": "Hi"},
+                {"role": "assistant", "content": "Hello! How can I help?"},
+            ],
+        )
+
+
+def test_get_sessions_list_endpoint():
+    from contoso_chat.session_store import clear_session_store, create_or_get_session
+    clear_session_store()
+
+    create_or_get_session("s1", customer_id="user-a", title="Session 1")
+    create_or_get_session("s2", customer_id="user-b", title="Session 2")
+    create_or_get_session("s3", customer_id="user-a", title="Session 3")
+
+    # List all
+    res_all = client.get("/api/sessions")
+    assert res_all.status_code == 200
+    sessions_all = res_all.json()
+    assert len(sessions_all) == 3
+
+    # Filter by customer_id
+    res_filtered = client.get("/api/sessions?customer_id=user-a")
+    assert res_filtered.status_code == 200
+    sessions_a = res_filtered.json()
+    assert len(sessions_a) == 2
+    assert {s["session_id"] for s in sessions_a} == {"s1", "s3"}
+
+    # Filter by non-existent
+    res_none = client.get("/api/sessions?customer_id=nobody")
+    assert res_none.status_code == 200
+    assert res_none.json() == []
+
+
+def test_get_session_by_id_200_and_404():
+    from contoso_chat.session_store import (
+        append_message,
+        clear_session_store,
+        create_or_get_session,
+    )
+    clear_session_store()
+
+    create_or_get_session("s-lookup", customer_id="u1", title="Lookup Test")
+    append_message("s-lookup", "user", "Hello there")
+
+    # 200
+    res_found = client.get("/api/sessions/s-lookup")
+    assert res_found.status_code == 200
+    data = res_found.json()
+    assert data["session_id"] == "s-lookup"
+    assert data["title"] == "Lookup Test"
+    assert len(data["messages"]) == 1
+
+    # 404
+    res_missing = client.get("/api/sessions/non-existent-session")
+    assert res_missing.status_code == 404
+
+
+def test_delete_session_endpoint_200_and_404():
+    from contoso_chat.session_store import clear_session_store, create_or_get_session
+    clear_session_store()
+
+    create_or_get_session("s-delete", customer_id="u1")
+
+    # 200 deleted
+    res_del = client.delete("/api/sessions/s-delete")
+    assert res_del.status_code == 200
+    assert res_del.json() == {"status": "deleted", "session_id": "s-delete"}
+
+    # Confirm deletion
+    res_get = client.get("/api/sessions/s-delete")
+    assert res_get.status_code == 404
+
+    # 404 on deleting again
+    res_del_again = client.delete("/api/sessions/s-delete")
+    assert res_del_again.status_code == 404
