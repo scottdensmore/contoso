@@ -1533,3 +1533,82 @@ def test_create_response_stream_mock_mode_omits_stores_event_when_no_intent():
         ]
         stores_event = next((e for e in events if e.get("event") == "stores"), None)
         assert stores_event is None
+
+
+def test_get_tracking_info_endpoint_valid():
+    """Test GET /api/tracking/{identifier} returns tracking information for valid identifier."""
+    res = client.get("/api/tracking/CTSO-TRK-DEMO123")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["tracking_number"] == "CTSO-TRK-DEMO123"
+    assert data["carrier"] in ["FedEx Ground", "UPS Ground"]
+    assert len(data["milestones"]) >= 4
+
+
+def test_get_tracking_info_endpoint_not_found():
+    """Test GET /api/tracking/{identifier} returns 404 for unknown identifier."""
+    res = client.get("/api/tracking/UNKNOWN-99999")
+    assert res.status_code == 404
+    data = res.json()
+    assert "Tracking information not found for identifier: UNKNOWN-99999" in data["detail"]
+
+
+def test_create_response_mock_mode_with_carrier_tracking():
+    """Test POST /api/create_response includes carrier_tracking payload in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Where is package CTSO-TRK-98765?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "carrier_tracking" in data
+        assert data["carrier_tracking"]["tracking_number"] == "CTSO-TRK-98765"
+
+
+def test_create_response_mock_mode_without_carrier_tracking():
+    """Test POST /api/create_response omits carrier_tracking when no carrier intent is detected."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What tents are best for winter?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "carrier_tracking" not in data
+
+
+def test_create_response_stream_mock_mode_emits_carrier_tracking_event():
+    """Test POST /api/create_response/stream emits event: carrier_tracking in mock mode."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Where is my shipment CTSO-TRK-DEMO123?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        carrier_event = next((e for e in events if e.get("event") == "carrier_tracking"), None)
+        assert carrier_event is not None
+        assert "carrier_tracking" in carrier_event
+        assert carrier_event["carrier_tracking"]["tracking_number"] == "CTSO-TRK-DEMO123"
+
+
+def test_create_response_stream_mock_mode_omits_carrier_tracking_event_when_no_intent():
+    """Test POST /api/create_response/stream omits event: carrier_tracking for general questions."""
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about sleeping bags"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        carrier_event = next((e for e in events if e.get("event") == "carrier_tracking"), None)
+        assert carrier_event is None
