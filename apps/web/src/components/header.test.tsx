@@ -34,7 +34,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
   })
 
   it('renders login/signup links when unauthenticated', async () => {
@@ -196,7 +196,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 3,
       subtotal: 150,
-    })
+    } as any)
 
     await act(async () => {
       render(<Header />)
@@ -220,7 +220,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
 
     const { rerender } = render(<Header />)
     const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
@@ -243,7 +243,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
     rerender(<Header />)
 
     // Drawer closes
@@ -258,7 +258,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
     rerender(<Header />)
 
     expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
@@ -277,7 +277,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
 
     const { rerender } = render(<Header />)
     const cartButton = screen.getByRole('button', { name: 'Shopping cart' })
@@ -295,7 +295,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
     rerender(<Header />)
 
     // Drawer closes
@@ -310,7 +310,7 @@ describe('Header', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+    } as any)
     rerender(<Header />)
 
     expect(focusSpy).not.toHaveBeenCalled()

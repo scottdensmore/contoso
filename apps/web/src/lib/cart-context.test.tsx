@@ -191,6 +191,155 @@ describe("CartContext", () => {
     expect(result.current.removeItem).toBe(removeItem);
     expect(result.current.updateQuantity).toBe(updateQuantity);
     expect(result.current.clearCart).toBe(clearCart);
+    expect(result.current.applyPromoCode).toBe(result.current.applyPromoCode);
+    expect(result.current.removePromoCode).toBe(result.current.removePromoCode);
+  });
+
+  it("initializes with promo code fields default state", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    expect(result.current.appliedPromo).toBeNull();
+    expect(result.current.discountPercent).toBe(0);
+    expect(result.current.discountAmount).toBe(0);
+    expect(result.current.total).toBe(0);
+  });
+
+  it("calculates total matching subtotal when no promo code is applied", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 100 }, 2);
+    });
+    expect(result.current.subtotal).toBe(200);
+    expect(result.current.discountPercent).toBe(0);
+    expect(result.current.discountAmount).toBe(0);
+    expect(result.current.total).toBe(200);
+  });
+
+  it("applies valid promo code and recalculates discount and total", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 100 }, 2);
+    });
+
+    let applyResult: { success: boolean; message: string } | undefined;
+    act(() => {
+      applyResult = result.current.applyPromoCode("WELCOME20");
+    });
+
+    expect(applyResult).toEqual({ success: true, message: "20% off welcome discount" });
+    expect(result.current.appliedPromo).toEqual({
+      code: "WELCOME20",
+      discountPercent: 20,
+      description: "20% off welcome discount",
+    });
+    expect(result.current.discountPercent).toBe(20);
+    expect(result.current.discountAmount).toBe(40);
+    expect(result.current.total).toBe(160);
+  });
+
+  it("fails gracefully when applying invalid promo code", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 100 }, 1);
+    });
+
+    let applyResult: { success: boolean; message: string } | undefined;
+    act(() => {
+      applyResult = result.current.applyPromoCode("INVALID_PROMO");
+    });
+
+    expect(applyResult).toEqual({ success: false, message: "Invalid promo code" });
+    expect(result.current.appliedPromo).toBeNull();
+    expect(result.current.discountPercent).toBe(0);
+    expect(result.current.discountAmount).toBe(0);
+    expect(result.current.total).toBe(100);
+  });
+
+  it("removes applied promo code", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 100 }, 2);
+      result.current.applyPromoCode("OUTDOORS10");
+    });
+
+    expect(result.current.discountPercent).toBe(10);
+    expect(result.current.discountAmount).toBe(20);
+    expect(result.current.total).toBe(180);
+
+    act(() => {
+      result.current.removePromoCode();
+    });
+
+    expect(result.current.appliedPromo).toBeNull();
+    expect(result.current.discountPercent).toBe(0);
+    expect(result.current.discountAmount).toBe(0);
+    expect(result.current.total).toBe(200);
+  });
+
+  it("clears applied promo code when clearCart is called", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.addItem({ productId: "p1", slug: "tent", name: "Tent", price: 100 }, 2);
+      result.current.applyPromoCode("TRAIL15");
+    });
+    expect(result.current.appliedPromo?.code).toBe("TRAIL15");
+
+    act(() => {
+      result.current.clearCart();
+    });
+
+    expect(result.current.items).toHaveLength(0);
+    expect(result.current.subtotal).toBe(0);
+    expect(result.current.appliedPromo).toBeNull();
+    expect(result.current.discountPercent).toBe(0);
+    expect(result.current.discountAmount).toBe(0);
+    expect(result.current.total).toBe(0);
+    expect(localStorage.getItem("contoso_applied_promo")).toBeNull();
+  });
+
+  it("hydrates applied promo from localStorage on mount", () => {
+    localStorage.setItem(
+      "contoso_applied_promo",
+      JSON.stringify({
+        code: "WELCOME20",
+        discountPercent: 20,
+        description: "20% off welcome discount",
+      })
+    );
+
+    const { result } = renderHook(() => useCart(), { wrapper });
+    expect(result.current.appliedPromo).toEqual({
+      code: "WELCOME20",
+      discountPercent: 20,
+      description: "20% off welcome discount",
+    });
+    expect(result.current.discountPercent).toBe(20);
+  });
+
+  it("handles corrupted promo in localStorage safely", () => {
+    localStorage.setItem("contoso_applied_promo", "{invalid-json");
+
+    const { result } = renderHook(() => useCart(), { wrapper });
+    expect(result.current.appliedPromo).toBeNull();
+    expect(result.current.discountPercent).toBe(0);
+  });
+
+  it("persists promo code to localStorage and removes it on removePromoCode", () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    act(() => {
+      result.current.applyPromoCode("OUTDOORS10");
+    });
+
+    expect(JSON.parse(localStorage.getItem("contoso_applied_promo") || "{}")).toEqual({
+      code: "OUTDOORS10",
+      discountPercent: 10,
+      description: "10% off site-wide",
+    });
+
+    act(() => {
+      result.current.removePromoCode();
+    });
+
+    expect(localStorage.getItem("contoso_applied_promo")).toBeNull();
   });
 });
 

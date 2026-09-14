@@ -40,6 +40,8 @@ describe("CartDrawer", () => {
   const mockUpdateQuantity = vi.fn();
   const mockClearCart = vi.fn();
   const mockPush = vi.fn();
+  const mockApplyPromoCode = vi.fn();
+  const mockRemovePromoCode = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -351,5 +353,183 @@ describe("CartDrawer", () => {
     const signInLink = screen.getByRole("link", { name: /Sign in to Checkout/i });
     fireEvent.click(signInLink);
     expect(mockCloseCart).toHaveBeenCalledTimes(2);
+  });
+
+  it("renders promo code input and apply button with live region when cart has items", () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 1, image: "/images/tent.webp" },
+      ],
+      subtotal: 100,
+      total: 100,
+      discountAmount: 0,
+      appliedPromo: null,
+      closeCart: mockCloseCart,
+      applyPromoCode: mockApplyPromoCode,
+      removePromoCode: mockRemovePromoCode,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    const promoInput = screen.getByLabelText("Enter promotional discount code");
+    expect(promoInput).toBeDefined();
+    expect(promoInput.getAttribute("id")).toBe("promo-code-input");
+    expect(promoInput.getAttribute("placeholder")).toBe("Promo code");
+
+    const applyButton = screen.getByRole("button", { name: "Apply" });
+    expect(applyButton).toBeDefined();
+
+    const liveRegion = document.querySelector('[aria-live="polite"]');
+    expect(liveRegion).not.toBeNull();
+  });
+
+  it("applies promo code on button click and displays success message", () => {
+    mockApplyPromoCode.mockReturnValue({
+      success: true,
+      message: "20% off welcome discount",
+    });
+
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 1, image: "/images/tent.webp" },
+      ],
+      subtotal: 100,
+      total: 100,
+      discountAmount: 0,
+      appliedPromo: null,
+      closeCart: mockCloseCart,
+      applyPromoCode: mockApplyPromoCode,
+      removePromoCode: mockRemovePromoCode,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    const promoInput = screen.getByLabelText("Enter promotional discount code");
+    fireEvent.change(promoInput, { target: { value: "WELCOME20" } });
+
+    const applyButton = screen.getByRole("button", { name: "Apply" });
+    fireEvent.click(applyButton);
+
+    expect(mockApplyPromoCode).toHaveBeenCalledWith("WELCOME20");
+    expect(screen.getByText("20% off welcome discount")).toBeDefined();
+  });
+
+  it("displays error message when invalid promo code is applied", () => {
+    mockApplyPromoCode.mockReturnValue({
+      success: false,
+      message: "Invalid promo code",
+    });
+
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 1, image: "/images/tent.webp" },
+      ],
+      subtotal: 100,
+      total: 100,
+      discountAmount: 0,
+      appliedPromo: null,
+      closeCart: mockCloseCart,
+      applyPromoCode: mockApplyPromoCode,
+      removePromoCode: mockRemovePromoCode,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    const promoInput = screen.getByLabelText("Enter promotional discount code");
+    fireEvent.change(promoInput, { target: { value: "BADCODE" } });
+
+    const applyButton = screen.getByRole("button", { name: "Apply" });
+    fireEvent.click(applyButton);
+
+    expect(mockApplyPromoCode).toHaveBeenCalledWith("BADCODE");
+    expect(screen.getByText("Invalid promo code")).toBeDefined();
+  });
+
+  it("displays applied promo badge, discount line item (-$XX.XX), subtotal, discount, total, and removes code", () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 2, image: "/images/tent.webp" },
+      ],
+      subtotal: 200,
+      discountAmount: 40,
+      total: 160,
+      appliedPromo: {
+        code: "WELCOME20",
+        discountPercent: 20,
+        description: "20% off welcome discount",
+      },
+      closeCart: mockCloseCart,
+      applyPromoCode: mockApplyPromoCode,
+      removePromoCode: mockRemovePromoCode,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({ status: "unauthenticated" } as any);
+
+    render(<CartDrawer />);
+
+    expect(screen.getByText("WELCOME20 (20% off)")).toBeDefined();
+    expect(screen.getByText("Subtotal")).toBeDefined();
+    expect(screen.getByText("Discount")).toBeDefined();
+    expect(screen.getByText("Total")).toBeDefined();
+    expect(screen.getByText("-$40.00")).toBeDefined();
+    expect(screen.getByText("$160.00")).toBeDefined();
+
+    const removeBtn = screen.getByRole("button", { name: "Remove" });
+    fireEvent.click(removeBtn);
+    expect(mockRemovePromoCode).toHaveBeenCalled();
+  });
+
+  it("includes promoCode in checkout payload when promo is applied", async () => {
+    vi.mocked(useCart).mockReturnValue({
+      isOpen: true,
+      items: [
+        { productId: "p1", slug: "tent", name: "Tent", price: 100, quantity: 2, image: "/images/tent.webp" },
+      ],
+      subtotal: 200,
+      discountAmount: 40,
+      total: 160,
+      appliedPromo: {
+        code: "WELCOME20",
+        discountPercent: 20,
+        description: "20% off welcome discount",
+      },
+      closeCart: mockCloseCart,
+      clearCart: mockClearCart,
+      applyPromoCode: mockApplyPromoCode,
+      removePromoCode: mockRemovePromoCode,
+    } as any);
+    vi.mocked(useSession).mockReturnValue({
+      status: "authenticated",
+      data: { user: { id: "u1", email: "user@example.com" } },
+    } as any);
+
+    vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ id: "ord_123" }),
+    } as any);
+
+    render(<CartDrawer />);
+    const placeOrderBtn = screen.getByRole("button", { name: /Place Order/i });
+    fireEvent.click(placeOrderBtn);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ productId: "p1", quantity: 2 }],
+          promoCode: "WELCOME20",
+        }),
+      });
+      expect(mockClearCart).toHaveBeenCalled();
+      expect(mockCloseCart).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/profile");
+    });
   });
 });

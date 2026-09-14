@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { PromoCode, validatePromoCode } from "@/lib/promo-codes";
 
 export interface CartItem {
   productId: string;
@@ -29,14 +30,22 @@ export interface CartContextValue {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  appliedPromo: PromoCode | null;
+  discountPercent: number;
+  discountAmount: number;
+  total: number;
+  applyPromoCode: (code: string) => { success: boolean; message: string };
+  removePromoCode: () => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 const CART_STORAGE_KEY = "contoso_cart";
+const PROMO_STORAGE_KEY = "contoso_applied_promo";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -65,6 +74,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore localStorage read errors
     }
+
+    try {
+      const storedPromo = localStorage.getItem(PROMO_STORAGE_KEY);
+      if (storedPromo) {
+        const parsedPromo = JSON.parse(storedPromo);
+        if (
+          parsedPromo &&
+          typeof parsedPromo === "object" &&
+          typeof parsedPromo.code === "string" &&
+          typeof parsedPromo.discountPercent === "number" &&
+          typeof parsedPromo.description === "string"
+        ) {
+          setAppliedPromo(parsedPromo);
+        }
+      }
+    } catch {
+      // Ignore localStorage read errors
+    }
+
     setIsHydrated(true);
   }, []);
 
@@ -76,6 +104,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Ignore localStorage write errors
     }
   }, [items, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    try {
+      if (appliedPromo) {
+        localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(appliedPromo));
+      } else {
+        localStorage.removeItem(PROMO_STORAGE_KEY);
+      }
+    } catch {
+      // Ignore localStorage write errors
+    }
+  }, [appliedPromo, isHydrated]);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
@@ -116,8 +157,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [removeItem]
   );
 
+  const applyPromoCode = useCallback((code: string) => {
+    const result = validatePromoCode(code);
+    if (result.valid && result.promo) {
+      setAppliedPromo(result.promo);
+      return { success: true, message: result.message };
+    }
+    return { success: false, message: result.message };
+  }, []);
+
+  const removePromoCode = useCallback(() => {
+    setAppliedPromo(null);
+  }, []);
+
   const clearCart = useCallback(() => {
     setItems([]);
+    setAppliedPromo(null);
+    try {
+      localStorage.removeItem(PROMO_STORAGE_KEY);
+    } catch {
+      // Ignore localStorage errors
+    }
   }, []);
 
   const totalItems = useMemo(
@@ -127,6 +187,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     [items]
+  );
+
+  const discountPercent = useMemo(
+    () => (appliedPromo ? appliedPromo.discountPercent : 0),
+    [appliedPromo]
+  );
+
+  const discountAmount = useMemo(
+    () => Math.round((subtotal * discountPercent) / 100 * 100) / 100,
+    [subtotal, discountPercent]
+  );
+
+  const total = useMemo(
+    () => Math.max(0, Math.round((subtotal - discountAmount) * 100) / 100),
+    [subtotal, discountAmount]
   );
 
   const contextValue = useMemo<CartContextValue>(
@@ -141,6 +216,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart,
       totalItems,
       subtotal,
+      appliedPromo,
+      discountPercent,
+      discountAmount,
+      total,
+      applyPromoCode,
+      removePromoCode,
     }),
     [
       items,
@@ -153,6 +234,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       clearCart,
       totalItems,
       subtotal,
+      appliedPromo,
+      discountPercent,
+      discountAmount,
+      total,
+      applyPromoCode,
+      removePromoCode,
     ]
   );
 

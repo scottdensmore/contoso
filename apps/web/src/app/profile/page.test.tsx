@@ -59,7 +59,13 @@ describe('Profile Page', () => {
       clearCart: vi.fn(),
       totalItems: 0,
       subtotal: 0,
-    })
+      appliedPromo: null,
+      discountPercent: 0,
+      discountAmount: 0,
+      total: 0,
+      applyPromoCode: vi.fn(),
+      removePromoCode: vi.fn(),
+    } as any)
   })
 
   it('renders loading state if loading', () => {

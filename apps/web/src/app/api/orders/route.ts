@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validatePromoCode } from "@/lib/promo-codes";
 
 interface OrderItemInput {
   productId: string;
@@ -31,6 +32,24 @@ export async function POST(request: Request) {
         { error: "Cart items are required to place an order" },
         { status: 400 }
       );
+    }
+
+    let discountPercent = 0;
+    if (body.promoCode !== undefined) {
+      if (typeof body.promoCode !== "string") {
+        return NextResponse.json(
+          { error: "Invalid promo code" },
+          { status: 400 }
+        );
+      }
+      const validation = validatePromoCode(body.promoCode);
+      if (!validation.valid || !validation.promo) {
+        return NextResponse.json(
+          { error: validation.message || "Invalid promo code" },
+          { status: 400 }
+        );
+      }
+      discountPercent = validation.promo.discountPercent;
     }
 
     const itemsInput: OrderItemInput[] = body.items;
@@ -81,6 +100,11 @@ export async function POST(request: Request) {
         price: linePrice,
       };
     });
+
+    if (discountPercent > 0) {
+      const discountAmount = (total * discountPercent) / 100;
+      total = Math.max(0, total - discountAmount);
+    }
 
     const order = await prisma.order.create({
       data: {

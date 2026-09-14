@@ -267,4 +267,138 @@ describe("POST /api/orders", () => {
     const body = await res.json();
     expect(body.error).toContain("Internal server error");
   });
+
+  it("returns 400 when promoCode is invalid or non-string", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    const req1 = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{ productId: "p1", quantity: 1 }],
+        promoCode: "INVALID_PROMO",
+      }),
+    });
+
+    const res1 = await POST(req1);
+    expect(res1.status).toBe(400);
+    const body1 = await res1.json();
+    expect(body1.error).toBe("Invalid promo code");
+
+    const req2 = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{ productId: "p1", quantity: 1 }],
+        promoCode: 12345,
+      }),
+    });
+
+    const res2 = await POST(req2);
+    expect(res2.status).toBe(400);
+  });
+
+  it("creates order with discounted total when valid promoCode is provided", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    vi.mocked(prisma.product.findMany).mockResolvedValue([
+      { id: "p1", name: "Tent", price: 100, slug: "tent", categoryId: "c1", brandId: "b1", description: "", image: "", createdAt: new Date(), updatedAt: new Date() },
+    ]);
+
+    const createdOrder = {
+      id: "ord_disc",
+      userId: "u1",
+      total: 80,
+      date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      items: [{ id: "i1", orderId: "ord_disc", productId: "p1", quantity: 1, price: 100 }],
+    };
+    vi.mocked(prisma.order.create).mockResolvedValue(createdOrder as any);
+
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{ productId: "p1", quantity: 1 }],
+        promoCode: "WELCOME20",
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.id).toBe("ord_disc");
+    expect(body.total).toBe(80);
+
+    // Verify prisma.order.create received total: 80 (100 - 20%)
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: {
+        userId: "u1",
+        total: 80,
+        items: {
+          create: [{ productId: "p1", quantity: 1, price: 100 }],
+        },
+      },
+      include: { items: { include: { product: true } } },
+    });
+  });
+
+  it("normalizes promoCode and calculates discounted total accurately", async () => {
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "u1", email: "user@example.com" },
+    } as any);
+
+    vi.mocked(prisma.product.findMany).mockResolvedValue([
+      { id: "p1", name: "Tent", price: 120, slug: "tent", categoryId: "c1", brandId: "b1", description: "", image: "", createdAt: new Date(), updatedAt: new Date() },
+      { id: "p2", name: "Bag", price: 80, slug: "bag", categoryId: "c1", brandId: "b1", description: "", image: "", createdAt: new Date(), updatedAt: new Date() },
+    ]);
+
+    const createdOrder = {
+      id: "ord_trail",
+      userId: "u1",
+      total: 272,
+      date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      items: [
+        { id: "i1", orderId: "ord_trail", productId: "p1", quantity: 2, price: 120 },
+        { id: "i2", orderId: "ord_trail", productId: "p2", quantity: 1, price: 80 },
+      ],
+    };
+    vi.mocked(prisma.order.create).mockResolvedValue(createdOrder as any);
+
+    // subtotal = 2*120 + 80 = 320. TRAIL15 discount: 15% of 320 = 48. Total = 320 - 48 = 272.
+    const req = new Request("http://localhost/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [
+          { productId: "p1", quantity: 2 },
+          { productId: "p2", quantity: 1 },
+        ],
+        promoCode: "  trail15  ",
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: {
+        userId: "u1",
+        total: 272,
+        items: {
+          create: [
+            { productId: "p1", quantity: 2, price: 120 },
+            { productId: "p2", quantity: 1, price: 80 },
+          ],
+        },
+      },
+      include: { items: { include: { product: true } } },
+    });
+  });
 });

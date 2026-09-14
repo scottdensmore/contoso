@@ -20,11 +20,27 @@ const CURRENCY_FORMATTER = new Intl.NumberFormat("en-US", {
 });
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, updateQuantity, removeItem, clearCart, subtotal } = useCart();
+  const {
+    items,
+    isOpen,
+    closeCart,
+    updateQuantity,
+    removeItem,
+    clearCart,
+    subtotal,
+    total = subtotal,
+    appliedPromo = null,
+    discountAmount = 0,
+    applyPromoCode = () => ({ success: false, message: "" }),
+    removePromoCode = () => {},
+  } = useCart();
   const { status } = useSession();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoMessage, setPromoMessage] = useState<string | null>(null);
+  const [promoStatus, setPromoStatus] = useState<"idle" | "success" | "error">("idle");
   const drawerRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
@@ -89,19 +105,48 @@ export default function CartDrawer() {
 
   const formattedSubtotal = CURRENCY_FORMATTER.format(subtotal);
 
+  const handleApplyPromo = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const res = applyPromoCode(promoInput);
+    if (res.success) {
+      setPromoStatus("success");
+      setPromoMessage(res.message);
+      setPromoInput("");
+    } else {
+      setPromoStatus("error");
+      setPromoMessage(res.message);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    removePromoCode();
+    setPromoStatus("idle");
+    setPromoMessage(null);
+    setPromoInput("");
+  };
+
   const handleCheckout = async () => {
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
+      const payload: {
+        items: { productId: string; quantity: number }[];
+        promoCode?: string;
+      } = {
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      };
+
+      if (appliedPromo) {
+        payload.promoCode = appliedPromo.code;
+      }
+
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -238,10 +283,72 @@ export default function CartDrawer() {
           {/* Footer */}
           {items.length > 0 && (
             <div className="border-t border-zinc-200 p-6 bg-zinc-50 space-y-4">
-              <div className="flex justify-between text-base font-semibold text-zinc-900">
-                <span>Subtotal</span>
-                <span>{formattedSubtotal}</span>
+              {/* Promo code entry section */}
+              <div className="space-y-2">
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between rounded-md bg-zinc-100 border border-zinc-200 px-3 py-2 text-sm">
+                    <span className="font-semibold text-zinc-800">
+                      {appliedPromo.code} ({appliedPromo.discountPercent}% off)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromo}
+                      className={`text-xs font-semibold text-red-600 hover:text-red-800 p-1 ${ACTION_FOCUS}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApplyPromo} className="flex gap-2">
+                    <input
+                      id="promo-code-input"
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Promo code"
+                      aria-label="Enter promotional discount code"
+                      className={`flex-1 rounded-md border border-zinc-300 px-3 py-1.5 text-sm uppercase text-zinc-900 placeholder-zinc-400 ${ACTION_FOCUS}`}
+                    />
+                    <button
+                      type="submit"
+                      className={`rounded-md bg-zinc-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-700 ${ACTION_BOUNDARY} ${ACTION_FOCUS}`}
+                    >
+                      Apply
+                    </button>
+                  </form>
+                )}
+                <div aria-live="polite" className="text-xs">
+                  {promoMessage && (
+                    <p className={promoStatus === "error" ? "text-red-600" : "text-emerald-600"}>
+                      {promoMessage}
+                    </p>
+                  )}
+                </div>
               </div>
+
+              {/* Summary */}
+              {appliedPromo ? (
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex justify-between text-zinc-600">
+                    <span>Subtotal</span>
+                    <span>{formattedSubtotal}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-600 font-medium">
+                    <span>Discount</span>
+                    <span>-{CURRENCY_FORMATTER.format(discountAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-base font-semibold text-zinc-900 border-t border-zinc-200 pt-1.5">
+                    <span>Total</span>
+                    <span>{CURRENCY_FORMATTER.format(total)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between text-base font-semibold text-zinc-900">
+                  <span>Subtotal</span>
+                  <span>{formattedSubtotal}</span>
+                </div>
+              )}
+
               <p className="text-xs text-zinc-500">Shipping and taxes calculated at checkout.</p>
 
               {status === "authenticated" ? (
@@ -251,7 +358,7 @@ export default function CartDrawer() {
                   disabled={isSubmitting}
                   className={`w-full rounded-md bg-zinc-900 py-3 text-center text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 disabled:opacity-60 ${ACTION_BOUNDARY}`}
                 >
-                  {isSubmitting ? "Placing order..." : `Place Order (${formattedSubtotal})`}
+                  {isSubmitting ? "Placing order..." : `Place Order (${appliedPromo ? CURRENCY_FORMATTER.format(total) : formattedSubtotal})`}
                 </button>
               ) : (
                 <Link
