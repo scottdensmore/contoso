@@ -1114,3 +1114,84 @@ def test_validate_promo_code_endpoint_invalid():
     data = res.json()
     assert data["valid"] is False
     assert "message" in data
+
+
+def test_post_chat_export_json_response():
+    res = client.post(
+        "/api/chat/export",
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "format": "markdown",
+            "title": "My Chat",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["format"] == "markdown"
+    assert data["media_type"] == "text/markdown"
+    assert data["filename"] == "chat-transcript-export.md"
+    assert "Hello" in data["content"]
+    assert data["message_count"] == 1
+
+
+def test_post_chat_export_download_response():
+    res = client.post(
+        "/api/chat/export?download=true",
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "format": "text",
+        },
+    )
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("text/plain")
+    assert 'attachment; filename="chat-transcript-export.txt"' in res.headers["content-disposition"]
+    assert "Hello" in res.text
+
+
+def test_get_session_export_download():
+    from contoso_chat.session_store import (
+        append_message,
+        clear_session_store,
+        create_or_get_session,
+    )
+
+    clear_session_store()
+    sess_id = "sess-get-export"
+    create_or_get_session(sess_id, title="Trip Planning")
+    append_message(sess_id, role="user", content="Where can I camp?")
+    append_message(sess_id, role="assistant", content="In Yosemite!")
+
+    res = client.get(f"/api/sessions/{sess_id}/export?format=markdown")
+    assert res.status_code == 200
+    assert res.headers["content-type"].startswith("text/markdown")
+    assert f'attachment; filename="chat-transcript-{sess_id}.md"' in res.headers["content-disposition"]
+    assert "Trip Planning" in res.text
+    assert "Where can I camp?" in res.text
+    assert "In Yosemite!" in res.text
+
+
+def test_export_endpoints_404_on_missing_session():
+    res_get = client.get("/api/sessions/nonexistent-sess-404/export")
+    assert res_get.status_code == 404
+
+    res_post = client.post(
+        "/api/chat/export",
+        json={"session_id": "nonexistent-sess-404"},
+    )
+    assert res_post.status_code == 404
+
+
+def test_export_endpoints_400_on_invalid_format():
+    from contoso_chat.session_store import clear_session_store, create_or_get_session
+    clear_session_store()
+    sess_id = "sess-invalid-fmt"
+    create_or_get_session(sess_id, title="Test")
+
+    res_get = client.get(f"/api/sessions/{sess_id}/export?format=unsupported")
+    assert res_get.status_code == 400
+
+    res_post = client.post(
+        "/api/chat/export",
+        json={"format": "unsupported"},
+    )
+    assert res_post.status_code == 400

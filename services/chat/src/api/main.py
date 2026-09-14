@@ -26,8 +26,9 @@ from contoso_chat.session_store import (
     get_session,
     list_sessions,
 )
+from contoso_chat.transcript_export import export_transcript
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from local_provider_health import evaluate_local_provider_health
@@ -143,6 +144,15 @@ app.add_middleware(
 # Request model
 class PromoValidateRequest(BaseModel):
     code: str
+
+
+class ChatExportRequest(BaseModel):
+    session_id: Optional[str] = None
+    messages: Optional[list[dict[str, Any]]] = None
+    format: str = "markdown"  # "markdown" | "text" | "json"
+    title: Optional[str] = None
+    include_citations: bool = True
+    include_timestamps: bool = True
 
 
 class ChatRequest(BaseModel):
@@ -453,6 +463,60 @@ async def delete_session_by_id(session_id: str) -> dict[str, str]:
     if not deleted:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"status": "deleted", "session_id": session_id}
+
+
+@app.get("/api/sessions/{session_id}/export")
+async def export_session_by_id(
+    session_id: str,
+    format: str = "markdown",
+    include_citations: bool = True,
+    include_timestamps: bool = True,
+) -> Response:
+    try:
+        result = export_transcript(
+            session_id=session_id,
+            format=format,
+            include_citations=include_citations,
+            include_timestamps=include_timestamps,
+        )
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return Response(
+        content=result["content"],
+        media_type=result["media_type"],
+        headers={"Content-Disposition": f'attachment; filename="{result["filename"]}"'},
+    )
+
+
+@app.post("/api/chat/export")
+async def export_chat(
+    request: ChatExportRequest,
+    download: bool = False,
+) -> Any:
+    try:
+        result = export_transcript(
+            session_id=request.session_id,
+            messages=request.messages,
+            format=request.format,
+            title=request.title,
+            include_citations=request.include_citations,
+            include_timestamps=request.include_timestamps,
+        )
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if download:
+        return Response(
+            content=result["content"],
+            media_type=result["media_type"],
+            headers={"Content-Disposition": f'attachment; filename="{result["filename"]}"'},
+        )
+    return result
 
 
 @app.post("/api/feedback", response_model=FeedbackResponse, status_code=201)
