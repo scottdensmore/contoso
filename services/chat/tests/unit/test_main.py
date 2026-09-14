@@ -1612,3 +1612,95 @@ def test_create_response_stream_mock_mode_omits_carrier_tracking_event_when_no_i
         ]
         carrier_event = next((e for e in events if e.get("event") == "carrier_tracking"), None)
         assert carrier_event is None
+
+
+def test_get_all_faqs_endpoint():
+    res = client.get("/api/faq")
+    assert res.status_code == 200
+    faqs = res.json()
+    assert isinstance(faqs, list)
+    assert len(faqs) >= 7
+    ids = {f["faq_id"] for f in faqs}
+    assert "warranty" in ids
+    assert "returns" in ids
+
+
+def test_search_faqs_endpoint_with_category_filter():
+    res = client.get("/api/faq?category=returns")
+    assert res.status_code == 200
+    faqs = res.json()
+    assert isinstance(faqs, list)
+    assert len(faqs) == 1
+    assert faqs[0]["faq_id"] == "returns"
+    assert faqs[0]["category"] == "returns"
+
+
+def test_search_faqs_endpoint_with_query():
+    res = client.get("/api/faq?query=warranty")
+    assert res.status_code == 200
+    faqs = res.json()
+    assert isinstance(faqs, list)
+    assert any(f["faq_id"] == "warranty" for f in faqs)
+
+
+def test_get_faq_by_id_endpoint_success():
+    res = client.get("/api/faq/warranty")
+    assert res.status_code == 200
+    faq = res.json()
+    assert faq["faq_id"] == "warranty"
+    assert faq["category"] == "warranty"
+    assert "1-year" in faq["answer"] or "warranty" in faq["answer"].lower()
+
+
+def test_get_faq_by_id_endpoint_not_found():
+    res = client.get("/api/faq/unknown-faq-999")
+    assert res.status_code == 404
+    data = res.json()
+    assert data["detail"] == "FAQ topic not found: unknown-faq-999"
+
+
+def test_create_response_mock_mode_with_faq_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What is your warranty policy on outdoor gear?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "faq" in data
+        assert isinstance(data["faq"], list)
+        assert any(item["faq_id"] == "warranty" for item in data["faq"])
+
+
+def test_create_response_stream_mock_mode_emits_faq_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What is your warranty policy on outdoor gear?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        faq_event = next((e for e in events if e.get("event") == "faq"), None)
+        assert faq_event is not None
+        assert "faq" in faq_event
+        assert any(item["faq_id"] == "warranty" for item in faq_event["faq"])
+
+
+def test_create_response_stream_mock_mode_omits_faq_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about sleeping bags"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        faq_event = next((e for e in events if e.get("event") == "faq"), None)
+        assert faq_event is None

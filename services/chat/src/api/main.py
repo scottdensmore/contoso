@@ -10,6 +10,13 @@ from contoso_chat.carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from contoso_chat.faq import (
+    FaqItem,
+    detect_faq_intent,
+    get_all_faqs,
+    get_faq_by_id,
+    search_faqs,
+)
 from contoso_chat.feedback import (
     FeedbackRequest,
     FeedbackResponse,
@@ -335,6 +342,7 @@ async def create_response(request: ChatRequest):
             promo_intent = detect_promo_intent(request.question)
             policy_intent = detect_policy_intent(request.question)
             store_intent = detect_store_intent(request.question)
+            faq_result = detect_faq_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -389,6 +397,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = (
                     f"Mock response: Regarding our {p_obj.get('title', 'policy')}: "
                     f"{p_obj.get('details', p_obj.get('summary', ''))}"
+                )
+            if faq_result and faq_result.matches:
+                mock_payload["faq"] = [item.model_dump() for item in faq_result.matches]
+                f_obj = faq_result.matches[0]
+                mock_payload["answer"] = (
+                    f"Mock response: Regarding {f_obj.question}: {f_obj.answer}"
                 )
             if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                 mock_payload["stores"] = store_intent["matched_stores"]
@@ -526,6 +540,7 @@ async def create_response_stream(request: ChatRequest):
                 promo_intent = detect_promo_intent(request.question)
                 policy_intent = detect_policy_intent(request.question)
                 store_intent = detect_store_intent(request.question)
+                faq_result = detect_faq_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -550,6 +565,8 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
                 if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                     yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
+                if faq_result and faq_result.matches:
+                    yield f"data: {json.dumps({'event': 'faq', 'faq': [item.model_dump() for item in faq_result.matches]})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -604,6 +621,12 @@ async def create_response_stream(request: ChatRequest):
                             f"Mock response: Contoso Outdoors retail store: {store_names} ",
                             f"located at {matched[0].get('address')}.",
                         ]
+                elif faq_result and faq_result.matches:
+                    f_obj = faq_result.matches[0]
+                    mock_chunks = [
+                        f"Mock response: Regarding {f_obj.question}: ",
+                        f"{f_obj.answer}",
+                    ]
                 else:
                     mock_chunks = [
                         f"Mock response: You asked about '{request.question}'. ",
@@ -735,6 +758,26 @@ async def validate_promotion(request: PromoValidateRequest) -> dict[str, Any]:
     logger.info("Promo validation requested", extra={"code": request.code})
     return validate_promo_code(request.code)
 
+
+
+@app.get("/api/faq", response_model=list[FaqItem])
+async def get_faq_catalog(
+    query: Optional[str] = None,
+    category: Optional[str] = None,
+) -> list[FaqItem]:
+    logger.info("FAQ catalog requested", extra={"query": query, "category": category})
+    if query or category:
+        return search_faqs(query=query or "", category=category)
+    return get_all_faqs()
+
+
+@app.get("/api/faq/{faq_id}", response_model=FaqItem)
+async def get_faq_by_id_endpoint(faq_id: str) -> FaqItem:
+    logger.info("FAQ detail requested", extra={"faq_id": faq_id})
+    item = get_faq_by_id(faq_id)
+    if not item:
+        raise HTTPException(status_code=404, detail=f"FAQ topic not found: {faq_id}")
+    return item
 
 
 @app.get("/api/policies")
