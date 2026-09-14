@@ -133,6 +133,12 @@ describe('Profile Page', () => {
     expect(wishlistTab.getAttribute('aria-controls')).toBe('panel-wishlist')
     expect(wishlistTab.getAttribute('id')).toBe('tab-wishlist')
 
+    const notificationsTab = screen.getByRole('tab', { name: /Notifications/i })
+    expect(notificationsTab).toBeDefined()
+    expect(notificationsTab.getAttribute('aria-selected')).toBe('false')
+    expect(notificationsTab.getAttribute('aria-controls')).toBe('panel-notifications')
+    expect(notificationsTab.getAttribute('id')).toBe('tab-notifications')
+
     const panel = screen.getByRole('tabpanel')
     expect(panel.getAttribute('id')).toBe('panel-general')
     expect(panel.getAttribute('aria-labelledby')).toBe('tab-general')
@@ -467,4 +473,42 @@ describe('Profile Page', () => {
     fireEvent.click(removeButton);
     expect(mockWishlistRemoveItem).toHaveBeenCalledWith("prod-1");
   });
+
+  it('renders notification preferences form when notifications tab is clicked', async () => {
+    vi.mocked(useSession).mockReturnValue({
+      status: 'authenticated',
+      data: { user: { id: 'user-123', name: 'Test User' } },
+    } as any)
+
+    vi.mocked(fetch).mockImplementation((url: any) => {
+      if (String(url).includes('/api/categories')) {
+        return Promise.resolve({ ok: true, json: async () => [] }) as any
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ name: 'Test User', phoneNumber: '(555) 123-4567' }),
+      }) as any
+    })
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /Notifications/i })).toBeDefined()
+    })
+
+    const notificationsTab = screen.getByRole('tab', { name: /Notifications/i })
+    fireEvent.click(notificationsTab)
+
+    expect(notificationsTab.getAttribute('aria-selected')).toBe('true')
+
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.getAttribute('id')).toBe('panel-notifications')
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-notifications')
+    expect(panel.tabIndex).toBe(0)
+
+    expect(screen.getByText('Notification Preferences')).toBeDefined()
+    expect(screen.getByText('Order & Shipping Alerts')).toBeDefined()
+    expect(screen.getByRole('button', { name: /Save Preferences/i })).toBeDefined()
+  })
 });
+
