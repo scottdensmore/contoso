@@ -5,6 +5,12 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from contoso_chat.feedback import (
+    FeedbackRequest,
+    FeedbackResponse,
+    get_feedback_summary,
+    record_feedback,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -274,3 +280,13 @@ async def create_response_stream(request: ChatRequest):
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(streamer(), media_type="text/event-stream")
+
+
+@app.post("/api/feedback", response_model=FeedbackResponse, status_code=201)
+async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
+    return record_feedback(request)
+
+
+@app.get("/api/feedback/summary")
+async def feedback_summary() -> dict[str, Any]:
+    return get_feedback_summary()
