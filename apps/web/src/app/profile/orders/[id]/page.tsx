@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/header";
+import OrderActions from "@/components/order-actions";
 import { ACTION_BOUNDARY } from "@/lib/control-classes";
 
 export default function OrderDetailPage() {
@@ -128,7 +129,12 @@ export default function OrderDetailPage() {
     currency: "USD",
   }).format(subtotal);
 
-  const statusText = order.status || "Completed";
+  const actionItems = (order.items || []).map((item: any) => ({
+    id: String(item.id ?? item.productId),
+    name: item.product?.name ?? `Item #${item.id ?? item.productId}`,
+    quantity: Number(item.quantity ?? 1),
+    price: Number(item.price ?? 0),
+  }));
 
   const cityStateZip = [
     user.city,
@@ -156,18 +162,20 @@ export default function OrderDetailPage() {
         <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm print:border-none print:shadow-none print:p-0 space-y-6">
           {/* Order Header */}
           <div className="flex flex-wrap justify-between items-start gap-4 pb-6 border-b border-gray-200">
-            <div>
-              <div className="flex items-center gap-3">
+            <div className="space-y-3">
+              <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   Order #{order.id}
                 </h1>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {statusText}
-                </span>
+                <p className="text-sm text-gray-500 mt-1">
+                  Placed on {formattedDate} &bull; Total: {formattedTotal}
+                </p>
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                Placed on {formattedDate}
-              </p>
+              <OrderActions
+                orderId={order.id}
+                orderDate={order.date}
+                items={actionItems}
+              />
             </div>
             <div className="print:hidden">
               <button
