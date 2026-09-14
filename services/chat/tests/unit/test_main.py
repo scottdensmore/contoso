@@ -982,3 +982,135 @@ def test_delete_session_endpoint_200_and_404():
     # 404 on deleting again
     res_del_again = client.delete("/api/sessions/s-delete")
     assert res_del_again.status_code == 404
+
+
+def test_create_response_mock_mode_with_promotions():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "do you have any coupons or discounts?"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "promotions" in data
+        promotions = data["promotions"]
+        assert isinstance(promotions, list)
+        assert len(promotions) == 3
+        codes = {p["code"] for p in promotions}
+        assert codes == {"WELCOME20", "OUTDOORS10", "TRAIL15"}
+        assert "WELCOME20" in data["answer"] or "OUTDOORS10" in data["answer"] or "discount" in data["answer"].lower()
+
+
+def test_create_response_mock_mode_without_promotions():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response", json={"question": "hello"})
+        assert res.status_code == 200
+        data = res.json()
+        assert "promotions" not in data or data.get("promotions") is None
+
+
+def test_create_response_stream_mock_mode_emits_promotions_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "any promo codes available?"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        promo_event = next((e for e in events if e.get("event") == "promotions"), None)
+        assert promo_event is not None
+        assert "promotions" in promo_event
+        codes = {p["code"] for p in promo_event["promotions"]}
+        assert codes == {"WELCOME20", "OUTDOORS10", "TRAIL15"}
+
+
+def test_create_response_stream_mock_mode_omits_promotions_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post("/api/create_response/stream", json={"question": "hello"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        promo_event = next((e for e in events if e.get("event") == "promotions"), None)
+        assert promo_event is None
+
+
+@patch("main.get_response")
+def test_create_response_real_mode_includes_promotions(mock_get_response):
+    expected_promos = [
+        {"code": "WELCOME20", "discount_percent": 20, "description": "20% off welcome discount for adventurers"},
+    ]
+    mock_get_response.return_value = {
+        "answer": "You can use code WELCOME20 for 20% off!",
+        "context": [],
+        "promotions": expected_promos,
+    }
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "any discounts?", "customer_id": "cust-1"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data.get("promotions") == expected_promos
+
+
+@patch("main.get_response_stream")
+def test_create_response_stream_real_mode_emits_promotions_event(mock_get_response_stream):
+    expected_promos = [
+        {"code": "WELCOME20", "discount_percent": 20, "description": "20% off welcome discount for adventurers"},
+    ]
+
+    async def fake_stream(customer_id, question, chat_history):
+        yield f"data: {json.dumps({'event': 'citations', 'citations': []})}\n\n"
+        yield f"data: {json.dumps({'event': 'promotions', 'promotions': expected_promos})}\n\n"
+        yield f"data: {json.dumps({'chunk': 'Here are your discounts.'})}\n\n"
+
+    mock_get_response_stream.side_effect = fake_stream
+    with patch("main.REAL_CHAT_AVAILABLE", True):
+        res = client.post("/api/create_response/stream", json={"question": "any discounts?"})
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        promo_event = next((e for e in events if e.get("event") == "promotions"), None)
+        assert promo_event is not None
+        assert promo_event["promotions"] == expected_promos
+
+
+def test_get_promotions_endpoint():
+    res = client.get("/api/promotions")
+    assert res.status_code == 200
+    promos = res.json()
+    assert isinstance(promos, list)
+    assert len(promos) == 3
+    codes = {p["code"] for p in promos}
+    assert codes == {"WELCOME20", "OUTDOORS10", "TRAIL15"}
+
+
+def test_validate_promo_code_endpoint_valid():
+    res = client.post("/api/promotions/validate", json={"code": "WELCOME20"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["valid"] is True
+    assert data["code"] == "WELCOME20"
+    assert data["discount_percent"] == 20
+
+
+def test_validate_promo_code_endpoint_case_insensitive():
+    res = client.post("/api/promotions/validate", json={"code": "outdoors10"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["valid"] is True
+    assert data["code"] == "OUTDOORS10"
+    assert data["discount_percent"] == 10
+
+
+def test_validate_promo_code_endpoint_invalid():
+    res = client.post("/api/promotions/validate", json={"code": "BADCODE"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["valid"] is False
+    assert "message" in data

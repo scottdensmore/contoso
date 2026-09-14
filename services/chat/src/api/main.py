@@ -12,6 +12,11 @@ from contoso_chat.feedback import (
     record_feedback,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.promotions import (
+    detect_promo_intent,
+    get_active_promotions,
+    validate_promo_code,
+)
 from contoso_chat.session_store import (
     ChatSession,
     append_message,
@@ -136,6 +141,10 @@ app.add_middleware(
 
 
 # Request model
+class PromoValidateRequest(BaseModel):
+    code: str
+
+
 class ChatRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -238,6 +247,7 @@ async def create_response(request: ChatRequest):
             logger.warning("Using mock response - real chat logic not available")
             handoff = detect_handoff_intent(request.question, chat_history)
             tracking_intent = detect_order_tracking_intent(request.question)
+            promo_intent = detect_promo_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -254,6 +264,13 @@ async def create_response(request: ChatRequest):
                     f"{MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. "
                     f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. "
                     f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}."
+                )
+            if promo_intent.get("is_promo_intent"):
+                mock_payload["promotions"] = get_active_promotions()
+                mock_payload["answer"] = (
+                    "Mock response: We have great promotions available! "
+                    "Use code WELCOME20 for 20% off your order, OUTDOORS10 for 10% off site-wide, "
+                    "or TRAIL15 for 15% off trail equipment. Apply them in your cart drawer at checkout!"
                 )
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -358,6 +375,7 @@ async def create_response_stream(request: ChatRequest):
                 )
                 handoff = detect_handoff_intent(request.question, chat_history)
                 tracking_intent = detect_order_tracking_intent(request.question)
+                promo_intent = detect_promo_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -365,11 +383,20 @@ async def create_response_stream(request: ChatRequest):
                 if tracking_intent.get("is_tracking_intent"):
                     captured_order_tracking = MOCK_ORDER_TRACKING
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
+                if promo_intent.get("is_promo_intent"):
+                    yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
+                if tracking_intent.get("is_tracking_intent"):
                     mock_chunks = [
                         f"Mock response: Your order #{MOCK_ORDER_TRACKING['order_id']} ",
                         f"is currently {MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. ",
                         f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. ",
                         f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}.",
+                    ]
+                elif promo_intent.get("is_promo_intent"):
+                    mock_chunks = [
+                        "Mock response: We have great promotions available! ",
+                        "Use code WELCOME20 for 20% off, OUTDOORS10 for 10% off, or TRAIL15 for 15% off. ",
+                        "Apply them in your shopping cart drawer at checkout!",
                     ]
                 else:
                     mock_chunks = [
@@ -436,3 +463,15 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
 @app.get("/api/feedback/summary")
 async def feedback_summary() -> dict[str, Any]:
     return get_feedback_summary()
+
+@app.get("/api/promotions")
+async def get_promotions() -> list[dict[str, Any]]:
+    logger.info("Promotions endpoint accessed")
+    return get_active_promotions()
+
+
+@app.post("/api/promotions/validate")
+async def validate_promotion(request: PromoValidateRequest) -> dict[str, Any]:
+    logger.info("Promo validation requested", extra={"code": request.code})
+    return validate_promo_code(request.code)
+
