@@ -2706,3 +2706,167 @@ async def test_generate_llm_response_gcp_provider_includes_rental_prompt():
     sent_prompt = kwargs["contents"]
     assert "Contoso Outdoors Official Gear Rental Guidance: Kayak" in sent_prompt
 
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_return_label_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Your return label for CTSO-98765 is generated. RMA-CTSO-98765"),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-1", "I need a return label for CTSO-98765", "[]"
+        )
+
+    assert result.get("return_label") is not None
+    assert result["return_label"]["order_id"] == "CTSO-98765"
+    assert result["return_label"]["rma_number"] == "RMA-CTSO-98765"
+    mock_llm.assert_awaited_once()
+    assert "return_label_prompt" in mock_llm.await_args.kwargs
+    assert "RMA-CTSO-98765" in mock_llm.await_args.kwargs["return_label_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_return_label_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our sleeping bags."),
+    ):
+        result = await get_response("cust-1", "Recommend a sleeping bag", "[]")
+
+    assert result.get("return_label") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_return_label_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "I need a return label for CTSO-98765", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    rl_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "return_label":
+                    rl_frame = data
+
+    assert "return_label" in event_types
+    assert rl_frame is not None
+    assert rl_frame["return_label"]["order_id"] == "CTSO-98765"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_return_label_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a camp stove", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+
+    assert "return_label" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_return_label_prompt():
+    mock_litellm_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local return label answer"))]
+        )
+    )
+
+    with patch.dict("sys.modules", {"litellm": SimpleNamespace(completion=mock_litellm_completion)}):
+        result = await generate_llm_response(
+            prompt="I need a return label for CTSO-98765",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id=None,
+            location=None,
+            model_name="gemma3:12b",
+            return_label_prompt="Return Label Information: RMA-CTSO-98765",
+        )
+
+    assert result == "local return label answer"
+    mock_litellm_completion.assert_called_once()
+    kwargs = mock_litellm_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
+    assert "Return Label Information: RMA-CTSO-98765" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_return_label_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp return label answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="I need a return label for CTSO-98765",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            return_label_prompt="Return Label Information: RMA-CTSO-98765",
+        )
+
+    assert result == "gcp return label answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Return Label Information: RMA-CTSO-98765" in sent_prompt

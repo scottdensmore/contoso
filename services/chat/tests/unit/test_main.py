@@ -1934,3 +1934,77 @@ def test_create_response_stream_mock_mode_omits_rental_info_event_when_no_intent
         rental_event = next((e for e in events if e.get("event") == "rental_info"), None)
         assert rental_event is None
 
+
+
+def test_create_order_return_label_post():
+    res = client.post(
+        "/api/orders/CTSO-12345/return_label",
+        json={"order_id": "CTSO-12345", "reason": "Defective item"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["order_id"] == "CTSO-12345"
+    assert data["rma_number"] == "RMA-CTSO-12345"
+    assert data["tracking_number"] == "1Z-CTSO-RET-00012345"
+    assert data["carrier"] == "Contoso Express Returns / UPS Ground Prepaid"
+    assert data["label_url"] == "/profile/orders/CTSO-12345/label"
+    assert data["valid_days"] == 14
+
+
+def test_get_order_return_label_get():
+    res = client.get("/api/orders/CTSO-98765/return_label")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["order_id"] == "CTSO-98765"
+    assert data["rma_number"] == "RMA-CTSO-98765"
+    assert data["tracking_number"] == "1Z-CTSO-RET-00098765"
+    assert data["label_url"] == "/profile/orders/CTSO-98765/label"
+    assert data["valid_days"] == 14
+
+
+def test_create_response_mock_mode_with_return_label_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "I need a return label for CTSO-98765"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "return_label" in data
+        assert data["return_label"]["order_id"] == "CTSO-98765"
+        assert data["return_label"]["rma_number"] == "RMA-CTSO-98765"
+        assert "RMA-CTSO-98765" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_return_label_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "I need a return label for CTSO-98765"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rl_event = next((e for e in events if e.get("event") == "return_label"), None)
+        assert rl_event is not None
+        assert "return_label" in rl_event
+        assert rl_event["return_label"]["order_id"] == "CTSO-98765"
+
+
+def test_create_response_stream_mock_mode_omits_return_label_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about camping tents"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rl_event = next((e for e in events if e.get("event") == "return_label"), None)
+        assert rl_event is None
