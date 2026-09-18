@@ -12,6 +12,7 @@ import WishlistButton from "@/components/wishlist-button";
 import CompareButton from "@/components/compare-button";
 import { galleryAlt } from "@/lib/gallery-alt";
 import { notFound } from "next/navigation";
+import SizeGuideModal from "@/components/size-guide-modal";
 import RecentlyViewed, { RecentlyViewedTracker } from "@/components/recently-viewed";
 
 // This function gets called at build time
@@ -172,6 +173,7 @@ export default async function Page({
           <div className="mt-6 flex items-center gap-2">
             <WishlistButton product={product} />
             <CompareButton product={{ id: product.id, name: product.name, slug: product.slug, price: product.price, image: product.image, categoryName: product.category?.name, brandName: product.brand?.name, description: product.description }} />
+            <SizeGuideModal category={product.category?.name} productName={product.name} />
           </div>
         </div>
       </Block>
