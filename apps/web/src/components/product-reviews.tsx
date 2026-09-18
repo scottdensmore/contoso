@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import clsx from "clsx";
-import { StarIcon as SolidStarIcon } from "@heroicons/react/20/solid";
+import { StarIcon as SolidStarIcon, MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { StarIcon as OutlineStarIcon } from "@heroicons/react/24/outline";
 import {
   type Review,
+  type ReviewSortOption,
   calculateReviewStats,
+  filterAndSortReviews,
 } from "@/lib/reviews";
 import {
   ACTION_BOUNDARY,
@@ -26,7 +28,10 @@ export default function ProductReviews({
   initialReviews = [],
 }: ProductReviewsProps) {
   const [userReviews, setUserReviews] = useState<Review[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<ReviewSortOption>("recent");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   // Form state
@@ -58,10 +63,22 @@ export default function ProductReviews({
   const allReviews: Review[] = [...userReviews, ...initialReviews];
   const stats = calculateReviewStats(allReviews);
 
-  const filteredReviews =
-    selectedRating !== null
-      ? allReviews.filter((r) => r.rating === selectedRating)
-      : allReviews;
+  const filteredReviews = filterAndSortReviews(allReviews, {
+    searchQuery,
+    starRating: selectedRating,
+    verifiedOnly,
+    sortBy,
+  });
+
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() || selectedRating !== null || verifiedOnly
+  );
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setSelectedRating(null);
+    setVerifiedOnly(false);
+  };
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +123,7 @@ export default function ProductReviews({
   };
 
   return (
-    <section aria-labelledby="reviews-heading" className="w-full">
+    <section aria-labelledby="reviews-heading" id="reviews" className="w-full">
       {/* Header & Rating Summary */}
       <div className="border-b border-zinc-200 pb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -218,21 +235,6 @@ export default function ProductReviews({
               );
             })}
           </div>
-
-          {selectedRating !== null && (
-            <div className="mt-4 flex items-center gap-3">
-              <span className="text-sm font-medium text-zinc-700">
-                Filtered by {selectedRating} star{selectedRating > 1 ? "s" : ""}:
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedRating(null)}
-                className={`text-sm font-semibold text-indigo-600 hover:text-indigo-500 underline rounded focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
-              >
-                All Reviews (Clear filter)
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -348,13 +350,113 @@ export default function ProductReviews({
         </form>
       )}
 
+      {/* Review Filter Controls Bar */}
+      <div className="mt-6 flex flex-col gap-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px]">
+            <label htmlFor="review-search-input" className="sr-only">
+              Search reviews
+            </label>
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <MagnifyingGlassIcon className="size-4 text-zinc-400" aria-hidden="true" />
+            </div>
+            <input
+              type="search"
+              id="review-search-input"
+              aria-label="Search reviews"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search review text..."
+              className={`w-full rounded-md border-0 bg-white py-2 pl-9 pr-8 text-sm text-zinc-900 shadow-xs placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear review search"
+                className={`absolute inset-y-0 right-0 flex items-center pr-2.5 text-zinc-400 hover:text-zinc-600 focus-visible:outline-indigo-600 rounded ${ACTION_FOCUS}`}
+              >
+                <span aria-hidden="true" className="text-base font-bold leading-none">&times;</span>
+              </button>
+            )}
+          </div>
+
+          {/* Verified Buyers Only Checkbox */}
+          <label className="flex items-center gap-2 text-sm font-medium text-zinc-700 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={verifiedOnly}
+              onChange={(e) => setVerifiedOnly(e.target.checked)}
+              aria-label="Verified buyers only"
+              className={`size-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
+            />
+            <span>Verified buyers only</span>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="review-sort-select" className="sr-only">
+              Sort reviews by
+            </label>
+            <select
+              id="review-sort-select"
+              aria-label="Sort reviews by"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as ReviewSortOption)}
+              className={`rounded-md border-0 bg-white py-2 pl-3 pr-8 text-sm text-zinc-900 shadow-xs focus:ring-2 focus:ring-indigo-600 focus-visible:outline-indigo-600 ${FIELD_BOUNDARY}`}
+            >
+              <option value="recent">Most Recent</option>
+              <option value="highest">Highest Rating</option>
+              <option value="lowest">Lowest Rating</option>
+            </select>
+          </div>
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className={`text-sm font-semibold text-indigo-600 hover:text-indigo-500 underline rounded whitespace-nowrap focus-visible:outline-indigo-600 ${ACTION_FOCUS}`}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Result count live announcement */}
+      <div
+        id="reviews-count"
+        aria-live="polite"
+        className="mt-4 flex flex-wrap items-center justify-between text-sm text-zinc-600"
+      >
+        <span>
+          Showing {filteredReviews.length} of {allReviews.length} reviews
+          {hasActiveFilters ? " (filtered)" : ""}
+        </span>
+      </div>
+
       {/* Reviews List */}
-      <div className="mt-6 space-y-4">
+      <div className="mt-4 space-y-4">
         {filteredReviews.length === 0 ? (
           <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500">
-            {selectedRating !== null
-              ? `No reviews found with ${selectedRating} stars.`
-              : "No reviews yet. Be the first to write a review!"}
+            {allReviews.length === 0 ? (
+              "No reviews yet. Be the first to write a review!"
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-zinc-600 font-medium">No reviews match your filters</p>
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  className={`rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-indigo-600 ${ACTION_BOUNDARY}`}
+                >
+                  Reset filters
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           filteredReviews.map((rev) => (
