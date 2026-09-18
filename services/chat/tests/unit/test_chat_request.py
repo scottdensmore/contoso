@@ -2870,3 +2870,171 @@ async def test_generate_llm_response_gcp_provider_includes_return_label_prompt()
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Return Label Information: RMA-CTSO-98765" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_trail_outfitting_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Rattlesnake Ridge conditions are open and 58F."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-1", "What are the conditions on Rattlesnake Ridge?", "[]"
+        )
+
+    assert result.get("trail_outfitting") is not None
+    assert result["trail_outfitting"]["action"] == "conditions"
+    assert result["trail_outfitting"]["trail"]["id"] == "rattlesnake-ridge"
+    mock_llm.assert_awaited_once()
+    assert "trail_prompt" in mock_llm.await_args.kwargs
+    assert "Rattlesnake Ridge Trail" in mock_llm.await_args.kwargs["trail_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_trail_outfitting_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here is your order status."),
+    ):
+        result = await get_response("cust-1", "Where is my package CTSO-12345?", "[]")
+
+    assert result.get("trail_outfitting") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_trail_outfitting_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "What gear should I pack for Bear Peak?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    trail_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "trail_outfitting":
+                    trail_frame = data
+
+    assert "trail_outfitting" in event_types
+    assert trail_frame is not None
+    assert trail_frame["trail_outfitting"]["action"] == "outfitting"
+    assert trail_frame["trail_outfitting"]["trail"]["id"] == "bear-peak"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_trail_outfitting_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a winter jacket", "[]")
+        frames = [f async for f in stream]
+
+    event_types = [
+        json.loads(f.removeprefix("data: "))["event"]
+        for f in frames
+        if f.startswith("data: ") and "event" in json.loads(f.removeprefix("data: "))
+    ]
+
+    assert "trail_outfitting" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_trail_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local trail answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="What are the conditions on Rattlesnake Ridge?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            trail_prompt="Contoso Outdoors Official Trail Conditions: Rattlesnake Ridge",
+        )
+
+    assert result == "local trail answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Official Trail Conditions: Rattlesnake Ridge" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_trail_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp trail answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="What are the conditions on Rattlesnake Ridge?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            trail_prompt="Contoso Outdoors Official Trail Conditions: Rattlesnake Ridge",
+        )
+
+    assert result == "gcp trail answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Official Trail Conditions: Rattlesnake Ridge" in sent_prompt

@@ -50,6 +50,12 @@ from .stores import (
     build_store_prompt,
     detect_store_intent,
 )
+from .trails import (
+    build_trail_prompt,
+    detect_trail_intent,
+    format_trail_response,
+    generate_outfitting_plan,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -275,6 +281,7 @@ async def generate_llm_response(
     review_prompt: str = "",
     rental_prompt: str = "",
     return_label_prompt: str = "",
+    trail_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -329,8 +336,12 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{rental_prompt}"
         if return_label_prompt:
             local_system = f"{local_system}\n\n{return_label_prompt}"
+        if trail_prompt:
+            local_system = f"{local_system}\n\n{trail_prompt}"
         if return_label_prompt:
             local_system = f"{local_system}\n\n{return_label_prompt}"
+        if trail_prompt:
+            local_system = f"{local_system}\n\n{trail_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -374,8 +385,12 @@ async def generate_llm_response(
             prompt_parts.append(rental_prompt)
         if return_label_prompt:
             prompt_parts.append(return_label_prompt)
+        if trail_prompt:
+            prompt_parts.append(trail_prompt)
         if return_label_prompt:
             prompt_parts.append(return_label_prompt)
+        if trail_prompt:
+            prompt_parts.append(trail_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -612,6 +627,32 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_return = format_return_label_response(return_label_intent, rl_info)
         return_label_payload = formatted_return.get("return_label")
 
+    trail_intent = detect_trail_intent(question)
+    trail_prompt = ""
+    trail_outfitting_payload = None
+    if trail_intent:
+        trail_outfitting_resp = generate_outfitting_plan(
+            trail_name=trail_intent.trail_name,
+            activity=trail_intent.activity or "day-hiking",
+            season=trail_intent.season or "spring",
+        )
+        trail_prompt = build_trail_prompt(trail_intent, trail_outfitting_resp)
+        formatted_trail = format_trail_response(trail_intent, trail_outfitting_resp)
+        trail_outfitting_payload = formatted_trail.get("trail_outfitting")
+
+    trail_intent = detect_trail_intent(question)
+    trail_prompt = ""
+    trail_outfitting_payload = None
+    if trail_intent:
+        trail_outfitting_resp = generate_outfitting_plan(
+            trail_name=trail_intent.trail_name,
+            activity=trail_intent.activity or "day-hiking",
+            season=trail_intent.season or "spring",
+        )
+        trail_prompt = build_trail_prompt(trail_intent, trail_outfitting_resp)
+        formatted_trail = format_trail_response(trail_intent, trail_outfitting_resp)
+        trail_outfitting_payload = formatted_trail.get("trail_outfitting")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -636,6 +677,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["rental_prompt"] = rental_prompt
     if return_label_prompt:
         llm_kwargs["return_label_prompt"] = return_label_prompt
+    if trail_prompt:
+        llm_kwargs["trail_prompt"] = trail_prompt
 
     answer = await generate_llm_response(
         question,
@@ -682,6 +725,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["rental_info"] = rental_info
     if return_label_payload:
         response_payload["return_label"] = return_label_payload
+    if trail_intent and trail_outfitting_payload:
+        response_payload["trail_outfitting"] = trail_outfitting_payload
 
     return response_payload
 
@@ -707,6 +752,7 @@ def generate_llm_response_stream(
     review_prompt: str = "",
     rental_prompt: str = "",
     return_label_prompt: str = "",
+    trail_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -923,6 +969,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_return = format_return_label_response(return_label_intent, rl_info)
         return_label_payload = formatted_return.get("return_label")
 
+    trail_intent = detect_trail_intent(question)
+    trail_prompt = ""
+    trail_outfitting_payload = None
+    if trail_intent:
+        trail_outfitting_resp = generate_outfitting_plan(
+            trail_name=trail_intent.trail_name,
+            activity=trail_intent.activity or "day-hiking",
+            season=trail_intent.season or "spring",
+        )
+        trail_prompt = build_trail_prompt(trail_intent, trail_outfitting_resp)
+        formatted_trail = format_trail_response(trail_intent, trail_outfitting_resp)
+        trail_outfitting_payload = formatted_trail.get("trail_outfitting")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -947,6 +1006,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'rental_info', 'rental_info': rental_info})}\n\n"
     if return_label_payload:
         yield f"data: {json.dumps({'event': 'return_label', 'return_label': return_label_payload})}\n\n"
+    if trail_intent and trail_outfitting_payload:
+        yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -972,6 +1033,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["rental_prompt"] = rental_prompt
     if return_label_prompt:
         stream_kwargs["return_label_prompt"] = return_label_prompt
+    if trail_prompt:
+        stream_kwargs["trail_prompt"] = trail_prompt
 
     for chunk in generate_llm_response_stream(
         question,

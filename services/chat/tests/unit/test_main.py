@@ -2008,3 +2008,90 @@ def test_create_response_stream_mock_mode_omits_return_label_event_when_no_inten
         ]
         rl_event = next((e for e in events if e.get("event") == "return_label"), None)
         assert rl_event is None
+
+
+def test_get_trails_endpoint():
+    res = client.get("/api/trails")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 4
+    trail_ids = {t["id"] for t in data}
+    assert "rattlesnake-ridge" in trail_ids
+    assert "bear-peak" in trail_ids
+    assert "multnomah-loop" in trail_ids
+    assert "mount-olympus" in trail_ids
+
+
+def test_get_trails_endpoint_with_filters():
+    res = client.get("/api/trails?region=Rocky%20Mountains&difficulty=hard")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) == 1
+    assert data[0]["id"] == "bear-peak"
+    assert data[0]["difficulty"] == "hard"
+
+
+def test_post_trails_outfitting_endpoint():
+    res = client.post(
+        "/api/trails/outfitting",
+        json={"trail_name": "rattlesnake-ridge", "activity": "day-hiking", "season": "spring"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["trail"]["id"] == "rattlesnake-ridge"
+    assert data["activity"] == "day-hiking"
+    assert data["season"] == "spring"
+    assert isinstance(data["gear_checklist"], list)
+    assert len(data["gear_checklist"]) >= 10
+    assert isinstance(data["safety_tips"], list)
+
+
+def test_create_response_mock_mode_with_trail_conditions_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What are the conditions on Rattlesnake Ridge?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "trail_outfitting" in data
+        assert data["trail_outfitting"]["action"] == "conditions"
+        assert data["trail_outfitting"]["trail"]["id"] == "rattlesnake-ridge"
+        assert "Rattlesnake Ridge" in data["answer"]
+        assert "58°F" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_trail_outfitting_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What gear should I pack for a spring hike at Bear Peak?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        trail_event = next((e for e in events if e.get("event") == "trail_outfitting"), None)
+        assert trail_event is not None
+        assert "trail_outfitting" in trail_event
+        assert trail_event["trail_outfitting"]["trail"]["id"] == "bear-peak"
+        assert trail_event["trail_outfitting"]["action"] == "outfitting"
+
+
+def test_create_response_stream_mock_mode_omits_trail_outfitting_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Where is your retail store?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        trail_event = next((e for e in events if e.get("event") == "trail_outfitting"), None)
+        assert trail_event is None

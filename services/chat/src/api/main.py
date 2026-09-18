@@ -75,6 +75,15 @@ from contoso_chat.stores import (
     get_store_by_id,
     search_stores,
 )
+from contoso_chat.trails import (
+    TrailCondition,
+    TrailOutfittingRequest,
+    TrailOutfittingResponse,
+    detect_trail_intent,
+    format_trail_response,
+    generate_outfitting_plan,
+    get_trails,
+)
 from contoso_chat.transcript_export import export_transcript
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -373,6 +382,7 @@ async def create_response(request: ChatRequest):
             review_info = detect_review_sentiment_intent(request.question)
             rental_intent = detect_rental_intent(request.question)
             return_intent = detect_return_label_intent(request.question)
+            trail_intent = detect_trail_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -494,6 +504,10 @@ async def create_response(request: ChatRequest):
                 formatted_return = format_return_label_response(return_intent, rl_info)
                 mock_payload["return_label"] = formatted_return.get("return_label")
                 mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
+            if trail_intent:
+                formatted_trail = format_trail_response(trail_intent)
+                mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
+                mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -609,6 +623,7 @@ async def create_response_stream(request: ChatRequest):
                 review_info = detect_review_sentiment_intent(request.question)
                 rental_intent = detect_rental_intent(request.question)
                 return_intent = detect_return_label_intent(request.question)
+                trail_intent = detect_trail_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -660,6 +675,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     formatted_return = format_return_label_response(return_intent, rl_info)
                     yield f"data: {json.dumps({'event': 'return_label', 'return_label': formatted_return.get('return_label')})}\n\n"
+                if trail_intent:
+                    formatted_trail = format_trail_response(trail_intent)
+                    yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': formatted_trail.get('trail_outfitting')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -745,6 +763,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_rental = format_rental_response(rental_intent)
                     mock_chunks = [
                         str(formatted_rental.get("answer", ""))
+                    ]
+                elif trail_intent:
+                    formatted_trail = format_trail_response(trail_intent)
+                    mock_chunks = [
+                        str(formatted_trail.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1073,3 +1096,37 @@ async def create_order_return_label(
 async def get_order_return_label(order_id: str) -> ReturnLabelInfo:
     logger.info("Return label retrieval requested", extra={"order_id": order_id})
     return generate_return_label(order_id)
+
+
+@app.get("/api/trails", response_model=list[TrailCondition])
+async def get_trails_endpoint(
+    region: Optional[str] = None,
+    difficulty: Optional[str] = None,
+) -> list[TrailCondition]:
+    logger.info("Trails catalog requested", extra={"region": region, "difficulty": difficulty})
+    return get_trails(region=region, difficulty=difficulty)
+
+
+@app.post(
+    "/api/trails/outfitting",
+    response_model=TrailOutfittingResponse,
+    responses={
+        200: {"description": "Trail outfitting plan and checklist generated"},
+    },
+)
+async def post_trails_outfitting_endpoint(
+    request: TrailOutfittingRequest,
+) -> TrailOutfittingResponse:
+    logger.info(
+        "Trail outfitting requested",
+        extra={
+            "trail_name": request.trail_name,
+            "activity": request.activity,
+            "season": request.season,
+        },
+    )
+    return generate_outfitting_plan(
+        trail_name=request.trail_name,
+        activity=request.activity,
+        season=request.season,
+    )
