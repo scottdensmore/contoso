@@ -34,6 +34,15 @@ from contoso_chat.promotions import (
     get_active_promotions,
     validate_promo_code,
 )
+from contoso_chat.rentals import (
+    RentalPackage,
+    RentalQuoteRequest,
+    RentalQuoteResponse,
+    calculate_rental_quote,
+    detect_rental_intent,
+    format_rental_response,
+    get_rental_packages,
+)
 from contoso_chat.review_summary import (
     ProductReviewSummary,
     detect_review_sentiment_intent,
@@ -355,6 +364,7 @@ async def create_response(request: ChatRequest):
             faq_result = detect_faq_intent(request.question)
             sizing_info = detect_sizing_intent(request.question)
             review_info = detect_review_sentiment_intent(request.question)
+            rental_intent = detect_rental_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -463,6 +473,10 @@ async def create_response(request: ChatRequest):
                     mock_payload["answer"] = (
                         f"Mock response: Information for {store_names}: located at {matched[0].get('address')}."
                     )
+            if rental_intent:
+                formatted_rental = format_rental_response(rental_intent)
+                mock_payload["rental_info"] = formatted_rental.get("rental_info")
+                mock_payload["answer"] = formatted_rental.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -576,6 +590,7 @@ async def create_response_stream(request: ChatRequest):
                 faq_result = detect_faq_intent(request.question)
                 sizing_info = detect_sizing_intent(request.question)
                 review_info = detect_review_sentiment_intent(request.question)
+                rental_intent = detect_rental_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -606,6 +621,9 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'sizing', 'sizing': sizing_info['size_guide'].model_dump()})}\n\n"
                 if review_info.get("is_review_intent") and review_info.get("summary"):
                     yield f"data: {json.dumps({'event': 'review_summary', 'review_summary': review_info['summary'].model_dump()})}\n\n"
+                if rental_intent:
+                    formatted_rental = format_rental_response(rental_intent)
+                    yield f"data: {json.dumps({'event': 'rental_info', 'rental_info': formatted_rental.get('rental_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -686,6 +704,11 @@ async def create_response_stream(request: ChatRequest):
                         f"Rated {summary.average_rating}/5 stars across {summary.total_reviews} reviews ({summary.recommendation_percentage}% recommend). ",
                         f"Top pros include {', '.join(summary.pros)}. ",
                         f"Cons noted: {', '.join(summary.cons)}.",
+                    ]
+                elif rental_intent:
+                    formatted_rental = format_rental_response(rental_intent)
+                    mock_chunks = [
+                        str(formatted_rental.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -944,3 +967,44 @@ async def get_tracking_info(identifier: str) -> CarrierTrackingInfo:
             detail=f"Tracking information not found for identifier: {identifier}",
         )
     return info
+
+
+@app.get("/api/rentals/packages", response_model=list[RentalPackage])
+async def get_rental_packages_endpoint(
+    category: Optional[str] = None,
+) -> list[RentalPackage]:
+    logger.info("Rental packages requested", extra={"category": category})
+    return get_rental_packages(category=category)
+
+
+@app.post(
+    "/api/rentals/quote",
+    response_model=RentalQuoteResponse,
+    responses={
+        200: {"description": "Rental quote calculated"},
+        404: {"description": "Rental package not found"},
+    },
+)
+async def post_rental_quote_endpoint(
+    request: RentalQuoteRequest,
+) -> RentalQuoteResponse:
+    logger.info(
+        "Rental quote requested",
+        extra={
+            "gear_type": request.gear_type,
+            "days": request.days,
+            "store_name": request.store_name,
+        },
+    )
+    quote = calculate_rental_quote(
+        gear_type=request.gear_type,
+        days=request.days,
+        store_name=request.store_name,
+    )
+    if not quote:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Rental package not found for gear type: {request.gear_type}",
+        )
+    return quote
+

@@ -1834,3 +1834,103 @@ def test_create_response_stream_mock_mode_omits_review_summary_event_when_no_int
         ]
         review_event = next((e for e in events if e.get("event") == "review_summary"), None)
         assert review_event is None
+
+
+def test_get_rentals_packages_endpoint():
+    res = client.get("/api/rentals/packages")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 4
+    assert {p["id"] for p in data} == {
+        "camp-bundle-4p",
+        "backpack-ultralight",
+        "kayak-touring-set",
+        "snowshoe-alpine-kit",
+    }
+
+
+def test_get_rentals_packages_endpoint_with_category_filter():
+    res = client.get("/api/rentals/packages?category=camping")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) == 1
+    assert data[0]["id"] == "camp-bundle-4p"
+
+
+def test_post_rentals_quote_endpoint_success():
+    res = client.post(
+        "/api/rentals/quote",
+        json={"gear_type": "backpack", "days": 5, "store_name": "Denver"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["package_id"] == "backpack-ultralight"
+    assert data["days"] == 5
+    assert data["daily_rate"] == 35.0
+    assert data["discount_percent"] == 10.0
+    assert data["discount_amount"] == 17.5
+    assert data["subtotal"] == 157.5
+    assert data["deposit"] == 75.0
+    assert data["total_due"] == 232.5
+    assert data["store"] == "Denver"
+    assert data["store_available"] is True
+
+
+def test_post_rentals_quote_endpoint_not_found():
+    res = client.post(
+        "/api/rentals/quote",
+        json={"gear_type": "jetpack", "days": 1},
+    )
+    assert res.status_code == 404
+    assert "Rental package not found" in res.json()["detail"]
+
+
+def test_create_response_mock_mode_with_rental_quote_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "How much to rent a kayak for 3 days in Seattle?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "rental_info" in data
+        assert data["rental_info"]["action"] == "quote"
+        assert data["rental_info"]["quote"]["package_id"] == "kayak-touring-set"
+        assert "kayak" in data["answer"].lower()
+        assert "Seattle" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_rental_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Can I rent a tent for 4 days in Seattle?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rental_event = next((e for e in events if e.get("event") == "rental_info"), None)
+        assert rental_event is not None
+        assert "rental_info" in rental_event
+        assert rental_event["rental_info"]["action"] == "quote"
+
+
+def test_create_response_stream_mock_mode_omits_rental_info_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about sleeping bags"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rental_event = next((e for e in events if e.get("event") == "rental_info"), None)
+        assert rental_event is None
+

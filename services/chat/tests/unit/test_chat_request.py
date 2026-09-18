@@ -2541,3 +2541,168 @@ async def test_generate_llm_response_gcp_provider_includes_review_prompt():
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Verified Customer Review Summary: TrailMaster X4 Tent." in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_rental_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Kayak rental in Seattle for 3 days is $135 plus deposit."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-1", "How much to rent a kayak for 3 days in Seattle?", "[]"
+        )
+
+    assert result.get("rental_info") is not None
+    assert result["rental_info"]["action"] == "quote"
+    assert result["rental_info"]["quote"]["package_id"] == "kayak-touring-set"
+    mock_llm.assert_awaited_once()
+    assert "rental_prompt" in mock_llm.await_args.kwargs
+    assert "Contoso Outdoors Official Gear Rental Guidance" in mock_llm.await_args.kwargs["rental_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_rental_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents for sale."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent for purchase", "[]")
+
+    assert result.get("rental_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_rental_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Can I rent a tent for a week?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    rental_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "rental_info":
+                    rental_frame = data
+
+    assert "rental_info" in event_types
+    assert rental_frame is not None
+    assert rental_frame["rental_info"]["action"] == "quote"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_rental_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a camp stove", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+
+    assert "rental_info" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_rental_prompt():
+    mock_litellm_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local rental answer"))]
+        )
+    )
+
+    with patch.dict("sys.modules", {"litellm": SimpleNamespace(completion=mock_litellm_completion)}):
+        result = await generate_llm_response(
+            prompt="How much to rent a kayak?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id=None,
+            location=None,
+            model_name="gemma3:12b",
+            rental_prompt="Contoso Outdoors Official Gear Rental Guidance: Kayak",
+        )
+
+    assert result == "local rental answer"
+    mock_litellm_completion.assert_called_once()
+    kwargs = mock_litellm_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
+    assert "Contoso Outdoors Official Gear Rental Guidance: Kayak" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_rental_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp rental answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="How much to rent a kayak?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            rental_prompt="Contoso Outdoors Official Gear Rental Guidance: Kayak",
+        )
+
+    assert result == "gcp rental answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Contoso Outdoors Official Gear Rental Guidance: Kayak" in sent_prompt
+
