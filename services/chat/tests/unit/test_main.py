@@ -1704,3 +1704,66 @@ def test_create_response_stream_mock_mode_omits_faq_event_when_no_intent():
         ]
         faq_event = next((e for e in events if e.get("event") == "faq"), None)
         assert faq_event is None
+
+
+def test_get_sizing_guide_endpoint_success():
+    res = client.get("/api/sizing/jackets")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["category"] in ("jackets", "apparel")
+    assert "rows" in data
+    assert len(data["rows"]) > 0
+
+
+def test_get_sizing_guide_endpoint_not_found():
+    res = client.get("/api/sizing/unknown-category-999")
+    assert res.status_code == 404
+    data = res.json()
+    assert data["detail"] == "Sizing guide not found for category: unknown-category-999"
+
+
+def test_create_response_mock_mode_with_sizing_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What size jacket should I get for a 40 inch chest?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "sizing" in data
+        assert data["sizing"]["category"] in ("jackets", "apparel")
+        assert "M" in data["answer"] or "size" in data["answer"].lower()
+
+
+def test_create_response_stream_mock_mode_emits_sizing_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What size jacket should I get for a 40 inch chest?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        sizing_event = next((e for e in events if e.get("event") == "sizing"), None)
+        assert sizing_event is not None
+        assert "sizing" in sizing_event
+        assert sizing_event["sizing"]["category"] in ("jackets", "apparel")
+
+
+def test_create_response_stream_mock_mode_omits_sizing_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about sleeping bags"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        sizing_event = next((e for e in events if e.get("event") == "sizing"), None)
+        assert sizing_event is None

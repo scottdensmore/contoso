@@ -43,6 +43,11 @@ from contoso_chat.session_store import (
     get_session,
     list_sessions,
 )
+from contoso_chat.sizing import (
+    CategorySizeGuide,
+    detect_sizing_intent,
+    get_size_guide,
+)
 from contoso_chat.stores import (
     detect_store_intent,
     get_all_stores,
@@ -343,6 +348,7 @@ async def create_response(request: ChatRequest):
             policy_intent = detect_policy_intent(request.question)
             store_intent = detect_store_intent(request.question)
             faq_result = detect_faq_intent(request.question)
+            sizing_info = detect_sizing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -404,6 +410,18 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = (
                     f"Mock response: Regarding {f_obj.question}: {f_obj.answer}"
                 )
+            if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
+                mock_payload["sizing"] = sizing_info["size_guide"].model_dump()
+                guide = sizing_info["size_guide"]
+                rec = sizing_info.get("recommendation")
+                if rec:
+                    mock_payload["answer"] = (
+                        f"Mock response: For {guide.title}, we recommend size {rec.recommended_size}. {rec.advice}"
+                    )
+                else:
+                    mock_payload["answer"] = (
+                        f"Mock response: Here is our sizing guide for {guide.title}. {guide.measurement_instructions}"
+                    )
             if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                 mock_payload["stores"] = store_intent["matched_stores"]
                 matched = store_intent["matched_stores"]
@@ -541,6 +559,7 @@ async def create_response_stream(request: ChatRequest):
                 policy_intent = detect_policy_intent(request.question)
                 store_intent = detect_store_intent(request.question)
                 faq_result = detect_faq_intent(request.question)
+                sizing_info = detect_sizing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -567,6 +586,8 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
                 if faq_result and faq_result.matches:
                     yield f"data: {json.dumps({'event': 'faq', 'faq': [item.model_dump() for item in faq_result.matches]})}\n\n"
+                if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
+                    yield f"data: {json.dumps({'event': 'sizing', 'sizing': sizing_info['size_guide'].model_dump()})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -627,6 +648,19 @@ async def create_response_stream(request: ChatRequest):
                         f"Mock response: Regarding {f_obj.question}: ",
                         f"{f_obj.answer}",
                     ]
+                elif sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
+                    guide = sizing_info["size_guide"]
+                    rec = sizing_info.get("recommendation")
+                    if rec:
+                        mock_chunks = [
+                            f"Mock response: For {guide.title}, we recommend size {rec.recommended_size}. ",
+                            f"{rec.advice}",
+                        ]
+                    else:
+                        mock_chunks = [
+                            f"Mock response: Here is our sizing guide for {guide.title}. ",
+                            f"{guide.measurement_instructions}",
+                        ]
                 else:
                     mock_chunks = [
                         f"Mock response: You asked about '{request.question}'. ",
@@ -758,6 +792,25 @@ async def validate_promotion(request: PromoValidateRequest) -> dict[str, Any]:
     logger.info("Promo validation requested", extra={"code": request.code})
     return validate_promo_code(request.code)
 
+
+
+@app.get(
+    "/api/sizing/{category}",
+    response_model=CategorySizeGuide,
+    responses={
+        200: {"description": "Category sizing guide retrieved"},
+        404: {"description": "Sizing guide not found"},
+    },
+)
+async def get_sizing_guide_endpoint(category: str) -> CategorySizeGuide:
+    logger.info("Sizing guide requested", extra={"category": category})
+    guide = get_size_guide(category)
+    if not guide:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Sizing guide not found for category: {category}",
+        )
+    return guide
 
 
 @app.get("/api/faq", response_model=list[FaqItem])
