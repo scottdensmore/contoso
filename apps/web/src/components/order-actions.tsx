@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Link from "next/link"
 import {
   determineOrderStatus,
   getOrderAction,
@@ -230,6 +231,15 @@ export default function OrderActions({
             Request Return
           </button>
         )}
+
+        {state.status === "Return Requested" && (
+          <Link
+            href={`/profile/orders/${orderId}/label`}
+            className={`print:hidden inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 focus-visible:outline-purple-600 ${ACTION_BOUNDARY}`}
+          >
+            Print Return Label
+          </Link>
+        )}
       </div>
 
       {/* Status Description */}
@@ -237,16 +247,26 @@ export default function OrderActions({
 
       {/* Return Instructions Card when Return Requested */}
       {state.status === "Return Requested" && (
-        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 text-sm text-purple-900 space-y-1">
-          <h3 className="font-semibold text-purple-950">
-            Return Instructions
-          </h3>
-          <p>
-            Your return request has been submitted. A prepaid shipping label has
-            been generated and emailed to you. Please securely pack your items
-            and drop off your package at any authorized shipping center within 14
-            days.
-          </p>
+        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 text-sm text-purple-900 space-y-3">
+          <div className="space-y-1">
+            <h3 className="font-semibold text-purple-950">
+              Return Instructions
+            </h3>
+            <p>
+              Your return request has been submitted. A prepaid shipping label has
+              been generated and emailed to you. Please securely pack your items
+              and drop off your package at any authorized shipping center within 14
+              days.
+            </p>
+          </div>
+          <div>
+            <Link
+              href={`/profile/orders/${orderId}/label`}
+              className={`print:hidden inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium text-purple-800 bg-purple-100 hover:bg-purple-200 border border-purple-300 focus-visible:outline-purple-600 ${ACTION_BOUNDARY}`}
+            >
+              Print Return Label
+            </Link>
+          </div>
         </div>
       )}
 
