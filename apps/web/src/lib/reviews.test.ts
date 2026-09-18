@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseManualReviews, calculateReviewStats, type Review } from './reviews'
+import { parseManualReviews, calculateReviewStats, filterAndSortReviews, type Review, type ReviewSortOption, type ReviewFilterOptions } from './reviews'
 
 describe('parseManualReviews', () => {
   const sampleMarkdown = `
@@ -146,5 +146,135 @@ describe('calculateReviewStats', () => {
     // 14 / 3 = 4.66666... -> 4.7
     const stats = calculateReviewStats(reviews)
     expect(stats.averageRating).toBe(4.7)
+  })
+})
+
+describe('filterAndSortReviews', () => {
+  const testReviews: Review[] = [
+    {
+      id: 'rev-1',
+      rating: 5,
+      title: 'Amazing Tent',
+      comment: 'Super easy setup and very spacious.',
+      author: 'Alice (Verified Buyer)',
+      date: '2024-03-01',
+    },
+    {
+      id: 'rev-2',
+      rating: 2,
+      title: 'Disappointed',
+      comment: 'Leaked during light rain in the mountains.',
+      author: 'Bob Backpacker',
+      date: '2024-03-15',
+    },
+    {
+      id: 'rev-3',
+      rating: 4,
+      title: 'Solid product',
+      comment: 'Great tent, withstood wind well.',
+      author: 'Charlie Camper (verified)',
+      date: '2024-02-10',
+    },
+    {
+      id: 'rev-4',
+      rating: 5,
+      title: 'Best purchase',
+      comment: 'High quality materials and quick delivery.',
+      author: 'Dana Mountaineer',
+      date: '2024-01-20',
+    },
+    {
+      id: 'rev-5',
+      rating: 1,
+      comment: 'Zippers broke on day one.',
+      author: 'Evan Verified Customer',
+      date: '2024-04-01',
+    },
+  ]
+
+  it('returns all reviews by default sorted by recent date descending', () => {
+    const result = filterAndSortReviews(testReviews, {})
+    expect(result.map((r) => r.id)).toEqual(['rev-5', 'rev-2', 'rev-1', 'rev-3', 'rev-4'])
+  })
+
+  it('filters by case-insensitive keyword search in comment', () => {
+    const result = filterAndSortReviews(testReviews, { searchQuery: 'rain' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('rev-2')
+  })
+
+  it('filters by case-insensitive keyword search in title', () => {
+    const result = filterAndSortReviews(testReviews, { searchQuery: 'amazing' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('rev-1')
+  })
+
+  it('filters by case-insensitive keyword search in author', () => {
+    const result = filterAndSortReviews(testReviews, { searchQuery: 'mountaineer' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('rev-4')
+  })
+
+  it('handles search query with leading/trailing whitespace', () => {
+    const result = filterAndSortReviews(testReviews, { searchQuery: '  zippers  ' })
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('rev-5')
+  })
+
+  it('returns empty array when search query matches nothing', () => {
+    const result = filterAndSortReviews(testReviews, { searchQuery: 'nonexistent123' })
+    expect(result).toHaveLength(0)
+  })
+
+  it('filters by exact star rating', () => {
+    const result = filterAndSortReviews(testReviews, { starRating: 5 })
+    expect(result).toHaveLength(2)
+    expect(result.map((r) => r.id)).toEqual(['rev-1', 'rev-4'])
+  })
+
+  it('ignores null or undefined star rating', () => {
+    const resultNull = filterAndSortReviews(testReviews, { starRating: null })
+    expect(resultNull).toHaveLength(5)
+    const resultUndefined = filterAndSortReviews(testReviews, { starRating: undefined })
+    expect(resultUndefined).toHaveLength(5)
+  })
+
+  it('filters by verified buyers only', () => {
+    const result = filterAndSortReviews(testReviews, { verifiedOnly: true })
+    expect(result).toHaveLength(3)
+    expect(result.map((r) => r.id)).toEqual(['rev-5', 'rev-1', 'rev-3'])
+  })
+
+  it('sorts by highest rating first, with ties broken by date descending', () => {
+    const result = filterAndSortReviews(testReviews, { sortBy: 'highest' })
+    expect(result.map((r) => r.id)).toEqual(['rev-1', 'rev-4', 'rev-3', 'rev-2', 'rev-5'])
+  })
+
+  it('sorts by lowest rating first, with ties broken by date descending', () => {
+    const result = filterAndSortReviews(testReviews, { sortBy: 'lowest' })
+    expect(result.map((r) => r.id)).toEqual(['rev-5', 'rev-2', 'rev-3', 'rev-1', 'rev-4'])
+  })
+
+  it('sorts by recent date descending', () => {
+    const result = filterAndSortReviews(testReviews, { sortBy: 'recent' })
+    expect(result.map((r) => r.id)).toEqual(['rev-5', 'rev-2', 'rev-1', 'rev-3', 'rev-4'])
+  })
+
+  it('combines search, star rating, verified filter, and sorting simultaneously', () => {
+    const options: ReviewFilterOptions = {
+      searchQuery: 'tent',
+      starRating: 4,
+      verifiedOnly: true,
+      sortBy: 'highest' as ReviewSortOption,
+    }
+    const result = filterAndSortReviews(testReviews, options)
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('rev-3')
+  })
+
+  it('does not mutate original reviews array', () => {
+    const original = [...testReviews]
+    filterAndSortReviews(testReviews, { sortBy: 'lowest', starRating: 1 })
+    expect(testReviews).toEqual(original)
   })
 })

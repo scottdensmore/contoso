@@ -105,3 +105,67 @@ export function calculateReviewStats(reviews: Review[]): ReviewStats {
     ratingPercentages,
   };
 }
+
+export type ReviewSortOption = "recent" | "highest" | "lowest";
+
+export interface ReviewFilterOptions {
+  searchQuery?: string;
+  starRating?: number | null;
+  verifiedOnly?: boolean;
+  sortBy?: ReviewSortOption;
+}
+
+export function filterAndSortReviews(
+  reviews: Review[],
+  options: ReviewFilterOptions
+): Review[] {
+  const { searchQuery, starRating, verifiedOnly, sortBy = "recent" } = options;
+  const trimmedQuery = searchQuery ? searchQuery.trim().toLowerCase() : "";
+
+  const filtered = reviews.filter((review) => {
+    if (trimmedQuery.length > 0) {
+      const commentMatch = review.comment.toLowerCase().includes(trimmedQuery);
+      const titleMatch = review.title
+        ? review.title.toLowerCase().includes(trimmedQuery)
+        : false;
+      const authorMatch = review.author.toLowerCase().includes(trimmedQuery);
+      if (!commentMatch && !titleMatch && !authorMatch) {
+        return false;
+      }
+    }
+
+    if (starRating !== null && starRating !== undefined) {
+      if (review.rating !== starRating) {
+        return false;
+      }
+    }
+
+    if (verifiedOnly) {
+      if (!review.author.toLowerCase().includes("verified")) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const compareDateDesc = (a: Review, b: Review) =>
+    new Date(b.date).getTime() - new Date(a.date).getTime();
+
+  return filtered.slice().sort((a, b) => {
+    if (sortBy === "highest") {
+      if (b.rating !== a.rating) {
+        return b.rating - a.rating;
+      }
+      return compareDateDesc(a, b);
+    }
+    if (sortBy === "lowest") {
+      if (a.rating !== b.rating) {
+        return a.rating - b.rating;
+      }
+      return compareDateDesc(a, b);
+    }
+    // "recent" or default
+    return compareDateDesc(a, b);
+  });
+}

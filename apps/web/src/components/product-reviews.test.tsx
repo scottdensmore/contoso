@@ -194,4 +194,132 @@ describe('ProductReviews Component', () => {
     const liveRegion = screen.getByRole('status')
     expect(liveRegion.textContent).toMatch(/submitted|thank you/i)
   })
+
+  it("searches reviews by keyword and clears search with clear button", () => {
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={sampleReviews} />
+    )
+
+    const searchInput = screen.getByRole("searchbox", { name: /search reviews/i })
+    expect(searchInput).toBeDefined()
+
+    // Search for "rain" - only rev-3 (Charlie Camper) has "rain"
+    fireEvent.change(searchInput, { target: { value: "rain" } })
+
+    expect(screen.getByText("Charlie Camper")).toBeDefined()
+    expect(screen.queryByText("Alice Explorer")).toBeNull()
+    expect(screen.queryByText("Bob Backpacker")).toBeNull()
+
+    // Clear search with clear button
+    const clearSearchBtn = screen.getByRole("button", { name: /clear review search/i })
+    fireEvent.click(clearSearchBtn)
+
+    expect(screen.getByText("Alice Explorer")).toBeDefined()
+    expect(screen.getByText("Bob Backpacker")).toBeDefined()
+    expect(screen.getByText("Charlie Camper")).toBeDefined()
+  })
+
+  it("sorts reviews by highest rating, lowest rating, and most recent", () => {
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={sampleReviews} />
+    )
+
+    const sortSelect = screen.getByRole("combobox", { name: /sort reviews by/i })
+    expect(sortSelect).toBeDefined()
+
+    // Sort by Highest Rating
+    fireEvent.change(sortSelect, { target: { value: "highest" } })
+    let cards = screen.getAllByTestId("review-card")
+    // 5-star first (Alice), then 4-star (Charlie), then 3-star (Bob)
+    expect(within(cards[0]).getByText("Alice Explorer")).toBeDefined()
+    expect(within(cards[1]).getByText("Charlie Camper")).toBeDefined()
+    expect(within(cards[2]).getByText("Bob Backpacker")).toBeDefined()
+
+    // Sort by Lowest Rating
+    fireEvent.change(sortSelect, { target: { value: "lowest" } })
+    cards = screen.getAllByTestId("review-card")
+    expect(within(cards[0]).getByText("Bob Backpacker")).toBeDefined()
+    expect(within(cards[1]).getByText("Charlie Camper")).toBeDefined()
+    expect(within(cards[2]).getByText("Alice Explorer")).toBeDefined()
+
+    // Sort by Most Recent (2024-03-05 Charlie, 2024-02-10 Bob, 2024-01-15 Alice)
+    fireEvent.change(sortSelect, { target: { value: "recent" } })
+    cards = screen.getAllByTestId("review-card")
+    expect(within(cards[0]).getByText("Charlie Camper")).toBeDefined()
+    expect(within(cards[1]).getByText("Bob Backpacker")).toBeDefined()
+    expect(within(cards[2]).getByText("Alice Explorer")).toBeDefined()
+  })
+
+  it("filters reviews by verified buyers only", () => {
+    const mixedReviews: Review[] = [
+      { id: "1", rating: 5, author: "Alice (Verified Buyer)", comment: "Great", date: "2024-01-01" },
+      { id: "2", rating: 4, author: "Regular Bob", comment: "Good", date: "2024-01-02" },
+    ]
+
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={mixedReviews} />
+    )
+
+    const verifiedCheckbox = screen.getByRole("checkbox", { name: /verified buyers only/i })
+    expect(verifiedCheckbox).toBeDefined()
+
+    fireEvent.click(verifiedCheckbox)
+    expect(screen.getByText("Alice (Verified Buyer)")).toBeDefined()
+    expect(screen.queryByText("Regular Bob")).toBeNull()
+
+    // Uncheck
+    fireEvent.click(verifiedCheckbox)
+    expect(screen.getByText("Alice (Verified Buyer)")).toBeDefined()
+    expect(screen.getByText("Regular Bob")).toBeDefined()
+  })
+
+  it("displays empty state and recovers via Reset filters button", () => {
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={sampleReviews} />
+    )
+
+    const searchInput = screen.getByRole("searchbox", { name: /search reviews/i })
+    fireEvent.change(searchInput, { target: { value: "xyznonexistent123" } })
+
+    expect(screen.getByText(/no reviews match your filters/i)).toBeDefined()
+
+    const resetBtn = screen.getByRole("button", { name: /reset filters/i })
+    fireEvent.click(resetBtn)
+
+    expect(screen.getByText("Alice Explorer")).toBeDefined()
+    expect(screen.getByText("Bob Backpacker")).toBeDefined()
+    expect(screen.getByText("Charlie Camper")).toBeDefined()
+    expect((searchInput as HTMLInputElement).value).toBe("")
+  })
+
+  it("announces active filter and review count via aria-live polite region", () => {
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={sampleReviews} />
+    )
+
+    const liveRegions = document.querySelectorAll("[aria-live='polite']")
+    expect(liveRegions.length).toBeGreaterThan(0)
+
+    const matchRegion = Array.from(liveRegions).find((el) =>
+      el.textContent && el.textContent.includes("3")
+    )
+    expect(matchRegion).toBeDefined()
+  })
+
+  it("provides accessible controls conforming to WCAG requirements", () => {
+    render(
+      <ProductReviews slug={slug} productName={productName} initialReviews={sampleReviews} />
+    )
+
+    const searchInput = screen.getByRole("searchbox", { name: /search reviews/i })
+    expect(searchInput.getAttribute("type")).toBe("search")
+    expect(searchInput.getAttribute("aria-label")).toBe("Search reviews")
+
+    const sortSelect = screen.getByRole("combobox", { name: /sort reviews by/i })
+    expect(sortSelect.getAttribute("aria-label")).toBe("Sort reviews by")
+
+    const verifiedCheckbox = screen.getByRole("checkbox", { name: /verified buyers only/i })
+    expect(verifiedCheckbox).toBeDefined()
+  })
+
 })
