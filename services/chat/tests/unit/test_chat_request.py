@@ -2374,3 +2374,170 @@ async def test_generate_llm_response_gcp_provider_includes_sizing_prompt():
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Sizing Guide: Jackets. Recommended Size: M." in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_with_review_sentiment_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="The TrailMaster X4 Tent has great reviews."),
+    ) as mock_llm:
+        result = await get_response("cust-1", "What do customers think of the TrailMaster tent?", "[]")
+
+    assert "review_summary" in result
+    review_payload = result["review_summary"]
+    assert isinstance(review_payload, dict)
+    assert review_payload["product_slug"] == "trailmaster-x4-tent"
+    assert review_payload["average_rating"] == 4.7
+    assert len(review_payload["pros"]) > 0
+
+    mock_llm.assert_awaited_once()
+    call_kwargs = mock_llm.await_args.kwargs
+    assert "review_prompt" in call_kwargs
+    assert "TrailMaster X4 Tent" in call_kwargs["review_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_without_review_sentiment_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent for camping", "[]")
+
+    assert result.get("review_summary") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_review_summary_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "What do customers think of the TrailMaster tent?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    review_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "review_summary":
+                    review_frame = data
+
+    assert "review_summary" in event_types
+    assert review_frame is not None
+    assert review_frame["review_summary"]["product_slug"] == "trailmaster-x4-tent"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_review_summary_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a camp stove", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+
+    assert "review_summary" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_review_prompt():
+    mock_litellm_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local review answer"))]
+        )
+    )
+
+    with patch.dict("sys.modules", {"litellm": SimpleNamespace(completion=mock_litellm_completion)}):
+        result = await generate_llm_response(
+            prompt="What do customers think of the TrailMaster tent?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id=None,
+            location=None,
+            model_name="gemma3:12b",
+            review_prompt="Verified Customer Review Summary: TrailMaster X4 Tent.",
+        )
+
+    assert result == "local review answer"
+    mock_litellm_completion.assert_called_once()
+    kwargs = mock_litellm_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
+    assert "Verified Customer Review Summary: TrailMaster X4 Tent." in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_review_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp review answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="What do customers think of the TrailMaster tent?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            review_prompt="Verified Customer Review Summary: TrailMaster X4 Tent.",
+        )
+
+    assert result == "gcp review answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Verified Customer Review Summary: TrailMaster X4 Tent." in sent_prompt

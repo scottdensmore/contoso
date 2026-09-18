@@ -1767,3 +1767,70 @@ def test_create_response_stream_mock_mode_omits_sizing_event_when_no_intent():
         ]
         sizing_event = next((e for e in events if e.get("event") == "sizing"), None)
         assert sizing_event is None
+
+
+def test_get_review_summary_endpoint_success():
+    res = client.get("/api/reviews/trailmaster-x4-tent/summary")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["product_slug"] == "trailmaster-x4-tent"
+    assert data["product_name"] == "TrailMaster X4 Tent"
+    assert data["average_rating"] == 4.7
+    assert data["total_reviews"] == 48
+    assert data["sentiment"] == "positive"
+    assert "Waterproof double-wall construction" in data["pros"]
+    assert data["recommendation_percentage"] == 94
+
+
+def test_get_review_summary_endpoint_not_found():
+    res = client.get("/api/reviews/unknown-product-999/summary")
+    assert res.status_code == 404
+    data = res.json()
+    assert data["detail"] == "Review summary not found for product: unknown-product-999"
+
+
+def test_create_response_mock_mode_with_review_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What are the pros and cons of the TrailMaster tent according to customers?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "review_summary" in data
+        assert data["review_summary"]["product_slug"] == "trailmaster-x4-tent"
+        assert "TrailMaster" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_review_summary_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What are the pros and cons of the TrailMaster tent according to customers?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        review_event = next((e for e in events if e.get("event") == "review_summary"), None)
+        assert review_event is not None
+        assert "review_summary" in review_event
+        assert review_event["review_summary"]["product_slug"] == "trailmaster-x4-tent"
+
+
+def test_create_response_stream_mock_mode_omits_review_summary_event_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Tell me about sleeping bags"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        review_event = next((e for e in events if e.get("event") == "review_summary"), None)
+        assert review_event is None

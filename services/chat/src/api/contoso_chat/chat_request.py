@@ -26,6 +26,10 @@ from .promotions import (
     detect_promo_intent,
     get_active_promotions,
 )
+from .review_summary import (
+    build_review_summary_prompt,
+    detect_review_sentiment_intent,
+)
 from .search_service import get_search_service
 from .sizing import (
     build_sizing_prompt,
@@ -257,6 +261,7 @@ async def generate_llm_response(
     carrier_tracking_prompt: str = "",
     faq_prompt: str = "",
     sizing_prompt: str = "",
+    review_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -305,6 +310,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{faq_prompt}"
         if sizing_prompt:
             local_system = f"{local_system}\n\n{sizing_prompt}"
+        if review_prompt:
+            local_system = f"{local_system}\n\n{review_prompt}"
+        if review_prompt:
+            local_system = f"{local_system}\n\n{review_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -342,6 +351,10 @@ async def generate_llm_response(
             prompt_parts.append(faq_prompt)
         if sizing_prompt:
             prompt_parts.append(sizing_prompt)
+        if review_prompt:
+            prompt_parts.append(review_prompt)
+        if review_prompt:
+            prompt_parts.append(review_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -549,6 +562,22 @@ async def get_response(customer_id, question, chat_history: Any = None):
             question,
         )
 
+    review_info = detect_review_sentiment_intent(question)
+    review_prompt = ""
+    if review_info.get("is_review_intent") and review_info.get("summary"):
+        review_prompt = build_review_summary_prompt(
+            review_info.get("summary"),
+            question,
+        )
+
+    review_info = detect_review_sentiment_intent(question)
+    review_prompt = ""
+    if review_info.get("is_review_intent") and review_info.get("summary"):
+        review_prompt = build_review_summary_prompt(
+            review_info.get("summary"),
+            question,
+        )
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -567,6 +596,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["faq_prompt"] = faq_prompt
     if sizing_prompt:
         llm_kwargs["sizing_prompt"] = sizing_prompt
+    if review_prompt:
+        llm_kwargs["review_prompt"] = review_prompt
 
     answer = await generate_llm_response(
         question,
@@ -607,6 +638,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["faq"] = [item.model_dump() for item in faq_result.matches]
     if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
         response_payload["sizing"] = sizing_info["size_guide"].model_dump()
+    if review_info.get("is_review_intent") and review_info.get("summary"):
+        response_payload["review_summary"] = review_info["summary"].model_dump()
 
     return response_payload
 
@@ -629,6 +662,7 @@ def generate_llm_response_stream(
     carrier_tracking_prompt: str = "",
     faq_prompt: str = "",
     sizing_prompt: str = "",
+    review_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -808,6 +842,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             question,
         )
 
+    review_info = detect_review_sentiment_intent(question)
+    review_prompt = ""
+    if review_info.get("is_review_intent") and review_info.get("summary"):
+        review_prompt = build_review_summary_prompt(
+            review_info.get("summary"),
+            question,
+        )
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -826,6 +868,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'faq', 'faq': [item.model_dump() for item in faq_result.matches]})}\n\n"
     if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
         yield f"data: {json.dumps({'event': 'sizing', 'sizing': sizing_info['size_guide'].model_dump()})}\n\n"
+    if review_info.get("is_review_intent") and review_info.get("summary"):
+        yield f"data: {json.dumps({'event': 'review_summary', 'review_summary': review_info['summary'].model_dump()})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -845,6 +889,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["faq_prompt"] = faq_prompt
     if sizing_prompt:
         stream_kwargs["sizing_prompt"] = sizing_prompt
+    if review_prompt:
+        stream_kwargs["review_prompt"] = review_prompt
 
     for chunk in generate_llm_response_stream(
         question,
