@@ -2207,3 +2207,170 @@ async def test_generate_llm_response_gcp_provider_includes_faq_prompt():
     kwargs = mock_client.models.generate_content.call_args.kwargs
     sent_prompt = kwargs["contents"]
     assert "Official Store FAQ: Returns are within 30 days." in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_with_sizing_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Size M is recommended for a 40 inch chest."),
+    ) as mock_llm:
+        result = await get_response("cust-1", "What size jacket should I get for a 40 inch chest?", "[]")
+
+    assert "sizing" in result
+    sizing_payload = result["sizing"]
+    assert isinstance(sizing_payload, dict)
+    assert sizing_payload["category"] in ("jackets", "apparel")
+    assert "rows" in sizing_payload
+    assert len(sizing_payload["rows"]) > 0
+
+    mock_llm.assert_awaited_once()
+    call_kwargs = mock_llm.await_args.kwargs
+    assert "sizing_prompt" in call_kwargs
+    assert "Sizing" in call_kwargs["sizing_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_without_sizing_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents."),
+    ):
+        result = await get_response("cust-1", "Recommend a tent for camping", "[]")
+
+    assert result.get("sizing") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_sizing_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "What size jacket should I get for a 40 inch chest?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    sizing_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "sizing":
+                    sizing_frame = data
+
+    assert "sizing" in event_types
+    assert sizing_frame is not None
+    assert sizing_frame["sizing"]["category"] in ("jackets", "apparel")
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_sizing_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-1", "Recommend a camp stove", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+
+    assert "sizing" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_sizing_prompt():
+    mock_litellm_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local sizing answer"))]
+        )
+    )
+
+    with patch.dict("sys.modules", {"litellm": SimpleNamespace(completion=mock_litellm_completion)}):
+        result = await generate_llm_response(
+            prompt="What size jacket for 40 inch chest?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id=None,
+            location=None,
+            model_name="gemma3:12b",
+            sizing_prompt="Sizing Guide: Jackets. Recommended Size: M.",
+        )
+
+    assert result == "local sizing answer"
+    mock_litellm_completion.assert_called_once()
+    kwargs = mock_litellm_completion.call_args.kwargs
+    messages = kwargs["messages"]
+    system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
+    assert "Sizing Guide: Jackets. Recommended Size: M." in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_sizing_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp sizing answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="What size jacket for 40 inch chest?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            sizing_prompt="Sizing Guide: Jackets. Recommended Size: M.",
+        )
+
+    assert result == "gcp sizing answer"
+    kwargs = mock_client.models.generate_content.call_args.kwargs
+    sent_prompt = kwargs["contents"]
+    assert "Sizing Guide: Jackets. Recommended Size: M." in sent_prompt

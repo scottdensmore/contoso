@@ -27,6 +27,10 @@ from .promotions import (
     get_active_promotions,
 )
 from .search_service import get_search_service
+from .sizing import (
+    build_sizing_prompt,
+    detect_sizing_intent,
+)
 from .stores import (
     build_store_prompt,
     detect_store_intent,
@@ -252,6 +256,7 @@ async def generate_llm_response(
     store_prompt: str = "",
     carrier_tracking_prompt: str = "",
     faq_prompt: str = "",
+    sizing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -298,6 +303,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{carrier_tracking_prompt}"
         if faq_prompt:
             local_system = f"{local_system}\n\n{faq_prompt}"
+        if sizing_prompt:
+            local_system = f"{local_system}\n\n{sizing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -333,6 +340,8 @@ async def generate_llm_response(
             prompt_parts.append(carrier_tracking_prompt)
         if faq_prompt:
             prompt_parts.append(faq_prompt)
+        if sizing_prompt:
+            prompt_parts.append(sizing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -531,6 +540,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if faq_result and faq_result.matches:
         faq_prompt = build_faq_prompt(faq_result.matches, question)
 
+    sizing_info = detect_sizing_intent(question)
+    sizing_prompt = ""
+    if sizing_info.get("is_sizing_intent"):
+        sizing_prompt = build_sizing_prompt(
+            sizing_info.get("size_guide"),
+            sizing_info.get("recommendation"),
+            question,
+        )
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -547,6 +565,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["carrier_tracking_prompt"] = carrier_tracking_prompt
     if faq_prompt:
         llm_kwargs["faq_prompt"] = faq_prompt
+    if sizing_prompt:
+        llm_kwargs["sizing_prompt"] = sizing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -585,6 +605,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["carrier_tracking"] = carrier_tracking_info.model_dump()
     if faq_result and faq_result.matches:
         response_payload["faq"] = [item.model_dump() for item in faq_result.matches]
+    if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
+        response_payload["sizing"] = sizing_info["size_guide"].model_dump()
 
     return response_payload
 
@@ -606,6 +628,7 @@ def generate_llm_response_stream(
     store_prompt: str = "",
     carrier_tracking_prompt: str = "",
     faq_prompt: str = "",
+    sizing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -652,6 +675,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{carrier_tracking_prompt}"
         if faq_prompt:
             local_system = f"{local_system}\n\n{faq_prompt}"
+        if sizing_prompt:
+            local_system = f"{local_system}\n\n{sizing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -690,6 +715,8 @@ def generate_llm_response_stream(
             prompt_parts.append(carrier_tracking_prompt)
         if faq_prompt:
             prompt_parts.append(faq_prompt)
+        if sizing_prompt:
+            prompt_parts.append(sizing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -772,6 +799,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if faq_result and faq_result.matches:
         faq_prompt = build_faq_prompt(faq_result.matches, question)
 
+    sizing_info = detect_sizing_intent(question)
+    sizing_prompt = ""
+    if sizing_info.get("is_sizing_intent"):
+        sizing_prompt = build_sizing_prompt(
+            sizing_info.get("size_guide"),
+            sizing_info.get("recommendation"),
+            question,
+        )
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -788,6 +824,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'carrier_tracking', 'carrier_tracking': carrier_tracking_info.model_dump()})}\n\n"
     if faq_result and faq_result.matches:
         yield f"data: {json.dumps({'event': 'faq', 'faq': [item.model_dump() for item in faq_result.matches]})}\n\n"
+    if sizing_info.get("is_sizing_intent") and sizing_info.get("size_guide"):
+        yield f"data: {json.dumps({'event': 'sizing', 'sizing': sizing_info['size_guide'].model_dump()})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -805,6 +843,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["carrier_tracking_prompt"] = carrier_tracking_prompt
     if faq_prompt:
         stream_kwargs["faq_prompt"] = faq_prompt
+    if sizing_prompt:
+        stream_kwargs["sizing_prompt"] = sizing_prompt
 
     for chunk in generate_llm_response_stream(
         question,
