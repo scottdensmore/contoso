@@ -39,6 +39,15 @@ vi.mock('@/components/compare-button', () => ({
   ),
 }))
 
+vi.mock('@/components/size-guide-modal', () => ({
+  __esModule: true,
+  default: ({ productName }: any) => (
+    <button data-testid="size-guide-modal" aria-label={`Size Guide for ${productName}`}>
+      Size Guide
+    </button>
+  ),
+}))
+
 vi.mock("@/components/recently-viewed", () => ({
   __esModule: true,
   default: ({ currentSlug }: { currentSlug?: string }) => (
@@ -132,6 +141,18 @@ describe('Product detail page', () => {
     const compareButton = screen.getByTestId('compare-button')
     expect(compareButton).toBeDefined()
     expect(compareButton.getAttribute('aria-label')).toContain('TrailMaster X4 Tent')
+  })
+
+  it("renders SizeGuideModal alongside AddToCart, WishlistButton and CompareButton", async () => {
+    const page = await Page({ params: Promise.resolve({ slug: "trailmaster-x4-tent" }) })
+    render(page)
+
+    expect(screen.getByTestId("add-to-cart")).toBeDefined()
+    expect(screen.getByTestId("wishlist-button")).toBeDefined()
+    expect(screen.getByTestId("compare-button")).toBeDefined()
+    const sizeGuideBtn = screen.getByTestId("size-guide-modal")
+    expect(sizeGuideBtn).toBeDefined()
+    expect(sizeGuideBtn.getAttribute("aria-label")).toContain("TrailMaster X4 Tent")
   })
 
   it("renders RecentlyViewed tracker and shelf with current product slug", async () => {
