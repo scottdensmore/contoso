@@ -66,7 +66,7 @@ export const RENTAL_PACKAGES: RentalPackage[] = [
       '2 dual-burner camp stoves',
       '4 LED lanterns',
     ],
-    image: '/images/rentals/camping-bundle.jpg',
+    image: 'rentals-camping-bundle',
   },
   {
     id: 'backpack-ultralight',
@@ -82,7 +82,7 @@ export const RENTAL_PACKAGES: RentalPackage[] = [
       'Down 20°F sleeping bag',
       'Pocket camp stove',
     ],
-    image: '/images/rentals/backpacking-kit.jpg',
+    image: 'rentals-backpacking-kit',
   },
   {
     id: 'kayak-touring-set',
@@ -98,7 +98,7 @@ export const RENTAL_PACKAGES: RentalPackage[] = [
       'Type III PFD life vest',
       'Waterproof dry bag',
     ],
-    image: '/images/rentals/kayak-set.jpg',
+    image: 'rentals-kayak-set',
   },
   {
     id: 'snowshoe-alpine-kit',
@@ -113,7 +113,7 @@ export const RENTAL_PACKAGES: RentalPackage[] = [
       'Telescoping trekking poles',
       'Gaiters set',
     ],
-    image: '/images/rentals/snowshoe-kit.jpg',
+    image: 'rentals-snowshoe-kit',
   },
 ];
 
