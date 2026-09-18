@@ -43,6 +43,13 @@ from contoso_chat.rentals import (
     format_rental_response,
     get_rental_packages,
 )
+from contoso_chat.return_label import (
+    ReturnLabelInfo,
+    ReturnLabelRequest,
+    detect_return_label_intent,
+    format_return_label_response,
+    generate_return_label,
+)
 from contoso_chat.review_summary import (
     ProductReviewSummary,
     detect_review_sentiment_intent,
@@ -365,6 +372,7 @@ async def create_response(request: ChatRequest):
             sizing_info = detect_sizing_intent(request.question)
             review_info = detect_review_sentiment_intent(request.question)
             rental_intent = detect_rental_intent(request.question)
+            return_intent = detect_return_label_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -413,7 +421,7 @@ async def create_response(request: ChatRequest):
                     "Use code WELCOME20 for 20% off your order, OUTDOORS10 for 10% off site-wide, "
                     "or TRAIL15 for 15% off trail equipment. Apply them in your cart drawer at checkout!"
                 )
-            if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+            if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy") and not return_intent:
                 mock_payload["policy"] = policy_intent["matched_policy"]
                 p_obj = policy_intent["matched_policy"]
                 mock_payload["answer"] = (
@@ -477,6 +485,15 @@ async def create_response(request: ChatRequest):
                 formatted_rental = format_rental_response(rental_intent)
                 mock_payload["rental_info"] = formatted_rental.get("rental_info")
                 mock_payload["answer"] = formatted_rental.get("answer", mock_payload["answer"])
+            if return_intent:
+                rl_info = (
+                    generate_return_label(return_intent.order_id)
+                    if return_intent.order_id
+                    else None
+                )
+                formatted_return = format_return_label_response(return_intent, rl_info)
+                mock_payload["return_label"] = formatted_return.get("return_label")
+                mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -591,12 +608,23 @@ async def create_response_stream(request: ChatRequest):
                 sizing_info = detect_sizing_intent(request.question)
                 review_info = detect_review_sentiment_intent(request.question)
                 rental_intent = detect_rental_intent(request.question)
+                return_intent = detect_return_label_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
                 yield f"data: {json.dumps({'event': 'profile', 'profile': {'membership': 'Gold', 'past_purchases_count': 2}})}\n\n"
                 captured_carrier_tracking: Optional[dict[str, Any]] = None
-                if carrier_intent.get("is_carrier_intent"):
+                if return_intent:
+                    rl_info = (
+                        generate_return_label(return_intent.order_id)
+                        if return_intent.order_id
+                        else None
+                    )
+                    formatted_return = format_return_label_response(return_intent, rl_info)
+                    mock_chunks = [
+                        str(formatted_return.get("answer", ""))
+                    ]
+                elif carrier_intent.get("is_carrier_intent"):
                     ext_id = carrier_intent.get("extracted_identifier")
                     c_info = lookup_carrier_tracking(ext_id) if ext_id else None
                     if c_info:
@@ -611,7 +639,7 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
                 if promo_intent.get("is_promo_intent"):
                     yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
-                if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy"):
+                if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy") and not return_intent:
                     yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
                 if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                     yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
@@ -624,6 +652,14 @@ async def create_response_stream(request: ChatRequest):
                 if rental_intent:
                     formatted_rental = format_rental_response(rental_intent)
                     yield f"data: {json.dumps({'event': 'rental_info', 'rental_info': formatted_rental.get('rental_info')})}\n\n"
+                if return_intent:
+                    rl_info = (
+                        generate_return_label(return_intent.order_id)
+                        if return_intent.order_id
+                        else None
+                    )
+                    formatted_return = format_return_label_response(return_intent, rl_info)
+                    yield f"data: {json.dumps({'event': 'return_label', 'return_label': formatted_return.get('return_label')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1008,3 +1044,32 @@ async def post_rental_quote_endpoint(
         )
     return quote
 
+
+
+@app.post(
+    "/api/orders/{order_id}/return_label",
+    response_model=ReturnLabelInfo,
+    responses={
+        200: {"description": "Return label generated"},
+    },
+)
+async def create_order_return_label(
+    order_id: str,
+    request: Optional[ReturnLabelRequest] = None,
+) -> ReturnLabelInfo:
+    logger.info("Return label creation requested", extra={"order_id": order_id})
+    reason = request.reason if request else None
+    items = request.items if request else None
+    return generate_return_label(order_id, reason=reason, items=items)
+
+
+@app.get(
+    "/api/orders/{order_id}/return_label",
+    response_model=ReturnLabelInfo,
+    responses={
+        200: {"description": "Return label retrieved"},
+    },
+)
+async def get_order_return_label(order_id: str) -> ReturnLabelInfo:
+    logger.info("Return label retrieval requested", extra={"order_id": order_id})
+    return generate_return_label(order_id)

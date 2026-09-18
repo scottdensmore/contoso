@@ -31,6 +31,12 @@ from .rentals import (
     detect_rental_intent,
     format_rental_response,
 )
+from .return_label import (
+    build_return_label_prompt,
+    detect_return_label_intent,
+    format_return_label_response,
+    generate_return_label,
+)
 from .review_summary import (
     build_review_summary_prompt,
     detect_review_sentiment_intent,
@@ -268,6 +274,7 @@ async def generate_llm_response(
     sizing_prompt: str = "",
     review_prompt: str = "",
     rental_prompt: str = "",
+    return_label_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -320,6 +327,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{review_prompt}"
         if rental_prompt:
             local_system = f"{local_system}\n\n{rental_prompt}"
+        if return_label_prompt:
+            local_system = f"{local_system}\n\n{return_label_prompt}"
+        if return_label_prompt:
+            local_system = f"{local_system}\n\n{return_label_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -361,6 +372,10 @@ async def generate_llm_response(
             prompt_parts.append(review_prompt)
         if rental_prompt:
             prompt_parts.append(rental_prompt)
+        if return_label_prompt:
+            prompt_parts.append(return_label_prompt)
+        if return_label_prompt:
+            prompt_parts.append(return_label_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -584,6 +599,19 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_rental = format_rental_response(rental_intent)
         rental_info = formatted_rental.get("rental_info")
 
+    return_label_intent = detect_return_label_intent(question)
+    return_label_prompt = ""
+    return_label_payload = None
+    if return_label_intent:
+        rl_info = (
+            generate_return_label(return_label_intent.order_id)
+            if return_label_intent.order_id
+            else None
+        )
+        return_label_prompt = build_return_label_prompt(return_label_intent, rl_info)
+        formatted_return = format_return_label_response(return_label_intent, rl_info)
+        return_label_payload = formatted_return.get("return_label")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -606,6 +634,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["review_prompt"] = review_prompt
     if rental_prompt:
         llm_kwargs["rental_prompt"] = rental_prompt
+    if return_label_prompt:
+        llm_kwargs["return_label_prompt"] = return_label_prompt
 
     answer = await generate_llm_response(
         question,
@@ -650,6 +680,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["review_summary"] = review_info["summary"].model_dump()
     if rental_intent and rental_info:
         response_payload["rental_info"] = rental_info
+    if return_label_payload:
+        response_payload["return_label"] = return_label_payload
 
     return response_payload
 
@@ -674,6 +706,7 @@ def generate_llm_response_stream(
     sizing_prompt: str = "",
     review_prompt: str = "",
     rental_prompt: str = "",
+    return_label_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -877,6 +910,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_rental = format_rental_response(rental_intent)
         rental_info = formatted_rental.get("rental_info")
 
+    return_label_intent = detect_return_label_intent(question)
+    return_label_prompt = ""
+    return_label_payload = None
+    if return_label_intent:
+        rl_info = (
+            generate_return_label(return_label_intent.order_id)
+            if return_label_intent.order_id
+            else None
+        )
+        return_label_prompt = build_return_label_prompt(return_label_intent, rl_info)
+        formatted_return = format_return_label_response(return_label_intent, rl_info)
+        return_label_payload = formatted_return.get("return_label")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -899,6 +945,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'review_summary', 'review_summary': review_info['summary'].model_dump()})}\n\n"
     if rental_intent and rental_info:
         yield f"data: {json.dumps({'event': 'rental_info', 'rental_info': rental_info})}\n\n"
+    if return_label_payload:
+        yield f"data: {json.dumps({'event': 'return_label', 'return_label': return_label_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -922,6 +970,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["review_prompt"] = review_prompt
     if rental_prompt:
         stream_kwargs["rental_prompt"] = rental_prompt
+    if return_label_prompt:
+        stream_kwargs["return_label_prompt"] = return_label_prompt
 
     for chunk in generate_llm_response_stream(
         question,
