@@ -55,6 +55,17 @@ from contoso_chat.review_summary import (
     detect_review_sentiment_intent,
     get_review_summary,
 )
+from contoso_chat.rewards import (
+    CustomerLoyaltyInfo,
+    LoyaltyRedemptionRequest,
+    LoyaltyRedemptionResponse,
+    MemberTierInfo,
+    detect_rewards_intent,
+    format_rewards_response,
+    get_customer_loyalty,
+    get_tier_perks,
+    redeem_voucher,
+)
 from contoso_chat.session_store import (
     ChatSession,
     append_message,
@@ -383,6 +394,7 @@ async def create_response(request: ChatRequest):
             rental_intent = detect_rental_intent(request.question)
             return_intent = detect_return_label_intent(request.question)
             trail_intent = detect_trail_intent(request.question)
+            rewards_intent = detect_rewards_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -508,6 +520,11 @@ async def create_response(request: ChatRequest):
                 formatted_trail = format_trail_response(trail_intent)
                 mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
                 mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
+            if rewards_intent:
+                rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
+                mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
+                mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -624,6 +641,7 @@ async def create_response_stream(request: ChatRequest):
                 rental_intent = detect_rental_intent(request.question)
                 return_intent = detect_return_label_intent(request.question)
                 trail_intent = detect_trail_intent(request.question)
+                rewards_intent = detect_rewards_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -678,6 +696,10 @@ async def create_response_stream(request: ChatRequest):
                 if trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': formatted_trail.get('trail_outfitting')})}\n\n"
+                if rewards_intent:
+                    rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                    formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
+                    yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -697,6 +719,12 @@ async def create_response_stream(request: ChatRequest):
                         f"is currently {MOCK_ORDER_TRACKING['status']} with {MOCK_ORDER_TRACKING['carrier']}. ",
                         f"Tracking number: {MOCK_ORDER_TRACKING['tracking_number']}. ",
                         f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}.",
+                    ]
+                elif rewards_intent:
+                    rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                    formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
+                    mock_chunks = [
+                        str(formatted_rewards.get("answer", ""))
                     ]
                 elif promo_intent.get("is_promo_intent"):
                     mock_chunks = [
@@ -1130,3 +1158,46 @@ async def post_trails_outfitting_endpoint(
         activity=request.activity,
         season=request.season,
     )
+
+
+@app.get(
+    "/api/loyalty/profile",
+    response_model=CustomerLoyaltyInfo,
+    responses={
+        200: {"description": "Customer loyalty profile retrieved"},
+    },
+)
+async def get_loyalty_profile_endpoint(
+    customer_id: Optional[str] = None,
+) -> CustomerLoyaltyInfo:
+    logger.info("Loyalty profile requested", extra={"customer_id": customer_id})
+    return get_customer_loyalty(customer_id=customer_id)
+
+
+@app.get(
+    "/api/loyalty/tiers",
+    response_model=list[MemberTierInfo],
+    responses={
+        200: {"description": "Member tiers and perks retrieved"},
+    },
+)
+async def get_loyalty_tiers_endpoint() -> list[MemberTierInfo]:
+    logger.info("Loyalty tiers requested")
+    return get_tier_perks()
+
+
+@app.post(
+    "/api/loyalty/redeem",
+    response_model=LoyaltyRedemptionResponse,
+    responses={
+        200: {"description": "Loyalty voucher redemption processed"},
+    },
+)
+async def post_loyalty_redeem_endpoint(
+    request: LoyaltyRedemptionRequest,
+) -> LoyaltyRedemptionResponse:
+    logger.info(
+        "Loyalty voucher redemption requested",
+        extra={"voucher_id": request.voucher_id, "customer_id": request.customer_id},
+    )
+    return redeem_voucher(voucher_id=request.voucher_id, customer_id=request.customer_id)

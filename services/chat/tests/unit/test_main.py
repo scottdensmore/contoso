@@ -2095,3 +2095,135 @@ def test_create_response_stream_mock_mode_omits_trail_outfitting_when_no_intent(
         ]
         trail_event = next((e for e in events if e.get("event") == "trail_outfitting"), None)
         assert trail_event is None
+
+
+def test_get_loyalty_profile_endpoint():
+    res = client.get("/api/loyalty/profile")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["customer_id"] == "cust-default"
+    assert data["points_balance"] == 650
+    assert data["tier"] == "Pathfinder"
+    assert data["points_to_next_tier"] == 650
+    assert data["next_tier"] == "Summit Explorer"
+    assert isinstance(data["available_vouchers"], list)
+
+
+def test_get_loyalty_tiers_endpoint():
+    res = client.get("/api/loyalty/tiers")
+    assert res.status_code == 200
+    tiers = res.json()
+    assert isinstance(tiers, list)
+    assert len(tiers) == 3
+    names = [t["tier_name"] for t in tiers]
+    assert names == ["Trailblazer", "Pathfinder", "Summit Explorer"]
+
+
+def test_post_loyalty_redeem_endpoint():
+    # 1. Successful redemption
+    res = client.post(
+        "/api/loyalty/redeem",
+        json={"voucher_id": "voucher-10", "customer_id": "cust-default"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["promo_code"] == "REWARD10"
+    assert data["remaining_points"] == 450
+    assert data["voucher"]["id"] == "voucher-10"
+
+    # 2. Insufficient points redemption
+    res2 = client.post(
+        "/api/loyalty/redeem",
+        json={"voucher_id": "voucher-50", "customer_id": "cust-default"},
+    )
+    assert res2.status_code == 200
+    data2 = res2.json()
+    assert data2["success"] is False
+    assert data2["remaining_points"] == 450
+
+
+def test_create_response_mock_mode_with_rewards_balance_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "How many reward points do I have?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "rewards_info" in data
+        assert data["rewards_info"]["action"] == "balance"
+        assert "Pathfinder" in data["answer"]
+
+
+def test_create_response_mock_mode_with_rewards_tiers_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What are the benefits of Pathfinder tier?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "rewards_info" in data
+        assert data["rewards_info"]["action"] == "tiers"
+        assert "Summit Explorer" in data["answer"]
+
+
+def test_create_response_mock_mode_with_rewards_vouchers_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What vouchers are available for my rewards?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "rewards_info" in data
+        assert data["rewards_info"]["action"] == "vouchers"
+        assert "$10" in data["answer"]
+
+
+def test_create_response_mock_mode_with_rewards_redeem_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Redeem my points for a $10 discount voucher"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "rewards_info" in data
+        assert data["rewards_info"]["action"] == "redeem"
+        assert "REWARD10" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_rewards_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What are the benefits of Pathfinder tier?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rewards_event = next((e for e in events if e.get("event") == "rewards_info"), None)
+        assert rewards_event is not None
+        assert "rewards_info" in rewards_event
+        assert rewards_event["rewards_info"]["action"] == "tiers"
+
+
+def test_create_response_stream_mock_mode_omits_rewards_info_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Where is your retail store?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        rewards_event = next((e for e in events if e.get("event") == "rewards_info"), None)
+        assert rewards_event is None

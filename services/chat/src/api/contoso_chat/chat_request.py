@@ -41,6 +41,12 @@ from .review_summary import (
     build_review_summary_prompt,
     detect_review_sentiment_intent,
 )
+from .rewards import (
+    build_rewards_prompt,
+    detect_rewards_intent,
+    format_rewards_response,
+    get_customer_loyalty,
+)
 from .search_service import get_search_service
 from .sizing import (
     build_sizing_prompt,
@@ -282,6 +288,7 @@ async def generate_llm_response(
     rental_prompt: str = "",
     return_label_prompt: str = "",
     trail_prompt: str = "",
+    rewards_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -342,6 +349,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{return_label_prompt}"
         if trail_prompt:
             local_system = f"{local_system}\n\n{trail_prompt}"
+        if rewards_prompt:
+            local_system = f"{local_system}\n\n{rewards_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -391,6 +400,8 @@ async def generate_llm_response(
             prompt_parts.append(return_label_prompt)
         if trail_prompt:
             prompt_parts.append(trail_prompt)
+        if rewards_prompt:
+            prompt_parts.append(rewards_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -653,6 +664,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_trail = format_trail_response(trail_intent, trail_outfitting_resp)
         trail_outfitting_payload = formatted_trail.get("trail_outfitting")
 
+    rewards_intent = detect_rewards_intent(question)
+    rewards_prompt = ""
+    rewards_info_payload = None
+    if rewards_intent:
+        rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or customer_id)
+        rewards_prompt = build_rewards_prompt(rewards_intent, rewards_loyalty)
+        formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
+        rewards_info_payload = formatted_rewards.get("rewards_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -679,6 +699,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["return_label_prompt"] = return_label_prompt
     if trail_prompt:
         llm_kwargs["trail_prompt"] = trail_prompt
+    if rewards_prompt:
+        llm_kwargs["rewards_prompt"] = rewards_prompt
 
     answer = await generate_llm_response(
         question,
@@ -727,6 +749,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["return_label"] = return_label_payload
     if trail_intent and trail_outfitting_payload:
         response_payload["trail_outfitting"] = trail_outfitting_payload
+    if rewards_intent and rewards_info_payload:
+        response_payload["rewards_info"] = rewards_info_payload
 
     return response_payload
 
@@ -753,6 +777,7 @@ def generate_llm_response_stream(
     rental_prompt: str = "",
     return_label_prompt: str = "",
     trail_prompt: str = "",
+    rewards_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -805,6 +830,12 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{review_prompt}"
         if rental_prompt:
             local_system = f"{local_system}\n\n{rental_prompt}"
+        if return_label_prompt:
+            local_system = f"{local_system}\n\n{return_label_prompt}"
+        if trail_prompt:
+            local_system = f"{local_system}\n\n{trail_prompt}"
+        if rewards_prompt:
+            local_system = f"{local_system}\n\n{rewards_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -849,6 +880,12 @@ def generate_llm_response_stream(
             prompt_parts.append(review_prompt)
         if rental_prompt:
             prompt_parts.append(rental_prompt)
+        if return_label_prompt:
+            prompt_parts.append(return_label_prompt)
+        if trail_prompt:
+            prompt_parts.append(trail_prompt)
+        if rewards_prompt:
+            prompt_parts.append(rewards_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -982,6 +1019,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_trail = format_trail_response(trail_intent, trail_outfitting_resp)
         trail_outfitting_payload = formatted_trail.get("trail_outfitting")
 
+    rewards_intent = detect_rewards_intent(question)
+    rewards_prompt = ""
+    rewards_info_payload = None
+    if rewards_intent:
+        rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or customer_id)
+        rewards_prompt = build_rewards_prompt(rewards_intent, rewards_loyalty)
+        formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
+        rewards_info_payload = formatted_rewards.get("rewards_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1008,6 +1054,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'return_label', 'return_label': return_label_payload})}\n\n"
     if trail_intent and trail_outfitting_payload:
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
+    if rewards_intent and rewards_info_payload:
+        yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1035,6 +1083,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["return_label_prompt"] = return_label_prompt
     if trail_prompt:
         stream_kwargs["trail_prompt"] = trail_prompt
+    if rewards_prompt:
+        stream_kwargs["rewards_prompt"] = rewards_prompt
 
     for chunk in generate_llm_response_stream(
         question,
