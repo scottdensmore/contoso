@@ -53,6 +53,20 @@ from contoso_chat.fire_safety import (
     get_fire_zones,
     submit_fire_report,
 )
+from contoso_chat.first_aid import (
+    KitCalcRequest,
+    KitCalcResponse,
+    MedicalConditionModel,
+    TriageRequest,
+    TriageResponse,
+    assess_wilderness_triage,
+    calculate_first_aid_kit,
+    detect_first_aid_intent,
+    format_first_aid_response,
+    get_evacuation_safety_protocol,
+    get_medical_condition_by_id,
+    get_medical_conditions,
+)
 from contoso_chat.huts import (
     AlpineHutModel,
     HutAvailabilityRequest,
@@ -555,6 +569,7 @@ async def create_response(request: ChatRequest):
             water_intent = detect_water_intent(request.question)
             route_intent = detect_route_intent(request.question)
             fire_safety_intent = detect_fire_safety_intent(request.question)
+            first_aid_intent = detect_first_aid_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -685,7 +700,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -738,6 +753,10 @@ async def create_response(request: ChatRequest):
                 formatted_fire = format_fire_safety_response(fire_safety_intent)
                 mock_payload["fire_safety_info"] = formatted_fire.get("fire_safety_info")
                 mock_payload["answer"] = formatted_fire.get("answer", mock_payload["answer"])
+            if first_aid_intent:
+                formatted_first_aid = format_first_aid_response(first_aid_intent)
+                mock_payload["first_aid_info"] = formatted_first_aid.get("first_aid_info")
+                mock_payload["answer"] = formatted_first_aid.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -868,6 +887,7 @@ async def create_response_stream(request: ChatRequest):
                 water_intent = detect_water_intent(request.question)
                 route_intent = detect_route_intent(request.question)
                 fire_safety_intent = detect_fire_safety_intent(request.question)
+                first_aid_intent = detect_first_aid_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -926,7 +946,7 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -965,6 +985,9 @@ async def create_response_stream(request: ChatRequest):
                 if fire_safety_intent:
                     formatted_fire = format_fire_safety_response(fire_safety_intent)
                     yield f"data: {json.dumps({'event': 'fire_safety_info', 'fire_safety_info': formatted_fire.get('fire_safety_info')})}\n\n"
+                if first_aid_intent:
+                    formatted_first_aid = format_first_aid_response(first_aid_intent)
+                    yield f"data: {json.dumps({'event': 'first_aid_info', 'first_aid_info': formatted_first_aid.get('first_aid_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1072,6 +1095,11 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_fire.get("answer", ""))
                     ]
+                elif first_aid_intent:
+                    formatted_first_aid = format_first_aid_response(first_aid_intent)
+                    mock_chunks = [
+                        str(formatted_first_aid.get("answer", ""))
+                    ]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
@@ -1082,7 +1110,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -2232,3 +2260,59 @@ async def submit_fire_report_endpoint(
         return submit_fire_report(request)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/first-aid/conditions",
+    response_model=list[MedicalConditionModel],
+    tags=["Wilderness First Aid & Medical Protocol"],
+    summary="List wilderness medical conditions with optional category and severity filters",
+)
+async def get_conditions_endpoint(
+    category: Optional[str] = None,
+    severity: Optional[str] = None,
+) -> list[MedicalConditionModel]:
+    return get_medical_conditions(category=category, severity=severity)
+
+
+@app.get(
+    "/api/first-aid/conditions/{condition_id}",
+    response_model=MedicalConditionModel,
+    tags=["Wilderness First Aid & Medical Protocol"],
+    summary="Get medical condition details by condition ID",
+)
+async def get_condition_by_id_endpoint(condition_id: str) -> MedicalConditionModel:
+    cond = get_medical_condition_by_id(condition_id)
+    if not cond:
+        raise HTTPException(status_code=404, detail=f"Medical condition '{condition_id}' not found")
+    return cond
+
+
+@app.post(
+    "/api/first-aid/triage",
+    response_model=TriageResponse,
+    tags=["Wilderness First Aid & Medical Protocol"],
+    summary="Assess wilderness injury symptoms and determine triage recommendation",
+)
+async def assess_triage_endpoint(request: TriageRequest) -> TriageResponse:
+    return assess_wilderness_triage(request)
+
+
+@app.post(
+    "/api/first-aid/kit-calculator",
+    response_model=KitCalcResponse,
+    tags=["Wilderness First Aid & Medical Protocol"],
+    summary="Calculate tailored first aid kit quantities based on party size and trip days",
+)
+async def calculate_kit_endpoint(request: KitCalcRequest) -> KitCalcResponse:
+    return calculate_first_aid_kit(request)
+
+
+@app.get(
+    "/api/first-aid/evacuation-protocol",
+    response_model=dict[str, Any],
+    tags=["Wilderness First Aid & Medical Protocol"],
+    summary="Get Search & Rescue (SAR) evacuation and helicopter LZ protocols",
+)
+async def get_evacuation_protocol_endpoint() -> dict[str, Any]:
+    return get_evacuation_safety_protocol()
