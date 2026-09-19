@@ -2802,3 +2802,106 @@ def test_create_response_stream_mock_mode_emits_hut_info_event():
         assert hut_event is not None
         assert "hut_info" in hut_event
         assert hut_event["hut_info"]["action"] == "quote"
+
+
+def test_get_volunteer_projects_endpoint():
+    res = client.get("/api/volunteer/projects")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 4
+
+    res_cascades = client.get("/api/volunteer/projects?region=Cascades")
+    assert res_cascades.status_code == 200
+    cascades = res_cascades.json()
+    assert len(cascades) >= 2
+    assert all(p["region"] == "Cascades" for p in cascades)
+
+    res_diff = client.get("/api/volunteer/projects?difficulty=Strenuous")
+    assert res_diff.status_code == 200
+    strenuous = res_diff.json()
+    assert len(strenuous) >= 1
+    assert all(p["difficulty"] == "Strenuous" for p in strenuous)
+
+
+def test_get_volunteer_project_by_id_endpoint():
+    res = client.get("/api/volunteer/projects/mailbox-drainage")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["project_id"] == "mailbox-drainage"
+    assert "Pulaski" in data["required_tools"]
+
+    res_404 = client.get("/api/volunteer/projects/nonexistent-project")
+    assert res_404.status_code == 404
+
+
+def test_post_volunteer_register_endpoint():
+    res = client.post(
+        "/api/volunteer/register",
+        json={
+            "project_id": "mailbox-drainage",
+            "volunteer_name": "Alex Honnold",
+            "volunteer_email": "alex@example.com",
+            "emergency_contact": "Clair Honnold",
+            "emergency_phone": "555-0199",
+            "waiver_acknowledged": True,
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["registration_id"].startswith("VOL-")
+    assert data["project_id"] == "mailbox-drainage"
+    assert data["status"] == "confirmed"
+    assert "instructions" in data
+
+    res_404 = client.post(
+        "/api/volunteer/register",
+        json={
+            "project_id": "nonexistent-project",
+            "volunteer_name": "Alex Honnold",
+            "volunteer_email": "alex@example.com",
+            "emergency_contact": "Clair Honnold",
+            "emergency_phone": "555-0199",
+            "waiver_acknowledged": True,
+        },
+    )
+    assert res_404.status_code == 404
+
+
+def test_get_volunteer_impact_endpoint():
+    res = client.get("/api/volunteer/impact")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_hours_logged"] >= 10000
+    assert data["trails_maintained_miles"] > 0
+
+
+def test_create_response_mock_mode_with_volunteer_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "How can I volunteer for trail work in the Cascades?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "volunteer_info" in data
+        assert data["volunteer_info"]["action"] == "projects"
+        assert "Mailbox Peak" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_volunteer_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "How many volunteer hours has Contoso logged?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        vol_event = next((e for e in events if e.get("event") == "volunteer_info"), None)
+        assert vol_event is not None
+        assert "volunteer_info" in vol_event
+        assert vol_event["volunteer_info"]["action"] == "impact"
