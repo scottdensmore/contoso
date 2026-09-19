@@ -224,6 +224,17 @@ from contoso_chat.sizing import (
     detect_sizing_intent,
     get_size_guide,
 )
+from contoso_chat.ski_touring import (
+    SkinningPaceRequest,
+    SkinningPaceResponse,
+    SkiTourRouteModel,
+    calculate_skinning_pace,
+    detect_ski_tour_intent,
+    format_ski_tour_response,
+    get_ski_tour_route_by_id,
+    get_ski_tour_routes,
+    get_skin_track_etiquette_and_policies,
+)
 from contoso_chat.stores import (
     detect_store_intent,
     get_all_stores,
@@ -609,6 +620,7 @@ async def create_response(request: ChatRequest):
             lnt_intent = detect_lnt_intent(request.question)
             avalanche_intent = detect_avalanche_intent(request.question)
             weather_intent = detect_weather_intent(request.question)
+            ski_tour_intent = detect_ski_tour_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -809,6 +821,10 @@ async def create_response(request: ChatRequest):
                 mock_payload["weather_info"] = formatted_weather.get("weather_info")
                 if not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     mock_payload["answer"] = formatted_weather.get("answer", mock_payload["answer"])
+            if ski_tour_intent:
+                formatted_tour = format_ski_tour_response(ski_tour_intent)
+                mock_payload["ski_tour_info"] = formatted_tour.get("ski_tour_info")
+                mock_payload["answer"] = formatted_tour.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -943,6 +959,7 @@ async def create_response_stream(request: ChatRequest):
                 lnt_intent = detect_lnt_intent(request.question)
                 avalanche_intent = detect_avalanche_intent(request.question)
                 weather_intent = detect_weather_intent(request.question)
+                ski_tour_intent = detect_ski_tour_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1052,6 +1069,9 @@ async def create_response_stream(request: ChatRequest):
                 if weather_intent:
                     formatted_weather = format_weather_response(weather_intent)
                     yield f"data: {json.dumps({'event': 'weather_info', 'weather_info': formatted_weather.get('weather_info')})}\n\n"
+                if ski_tour_intent:
+                    formatted_tour = format_ski_tour_response(ski_tour_intent)
+                    yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': formatted_tour.get('ski_tour_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1143,6 +1163,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_rental = format_rental_response(rental_intent)
                     mock_chunks = [
                         str(formatted_rental.get("answer", ""))
+                    ]
+                elif ski_tour_intent:
+                    formatted_tour = format_ski_tour_response(ski_tour_intent)
+                    mock_chunks = [
+                        str(formatted_tour.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2546,3 +2571,54 @@ async def calculate_microclimate_endpoint(
 )
 async def get_weather_protocols_endpoint() -> dict[str, Any]:
     return get_lightning_safety_protocol()
+
+
+@app.get(
+    "/api/ski-touring/routes",
+    response_model=list[SkiTourRouteModel],
+    tags=["Backcountry Ski Touring & Splitboard Tooling"],
+    summary="List backcountry ski touring and splitboard routes",
+)
+async def get_ski_tour_routes_endpoint(
+    difficulty: Optional[str] = None,
+    zone: Optional[str] = None,
+) -> list[SkiTourRouteModel]:
+    return get_ski_tour_routes(difficulty=difficulty, zone=zone)
+
+
+@app.get(
+    "/api/ski-touring/routes/{route_id}",
+    response_model=SkiTourRouteModel,
+    tags=["Backcountry Ski Touring & Splitboard Tooling"],
+    summary="Get route details for a specific backcountry ski tour",
+)
+async def get_ski_tour_route_by_id_endpoint(route_id: str) -> SkiTourRouteModel:
+    route = get_ski_tour_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Ski tour route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/ski-touring/pace-calc",
+    response_model=SkinningPaceResponse,
+    tags=["Backcountry Ski Touring & Splitboard Tooling"],
+    summary="Calculate skinning ascent pace, total duration, and nutrition needs",
+)
+async def calculate_skinning_pace_endpoint(
+    request: SkinningPaceRequest,
+) -> SkinningPaceResponse:
+    try:
+        return calculate_skinning_pace(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/ski-touring/etiquette",
+    response_model=dict[str, Any],
+    tags=["Backcountry Ski Touring & Splitboard Tooling"],
+    summary="Get skin track etiquette guidelines and resort uphill travel policies",
+)
+async def get_ski_tour_etiquette_endpoint() -> dict[str, Any]:
+    return get_skin_track_etiquette_and_policies()

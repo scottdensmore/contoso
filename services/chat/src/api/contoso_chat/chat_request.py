@@ -112,6 +112,11 @@ from .sizing import (
     build_sizing_prompt,
     detect_sizing_intent,
 )
+from .ski_touring import (
+    build_ski_tour_prompt,
+    detect_ski_tour_intent,
+    format_ski_tour_response,
+)
 from .stores import (
     build_store_prompt,
     detect_store_intent,
@@ -391,6 +396,7 @@ async def generate_llm_response(
     lnt_prompt: str = "",
     avalanche_prompt: str = "",
     weather_prompt: str = "",
+    ski_tour_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -487,8 +493,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{avalanche_prompt}"
         if weather_prompt:
             local_system = f"{local_system}\n\n{weather_prompt}"
-        if weather_prompt:
-            local_system = f"{local_system}\n\n{weather_prompt}"
+        if ski_tour_prompt:
+            local_system = f"{local_system}\n\n{ski_tour_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -574,8 +580,8 @@ async def generate_llm_response(
             prompt_parts.append(avalanche_prompt)
         if weather_prompt:
             prompt_parts.append(weather_prompt)
-        if weather_prompt:
-            prompt_parts.append(weather_prompt)
+        if ski_tour_prompt:
+            prompt_parts.append(ski_tour_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -983,6 +989,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_weather = format_weather_response(weather_intent)
         weather_info_payload = formatted_weather.get("weather_info")
 
+    ski_tour_intent = detect_ski_tour_intent(question)
+    ski_tour_prompt = ""
+    ski_tour_info_payload = None
+    if ski_tour_intent:
+        ski_tour_prompt = build_ski_tour_prompt(ski_tour_intent)
+        formatted_ski_tour = format_ski_tour_response(ski_tour_intent)
+        ski_tour_info_payload = formatted_ski_tour.get("ski_tour_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1045,6 +1059,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["avalanche_prompt"] = avalanche_prompt
     if weather_prompt:
         llm_kwargs["weather_prompt"] = weather_prompt
+    if ski_tour_prompt:
+        llm_kwargs["ski_tour_prompt"] = ski_tour_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1129,6 +1145,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["avalanche_info"] = avalanche_info_payload
     if weather_intent and weather_info_payload:
         response_payload["weather_info"] = weather_info_payload
+    if ski_tour_intent and ski_tour_info_payload:
+        response_payload["ski_tour_info"] = ski_tour_info_payload
 
     return response_payload
 
@@ -1173,6 +1191,7 @@ def generate_llm_response_stream(
     lnt_prompt: str = "",
     avalanche_prompt: str = "",
     weather_prompt: str = "",
+    ski_tour_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1263,6 +1282,10 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{lnt_prompt}"
         if avalanche_prompt:
             local_system = f"{local_system}\n\n{avalanche_prompt}"
+        if weather_prompt:
+            local_system = f"{local_system}\n\n{weather_prompt}"
+        if ski_tour_prompt:
+            local_system = f"{local_system}\n\n{ski_tour_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1345,6 +1368,10 @@ def generate_llm_response_stream(
             prompt_parts.append(lnt_prompt)
         if avalanche_prompt:
             prompt_parts.append(avalanche_prompt)
+        if weather_prompt:
+            prompt_parts.append(weather_prompt)
+        if ski_tour_prompt:
+            prompt_parts.append(ski_tour_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1615,6 +1642,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_weather = format_weather_response(weather_intent)
         weather_info_payload = formatted_weather.get("weather_info")
 
+    ski_tour_intent = detect_ski_tour_intent(question)
+    ski_tour_prompt = ""
+    ski_tour_info_payload = None
+    if ski_tour_intent:
+        ski_tour_prompt = build_ski_tour_prompt(ski_tour_intent)
+        formatted_ski_tour = format_ski_tour_response(ski_tour_intent)
+        ski_tour_info_payload = formatted_ski_tour.get("ski_tour_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1675,6 +1710,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'avalanche_info', 'avalanche_info': avalanche_info_payload})}\n\n"
     if weather_intent and weather_info_payload:
         yield f"data: {json.dumps({'event': 'weather_info', 'weather_info': weather_info_payload})}\n\n"
+    if ski_tour_intent and ski_tour_info_payload:
+        yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': ski_tour_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1736,6 +1773,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["avalanche_prompt"] = avalanche_prompt
     if weather_prompt:
         stream_kwargs["weather_prompt"] = weather_prompt
+    if ski_tour_prompt:
+        stream_kwargs["ski_tour_prompt"] = ski_tour_prompt
 
     for chunk in generate_llm_response_stream(
         question,
