@@ -4137,3 +4137,163 @@ async def test_generate_llm_response_gcp_provider_includes_safety_prompt():
     assert result == "gcp safety answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Wilderness Safety & Emergency Advisory Grounding: AVALANCHE" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_shuttle_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="We offer the Enchantments connector shuttle."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "Are there shuttles for the Enchantments?", "[]"
+        )
+
+    assert result.get("shuttle_info") is not None
+    assert result["shuttle_info"]["action"] == "routes"
+    mock_llm.assert_awaited_once()
+    assert "shuttle_prompt" in mock_llm.await_args.kwargs
+    assert "Trailhead Shuttle & Rideshare Grounding" in mock_llm.await_args.kwargs["shuttle_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_shuttle_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are tents."),
+    ):
+        result = await get_response("cust-default", "Show me 4-person tents", "[]")
+
+    assert result.get("shuttle_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_shuttle_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Enchantments ", "shuttle departs early."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "What time does the Mount Rainier shuttle leave?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    shuttle_event = next((e for e in events if e.get("event") == "shuttle_info"), None)
+    assert shuttle_event is not None
+    assert "shuttle_info" in shuttle_event
+    assert shuttle_event["shuttle_info"]["action"] == "schedule"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_shuttle_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Store ", "hours."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "Where is your retail store?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    shuttle_event = next((e for e in events if e.get("event") == "shuttle_info"), None)
+    assert shuttle_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_shuttle_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local shuttle answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="shuttle to enchantments",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            shuttle_prompt="Contoso Outdoors Trailhead Shuttle & Rideshare Grounding: TEST",
+        )
+
+    assert result == "local shuttle answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Trailhead Shuttle & Rideshare Grounding: TEST" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_shuttle_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp shuttle answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="shuttle to enchantments",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            shuttle_prompt="Contoso Outdoors Trailhead Shuttle & Rideshare Grounding: SHUTTLE",
+        )
+
+    assert result == "gcp shuttle answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Trailhead Shuttle & Rideshare Grounding: SHUTTLE" in sent_prompt
