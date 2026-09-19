@@ -80,6 +80,20 @@ from contoso_chat.huts import (
     get_alpine_hut_by_id,
     get_alpine_huts,
 )
+from contoso_chat.leave_no_trace import (
+    LntPrincipleModel,
+    PackOutCalcRequest,
+    PackOutCalcResponse,
+    WasteComplianceRequest,
+    WasteComplianceResponse,
+    WildernessZoneModel,
+    assess_waste_compliance,
+    calculate_pack_out_waste,
+    detect_lnt_intent,
+    format_lnt_response,
+    get_lnt_principles,
+    get_wilderness_zones,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.permits import (
     ParkPassInfo,
@@ -570,6 +584,7 @@ async def create_response(request: ChatRequest):
             route_intent = detect_route_intent(request.question)
             fire_safety_intent = detect_fire_safety_intent(request.question)
             first_aid_intent = detect_first_aid_intent(request.question)
+            lnt_intent = detect_lnt_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -700,7 +715,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -757,6 +772,10 @@ async def create_response(request: ChatRequest):
                 formatted_first_aid = format_first_aid_response(first_aid_intent)
                 mock_payload["first_aid_info"] = formatted_first_aid.get("first_aid_info")
                 mock_payload["answer"] = formatted_first_aid.get("answer", mock_payload["answer"])
+            if lnt_intent:
+                formatted_lnt = format_lnt_response(lnt_intent)
+                mock_payload["lnt_info"] = formatted_lnt.get("lnt_info")
+                mock_payload["answer"] = formatted_lnt.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -888,6 +907,7 @@ async def create_response_stream(request: ChatRequest):
                 route_intent = detect_route_intent(request.question)
                 fire_safety_intent = detect_fire_safety_intent(request.question)
                 first_aid_intent = detect_first_aid_intent(request.question)
+                lnt_intent = detect_lnt_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -946,7 +966,7 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -988,6 +1008,9 @@ async def create_response_stream(request: ChatRequest):
                 if first_aid_intent:
                     formatted_first_aid = format_first_aid_response(first_aid_intent)
                     yield f"data: {json.dumps({'event': 'first_aid_info', 'first_aid_info': formatted_first_aid.get('first_aid_info')})}\n\n"
+                if lnt_intent:
+                    formatted_lnt = format_lnt_response(lnt_intent)
+                    yield f"data: {json.dumps({'event': 'lnt_info', 'lnt_info': formatted_lnt.get('lnt_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1100,6 +1123,11 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_first_aid.get("answer", ""))
                     ]
+                elif lnt_intent:
+                    formatted_lnt = format_lnt_response(lnt_intent)
+                    mock_chunks = [
+                        str(formatted_lnt.get("answer", ""))
+                    ]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
@@ -1110,7 +1138,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -2316,3 +2344,54 @@ async def calculate_kit_endpoint(request: KitCalcRequest) -> KitCalcResponse:
 )
 async def get_evacuation_protocol_endpoint() -> dict[str, Any]:
     return get_evacuation_safety_protocol()
+
+
+@app.get(
+    "/api/lnt/principles",
+    response_model=list[LntPrincipleModel],
+    tags=["Leave No Trace & Waste Regulations"],
+    summary="List Leave No Trace principles with optional principle_id filter",
+)
+async def get_lnt_principles_endpoint(
+    principle_id: Optional[str] = None,
+) -> list[LntPrincipleModel]:
+    return get_lnt_principles(principle_id=principle_id)
+
+
+@app.get(
+    "/api/lnt/zones",
+    response_model=list[WildernessZoneModel],
+    tags=["Leave No Trace & Waste Regulations"],
+    summary="List wilderness zones with optional zone_id filter",
+)
+async def get_wilderness_zones_endpoint(
+    zone_id: Optional[str] = None,
+) -> list[WildernessZoneModel]:
+    return get_wilderness_zones(zone_id=zone_id)
+
+
+@app.post(
+    "/api/lnt/compliance",
+    response_model=WasteComplianceResponse,
+    tags=["Leave No Trace & Waste Regulations"],
+    summary="Evaluate human waste and food storage rules for a wilderness zone",
+)
+async def assess_waste_compliance_endpoint(
+    request: WasteComplianceRequest,
+) -> WasteComplianceResponse:
+    try:
+        return assess_waste_compliance(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.post(
+    "/api/lnt/pack-out-calc",
+    response_model=PackOutCalcResponse,
+    tags=["Leave No Trace & Waste Regulations"],
+    summary="Calculate required WAG bags and waste supplies",
+)
+async def calculate_pack_out_waste_endpoint(
+    request: PackOutCalcRequest,
+) -> PackOutCalcResponse:
+    return calculate_pack_out_waste(request)
