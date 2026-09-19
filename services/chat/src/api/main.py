@@ -283,6 +283,17 @@ from contoso_chat.water import (
     get_water_sources,
     submit_water_report,
 )
+from contoso_chat.weather import (
+    MicroclimateRequest,
+    MicroclimateResponse,
+    MountainZoneModel,
+    calculate_microclimate,
+    detect_weather_intent,
+    format_weather_response,
+    get_lightning_safety_protocol,
+    get_mountain_zone_by_id,
+    get_mountain_zones,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -597,6 +608,7 @@ async def create_response(request: ChatRequest):
             first_aid_intent = detect_first_aid_intent(request.question)
             lnt_intent = detect_lnt_intent(request.question)
             avalanche_intent = detect_avalanche_intent(request.question)
+            weather_intent = detect_weather_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -792,6 +804,11 @@ async def create_response(request: ChatRequest):
                 formatted_avy = format_avalanche_response(avalanche_intent)
                 mock_payload["avalanche_info"] = formatted_avy.get("avalanche_info")
                 mock_payload["answer"] = formatted_avy.get("answer", mock_payload["answer"])
+            if weather_intent:
+                formatted_weather = format_weather_response(weather_intent)
+                mock_payload["weather_info"] = formatted_weather.get("weather_info")
+                if not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
+                    mock_payload["answer"] = formatted_weather.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -925,6 +942,7 @@ async def create_response_stream(request: ChatRequest):
                 first_aid_intent = detect_first_aid_intent(request.question)
                 lnt_intent = detect_lnt_intent(request.question)
                 avalanche_intent = detect_avalanche_intent(request.question)
+                weather_intent = detect_weather_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1031,6 +1049,9 @@ async def create_response_stream(request: ChatRequest):
                 if avalanche_intent:
                     formatted_avy = format_avalanche_response(avalanche_intent)
                     yield f"data: {json.dumps({'event': 'avalanche_info', 'avalanche_info': formatted_avy.get('avalanche_info')})}\n\n"
+                if weather_intent:
+                    formatted_weather = format_weather_response(weather_intent)
+                    yield f"data: {json.dumps({'event': 'weather_info', 'weather_info': formatted_weather.get('weather_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1122,6 +1143,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_rental = format_rental_response(rental_intent)
                     mock_chunks = [
                         str(formatted_rental.get("answer", ""))
+                    ]
+                elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
+                    formatted_weather = format_weather_response(weather_intent)
+                    mock_chunks = [
+                        str(formatted_weather.get("answer", ""))
                     ]
                 elif avalanche_intent:
                     formatted_avy = format_avalanche_response(avalanche_intent)
@@ -2470,3 +2496,53 @@ async def assess_slope_terrain_endpoint(
 )
 async def get_avalanche_rescue_protocol_endpoint() -> dict[str, Any]:
     return get_companion_rescue_protocol()
+
+
+@app.get(
+    "/api/weather/zones",
+    response_model=list[MountainZoneModel],
+    tags=["Wilderness Weather & Alpine Microclimate"],
+    summary="List mountain forecast zones with optional zone_id filter",
+)
+async def get_weather_zones_endpoint(
+    zone_id: Optional[str] = None,
+) -> list[MountainZoneModel]:
+    return get_mountain_zones(zone_id=zone_id)
+
+
+@app.get(
+    "/api/weather/zones/{zone_id}",
+    response_model=MountainZoneModel,
+    tags=["Wilderness Weather & Alpine Microclimate"],
+    summary="Get detailed mountain weather forecast for a specific zone",
+)
+async def get_weather_zone_by_id_endpoint(zone_id: str) -> MountainZoneModel:
+    zone = get_mountain_zone_by_id(zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail=f"Mountain zone '{zone_id}' not found")
+    return zone
+
+
+@app.post(
+    "/api/weather/microclimate",
+    response_model=MicroclimateResponse,
+    tags=["Wilderness Weather & Alpine Microclimate"],
+    summary="Calculate lapse rate, wind chill, and hypothermia risk",
+)
+async def calculate_microclimate_endpoint(
+    request: MicroclimateRequest,
+) -> MicroclimateResponse:
+    try:
+        return calculate_microclimate(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/weather/protocols",
+    response_model=dict[str, Any],
+    tags=["Wilderness Weather & Alpine Microclimate"],
+    summary="Get lightning safety and severe weather protocols",
+)
+async def get_weather_protocols_endpoint() -> dict[str, Any]:
+    return get_lightning_safety_protocol()
