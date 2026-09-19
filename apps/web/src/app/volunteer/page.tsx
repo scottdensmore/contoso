@@ -1,0 +1,37 @@
+import type { Metadata } from 'next';
+import Header from '@/components/header';
+import Block from '@/components/block';
+import VolunteerHub from '@/components/volunteer-hub';
+
+export const metadata: Metadata = {
+  title: 'Trail Volunteer & Stewardship Workparties | Contoso Outdoors',
+  description:
+    'Join volunteer trail maintenance crews, preserve Pacific Northwest backcountry trails, register for workparties, and log community stewardship impact.',
+};
+
+export default function VolunteerPage() {
+  return (
+    <>
+      <Header />
+      <Block outerClassName="bg-zinc-950" innerClassName="py-16 text-center">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <span className="mb-3 inline-block rounded-full bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            Contoso Backcountry Stewardship &amp; Conservation
+          </span>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white">
+            Trail Volunteer & Stewardship Workparties
+          </h1>
+          <p className="mt-4 max-w-2xl mx-auto text-base text-zinc-300 sm:text-lg">
+            Protect fragile alpine ecosystems and restore Pacific Northwest trail networks. Discover upcoming trail maintenance projects, register for volunteer crews, receive instant registration confirmations, and track our collective community stewardship impact.
+          </p>
+        </div>
+      </Block>
+
+      <main className="py-12">
+        <Block>
+          <VolunteerHub />
+        </Block>
+      </main>
+    </>
+  );
+}
