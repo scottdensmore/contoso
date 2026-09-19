@@ -3019,3 +3019,115 @@ def test_create_response_stream_mock_mode_emits_water_info_event():
         assert water_event is not None
         assert "water_info" in water_event
         assert water_event["water_info"]["action"] in ("filtration", "pathogens")
+
+
+def test_get_fire_zones_endpoint():
+    res = client.get("/api/fire-safety/zones")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) == 5
+
+    res_reg = client.get("/api/fire-safety/zones?region=North Cascades")
+    assert res_reg.status_code == 200
+    assert len(res_reg.json()) >= 1
+
+    res_danger = client.get("/api/fire-safety/zones?danger_level=extreme")
+    assert res_danger.status_code == 200
+    assert len(res_danger.json()) == 1
+
+
+def test_get_fire_zone_by_id_endpoint():
+    res = client.get("/api/fire-safety/zones/alpine-lakes")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["zone_id"] == "alpine-lakes"
+    assert data["name"] == "Alpine Lakes Wilderness"
+
+    res_404 = client.get("/api/fire-safety/zones/nonexistent-zone")
+    assert res_404.status_code == 404
+
+
+def test_post_fire_safety_check_stove_endpoint():
+    res_canister = client.post(
+        "/api/fire-safety/check-stove",
+        json={"zone_id": "alpine-lakes", "stove_type": "canister stove"},
+    )
+    assert res_canister.status_code == 200
+    assert res_canister.json()["is_allowed"] is True
+
+    res_alcohol = client.post(
+        "/api/fire-safety/check-stove",
+        json={"zone_id": "alpine-lakes", "stove_type": "alcohol stove"},
+    )
+    assert res_alcohol.status_code == 200
+    assert res_alcohol.json()["is_allowed"] is False
+
+    res_404 = client.post(
+        "/api/fire-safety/check-stove",
+        json={"zone_id": "nonexistent", "stove_type": "canister"},
+    )
+    assert res_404.status_code == 404
+
+
+def test_post_fire_safety_reports_endpoint():
+    res = client.post(
+        "/api/fire-safety/reports",
+        json={
+            "zone_id": "north-cascades-stehekin",
+            "location_description": "Smoke near trail",
+            "report_type": "smoke",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["report_id"].startswith("FIR-")
+    assert data["status"] == "confirmed"
+
+    res_404 = client.post(
+        "/api/fire-safety/reports",
+        json={
+            "zone_id": "nonexistent",
+            "location_description": "Smoke",
+            "report_type": "smoke",
+        },
+    )
+    assert res_404.status_code == 404
+
+
+def test_get_fire_safety_protocol_endpoint():
+    res = client.get("/api/fire-safety/protocol")
+    assert res.status_code == 200
+    data = res.json()
+    assert "principles" in data
+    assert "drown_stir_technique" in data
+
+
+def test_create_response_mock_mode_with_fire_safety_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Are campfires allowed in Alpine Lakes Wilderness?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "fire_safety_info" in data
+        assert data["fire_safety_info"]["action"] == "regulations"
+        assert "Alpine Lakes" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_fire_safety_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Can I use an alcohol stove in Alpine Lakes Wilderness?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        fire_event = next((e for e in events if e.get("event") == "fire_safety_info"), None)
+        assert fire_event is not None
+        assert "fire_safety_info" in fire_event
+        assert fire_event["fire_safety_info"]["action"] == "stove_check"
