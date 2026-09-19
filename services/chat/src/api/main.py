@@ -39,6 +39,20 @@ from contoso_chat.field_reports import (
     get_field_reports,
     get_hazard_alerts,
 )
+from contoso_chat.fire_safety import (
+    FireReportRequest,
+    FireReportResponse,
+    FireZoneModel,
+    StoveCheckRequest,
+    StoveCheckResponse,
+    check_stove_compliance,
+    detect_fire_safety_intent,
+    format_fire_safety_response,
+    get_campfire_safety_protocol,
+    get_fire_zone_by_id,
+    get_fire_zones,
+    submit_fire_report,
+)
 from contoso_chat.huts import (
     AlpineHutModel,
     HutAvailabilityRequest,
@@ -540,6 +554,7 @@ async def create_response(request: ChatRequest):
             volunteer_intent = detect_volunteer_intent(request.question)
             water_intent = detect_water_intent(request.question)
             route_intent = detect_route_intent(request.question)
+            fire_safety_intent = detect_fire_safety_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -670,7 +685,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -719,6 +734,10 @@ async def create_response(request: ChatRequest):
                 formatted_route = format_route_response(route_intent)
                 mock_payload["route_info"] = formatted_route.get("route_info")
                 mock_payload["answer"] = formatted_route.get("answer", mock_payload["answer"])
+            if fire_safety_intent:
+                formatted_fire = format_fire_safety_response(fire_safety_intent)
+                mock_payload["fire_safety_info"] = formatted_fire.get("fire_safety_info")
+                mock_payload["answer"] = formatted_fire.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -848,6 +867,7 @@ async def create_response_stream(request: ChatRequest):
                 volunteer_intent = detect_volunteer_intent(request.question)
                 water_intent = detect_water_intent(request.question)
                 route_intent = detect_route_intent(request.question)
+                fire_safety_intent = detect_fire_safety_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -906,7 +926,7 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -942,6 +962,9 @@ async def create_response_stream(request: ChatRequest):
                 if route_intent and not shuttle_intent:
                     formatted_route = format_route_response(route_intent)
                     yield f"data: {json.dumps({'event': 'route_info', 'route_info': formatted_route.get('route_info')})}\n\n"
+                if fire_safety_intent:
+                    formatted_fire = format_fire_safety_response(fire_safety_intent)
+                    yield f"data: {json.dumps({'event': 'fire_safety_info', 'fire_safety_info': formatted_fire.get('fire_safety_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1044,6 +1067,11 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_route.get("answer", ""))
                     ]
+                elif fire_safety_intent:
+                    formatted_fire = format_fire_safety_response(fire_safety_intent)
+                    mock_chunks = [
+                        str(formatted_fire.get("answer", ""))
+                    ]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
@@ -1054,7 +1082,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -2136,5 +2164,71 @@ async def get_route_by_id_endpoint(route_id: str) -> TrailRouteModel:
 async def export_route_endpoint(request: RouteExportRequest) -> RouteExportResponse:
     try:
         return export_route_file(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/fire-safety/zones",
+    response_model=list[FireZoneModel],
+    tags=["Fire Safety & Campfire Regulations"],
+    summary="List fire danger zones with optional region and danger level filters",
+)
+async def get_fire_zones_endpoint(
+    region: Optional[str] = None,
+    danger_level: Optional[str] = None,
+) -> list[FireZoneModel]:
+    return get_fire_zones(region=region, danger_level=danger_level)
+
+
+@app.get(
+    "/api/fire-safety/protocol",
+    response_model=dict[str, Any],
+    tags=["Fire Safety & Campfire Regulations"],
+    summary="Get Leave No Trace campfire safety guidelines and suppression procedures",
+)
+async def get_fire_safety_protocol_endpoint() -> dict[str, Any]:
+    return get_campfire_safety_protocol()
+
+
+@app.get(
+    "/api/fire-safety/zones/{zone_id}",
+    response_model=FireZoneModel,
+    tags=["Fire Safety & Campfire Regulations"],
+    summary="Get detailed fire danger and campfire regulation info for a zone",
+)
+async def get_fire_zone_by_id_endpoint(zone_id: str) -> FireZoneModel:
+    zone = get_fire_zone_by_id(zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail=f"Fire zone '{zone_id}' not found")
+    return zone
+
+
+@app.post(
+    "/api/fire-safety/check-stove",
+    response_model=StoveCheckResponse,
+    tags=["Fire Safety & Campfire Regulations"],
+    summary="Validate stove compliance for a specific fire zone",
+)
+async def check_stove_compliance_endpoint(
+    request: StoveCheckRequest,
+) -> StoveCheckResponse:
+    try:
+        return check_stove_compliance(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.post(
+    "/api/fire-safety/reports",
+    response_model=FireReportResponse,
+    tags=["Fire Safety & Campfire Regulations"],
+    summary="Submit a wildfire or smoke sighting report",
+)
+async def submit_fire_report_endpoint(
+    request: FireReportRequest,
+) -> FireReportResponse:
+    try:
+        return submit_fire_report(request)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))

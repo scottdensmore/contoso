@@ -4795,3 +4795,169 @@ async def test_generate_llm_response_gcp_provider_includes_water_prompt():
     assert result == "gcp water answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Backcountry Water Sources & Pathogen Filtration Grounding: WATER" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_fire_safety_info_when_intent_detected():
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Campfires are banned in Alpine Lakes Wilderness under Stage 1."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "Are campfires allowed in Alpine Lakes Wilderness?", "[]"
+        )
+
+    assert result.get("fire_safety_info") is not None
+    assert result["fire_safety_info"]["action"] == "regulations"
+    mock_llm.assert_awaited_once()
+    assert "fire_safety_prompt" in mock_llm.await_args.kwargs
+    assert "Fire Danger Index & Campfire Regulations Grounding" in mock_llm.await_args.kwargs["fire_safety_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_fire_safety_info_when_no_intent():
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents."),
+    ):
+        result = await get_response(
+            "cust-default", "What are your best tents?", "[]"
+        )
+
+    assert result.get("fire_safety_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_fire_safety_info_frame():
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Campfires are currently prohibited."]),
+    ):
+        generator = get_response_stream(
+            "cust-default", "Can I have a campfire in Alpine Lakes Wilderness?", "[]"
+        )
+        events = [
+            json.loads(chunk.removeprefix("data: "))
+            async for chunk in generator
+            if chunk.strip() and chunk.startswith("data: ") and chunk != "data: [DONE]"
+        ]
+
+    fire_event = next((e for e in events if e.get("event") == "fire_safety_info"), None)
+    assert fire_event is not None
+    assert "fire_safety_info" in fire_event
+    assert fire_event["fire_safety_info"]["action"] == "regulations"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_fire_safety_info_frame_when_no_intent():
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["General camping gear advice."]),
+    ):
+        generator = get_response_stream(
+            "cust-default", "What are your best tents?", "[]"
+        )
+        events = [
+            json.loads(chunk.removeprefix("data: "))
+            async for chunk in generator
+            if chunk.strip() and chunk.startswith("data: ") and chunk != "data: [DONE]"
+        ]
+
+    fire_event = next((e for e in events if e.get("event") == "fire_safety_info"), None)
+    assert fire_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_fire_safety_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local fire answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="campfire rules",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            fire_safety_prompt="Contoso Outdoors Fire Safety Grounding: TEST",
+        )
+
+    assert result == "local fire answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Fire Safety Grounding: TEST" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_fire_safety_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp fire answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="campfire rules",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            fire_safety_prompt="Contoso Outdoors Fire Safety Grounding: FIRE",
+        )
+
+    assert result == "gcp fire answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Fire Safety Grounding: FIRE" in sent_prompt
