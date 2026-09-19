@@ -114,6 +114,17 @@ from contoso_chat.rewards import (
     get_tier_perks,
     redeem_voucher,
 )
+from contoso_chat.routes import (
+    RouteExportRequest,
+    RouteExportResponse,
+    TrailRouteModel,
+    detect_route_intent,
+    export_route_file,
+    format_route_response,
+    get_gps_navigation_safety_protocol,
+    get_trail_route_by_id,
+    get_trail_routes,
+)
 from contoso_chat.safety import (
     AvalancheAdvisory,
     BeaconCheckinRequest,
@@ -528,6 +539,7 @@ async def create_response(request: ChatRequest):
             hut_intent = detect_hut_intent(request.question)
             volunteer_intent = detect_volunteer_intent(request.question)
             water_intent = detect_water_intent(request.question)
+            route_intent = detect_route_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -649,7 +661,7 @@ async def create_response(request: ChatRequest):
                 formatted_return = format_return_label_response(return_intent, rl_info)
                 mock_payload["return_label"] = formatted_return.get("return_label")
                 mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
-            if trail_intent and not field_reports_intent and not trip_planner_intent:
+            if trail_intent and not field_reports_intent and not trip_planner_intent and not route_intent:
                 formatted_trail = format_trail_response(trail_intent)
                 mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
                 mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
@@ -658,7 +670,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -703,6 +715,10 @@ async def create_response(request: ChatRequest):
                 formatted_water = format_water_response(water_intent)
                 mock_payload["water_info"] = formatted_water.get("water_info")
                 mock_payload["answer"] = formatted_water.get("answer", mock_payload["answer"])
+            if route_intent and not shuttle_intent:
+                formatted_route = format_route_response(route_intent)
+                mock_payload["route_info"] = formatted_route.get("route_info")
+                mock_payload["answer"] = formatted_route.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -831,6 +847,7 @@ async def create_response_stream(request: ChatRequest):
                 hut_intent = detect_hut_intent(request.question)
                 volunteer_intent = detect_volunteer_intent(request.question)
                 water_intent = detect_water_intent(request.question)
+                route_intent = detect_route_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -882,14 +899,14 @@ async def create_response_stream(request: ChatRequest):
                     )
                     formatted_return = format_return_label_response(return_intent, rl_info)
                     yield f"data: {json.dumps({'event': 'return_label', 'return_label': formatted_return.get('return_label')})}\n\n"
-                if trail_intent and not field_reports_intent:
+                if trail_intent and not field_reports_intent and not route_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': formatted_trail.get('trail_outfitting')})}\n\n"
                 if rewards_intent:
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -922,6 +939,9 @@ async def create_response_stream(request: ChatRequest):
                 if water_intent:
                     formatted_water = format_water_response(water_intent)
                     yield f"data: {json.dumps({'event': 'water_info', 'water_info': formatted_water.get('water_info')})}\n\n"
+                if route_intent and not shuttle_intent:
+                    formatted_route = format_route_response(route_intent)
+                    yield f"data: {json.dumps({'event': 'route_info', 'route_info': formatted_route.get('route_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1019,6 +1039,11 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_field_reports.get("answer", ""))
                     ]
+                elif route_intent and not shuttle_intent:
+                    formatted_route = format_route_response(route_intent)
+                    mock_chunks = [
+                        str(formatted_route.get("answer", ""))
+                    ]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
@@ -1029,7 +1054,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -2063,3 +2088,53 @@ async def post_water_reports_endpoint(
 async def get_water_pathogens_endpoint() -> dict[str, Any]:
     logger.info("Water pathogen guide requested")
     return get_pathogen_protection_info()
+
+
+@app.get(
+    "/api/routes",
+    response_model=list[TrailRouteModel],
+    tags=["Wilderness GPS Navigation"],
+    summary="List hiking and wilderness routes with optional filters",
+)
+async def get_routes_endpoint(
+    region: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    search: Optional[str] = None,
+) -> list[TrailRouteModel]:
+    return get_trail_routes(region=region, difficulty=difficulty, search=search)
+
+
+@app.get(
+    "/api/routes/safety/protocol",
+    response_model=dict[str, Any],
+    tags=["Wilderness GPS Navigation"],
+    summary="Get GPS navigation and offline safety guidelines",
+)
+async def get_route_safety_protocol_endpoint() -> dict[str, Any]:
+    return get_gps_navigation_safety_protocol()
+
+
+@app.get(
+    "/api/routes/{route_id}",
+    response_model=TrailRouteModel,
+    tags=["Wilderness GPS Navigation"],
+    summary="Get detailed trail route info by ID",
+)
+async def get_route_by_id_endpoint(route_id: str) -> TrailRouteModel:
+    route = get_trail_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/routes/export",
+    response_model=RouteExportResponse,
+    tags=["Wilderness GPS Navigation"],
+    summary="Export route to GPX file format",
+)
+async def export_route_endpoint(request: RouteExportRequest) -> RouteExportResponse:
+    try:
+        return export_route_file(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
