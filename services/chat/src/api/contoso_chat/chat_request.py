@@ -67,6 +67,11 @@ from .rewards import (
     format_rewards_response,
     get_customer_loyalty,
 )
+from .safety import (
+    build_safety_prompt,
+    detect_safety_intent,
+    format_safety_response,
+)
 from .search_service import get_search_service
 from .sizing import (
     build_sizing_prompt,
@@ -325,6 +330,7 @@ async def generate_llm_response(
     field_reports_prompt: str = "",
     trade_in_prompt: str = "",
     trip_planner_prompt: str = "",
+    safety_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -399,8 +405,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{trade_in_prompt}"
         if trip_planner_prompt:
             local_system = f"{local_system}\n\n{trip_planner_prompt}"
-        if trip_planner_prompt:
-            local_system = f"{local_system}\n\n{trip_planner_prompt}"
+        if safety_prompt:
+            local_system = f"{local_system}\n\n{safety_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -464,8 +470,8 @@ async def generate_llm_response(
             prompt_parts.append(trade_in_prompt)
         if trip_planner_prompt:
             prompt_parts.append(trip_planner_prompt)
-        if trip_planner_prompt:
-            prompt_parts.append(trip_planner_prompt)
+        if safety_prompt:
+            prompt_parts.append(safety_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -785,6 +791,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_trip = format_trip_planner_response(trip_planner_intent)
         trip_planner_payload = formatted_trip.get("trip_planner_info")
 
+    safety_intent = detect_safety_intent(question)
+    safety_prompt = ""
+    safety_info_payload = None
+    if safety_intent:
+        safety_prompt = build_safety_prompt(safety_intent)
+        formatted_safety = format_safety_response(safety_intent)
+        safety_info_payload = formatted_safety.get("safety_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -825,8 +839,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trade_in_prompt"] = trade_in_prompt
     if trip_planner_prompt:
         llm_kwargs["trip_planner_prompt"] = trip_planner_prompt
-    if trip_planner_prompt:
-        llm_kwargs["trip_planner_prompt"] = trip_planner_prompt
+    if safety_prompt:
+        llm_kwargs["safety_prompt"] = safety_prompt
 
     answer = await generate_llm_response(
         question,
@@ -889,6 +903,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trade_in_info"] = trade_in_info_payload
     if trip_planner_intent and trip_planner_payload:
         response_payload["trip_planner_info"] = trip_planner_payload
+    if safety_intent and safety_info_payload:
+        response_payload["safety_info"] = safety_info_payload
 
     return response_payload
 
@@ -922,6 +938,7 @@ def generate_llm_response_stream(
     field_reports_prompt: str = "",
     trade_in_prompt: str = "",
     trip_planner_prompt: str = "",
+    safety_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -992,6 +1009,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{trade_in_prompt}"
         if trip_planner_prompt:
             local_system = f"{local_system}\n\n{trip_planner_prompt}"
+        if safety_prompt:
+            local_system = f"{local_system}\n\n{safety_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1054,6 +1073,8 @@ def generate_llm_response_stream(
             prompt_parts.append(trade_in_prompt)
         if trip_planner_prompt:
             prompt_parts.append(trip_planner_prompt)
+        if safety_prompt:
+            prompt_parts.append(safety_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1244,6 +1265,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_trip = format_trip_planner_response(trip_planner_intent)
         trip_planner_payload = formatted_trip.get("trip_planner_info")
 
+    safety_intent = detect_safety_intent(question)
+    safety_prompt = ""
+    safety_info_payload = None
+    if safety_intent:
+        safety_prompt = build_safety_prompt(safety_intent)
+        formatted_safety = format_safety_response(safety_intent)
+        safety_info_payload = formatted_safety.get("safety_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1284,6 +1313,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'trade_in_info', 'trade_in_info': trade_in_info_payload})}\n\n"
     if trip_planner_intent and trip_planner_payload:
         yield f"data: {json.dumps({'event': 'trip_planner_info', 'trip_planner_info': trip_planner_payload})}\n\n"
+    if safety_intent and safety_info_payload:
+        yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': safety_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1325,6 +1356,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trade_in_prompt"] = trade_in_prompt
     if trip_planner_prompt:
         stream_kwargs["trip_planner_prompt"] = trip_planner_prompt
+    if safety_prompt:
+        stream_kwargs["safety_prompt"] = safety_prompt
 
     for chunk in generate_llm_response_stream(
         question,

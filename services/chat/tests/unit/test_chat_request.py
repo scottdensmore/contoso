@@ -3976,3 +3976,164 @@ async def test_generate_llm_response_gcp_provider_includes_trip_planner_prompt()
     assert result == "gcp trip planner answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Wilderness Trip Planning & Equipment Advisor Grounding: PLAN" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_safety_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Hypothermia protocol advice."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "What is the emergency protocol for hypothermia?", "[]"
+        )
+
+    assert result.get("safety_info") is not None
+    assert result["safety_info"]["action"] == "emergency_protocol"
+    assert result["safety_info"]["incident_type"] == "hypothermia"
+    mock_llm.assert_awaited_once()
+    assert "safety_prompt" in mock_llm.await_args.kwargs
+    assert "Wilderness Safety & Emergency Advisory Grounding" in mock_llm.await_args.kwargs["safety_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_safety_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are running shoes."),
+    ):
+        result = await get_response("cust-default", "Show me lightweight running shoes", "[]")
+
+    assert result.get("safety_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_safety_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Avalanche ", "danger is considerable."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "What is the avalanche advisory for Cascades?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    safety_event = next((e for e in events if e.get("event") == "safety_info"), None)
+    assert safety_event is not None
+    assert "safety_info" in safety_event
+    assert safety_event["safety_info"]["action"] == "avalanche_advisory"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_safety_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Store ", "hours."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "Where is your retail store?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    safety_event = next((e for e in events if e.get("event") == "safety_info"), None)
+    assert safety_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_safety_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local safety answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="emergency protocol",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            safety_prompt="Contoso Outdoors Wilderness Safety & Emergency Advisory Grounding: TEST",
+        )
+
+    assert result == "local safety answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Wilderness Safety & Emergency Advisory Grounding: TEST" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_safety_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp safety answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="avalanche advisory",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            safety_prompt="Contoso Outdoors Wilderness Safety & Emergency Advisory Grounding: AVALANCHE",
+        )
+
+    assert result == "gcp safety answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Wilderness Safety & Emergency Advisory Grounding: AVALANCHE" in sent_prompt

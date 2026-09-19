@@ -101,6 +101,22 @@ from contoso_chat.rewards import (
     get_tier_perks,
     redeem_voucher,
 )
+from contoso_chat.safety import (
+    AvalancheAdvisory,
+    BeaconCheckinRequest,
+    BeaconCheckinResponse,
+    BeaconRegistrationRequest,
+    BeaconRegistrationResponse,
+    EmergencyProtocol,
+    detect_safety_intent,
+    format_safety_response,
+    get_avalanche_advisory,
+    get_emergency_protocol,
+    list_avalanche_advisories,
+    list_emergency_protocols,
+    record_beacon_checkin,
+    register_safety_beacon,
+)
 from contoso_chat.session_store import (
     ChatSession,
     append_message,
@@ -607,6 +623,11 @@ async def create_response(request: ChatRequest):
                 formatted_trip = format_trip_planner_response(trip_planner_intent)
                 mock_payload["trip_planner_info"] = formatted_trip.get("trip_planner_info")
                 mock_payload["answer"] = formatted_trip.get("answer", mock_payload["answer"])
+            safety_intent = detect_safety_intent(request.question)
+            if safety_intent:
+                formatted_safety = format_safety_response(safety_intent)
+                mock_payload["safety_info"] = formatted_safety.get("safety_info")
+                mock_payload["answer"] = formatted_safety.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -730,6 +751,7 @@ async def create_response_stream(request: ChatRequest):
                 field_reports_intent = detect_field_reports_intent(request.question)
                 trade_in_intent = detect_trade_in_intent(request.question)
                 trip_planner_intent = detect_trip_planner_intent(request.question)
+                safety_intent = detect_safety_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -806,6 +828,9 @@ async def create_response_stream(request: ChatRequest):
                 if trip_planner_intent:
                     formatted_trip = format_trip_planner_response(trip_planner_intent)
                     yield f"data: {json.dumps({'event': 'trip_planner_info', 'trip_planner_info': formatted_trip.get('trip_planner_info')})}\n\n"
+                if safety_intent:
+                    formatted_safety = format_safety_response(safety_intent)
+                    yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': formatted_safety.get('safety_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -932,6 +957,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trip = format_trip_planner_response(trip_planner_intent)
                     mock_chunks = [
                         str(formatted_trip.get("answer", ""))
+                    ]
+                elif safety_intent:
+                    formatted_safety = format_safety_response(safety_intent)
+                    mock_chunks = [
+                        str(formatted_safety.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1530,3 +1560,92 @@ async def post_planner_generate_endpoint(
         },
     )
     return generate_wilderness_trip_plan(params)
+
+
+@app.post(
+    "/api/safety/beacon/register",
+    response_model=BeaconRegistrationResponse,
+    responses={
+        200: {"description": "Wilderness satellite safety beacon registered"},
+    },
+)
+async def post_safety_beacon_register_endpoint(
+    request: BeaconRegistrationRequest,
+) -> BeaconRegistrationResponse:
+    logger.info(
+        "Safety beacon registration requested",
+        extra={
+            "device_type": request.device_type,
+            "owner_name": request.owner_name,
+            "trip_zone": request.trip_zone,
+        },
+    )
+    return register_safety_beacon(request)
+
+
+@app.post(
+    "/api/safety/beacon/checkin",
+    response_model=BeaconCheckinResponse,
+    responses={
+        200: {"description": "Safety beacon status check-in recorded"},
+        404: {"description": "Beacon device not found in registry"},
+    },
+)
+async def post_safety_beacon_checkin_endpoint(
+    request: BeaconCheckinRequest,
+) -> BeaconCheckinResponse:
+    logger.info("Safety beacon check-in requested", extra={"device_id": request.device_id})
+    try:
+        return record_beacon_checkin(request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/safety/protocols",
+    response_model=list[EmergencyProtocol],
+    responses={
+        200: {"description": "Emergency backcountry first-response protocols retrieved"},
+    },
+)
+async def get_safety_protocols_endpoint() -> list[EmergencyProtocol]:
+    logger.info("Emergency protocols catalog requested")
+    return list_emergency_protocols()
+
+
+@app.get(
+    "/api/safety/protocols/{incident_type}",
+    response_model=EmergencyProtocol,
+    responses={
+        200: {"description": "Emergency protocol details retrieved"},
+        404: {"description": "Emergency protocol not found"},
+    },
+)
+async def get_safety_protocol_endpoint(
+    incident_type: str,
+) -> EmergencyProtocol:
+    logger.info("Emergency protocol requested", extra={"incident_type": incident_type})
+    protocol = get_emergency_protocol(incident_type)
+    if not protocol:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Emergency protocol not found: {incident_type}",
+        )
+    return protocol
+
+
+@app.get(
+    "/api/safety/avalanche",
+    response_model=list[AvalancheAdvisory],
+    responses={
+        200: {"description": "Regional avalanche advisories retrieved"},
+    },
+)
+async def get_safety_avalanche_endpoint(
+    zone: Optional[str] = None,
+) -> list[AvalancheAdvisory]:
+    logger.info("Regional avalanche advisory requested", extra={"zone": zone})
+    if zone:
+        advisory = get_avalanche_advisory(zone)
+        return [advisory] if advisory else []
+    return list_avalanche_advisories()
