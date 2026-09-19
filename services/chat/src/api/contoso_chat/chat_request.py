@@ -17,6 +17,11 @@ from .order_tracking import (
     detect_order_tracking_intent,
     lookup_order_tracking,
 )
+from .permits import (
+    build_permits_prompt,
+    detect_permits_intent,
+    format_permits_response,
+)
 from .policies import (
     build_policy_prompt,
     detect_policy_intent,
@@ -289,6 +294,7 @@ async def generate_llm_response(
     return_label_prompt: str = "",
     trail_prompt: str = "",
     rewards_prompt: str = "",
+    permits_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -351,6 +357,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{trail_prompt}"
         if rewards_prompt:
             local_system = f"{local_system}\n\n{rewards_prompt}"
+        if permits_prompt:
+            local_system = f"{local_system}\n\n{permits_prompt}"
+        if permits_prompt:
+            local_system = f"{local_system}\n\n{permits_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -402,6 +412,10 @@ async def generate_llm_response(
             prompt_parts.append(trail_prompt)
         if rewards_prompt:
             prompt_parts.append(rewards_prompt)
+        if permits_prompt:
+            prompt_parts.append(permits_prompt)
+        if permits_prompt:
+            prompt_parts.append(permits_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -673,6 +687,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
         rewards_info_payload = formatted_rewards.get("rewards_info")
 
+    permits_intent = detect_permits_intent(question)
+    permits_prompt = ""
+    permits_info_payload = None
+    if permits_intent:
+        permits_prompt = build_permits_prompt(permits_intent)
+        formatted_permits = format_permits_response(permits_intent)
+        permits_info_payload = formatted_permits.get("permits_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -701,6 +723,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
+    if permits_prompt:
+        llm_kwargs["permits_prompt"] = permits_prompt
 
     answer = await generate_llm_response(
         question,
@@ -751,6 +775,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trail_outfitting"] = trail_outfitting_payload
     if rewards_intent and rewards_info_payload:
         response_payload["rewards_info"] = rewards_info_payload
+    if permits_intent and permits_info_payload:
+        response_payload["permits_info"] = permits_info_payload
 
     return response_payload
 
@@ -778,6 +804,7 @@ def generate_llm_response_stream(
     return_label_prompt: str = "",
     trail_prompt: str = "",
     rewards_prompt: str = "",
+    permits_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1028,6 +1055,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
         rewards_info_payload = formatted_rewards.get("rewards_info")
 
+    permits_intent = detect_permits_intent(question)
+    permits_prompt = ""
+    permits_info_payload = None
+    if permits_intent:
+        permits_prompt = build_permits_prompt(permits_intent)
+        formatted_permits = format_permits_response(permits_intent)
+        permits_info_payload = formatted_permits.get("permits_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1056,6 +1091,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
     if rewards_intent and rewards_info_payload:
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
+    if permits_intent and permits_info_payload:
+        yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1085,6 +1122,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
+    if permits_prompt:
+        stream_kwargs["permits_prompt"] = permits_prompt
 
     for chunk in generate_llm_response_stream(
         question,

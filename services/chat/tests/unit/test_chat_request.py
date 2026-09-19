@@ -3205,3 +3205,170 @@ async def test_generate_llm_response_gcp_provider_includes_rewards_prompt():
     assert result == "gcp rewards answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Customer Loyalty Rewards & Benefits Guidance: Pathfinder" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_permits_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Permit details for Mount Whitney."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "Do I need a permit for Mount Whitney or Enchantments?", "[]"
+        )
+
+    assert result.get("permits_info") is not None
+    assert result["permits_info"]["action"] == "lotteries"
+    assert len(result["permits_info"]["lotteries"]) >= 2
+    mock_llm.assert_awaited_once()
+    assert "permits_prompt" in mock_llm.await_args.kwargs
+    assert "Official Backcountry Permits & National Parks Pass" in mock_llm.await_args.kwargs["permits_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_permits_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents."),
+    ):
+        result = await get_response("cust-default", "Tell me about waterproof tents", "[]")
+
+    assert result.get("permits_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_permits_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-default", "Which park pass covers Rainier and Olympic National Parks?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = []
+    permits_frame = None
+    for frame in frames:
+        if frame.startswith("data: "):
+            data = json.loads(frame.removeprefix("data: "))
+            if "event" in data:
+                event_types.append(data["event"])
+                if data["event"] == "permits_info":
+                    permits_frame = data
+
+    assert "permits_info" in event_types
+    assert permits_frame is not None
+    assert permits_frame["permits_info"]["action"] in ["passes", "recommend"]
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_permits_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["chunk 1"]),
+    ):
+        stream = get_response_stream("cust-default", "What boots do you recommend?", "[]")
+        frames = [f async for f in stream]
+
+    event_types = [
+        json.loads(f.removeprefix("data: "))["event"]
+        for f in frames
+        if f.startswith("data: ") and "event" in json.loads(f.removeprefix("data: "))
+    ]
+
+    assert "permits_info" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_permits_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local permits answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="Do I need a permit for Mount Whitney?",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            permits_prompt="Contoso Outdoors Official Backcountry Permits & National Parks Pass Grounding: WHITNEY",
+        )
+
+    assert result == "local permits answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Official Backcountry Permits & National Parks Pass Grounding: WHITNEY" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_permits_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp permits answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="Do I need a permit for Mount Whitney?",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            permits_prompt="Contoso Outdoors Official Backcountry Permits & National Parks Pass Grounding: WHITNEY",
+        )
+
+    assert result == "gcp permits answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Official Backcountry Permits & National Parks Pass Grounding: WHITNEY" in sent_prompt
