@@ -140,6 +140,14 @@ from contoso_chat.trails import (
     get_trails,
 )
 from contoso_chat.transcript_export import export_transcript
+from contoso_chat.trip_planner import (
+    TripPlanParametersModel,
+    TripPlanResultModel,
+    detect_trip_planner_intent,
+    format_trip_planner_response,
+    generate_wilderness_trip_plan,
+    get_trip_templates,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -444,6 +452,7 @@ async def create_response(request: ChatRequest):
             adventure_intent = detect_adventure_intent(request.question)
             field_reports_intent = detect_field_reports_intent(request.question)
             trade_in_intent = detect_trade_in_intent(request.question)
+            trip_planner_intent = detect_trip_planner_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -565,7 +574,7 @@ async def create_response(request: ChatRequest):
                 formatted_return = format_return_label_response(return_intent, rl_info)
                 mock_payload["return_label"] = formatted_return.get("return_label")
                 mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
-            if trail_intent and not field_reports_intent:
+            if trail_intent and not field_reports_intent and not trip_planner_intent:
                 formatted_trail = format_trail_response(trail_intent)
                 mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
                 mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
@@ -594,6 +603,10 @@ async def create_response(request: ChatRequest):
                 formatted_trade_in = format_trade_in_response(trade_in_intent)
                 mock_payload["trade_in_info"] = formatted_trade_in.get("trade_in_info")
                 mock_payload["answer"] = formatted_trade_in.get("answer", mock_payload["answer"])
+            if trip_planner_intent:
+                formatted_trip = format_trip_planner_response(trip_planner_intent)
+                mock_payload["trip_planner_info"] = formatted_trip.get("trip_planner_info")
+                mock_payload["answer"] = formatted_trip.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -716,6 +729,7 @@ async def create_response_stream(request: ChatRequest):
                 adventure_intent = detect_adventure_intent(request.question)
                 field_reports_intent = detect_field_reports_intent(request.question)
                 trade_in_intent = detect_trade_in_intent(request.question)
+                trip_planner_intent = detect_trip_planner_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -789,6 +803,9 @@ async def create_response_stream(request: ChatRequest):
                 if trade_in_intent:
                     formatted_trade_in = format_trade_in_response(trade_in_intent)
                     yield f"data: {json.dumps({'event': 'trade_in_info', 'trade_in_info': formatted_trade_in.get('trade_in_info')})}\n\n"
+                if trip_planner_intent:
+                    formatted_trip = format_trip_planner_response(trip_planner_intent)
+                    yield f"data: {json.dumps({'event': 'trip_planner_info', 'trip_planner_info': formatted_trip.get('trip_planner_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -910,6 +927,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trade_in = format_trade_in_response(trade_in_intent)
                     mock_chunks = [
                         str(formatted_trade_in.get("answer", ""))
+                    ]
+                elif trip_planner_intent:
+                    formatted_trip = format_trip_planner_response(trip_planner_intent)
+                    mock_chunks = [
+                        str(formatted_trip.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1481,3 +1503,30 @@ async def post_trade_in_estimate_endpoint(
         condition=request.condition or "very_good",
         brand=request.brand,
     )
+
+
+@app.get("/api/planner/templates", response_model=list[dict[str, Any]])
+async def get_planner_templates_endpoint() -> list[dict[str, Any]]:
+    logger.info("Trip planner templates requested")
+    return get_trip_templates()
+
+
+@app.post(
+    "/api/planner/generate",
+    response_model=TripPlanResultModel,
+    responses={
+        200: {"description": "Wilderness trip plan, nutrition, and packing checklist generated"},
+    },
+)
+async def post_planner_generate_endpoint(
+    params: TripPlanParametersModel,
+) -> TripPlanResultModel:
+    logger.info(
+        "Wilderness trip plan generation requested",
+        extra={
+            "duration_days": params.duration_days,
+            "group_size": params.group_size,
+            "climate": params.climate,
+        },
+    )
+    return generate_wilderness_trip_plan(params)
