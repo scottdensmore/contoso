@@ -126,6 +126,22 @@ from contoso_chat.session_store import (
     get_session,
     list_sessions,
 )
+from contoso_chat.shuttles import (
+    CarpoolOfferRequest,
+    CarpoolOfferResponse,
+    ShuttleBookingRequest,
+    ShuttleBookingResponse,
+    ShuttleQuoteRequest,
+    ShuttleQuoteResponse,
+    ShuttleRouteModel,
+    book_shuttle,
+    calculate_shuttle_quote,
+    create_carpool_offer,
+    detect_shuttle_intent,
+    format_shuttle_response,
+    get_shuttle_routes,
+    list_carpools,
+)
 from contoso_chat.sizing import (
     CategorySizeGuide,
     detect_sizing_intent,
@@ -469,6 +485,7 @@ async def create_response(request: ChatRequest):
             field_reports_intent = detect_field_reports_intent(request.question)
             trade_in_intent = detect_trade_in_intent(request.question)
             trip_planner_intent = detect_trip_planner_intent(request.question)
+            shuttle_intent = detect_shuttle_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -599,7 +616,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -628,6 +645,10 @@ async def create_response(request: ChatRequest):
                 formatted_safety = format_safety_response(safety_intent)
                 mock_payload["safety_info"] = formatted_safety.get("safety_info")
                 mock_payload["answer"] = formatted_safety.get("answer", mock_payload["answer"])
+            if shuttle_intent:
+                formatted_shuttle = format_shuttle_response(shuttle_intent)
+                mock_payload["shuttle_info"] = formatted_shuttle.get("shuttle_info")
+                mock_payload["answer"] = formatted_shuttle.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -752,6 +773,7 @@ async def create_response_stream(request: ChatRequest):
                 trade_in_intent = detect_trade_in_intent(request.question)
                 trip_planner_intent = detect_trip_planner_intent(request.question)
                 safety_intent = detect_safety_intent(request.question)
+                shuttle_intent = detect_shuttle_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -831,6 +853,9 @@ async def create_response_stream(request: ChatRequest):
                 if safety_intent:
                     formatted_safety = format_safety_response(safety_intent)
                     yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': formatted_safety.get('safety_info')})}\n\n"
+                if shuttle_intent:
+                    formatted_shuttle = format_shuttle_response(shuttle_intent)
+                    yield f"data: {json.dumps({'event': 'shuttle_info', 'shuttle_info': formatted_shuttle.get('shuttle_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -938,7 +963,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent:
+                elif permits_intent and not shuttle_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -962,6 +987,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_safety = format_safety_response(safety_intent)
                     mock_chunks = [
                         str(formatted_safety.get("answer", ""))
+                    ]
+                elif shuttle_intent:
+                    formatted_shuttle = format_shuttle_response(shuttle_intent)
+                    mock_chunks = [
+                        str(formatted_shuttle.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1649,3 +1679,89 @@ async def get_safety_avalanche_endpoint(
         advisory = get_avalanche_advisory(zone)
         return [advisory] if advisory else []
     return list_avalanche_advisories()
+
+
+@app.get(
+    "/api/shuttles/routes",
+    response_model=list[ShuttleRouteModel],
+    responses={
+        200: {"description": "Trailhead shuttle routes retrieved"},
+    },
+)
+async def get_shuttle_routes_endpoint(
+    region: Optional[str] = None,
+    connector_only: bool = False,
+) -> list[ShuttleRouteModel]:
+    logger.info("Shuttle routes requested", extra={"region": region, "connector_only": connector_only})
+    return get_shuttle_routes(region=region, connector_only=connector_only)
+
+
+@app.post(
+    "/api/shuttles/quote",
+    response_model=ShuttleQuoteResponse,
+    responses={
+        200: {"description": "Shuttle fare quote calculated"},
+        404: {"description": "Shuttle route not found"},
+    },
+)
+async def post_shuttle_quote_endpoint(
+    request: ShuttleQuoteRequest,
+) -> ShuttleQuoteResponse:
+    logger.info("Shuttle fare quote requested", extra={"route_id": request.route_id, "seats": request.seats})
+    target_route_id = request.route_id
+    if not target_route_id and request.region:
+        matching = get_shuttle_routes(region=request.region)
+        if matching:
+            target_route_id = matching[0].route_id
+    if not target_route_id:
+        raise HTTPException(status_code=404, detail="Route not specified or not found")
+    quote = calculate_shuttle_quote(target_route_id, seats=request.seats)
+    if not quote:
+        raise HTTPException(status_code=404, detail=f"Route '{target_route_id}' not found")
+    return quote
+
+
+@app.post(
+    "/api/shuttles/book",
+    response_model=ShuttleBookingResponse,
+    responses={
+        200: {"description": "Shuttle seat reservation confirmed"},
+        404: {"description": "Shuttle route not found"},
+    },
+)
+async def post_shuttle_book_endpoint(
+    request: ShuttleBookingRequest,
+) -> ShuttleBookingResponse:
+    logger.info("Shuttle seat booking requested", extra={"route_id": request.route_id, "seats": request.seats})
+    try:
+        return book_shuttle(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/shuttles/carpools",
+    response_model=list[CarpoolOfferResponse],
+    responses={
+        200: {"description": "Community carpool offers retrieved"},
+    },
+)
+async def get_shuttle_carpools_endpoint(
+    destination: Optional[str] = None,
+) -> list[CarpoolOfferResponse]:
+    logger.info("Community carpool offers requested", extra={"destination": destination})
+    return list_carpools(destination=destination)
+
+
+@app.post(
+    "/api/shuttles/carpools",
+    response_model=CarpoolOfferResponse,
+    responses={
+        200: {"description": "Community carpool offer registered successfully"},
+    },
+)
+async def post_shuttle_carpools_endpoint(
+    request: CarpoolOfferRequest,
+) -> CarpoolOfferResponse:
+    logger.info("New community carpool offer submitted", extra={"origin": request.origin_city, "dest": request.destination_trailhead})
+    return create_carpool_offer(request)

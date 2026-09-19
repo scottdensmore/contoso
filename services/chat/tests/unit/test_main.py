@@ -2534,3 +2534,155 @@ def test_create_response_stream_mock_mode_omits_safety_info_when_no_intent():
         ]
         safety_event = next((e for e in events if e.get("event") == "safety_info"), None)
         assert safety_event is None
+
+
+def test_get_shuttle_routes_endpoint_all():
+    res = client.get("/api/shuttles/routes")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 4
+    route_ids = {r["route_id"] for r in data}
+    assert "enchantments-connector" in route_ids
+    assert "rainier-express" in route_ids
+
+
+def test_get_shuttle_routes_endpoint_filtered():
+    res_cascades = client.get("/api/shuttles/routes?region=cascades")
+    assert res_cascades.status_code == 200
+    data_cascades = res_cascades.json()
+    assert len(data_cascades) >= 1
+    assert all(r["region"] == "cascades" for r in data_cascades)
+
+    res_conn = client.get("/api/shuttles/routes?connector_only=true")
+    assert res_conn.status_code == 200
+    data_conn = res_conn.json()
+    assert len(data_conn) >= 1
+    assert all(r["is_connector"] is True for r in data_conn)
+
+
+def test_post_shuttle_quote_endpoint_success():
+    res = client.post(
+        "/api/shuttles/quote",
+        json={"route_id": "enchantments-connector", "seats": 2},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["route_id"] == "enchantments-connector"
+    assert data["seats"] == 2
+    assert data["price_per_seat"] == 30.0
+    assert data["total_price"] == 60.0
+    assert len(data["departure_times"]) >= 4
+
+
+def test_post_shuttle_quote_endpoint_not_found():
+    res = client.post(
+        "/api/shuttles/quote",
+        json={"route_id": "nonexistent-route", "seats": 1},
+    )
+    assert res.status_code == 404
+
+
+def test_post_shuttle_book_endpoint_success():
+    res = client.post(
+        "/api/shuttles/book",
+        json={
+            "route_id": "enchantments-connector",
+            "departure_date": "2026-10-03",
+            "departure_time": "06:30",
+            "seats": 2,
+            "passenger_name": "Taylor Swift",
+            "passenger_email": "taylor@example.com",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["booking_id"].startswith("SHT-")
+    assert data["route_id"] == "enchantments-connector"
+    assert data["departure_date"] == "2026-10-03"
+    assert data["departure_time"] == "06:30"
+    assert data["seats"] == 2
+    assert data["total_price"] == 60.0
+    assert data["status"] == "confirmed"
+    assert "instructions" in data
+
+
+def test_post_shuttle_book_endpoint_not_found():
+    res = client.post(
+        "/api/shuttles/book",
+        json={
+            "route_id": "nonexistent-route",
+            "departure_date": "2026-10-03",
+            "departure_time": "06:30",
+            "seats": 1,
+            "passenger_name": "Taylor Swift",
+            "passenger_email": "taylor@example.com",
+        },
+    )
+    assert res.status_code == 404
+
+
+def test_get_shuttles_carpools_endpoint():
+    res = client.get("/api/shuttles/carpools")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 2
+
+    res_filtered = client.get("/api/shuttles/carpools?destination=Rainier")
+    assert res_filtered.status_code == 200
+    data_filtered = res_filtered.json()
+    assert len(data_filtered) >= 1
+    assert all("Rainier".lower() in c["destination_trailhead"].lower() for c in data_filtered)
+
+
+def test_post_shuttles_carpools_endpoint():
+    res = client.post(
+        "/api/shuttles/carpools",
+        json={
+            "origin_city": "Bend",
+            "destination_trailhead": "Broken Top Trailhead",
+            "departure_date": "2026-10-20",
+            "seats_available": 2,
+            "driver_name": "Morgan Riley",
+            "contact_info": "morgan.riley@example.com",
+            "notes": "High clearance 4x4 vehicle",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["carpool_id"].startswith("CPL-")
+    assert data["origin_city"] == "Bend"
+    assert data["seats_available"] == 2
+    assert "created_at" in data
+
+
+def test_create_response_mock_mode_with_shuttle_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Are there shuttles for the Enchantments?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "shuttle_info" in data
+        assert data["shuttle_info"]["action"] == "routes"
+        assert "connector" in data["answer"].lower() or "shuttle" in data["answer"].lower()
+
+
+def test_create_response_stream_mock_mode_emits_shuttle_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What time does the Mount Rainier shuttle leave?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        shuttle_event = next((e for e in events if e.get("event") == "shuttle_info"), None)
+        assert shuttle_event is not None
+        assert "shuttle_info" in shuttle_event
+        assert shuttle_event["shuttle_info"]["action"] == "schedule"
