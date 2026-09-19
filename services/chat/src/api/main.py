@@ -31,6 +31,14 @@ from contoso_chat.feedback import (
     get_feedback_summary,
     record_feedback,
 )
+from contoso_chat.field_reports import (
+    FieldReportModel,
+    HazardAlertModel,
+    detect_field_reports_intent,
+    format_field_reports_response,
+    get_field_reports,
+    get_hazard_alerts,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.permits import (
     ParkPassInfo,
@@ -425,6 +433,7 @@ async def create_response(request: ChatRequest):
             permits_intent = detect_permits_intent(request.question)
             repair_intent = detect_repair_intent(request.question)
             adventure_intent = detect_adventure_intent(request.question)
+            field_reports_intent = detect_field_reports_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -546,7 +555,7 @@ async def create_response(request: ChatRequest):
                 formatted_return = format_return_label_response(return_intent, rl_info)
                 mock_payload["return_label"] = formatted_return.get("return_label")
                 mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
-            if trail_intent:
+            if trail_intent and not field_reports_intent:
                 formatted_trail = format_trail_response(trail_intent)
                 mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
                 mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
@@ -555,7 +564,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -567,6 +576,10 @@ async def create_response(request: ChatRequest):
                 formatted_adventure = format_adventure_response(adventure_intent)
                 mock_payload["adventures_info"] = formatted_adventure.get("adventures_info")
                 mock_payload["answer"] = formatted_adventure.get("answer", mock_payload["answer"])
+            if field_reports_intent:
+                formatted_field_reports = format_field_reports_response(field_reports_intent)
+                mock_payload["field_reports_info"] = formatted_field_reports.get("field_reports_info")
+                mock_payload["answer"] = formatted_field_reports.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -687,6 +700,7 @@ async def create_response_stream(request: ChatRequest):
                 permits_intent = detect_permits_intent(request.question)
                 repair_intent = detect_repair_intent(request.question)
                 adventure_intent = detect_adventure_intent(request.question)
+                field_reports_intent = detect_field_reports_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -738,14 +752,14 @@ async def create_response_stream(request: ChatRequest):
                     )
                     formatted_return = format_return_label_response(return_intent, rl_info)
                     yield f"data: {json.dumps({'event': 'return_label', 'return_label': formatted_return.get('return_label')})}\n\n"
-                if trail_intent:
+                if trail_intent and not field_reports_intent:
                     formatted_trail = format_trail_response(trail_intent)
                     yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': formatted_trail.get('trail_outfitting')})}\n\n"
                 if rewards_intent:
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -754,6 +768,9 @@ async def create_response_stream(request: ChatRequest):
                 if adventure_intent:
                     formatted_adventure = format_adventure_response(adventure_intent)
                     yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': formatted_adventure.get('adventures_info')})}\n\n"
+                if field_reports_intent:
+                    formatted_field_reports = format_field_reports_response(field_reports_intent)
+                    yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': formatted_field_reports.get('field_reports_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -845,6 +862,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_rental = format_rental_response(rental_intent)
                     mock_chunks = [
                         str(formatted_rental.get("answer", ""))
+                    ]
+                elif field_reports_intent:
+                    formatted_field_reports = format_field_reports_response(field_reports_intent)
+                    mock_chunks = [
+                        str(formatted_field_reports.get("answer", ""))
                     ]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
@@ -1367,3 +1389,33 @@ async def get_adventure_tours_endpoint(
 async def get_adventure_guides_endpoint() -> list[AdventureGuideInfo]:
     logger.info("Adventure guides requested")
     return get_adventure_guides()
+
+
+@app.get(
+    "/api/reports/feed",
+    response_model=list[FieldReportModel],
+    responses={
+        200: {"description": "Community trail field reports retrieved"},
+    },
+)
+async def get_reports_feed_endpoint(
+    trail_name: Optional[str] = None,
+    condition: Optional[str] = None,
+) -> list[FieldReportModel]:
+    logger.info("Reports feed requested", extra={"trail_name": trail_name, "condition": condition})
+    return get_field_reports(trail_name=trail_name, condition=condition)
+
+
+@app.get(
+    "/api/reports/alerts",
+    response_model=list[HazardAlertModel],
+    responses={
+        200: {"description": "Active trail hazard alerts retrieved"},
+    },
+)
+async def get_reports_alerts_endpoint(
+    trail_name: Optional[str] = None,
+) -> list[HazardAlertModel]:
+    logger.info("Hazard alerts requested", extra={"trail_name": trail_name})
+    return get_hazard_alerts(trail_name=trail_name)
+
