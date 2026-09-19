@@ -112,6 +112,11 @@ from .volunteer import (
     detect_volunteer_intent,
     format_volunteer_response,
 )
+from .water import (
+    build_water_prompt,
+    detect_water_intent,
+    format_water_response,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -349,6 +354,7 @@ async def generate_llm_response(
     shuttle_prompt: str = "",
     hut_prompt: str = "",
     volunteer_prompt: str = "",
+    water_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -431,6 +437,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{hut_prompt}"
         if volunteer_prompt:
             local_system = f"{local_system}\n\n{volunteer_prompt}"
+        if water_prompt:
+            local_system = f"{local_system}\n\n{water_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -502,6 +510,8 @@ async def generate_llm_response(
             prompt_parts.append(hut_prompt)
         if volunteer_prompt:
             prompt_parts.append(volunteer_prompt)
+        if water_prompt:
+            prompt_parts.append(water_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -853,6 +863,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_volunteer = format_volunteer_response(volunteer_intent)
         volunteer_info_payload = formatted_volunteer.get("volunteer_info")
 
+    water_intent = detect_water_intent(question)
+    water_prompt = ""
+    water_info_payload = None
+    if water_intent:
+        water_prompt = build_water_prompt(water_intent)
+        formatted_water = format_water_response(water_intent)
+        water_info_payload = formatted_water.get("water_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -901,6 +919,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["hut_prompt"] = hut_prompt
     if volunteer_prompt:
         llm_kwargs["volunteer_prompt"] = volunteer_prompt
+    if water_prompt:
+        llm_kwargs["water_prompt"] = water_prompt
 
     answer = await generate_llm_response(
         question,
@@ -971,6 +991,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["hut_info"] = hut_info_payload
     if volunteer_intent and volunteer_info_payload:
         response_payload["volunteer_info"] = volunteer_info_payload
+    if water_intent and water_info_payload:
+        response_payload["water_info"] = water_info_payload
 
     return response_payload
 
@@ -1008,6 +1030,7 @@ def generate_llm_response_stream(
     shuttle_prompt: str = "",
     hut_prompt: str = "",
     volunteer_prompt: str = "",
+    water_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1378,6 +1401,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_volunteer = format_volunteer_response(volunteer_intent)
         volunteer_info_payload = formatted_volunteer.get("volunteer_info")
 
+    water_intent = detect_water_intent(question)
+    water_prompt = ""
+    water_info_payload = None
+    if water_intent:
+        water_prompt = build_water_prompt(water_intent)
+        formatted_water = format_water_response(water_intent)
+        water_info_payload = formatted_water.get("water_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1426,6 +1457,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'hut_info', 'hut_info': hut_info_payload})}\n\n"
     if volunteer_intent and volunteer_info_payload:
         yield f"data: {json.dumps({'event': 'volunteer_info', 'volunteer_info': volunteer_info_payload})}\n\n"
+    if water_intent and water_info_payload:
+        yield f"data: {json.dumps({'event': 'water_info', 'water_info': water_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1475,6 +1508,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["hut_prompt"] = hut_prompt
     if volunteer_prompt:
         stream_kwargs["volunteer_prompt"] = volunteer_prompt
+    if water_prompt:
+        stream_kwargs["water_prompt"] = water_prompt
 
     for chunk in generate_llm_response_stream(
         question,

@@ -205,6 +205,20 @@ from contoso_chat.volunteer import (
     get_volunteer_projects,
     register_volunteer,
 )
+from contoso_chat.water import (
+    HydrationEstimateRequest,
+    HydrationEstimateResponse,
+    WaterReportRequest,
+    WaterReportResponse,
+    WaterSourceModel,
+    calculate_hydration_estimate,
+    detect_water_intent,
+    format_water_response,
+    get_pathogen_protection_info,
+    get_water_source_by_id,
+    get_water_sources,
+    submit_water_report,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -513,6 +527,7 @@ async def create_response(request: ChatRequest):
             shuttle_intent = detect_shuttle_intent(request.question)
             hut_intent = detect_hut_intent(request.question)
             volunteer_intent = detect_volunteer_intent(request.question)
+            water_intent = detect_water_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -684,6 +699,10 @@ async def create_response(request: ChatRequest):
                 formatted_vol = format_volunteer_response(volunteer_intent)
                 mock_payload["volunteer_info"] = formatted_vol.get("volunteer_info")
                 mock_payload["answer"] = formatted_vol.get("answer", mock_payload["answer"])
+            if water_intent:
+                formatted_water = format_water_response(water_intent)
+                mock_payload["water_info"] = formatted_water.get("water_info")
+                mock_payload["answer"] = formatted_water.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -811,6 +830,7 @@ async def create_response_stream(request: ChatRequest):
                 shuttle_intent = detect_shuttle_intent(request.question)
                 hut_intent = detect_hut_intent(request.question)
                 volunteer_intent = detect_volunteer_intent(request.question)
+                water_intent = detect_water_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -899,6 +919,9 @@ async def create_response_stream(request: ChatRequest):
                 if volunteer_intent:
                     formatted_vol = format_volunteer_response(volunteer_intent)
                     yield f"data: {json.dumps({'event': 'volunteer_info', 'volunteer_info': formatted_vol.get('volunteer_info')})}\n\n"
+                if water_intent:
+                    formatted_water = format_water_response(water_intent)
+                    yield f"data: {json.dumps({'event': 'water_info', 'water_info': formatted_water.get('water_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1045,6 +1068,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_vol = format_volunteer_response(volunteer_intent)
                     mock_chunks = [
                         str(formatted_vol.get("answer", ""))
+                    ]
+                elif water_intent:
+                    formatted_water = format_water_response(water_intent)
+                    mock_chunks = [
+                        str(formatted_water.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1955,3 +1983,83 @@ async def post_volunteer_register_endpoint(
 async def get_volunteer_impact_endpoint() -> StewardshipImpactModel:
     logger.info("Stewardship impact metrics requested")
     return get_stewardship_impact()
+
+
+@app.get(
+    "/api/water/sources",
+    response_model=list[WaterSourceModel],
+    tags=["Backcountry Water & Filtration"],
+    responses={
+        200: {"description": "Backcountry water sources retrieved successfully"},
+    },
+)
+async def get_water_sources_endpoint(
+    region: Optional[str] = None,
+    reliability: Optional[str] = None,
+) -> list[WaterSourceModel]:
+    logger.info("Water sources requested", extra={"region": region, "reliability": reliability})
+    return get_water_sources(region=region, reliability=reliability)
+
+
+@app.get(
+    "/api/water/sources/{source_id}",
+    response_model=WaterSourceModel,
+    tags=["Backcountry Water & Filtration"],
+    responses={
+        200: {"description": "Water source details retrieved"},
+        404: {"description": "Water source not found"},
+    },
+)
+async def get_water_source_by_id_endpoint(source_id: str) -> WaterSourceModel:
+    logger.info("Water source requested", extra={"source_id": source_id})
+    source = get_water_source_by_id(source_id)
+    if not source:
+        raise HTTPException(status_code=404, detail=f"Water source '{source_id}' not found")
+    return source
+
+
+@app.post(
+    "/api/water/hydration",
+    response_model=HydrationEstimateResponse,
+    tags=["Backcountry Water & Filtration"],
+    responses={
+        200: {"description": "Hydration carrying capacity estimate calculated"},
+    },
+)
+async def post_water_hydration_endpoint(
+    request: HydrationEstimateRequest,
+) -> HydrationEstimateResponse:
+    logger.info("Hydration estimate requested", extra={"distance": request.distance_miles, "elevation": request.elevation_gain_feet})
+    return calculate_hydration_estimate(request)
+
+
+@app.post(
+    "/api/water/reports",
+    response_model=WaterReportResponse,
+    tags=["Backcountry Water & Filtration"],
+    responses={
+        200: {"description": "Field condition report submitted and verified"},
+        404: {"description": "Water source not found"},
+    },
+)
+async def post_water_reports_endpoint(
+    request: WaterReportRequest,
+) -> WaterReportResponse:
+    logger.info("Water report submitted", extra={"source_id": request.source_id, "reporter": request.reporter_name})
+    try:
+        return submit_water_report(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/water/pathogens",
+    response_model=dict[str, Any],
+    tags=["Backcountry Water & Filtration"],
+    responses={
+        200: {"description": "Backcountry pathogen and filtration guide retrieved"},
+    },
+)
+async def get_water_pathogens_endpoint() -> dict[str, Any]:
+    logger.info("Water pathogen guide requested")
+    return get_pathogen_protection_info()
