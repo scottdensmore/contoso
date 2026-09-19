@@ -2378,3 +2378,159 @@ def test_create_response_stream_mock_mode_omits_trip_planner_info_when_no_intent
         ]
         planner_event = next((e for e in events if e.get("event") == "trip_planner_info"), None)
         assert planner_event is None
+
+
+def test_post_safety_beacon_register_endpoint():
+    res = client.post(
+        "/api/safety/beacon/register",
+        json={
+            "device_type": "garmin_inreach",
+            "imei": "300434012345678",
+            "owner_name": "Jordan Smith",
+            "emergency_contact": "Casey Smith",
+            "emergency_phone": "555-019-1234",
+            "trip_zone": "cascades",
+            "return_date": "2026-10-10",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["device_id"].startswith("SBR-")
+    assert data["status"] == "ACTIVE_MONITORING"
+    assert data["trip_zone"] == "cascades"
+    assert "registered_at" in data
+    assert "instructions" in data
+
+
+def test_post_safety_beacon_checkin_endpoint():
+    reg_res = client.post(
+        "/api/safety/beacon/register",
+        json={
+            "device_type": "spot",
+            "imei": "300434098765432",
+            "owner_name": "Robin Hood",
+            "emergency_contact": "Marion",
+            "emergency_phone": "555-019-5566",
+            "trip_zone": "tetons",
+        },
+    )
+    assert reg_res.status_code == 200
+    dev_id = reg_res.json()["device_id"]
+
+    check_res = client.post(
+        "/api/safety/beacon/checkin",
+        json={"device_id": dev_id, "status_message": "Reached basecamp", "coordinates": "43.7904,-110.6818"},
+    )
+    assert check_res.status_code == 200
+    data = check_res.json()
+    assert data["device_id"] == dev_id
+    assert data["status"] == "CHECKIN_CONFIRMED"
+    assert "Reached basecamp" in data["message"]
+
+
+def test_post_safety_beacon_checkin_endpoint_not_found():
+    res = client.post(
+        "/api/safety/beacon/checkin",
+        json={"device_id": "SBR-NONEXISTENT", "status_message": "OK"},
+    )
+    assert res.status_code == 404
+    assert "not found" in res.json()["detail"].lower()
+
+
+def test_get_safety_protocols_endpoint():
+    res = client.get("/api/safety/protocols")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 5
+    types = {p["incident_type"] for p in data}
+    assert {"hypothermia", "wildlife", "lightning", "altitude", "injury"}.issubset(types)
+
+
+def test_get_safety_protocol_by_id_endpoint_success():
+    res = client.get("/api/safety/protocols/hypothermia")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["incident_type"] == "hypothermia"
+    assert data["severity"] == "CRITICAL"
+    assert len(data["first_response_steps"]) >= 4
+
+
+def test_get_safety_protocol_by_id_endpoint_not_found():
+    res = client.get("/api/safety/protocols/non_existent_emergency")
+    assert res.status_code == 404
+
+
+def test_get_safety_avalanche_endpoint_all():
+    res = client.get("/api/safety/avalanche")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 5
+    zones = {a["zone"] for a in data}
+    assert zones == {"cascades", "rockies", "sierra", "wasatch", "tetons"}
+
+
+def test_get_safety_avalanche_endpoint_with_zone():
+    res = client.get("/api/safety/avalanche?zone=cascades")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["zone"] == "cascades"
+    assert data[0]["danger_rating"] == "Considerable"
+
+
+def test_get_safety_avalanche_endpoint_unknown_zone():
+    res = client.get("/api/safety/avalanche?zone=everest")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) == 0
+
+
+def test_create_response_mock_mode_with_safety_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What is the emergency protocol for a bear encounter?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "safety_info" in data
+        assert data["safety_info"]["action"] == "emergency_protocol"
+        assert "bear spray" in data["answer"].lower() or "stand ground" in data["answer"].lower()
+
+
+def test_create_response_stream_mock_mode_emits_safety_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What is the avalanche advisory for Cascades?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        safety_event = next((e for e in events if e.get("event") == "safety_info"), None)
+        assert safety_event is not None
+        assert "safety_info" in safety_event
+        assert safety_event["safety_info"]["action"] == "avalanche_advisory"
+
+
+def test_create_response_stream_mock_mode_omits_safety_info_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What waterproof jackets do you sell?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        safety_event = next((e for e in events if e.get("event") == "safety_info"), None)
+        assert safety_event is None
