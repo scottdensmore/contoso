@@ -3372,3 +3372,170 @@ async def test_generate_llm_response_gcp_provider_includes_permits_prompt():
     assert result == "gcp permits answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Official Backcountry Permits & National Parks Pass Grounding: WHITNEY" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_repair_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Our Tent Zipper Slider Replacement service costs $25."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "I have a broken zipper on tent", "[]"
+        )
+
+    assert result.get("repair_info") is not None
+    assert result["repair_info"]["action"] == "diagnose"
+    assert result["repair_info"]["diagnosis"]["diagnosed_service"]["service_id"] == "tent-zipper-slider"
+    mock_llm.assert_awaited_once()
+    assert "repair_prompt" in mock_llm.await_args.kwargs
+    assert "Contoso Outdoors Official Gear Repair" in mock_llm.await_args.kwargs["repair_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_repair_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="I can help you find equipment."),
+    ):
+        result = await get_response(
+            "cust-default", "What backpacks do you sell?", "[]"
+        )
+
+    assert result.get("repair_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_repair_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Our DWR Technical Reproofing costs $30."]),
+    ):
+        event_types = []
+        repair_frame = None
+        async for chunk in get_response_stream(
+            "cust-default", "My rain jacket is wetting out, can you reproof the DWR waterproofing?", "[]"
+        ):
+            if chunk.startswith("data: ") and not chunk.strip().endswith("[DONE]"):
+                data = json.loads(chunk[6:].strip())
+                if "event" in data:
+                    event_types.append(data["event"])
+                if data.get("event") == "repair_info":
+                    repair_frame = data
+        assert "repair_info" in event_types
+        assert repair_frame is not None
+        assert repair_frame["repair_info"]["action"] == "diagnose"
+        assert repair_frame["repair_info"]["diagnosis"]["diagnosed_service"]["service_id"] == "apparel-dwr-reproofing"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_repair_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["General stream"]),
+    ):
+        event_types = []
+        async for chunk in get_response_stream(
+            "cust-default", "Tell me about your sleeping bags", "[]"
+        ):
+            if chunk.startswith("data: ") and not chunk.strip().endswith("[DONE]"):
+                data = json.loads(chunk[6:].strip())
+                if "event" in data:
+                    event_types.append(data["event"])
+        assert "repair_info" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_repair_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local repair answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="broken zipper on tent",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            repair_prompt="Contoso Outdoors Official Gear Repair Guidance: REPAIR",
+        )
+
+    assert result == "local repair answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Official Gear Repair Guidance: REPAIR" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_repair_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp repair answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="broken zipper on tent",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            repair_prompt="Contoso Outdoors Official Gear Repair Guidance: REPAIR",
+        )
+
+    assert result == "gcp repair answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Official Gear Repair Guidance: REPAIR" in sent_prompt

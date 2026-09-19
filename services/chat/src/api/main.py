@@ -53,6 +53,15 @@ from contoso_chat.rentals import (
     format_rental_response,
     get_rental_packages,
 )
+from contoso_chat.repair import (
+    RepairDiagnoseRequest,
+    RepairDiagnosis,
+    RepairServiceItem,
+    detect_repair_intent,
+    diagnose_repair_issue,
+    format_repair_response,
+    get_repair_services,
+)
 from contoso_chat.return_label import (
     ReturnLabelInfo,
     ReturnLabelRequest,
@@ -406,6 +415,7 @@ async def create_response(request: ChatRequest):
             trail_intent = detect_trail_intent(request.question)
             rewards_intent = detect_rewards_intent(request.question)
             permits_intent = detect_permits_intent(request.question)
+            repair_intent = detect_repair_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -540,6 +550,10 @@ async def create_response(request: ChatRequest):
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
+            if repair_intent:
+                formatted_repair = format_repair_response(repair_intent)
+                mock_payload["repair_info"] = formatted_repair.get("repair_info")
+                mock_payload["answer"] = formatted_repair.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -658,6 +672,7 @@ async def create_response_stream(request: ChatRequest):
                 trail_intent = detect_trail_intent(request.question)
                 rewards_intent = detect_rewards_intent(request.question)
                 permits_intent = detect_permits_intent(request.question)
+                repair_intent = detect_repair_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -719,6 +734,9 @@ async def create_response_stream(request: ChatRequest):
                 if permits_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
+                if repair_intent:
+                    formatted_repair = format_repair_response(repair_intent)
+                    yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': formatted_repair.get('repair_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -820,6 +838,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
+                    ]
+                elif repair_intent:
+                    formatted_repair = format_repair_response(repair_intent)
+                    mock_chunks = [
+                        str(formatted_repair.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1267,3 +1290,31 @@ async def get_permit_regulations_endpoint(
 ) -> list[PermitRegulation]:
     logger.info("Permit regulations requested", extra={"park_or_region": park_or_region})
     return get_permit_regulations(park_or_region=park_or_region)
+
+
+@app.get(
+    "/api/repair/services",
+    response_model=list[RepairServiceItem],
+    responses={
+        200: {"description": "Gear repair and maintenance services retrieved"},
+    },
+)
+async def get_repair_services_endpoint(
+    category: Optional[str] = None,
+) -> list[RepairServiceItem]:
+    logger.info("Repair services requested", extra={"category": category})
+    return get_repair_services(category=category)
+
+
+@app.post(
+    "/api/repair/diagnose",
+    response_model=RepairDiagnosis,
+    responses={
+        200: {"description": "Gear repair diagnosis evaluated"},
+    },
+)
+async def post_repair_diagnose_endpoint(
+    request: RepairDiagnoseRequest,
+) -> RepairDiagnosis:
+    logger.info("Repair diagnosis requested", extra={"issue": request.issue, "gear_type": request.gear_type})
+    return diagnose_repair_issue(issue=request.issue, gear_type=request.gear_type)
