@@ -24,6 +24,16 @@ from contoso_chat.feedback import (
     record_feedback,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.permits import (
+    ParkPassInfo,
+    PermitLotteryInfo,
+    PermitRegulation,
+    detect_permits_intent,
+    format_permits_response,
+    get_park_passes,
+    get_permit_lotteries,
+    get_permit_regulations,
+)
 from contoso_chat.policies import (
     detect_policy_intent,
     get_policy_by_id,
@@ -395,6 +405,7 @@ async def create_response(request: ChatRequest):
             return_intent = detect_return_label_intent(request.question)
             trail_intent = detect_trail_intent(request.question)
             rewards_intent = detect_rewards_intent(request.question)
+            permits_intent = detect_permits_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -525,6 +536,10 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
+            if permits_intent:
+                formatted_permits = format_permits_response(permits_intent)
+                mock_payload["permits_info"] = formatted_permits.get("permits_info")
+                mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -642,6 +657,7 @@ async def create_response_stream(request: ChatRequest):
                 return_intent = detect_return_label_intent(request.question)
                 trail_intent = detect_trail_intent(request.question)
                 rewards_intent = detect_rewards_intent(request.question)
+                permits_intent = detect_permits_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -700,6 +716,9 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
+                if permits_intent:
+                    formatted_permits = format_permits_response(permits_intent)
+                    yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -796,6 +815,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
                         str(formatted_trail.get("answer", ""))
+                    ]
+                elif permits_intent:
+                    formatted_permits = format_permits_response(permits_intent)
+                    mock_chunks = [
+                        str(formatted_permits.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1201,3 +1225,45 @@ async def post_loyalty_redeem_endpoint(
         extra={"voucher_id": request.voucher_id, "customer_id": request.customer_id},
     )
     return redeem_voucher(voucher_id=request.voucher_id, customer_id=request.customer_id)
+
+
+@app.get(
+    "/api/permits/passes",
+    response_model=list[ParkPassInfo],
+    responses={
+        200: {"description": "National park and federal recreation pass catalog retrieved"},
+    },
+)
+async def get_park_passes_endpoint(
+    pass_type: Optional[str] = None,
+) -> list[ParkPassInfo]:
+    logger.info("Park passes catalog requested", extra={"pass_type": pass_type})
+    return get_park_passes(pass_type=pass_type)
+
+
+@app.get(
+    "/api/permits/lotteries",
+    response_model=list[PermitLotteryInfo],
+    responses={
+        200: {"description": "Backcountry permit lotteries and quotas retrieved"},
+    },
+)
+async def get_permit_lotteries_endpoint(
+    park_name: Optional[str] = None,
+) -> list[PermitLotteryInfo]:
+    logger.info("Permit lotteries requested", extra={"park_name": park_name})
+    return get_permit_lotteries(park_name=park_name)
+
+
+@app.get(
+    "/api/permits/regulations",
+    response_model=list[PermitRegulation],
+    responses={
+        200: {"description": "Wilderness backcountry regulations retrieved"},
+    },
+)
+async def get_permit_regulations_endpoint(
+    park_or_region: Optional[str] = None,
+) -> list[PermitRegulation]:
+    logger.info("Permit regulations requested", extra={"park_or_region": park_or_region})
+    return get_permit_regulations(park_or_region=park_or_region)
