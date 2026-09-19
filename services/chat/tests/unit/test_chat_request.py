@@ -3706,3 +3706,166 @@ async def test_generate_llm_response_gcp_provider_includes_adventures_prompt():
     assert result == "gcp adventures answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Official Adventure Tours Grounding: TOURS" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_trade_in_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Trade-in value for your tent is $200 store credit."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "Can I trade in my used Big Agnes tent for store credit?", "[]"
+        )
+
+    assert result.get("trade_in_info") is not None
+    assert result["trade_in_info"]["action"] == "estimate"
+    assert result["trade_in_info"]["brand"] == "Big Agnes"
+    mock_llm.assert_awaited_once()
+    assert "trade_in_prompt" in mock_llm.await_args.kwargs
+    assert "Re-Gear" in mock_llm.await_args.kwargs["trade_in_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_trade_in_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here are our tents."),
+    ):
+        result = await get_response(
+            "cust-default", "What 4-person tents do you sell?", "[]"
+        )
+
+    assert result.get("trade_in_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_trade_in_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Patagonia ", "jackets ", "are eligible."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "What brands are eligible for the Contoso Re-Gear trade-in program?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    trade_in_event = next((e for e in events if e.get("event") == "trade_in_info"), None)
+    assert trade_in_event is not None
+    assert trade_in_event["trade_in_info"]["action"] == "brands"
+    assert len(trade_in_event["trade_in_info"]["eligible_brands"]) == 8
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_trade_in_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["We have rain jackets."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "Tell me about waterproof jackets.", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    trade_in_event = next((e for e in events if e.get("event") == "trade_in_info"), None)
+    assert trade_in_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_trade_in_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local trade-in answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="trade in gear",
+            context="[]",
+            user_name="Alex",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            trade_in_prompt="Contoso Outdoors Re-Gear Trade-In & Sustainability Guidance: BRANDS",
+        )
+
+    assert result == "local trade-in answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Re-Gear Trade-In & Sustainability Guidance: BRANDS" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_trade_in_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp trade-in answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="trade in gear",
+            context="[]",
+            user_name="Alex",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            trade_in_prompt="Contoso Outdoors Re-Gear Trade-In & Sustainability Guidance: BRANDS",
+        )
+
+    assert result == "gcp trade-in answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Re-Gear Trade-In & Sustainability Guidance: BRANDS" in sent_prompt
