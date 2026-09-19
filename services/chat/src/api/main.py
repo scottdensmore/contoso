@@ -193,6 +193,18 @@ from contoso_chat.trip_planner import (
     generate_wilderness_trip_plan,
     get_trip_templates,
 )
+from contoso_chat.volunteer import (
+    StewardshipImpactModel,
+    VolunteerRegistrationRequest,
+    VolunteerRegistrationResponse,
+    VolunteerWorkpartyModel,
+    detect_volunteer_intent,
+    format_volunteer_response,
+    get_stewardship_impact,
+    get_volunteer_project_by_id,
+    get_volunteer_projects,
+    register_volunteer,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -500,6 +512,7 @@ async def create_response(request: ChatRequest):
             trip_planner_intent = detect_trip_planner_intent(request.question)
             shuttle_intent = detect_shuttle_intent(request.question)
             hut_intent = detect_hut_intent(request.question)
+            volunteer_intent = detect_volunteer_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -630,7 +643,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -667,6 +680,10 @@ async def create_response(request: ChatRequest):
                 formatted_hut = format_hut_response(hut_intent)
                 mock_payload["hut_info"] = formatted_hut.get("hut_info")
                 mock_payload["answer"] = formatted_hut.get("answer", mock_payload["answer"])
+            if volunteer_intent:
+                formatted_vol = format_volunteer_response(volunteer_intent)
+                mock_payload["volunteer_info"] = formatted_vol.get("volunteer_info")
+                mock_payload["answer"] = formatted_vol.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -793,6 +810,7 @@ async def create_response_stream(request: ChatRequest):
                 safety_intent = detect_safety_intent(request.question)
                 shuttle_intent = detect_shuttle_intent(request.question)
                 hut_intent = detect_hut_intent(request.question)
+                volunteer_intent = detect_volunteer_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -878,6 +896,9 @@ async def create_response_stream(request: ChatRequest):
                 if hut_intent:
                     formatted_hut = format_hut_response(hut_intent)
                     yield f"data: {json.dumps({'event': 'hut_info', 'hut_info': formatted_hut.get('hut_info')})}\n\n"
+                if volunteer_intent:
+                    formatted_vol = format_volunteer_response(volunteer_intent)
+                    yield f"data: {json.dumps({'event': 'volunteer_info', 'volunteer_info': formatted_vol.get('volunteer_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -985,7 +1006,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -1019,6 +1040,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_hut = format_hut_response(hut_intent)
                     mock_chunks = [
                         str(formatted_hut.get("answer", ""))
+                    ]
+                elif volunteer_intent:
+                    formatted_vol = format_volunteer_response(volunteer_intent)
+                    mock_chunks = [
+                        str(formatted_vol.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1864,3 +1890,68 @@ async def post_hut_book_endpoint(
         return book_alpine_hut(request)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/volunteer/projects",
+    response_model=list[VolunteerWorkpartyModel],
+    tags=["Trail Volunteer & Stewardship"],
+    responses={
+        200: {"description": "Volunteer workparties retrieved successfully"},
+    },
+)
+async def get_volunteer_projects_endpoint(
+    region: Optional[str] = None,
+    difficulty: Optional[str] = None,
+) -> list[VolunteerWorkpartyModel]:
+    logger.info("Volunteer workparties requested", extra={"region": region, "difficulty": difficulty})
+    return get_volunteer_projects(region=region, difficulty=difficulty)
+
+
+@app.get(
+    "/api/volunteer/projects/{project_id}",
+    response_model=VolunteerWorkpartyModel,
+    tags=["Trail Volunteer & Stewardship"],
+    responses={
+        200: {"description": "Volunteer workparty details retrieved"},
+        404: {"description": "Volunteer workparty not found"},
+    },
+)
+async def get_volunteer_project_by_id_endpoint(project_id: str) -> VolunteerWorkpartyModel:
+    logger.info("Volunteer workparty details requested", extra={"project_id": project_id})
+    proj = get_volunteer_project_by_id(project_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail=f"Volunteer project '{project_id}' not found")
+    return proj
+
+
+@app.post(
+    "/api/volunteer/register",
+    response_model=VolunteerRegistrationResponse,
+    tags=["Trail Volunteer & Stewardship"],
+    responses={
+        200: {"description": "Volunteer registration confirmed"},
+        404: {"description": "Volunteer project not found or full"},
+    },
+)
+async def post_volunteer_register_endpoint(
+    request: VolunteerRegistrationRequest,
+) -> VolunteerRegistrationResponse:
+    logger.info("Volunteer registration submitted", extra={"project_id": request.project_id, "volunteer": request.volunteer_name})
+    try:
+        return register_volunteer(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/volunteer/impact",
+    response_model=StewardshipImpactModel,
+    tags=["Trail Volunteer & Stewardship"],
+    responses={
+        200: {"description": "Stewardship impact metrics retrieved"},
+    },
+)
+async def get_volunteer_impact_endpoint() -> StewardshipImpactModel:
+    logger.info("Stewardship impact metrics requested")
+    return get_stewardship_impact()
