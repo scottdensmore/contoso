@@ -37,6 +37,11 @@ from .huts import (
     detect_hut_intent,
     format_hut_response,
 )
+from .leave_no_trace import (
+    build_lnt_prompt,
+    detect_lnt_intent,
+    format_lnt_response,
+)
 from .order_tracking import (
     build_order_tracking_prompt,
     detect_order_tracking_intent,
@@ -373,6 +378,7 @@ async def generate_llm_response(
     route_prompt: str = "",
     fire_safety_prompt: str = "",
     first_aid_prompt: str = "",
+    lnt_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -463,6 +469,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{fire_safety_prompt}"
         if first_aid_prompt:
             local_system = f"{local_system}\n\n{first_aid_prompt}"
+        if lnt_prompt:
+            local_system = f"{local_system}\n\n{lnt_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -542,6 +550,8 @@ async def generate_llm_response(
             prompt_parts.append(fire_safety_prompt)
         if first_aid_prompt:
             prompt_parts.append(first_aid_prompt)
+        if lnt_prompt:
+            prompt_parts.append(lnt_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -925,6 +935,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_first_aid = format_first_aid_response(first_aid_intent)
         first_aid_info_payload = formatted_first_aid.get("first_aid_info")
 
+    lnt_intent = detect_lnt_intent(question)
+    lnt_prompt = ""
+    lnt_info_payload = None
+    if lnt_intent:
+        lnt_prompt = build_lnt_prompt(lnt_intent)
+        formatted_lnt = format_lnt_response(lnt_intent)
+        lnt_info_payload = formatted_lnt.get("lnt_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -953,7 +971,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
         llm_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         llm_kwargs["repair_prompt"] = repair_prompt
@@ -981,6 +999,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["fire_safety_prompt"] = fire_safety_prompt
     if first_aid_prompt:
         llm_kwargs["first_aid_prompt"] = first_aid_prompt
+    if lnt_prompt:
+        llm_kwargs["lnt_prompt"] = lnt_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1059,6 +1079,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["fire_safety_info"] = fire_safety_info_payload
     if first_aid_intent and first_aid_info_payload:
         response_payload["first_aid_info"] = first_aid_info_payload
+    if lnt_intent and lnt_info_payload:
+        response_payload["lnt_info"] = lnt_info_payload
 
     return response_payload
 
@@ -1100,6 +1122,7 @@ def generate_llm_response_stream(
     route_prompt: str = "",
     fire_safety_prompt: str = "",
     first_aid_prompt: str = "",
+    lnt_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1182,6 +1205,12 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{water_prompt}"
         if route_prompt:
             local_system = f"{local_system}\n\n{route_prompt}"
+        if fire_safety_prompt:
+            local_system = f"{local_system}\n\n{fire_safety_prompt}"
+        if first_aid_prompt:
+            local_system = f"{local_system}\n\n{first_aid_prompt}"
+        if lnt_prompt:
+            local_system = f"{local_system}\n\n{lnt_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1260,6 +1289,8 @@ def generate_llm_response_stream(
             prompt_parts.append(fire_safety_prompt)
         if first_aid_prompt:
             prompt_parts.append(first_aid_prompt)
+        if lnt_prompt:
+            prompt_parts.append(lnt_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
