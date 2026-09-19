@@ -5,6 +5,14 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from contoso_chat.adventures import (
+    AdventureGuideInfo,
+    AdventureTourInfo,
+    detect_adventure_intent,
+    format_adventure_response,
+    get_adventure_guides,
+    get_adventure_tours,
+)
 from contoso_chat.carrier_tracking import (
     CarrierTrackingInfo,
     detect_carrier_tracking_intent,
@@ -416,6 +424,7 @@ async def create_response(request: ChatRequest):
             rewards_intent = detect_rewards_intent(request.question)
             permits_intent = detect_permits_intent(request.question)
             repair_intent = detect_repair_intent(request.question)
+            adventure_intent = detect_adventure_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -546,7 +555,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent:
+            if permits_intent and not adventure_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -554,6 +563,10 @@ async def create_response(request: ChatRequest):
                 formatted_repair = format_repair_response(repair_intent)
                 mock_payload["repair_info"] = formatted_repair.get("repair_info")
                 mock_payload["answer"] = formatted_repair.get("answer", mock_payload["answer"])
+            if adventure_intent:
+                formatted_adventure = format_adventure_response(adventure_intent)
+                mock_payload["adventures_info"] = formatted_adventure.get("adventures_info")
+                mock_payload["answer"] = formatted_adventure.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -673,6 +686,7 @@ async def create_response_stream(request: ChatRequest):
                 rewards_intent = detect_rewards_intent(request.question)
                 permits_intent = detect_permits_intent(request.question)
                 repair_intent = detect_repair_intent(request.question)
+                adventure_intent = detect_adventure_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -731,12 +745,15 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent:
+                if permits_intent and not adventure_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
                     formatted_repair = format_repair_response(repair_intent)
                     yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': formatted_repair.get('repair_info')})}\n\n"
+                if adventure_intent:
+                    formatted_adventure = format_adventure_response(adventure_intent)
+                    yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': formatted_adventure.get('adventures_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -833,6 +850,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trail = format_trail_response(trail_intent)
                     mock_chunks = [
                         str(formatted_trail.get("answer", ""))
+                    ]
+                elif adventure_intent:
+                    formatted_adventure = format_adventure_response(adventure_intent)
+                    mock_chunks = [
+                        str(formatted_adventure.get("answer", ""))
                     ]
                 elif permits_intent:
                     formatted_permits = format_permits_response(permits_intent)
@@ -1318,3 +1340,30 @@ async def post_repair_diagnose_endpoint(
 ) -> RepairDiagnosis:
     logger.info("Repair diagnosis requested", extra={"issue": request.issue, "gear_type": request.gear_type})
     return diagnose_repair_issue(issue=request.issue, gear_type=request.gear_type)
+
+
+@app.get(
+    "/api/adventures/tours",
+    response_model=list[AdventureTourInfo],
+    responses={
+        200: {"description": "Adventure tours and clinics retrieved"},
+    },
+)
+async def get_adventure_tours_endpoint(
+    category: Optional[str] = None,
+    difficulty: Optional[str] = None,
+) -> list[AdventureTourInfo]:
+    logger.info("Adventure tours requested", extra={"category": category, "difficulty": difficulty})
+    return get_adventure_tours(category=category, difficulty=difficulty)
+
+
+@app.get(
+    "/api/adventures/guides",
+    response_model=list[AdventureGuideInfo],
+    responses={
+        200: {"description": "Lead adventure guides retrieved"},
+    },
+)
+async def get_adventure_guides_endpoint() -> list[AdventureGuideInfo]:
+    logger.info("Adventure guides requested")
+    return get_adventure_guides()

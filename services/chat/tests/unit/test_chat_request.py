@@ -3539,3 +3539,170 @@ async def test_generate_llm_response_gcp_provider_includes_repair_prompt():
     assert result == "gcp repair answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Official Gear Repair Guidance: REPAIR" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_adventures_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Introduction to Outdoor Rock Climbing costs $175."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "What beginner rock climbing clinics do you offer?", "[]"
+        )
+
+    assert result.get("adventures_info") is not None
+    assert result["adventures_info"]["action"] in ["tours", "recommend"]
+    assert result["adventures_info"]["category"] == "Rock Climbing"
+    mock_llm.assert_awaited_once()
+    assert "adventures_prompt" in mock_llm.await_args.kwargs
+    assert "Contoso Outdoors Official Adventure Tours" in mock_llm.await_args.kwargs["adventures_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_adventures_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="I can help you find equipment."),
+    ):
+        result = await get_response(
+            "cust-default", "What backpacks do you sell?", "[]"
+        )
+
+    assert result.get("adventures_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_adventures_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Glacier travel prerequisites"]),
+    ):
+        event_types = []
+        adv_frame = None
+        async for chunk in get_response_stream(
+            "cust-default", "Do I need previous experience for glacier travel on Mount Rainier?", "[]"
+        ):
+            if chunk.startswith("data: ") and not chunk.strip().endswith("[DONE]"):
+                data = json.loads(chunk[6:].strip())
+                if "event" in data:
+                    event_types.append(data["event"])
+                if data.get("event") == "adventures_info":
+                    adv_frame = data
+        assert "adventures_info" in event_types
+        assert adv_frame is not None
+        assert adv_frame["adventures_info"]["action"] == "prerequisites"
+        assert adv_frame["adventures_info"]["tour_id"] == "alpine-mountaineering"
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_adventures_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["General stream"]),
+    ):
+        event_types = []
+        async for chunk in get_response_stream(
+            "cust-default", "Tell me about your sleeping bags", "[]"
+        ):
+            if chunk.startswith("data: ") and not chunk.strip().endswith("[DONE]"):
+                data = json.loads(chunk[6:].strip())
+                if "event" in data:
+                    event_types.append(data["event"])
+        assert "adventures_info" not in event_types
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_adventures_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local adventures answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="rock climbing clinic",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused",
+            location="unused",
+            model_name="unused",
+            adventures_prompt="Contoso Outdoors Official Adventure Tours Grounding: TOURS",
+        )
+
+    assert result == "local adventures answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Official Adventure Tours Grounding: TOURS" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_adventures_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp adventures answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="rock climbing clinic",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            adventures_prompt="Contoso Outdoors Official Adventure Tours Grounding: TOURS",
+        )
+
+    assert result == "gcp adventures answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Official Adventure Tours Grounding: TOURS" in sent_prompt

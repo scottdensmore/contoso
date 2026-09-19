@@ -3,6 +3,11 @@ import os
 import re
 from typing import Any
 
+from .adventures import (
+    build_adventure_prompt,
+    detect_adventure_intent,
+    format_adventure_response,
+)
 from .carrier_tracking import (
     build_carrier_milestone_prompt,
     detect_carrier_tracking_intent,
@@ -301,6 +306,7 @@ async def generate_llm_response(
     rewards_prompt: str = "",
     permits_prompt: str = "",
     repair_prompt: str = "",
+    adventures_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -367,6 +373,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{permits_prompt}"
         if repair_prompt:
             local_system = f"{local_system}\n\n{repair_prompt}"
+        if adventures_prompt:
+            local_system = f"{local_system}\n\n{adventures_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -422,6 +430,8 @@ async def generate_llm_response(
             prompt_parts.append(permits_prompt)
         if repair_prompt:
             prompt_parts.append(repair_prompt)
+        if adventures_prompt:
+            prompt_parts.append(adventures_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -709,6 +719,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_repair = format_repair_response(repair_intent)
         repair_info_payload = formatted_repair.get("repair_info")
 
+    adventure_intent = detect_adventure_intent(question)
+    adventures_prompt = ""
+    adventures_info_payload = None
+    if adventure_intent:
+        adventures_prompt = build_adventure_prompt(adventure_intent)
+        formatted_adventures = format_adventure_response(adventure_intent)
+        adventures_info_payload = formatted_adventures.get("adventures_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -737,10 +755,12 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt:
+    if permits_prompt and not adventure_intent:
         llm_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         llm_kwargs["repair_prompt"] = repair_prompt
+    if adventures_prompt:
+        llm_kwargs["adventures_prompt"] = adventures_prompt
 
     answer = await generate_llm_response(
         question,
@@ -791,10 +811,12 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trail_outfitting"] = trail_outfitting_payload
     if rewards_intent and rewards_info_payload:
         response_payload["rewards_info"] = rewards_info_payload
-    if permits_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and permits_info_payload:
         response_payload["permits_info"] = permits_info_payload
     if repair_intent and repair_info_payload:
         response_payload["repair_info"] = repair_info_payload
+    if adventure_intent and adventures_info_payload:
+        response_payload["adventures_info"] = adventures_info_payload
 
     return response_payload
 
@@ -824,6 +846,7 @@ def generate_llm_response_stream(
     rewards_prompt: str = "",
     permits_prompt: str = "",
     repair_prompt: str = "",
+    adventures_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -886,6 +909,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{permits_prompt}"
         if repair_prompt:
             local_system = f"{local_system}\n\n{repair_prompt}"
+        if adventures_prompt:
+            local_system = f"{local_system}\n\n{adventures_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -940,6 +965,8 @@ def generate_llm_response_stream(
             prompt_parts.append(permits_prompt)
         if repair_prompt:
             prompt_parts.append(repair_prompt)
+        if adventures_prompt:
+            prompt_parts.append(adventures_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1098,6 +1125,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_repair = format_repair_response(repair_intent)
         repair_info_payload = formatted_repair.get("repair_info")
 
+    adventure_intent = detect_adventure_intent(question)
+    adventures_prompt = ""
+    adventures_info_payload = None
+    if adventure_intent:
+        adventures_prompt = build_adventure_prompt(adventure_intent)
+        formatted_adventures = format_adventure_response(adventure_intent)
+        adventures_info_payload = formatted_adventures.get("adventures_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1126,10 +1161,12 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
     if rewards_intent and rewards_info_payload:
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
-    if permits_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and permits_info_payload:
         yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
     if repair_intent and repair_info_payload:
         yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': repair_info_payload})}\n\n"
+    if adventure_intent and adventures_info_payload:
+        yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': adventures_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1159,10 +1196,12 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt:
+    if permits_prompt and not adventure_intent:
         stream_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         stream_kwargs["repair_prompt"] = repair_prompt
+    if adventures_prompt:
+        stream_kwargs["adventures_prompt"] = adventures_prompt
 
     for chunk in generate_llm_response_stream(
         question,
