@@ -17,6 +17,11 @@ from .faq import (
     build_faq_prompt,
     detect_faq_intent,
 )
+from .field_reports import (
+    build_field_reports_prompt,
+    detect_field_reports_intent,
+    format_field_reports_response,
+)
 from .order_tracking import (
     build_order_tracking_prompt,
     detect_order_tracking_intent,
@@ -307,6 +312,7 @@ async def generate_llm_response(
     permits_prompt: str = "",
     repair_prompt: str = "",
     adventures_prompt: str = "",
+    field_reports_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -375,6 +381,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{repair_prompt}"
         if adventures_prompt:
             local_system = f"{local_system}\n\n{adventures_prompt}"
+        if field_reports_prompt:
+            local_system = f"{local_system}\n\n{field_reports_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -432,6 +440,8 @@ async def generate_llm_response(
             prompt_parts.append(repair_prompt)
         if adventures_prompt:
             prompt_parts.append(adventures_prompt)
+        if field_reports_prompt:
+            prompt_parts.append(field_reports_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -727,6 +737,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_adventures = format_adventure_response(adventure_intent)
         adventures_info_payload = formatted_adventures.get("adventures_info")
 
+    field_reports_intent = detect_field_reports_intent(question)
+    field_reports_prompt = ""
+    field_reports_info_payload = None
+    if field_reports_intent:
+        field_reports_prompt = build_field_reports_prompt(field_reports_intent)
+        formatted_field_reports = format_field_reports_response(field_reports_intent)
+        field_reports_info_payload = formatted_field_reports.get("field_reports_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -755,12 +773,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent:
         llm_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         llm_kwargs["repair_prompt"] = repair_prompt
     if adventures_prompt:
         llm_kwargs["adventures_prompt"] = adventures_prompt
+    if field_reports_prompt:
+        llm_kwargs["field_reports_prompt"] = field_reports_prompt
 
     answer = await generate_llm_response(
         question,
@@ -807,16 +827,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["rental_info"] = rental_info
     if return_label_payload:
         response_payload["return_label"] = return_label_payload
-    if trail_intent and trail_outfitting_payload:
+    if trail_intent and not field_reports_intent and trail_outfitting_payload:
         response_payload["trail_outfitting"] = trail_outfitting_payload
     if rewards_intent and rewards_info_payload:
         response_payload["rewards_info"] = rewards_info_payload
-    if permits_intent and not adventure_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and not field_reports_intent and permits_info_payload:
         response_payload["permits_info"] = permits_info_payload
     if repair_intent and repair_info_payload:
         response_payload["repair_info"] = repair_info_payload
     if adventure_intent and adventures_info_payload:
         response_payload["adventures_info"] = adventures_info_payload
+    if field_reports_intent and field_reports_info_payload:
+        response_payload["field_reports_info"] = field_reports_info_payload
 
     return response_payload
 
@@ -847,6 +869,7 @@ def generate_llm_response_stream(
     permits_prompt: str = "",
     repair_prompt: str = "",
     adventures_prompt: str = "",
+    field_reports_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -911,6 +934,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{repair_prompt}"
         if adventures_prompt:
             local_system = f"{local_system}\n\n{adventures_prompt}"
+        if field_reports_prompt:
+            local_system = f"{local_system}\n\n{field_reports_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -967,6 +992,8 @@ def generate_llm_response_stream(
             prompt_parts.append(repair_prompt)
         if adventures_prompt:
             prompt_parts.append(adventures_prompt)
+        if field_reports_prompt:
+            prompt_parts.append(field_reports_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1133,6 +1160,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_adventures = format_adventure_response(adventure_intent)
         adventures_info_payload = formatted_adventures.get("adventures_info")
 
+    field_reports_intent = detect_field_reports_intent(question)
+    field_reports_prompt = ""
+    field_reports_info_payload = None
+    if field_reports_intent:
+        field_reports_prompt = build_field_reports_prompt(field_reports_intent)
+        formatted_field_reports = format_field_reports_response(field_reports_intent)
+        field_reports_info_payload = formatted_field_reports.get("field_reports_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1157,16 +1192,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'rental_info', 'rental_info': rental_info})}\n\n"
     if return_label_payload:
         yield f"data: {json.dumps({'event': 'return_label', 'return_label': return_label_payload})}\n\n"
-    if trail_intent and trail_outfitting_payload:
+    if trail_intent and not field_reports_intent and trail_outfitting_payload:
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
     if rewards_intent and rewards_info_payload:
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
-    if permits_intent and not adventure_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and not field_reports_intent and permits_info_payload:
         yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
     if repair_intent and repair_info_payload:
         yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': repair_info_payload})}\n\n"
     if adventure_intent and adventures_info_payload:
         yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': adventures_info_payload})}\n\n"
+    if field_reports_intent and field_reports_info_payload:
+        yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': field_reports_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1196,12 +1233,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent:
         stream_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         stream_kwargs["repair_prompt"] = repair_prompt
     if adventures_prompt:
         stream_kwargs["adventures_prompt"] = adventures_prompt
+    if field_reports_prompt:
+        stream_kwargs["field_reports_prompt"] = field_reports_prompt
 
     for chunk in generate_llm_response_stream(
         question,
