@@ -13,6 +13,17 @@ from contoso_chat.adventures import (
     get_adventure_guides,
     get_adventure_tours,
 )
+from contoso_chat.avalanche import (
+    AvalancheZoneModel,
+    SlopeAssessmentRequest,
+    SlopeAssessmentResponse,
+    assess_slope_terrain,
+    detect_avalanche_intent,
+    format_avalanche_response,
+    get_avalanche_zone_by_id,
+    get_avalanche_zones,
+    get_companion_rescue_protocol,
+)
 from contoso_chat.carrier_tracking import (
     CarrierTrackingInfo,
     detect_carrier_tracking_intent,
@@ -585,6 +596,7 @@ async def create_response(request: ChatRequest):
             fire_safety_intent = detect_fire_safety_intent(request.question)
             first_aid_intent = detect_first_aid_intent(request.question)
             lnt_intent = detect_lnt_intent(request.question)
+            avalanche_intent = detect_avalanche_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -715,7 +727,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -727,7 +739,7 @@ async def create_response(request: ChatRequest):
                 formatted_adventure = format_adventure_response(adventure_intent)
                 mock_payload["adventures_info"] = formatted_adventure.get("adventures_info")
                 mock_payload["answer"] = formatted_adventure.get("answer", mock_payload["answer"])
-            if field_reports_intent:
+            if field_reports_intent and not avalanche_intent:
                 formatted_field_reports = format_field_reports_response(field_reports_intent)
                 mock_payload["field_reports_info"] = formatted_field_reports.get("field_reports_info")
                 mock_payload["answer"] = formatted_field_reports.get("answer", mock_payload["answer"])
@@ -740,7 +752,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["trip_planner_info"] = formatted_trip.get("trip_planner_info")
                 mock_payload["answer"] = formatted_trip.get("answer", mock_payload["answer"])
             safety_intent = detect_safety_intent(request.question)
-            if safety_intent:
+            if safety_intent and not avalanche_intent:
                 formatted_safety = format_safety_response(safety_intent)
                 mock_payload["safety_info"] = formatted_safety.get("safety_info")
                 mock_payload["answer"] = formatted_safety.get("answer", mock_payload["answer"])
@@ -776,6 +788,10 @@ async def create_response(request: ChatRequest):
                 formatted_lnt = format_lnt_response(lnt_intent)
                 mock_payload["lnt_info"] = formatted_lnt.get("lnt_info")
                 mock_payload["answer"] = formatted_lnt.get("answer", mock_payload["answer"])
+            if avalanche_intent:
+                formatted_avy = format_avalanche_response(avalanche_intent)
+                mock_payload["avalanche_info"] = formatted_avy.get("avalanche_info")
+                mock_payload["answer"] = formatted_avy.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -908,6 +924,7 @@ async def create_response_stream(request: ChatRequest):
                 fire_safety_intent = detect_fire_safety_intent(request.question)
                 first_aid_intent = detect_first_aid_intent(request.question)
                 lnt_intent = detect_lnt_intent(request.question)
+                avalanche_intent = detect_avalanche_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -966,7 +983,7 @@ async def create_response_stream(request: ChatRequest):
                     rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
+                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -975,7 +992,7 @@ async def create_response_stream(request: ChatRequest):
                 if adventure_intent:
                     formatted_adventure = format_adventure_response(adventure_intent)
                     yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': formatted_adventure.get('adventures_info')})}\n\n"
-                if field_reports_intent:
+                if field_reports_intent and not avalanche_intent:
                     formatted_field_reports = format_field_reports_response(field_reports_intent)
                     yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': formatted_field_reports.get('field_reports_info')})}\n\n"
                 if trade_in_intent:
@@ -984,7 +1001,7 @@ async def create_response_stream(request: ChatRequest):
                 if trip_planner_intent:
                     formatted_trip = format_trip_planner_response(trip_planner_intent)
                     yield f"data: {json.dumps({'event': 'trip_planner_info', 'trip_planner_info': formatted_trip.get('trip_planner_info')})}\n\n"
-                if safety_intent:
+                if safety_intent and not avalanche_intent:
                     formatted_safety = format_safety_response(safety_intent)
                     yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': formatted_safety.get('safety_info')})}\n\n"
                 if shuttle_intent:
@@ -1011,6 +1028,9 @@ async def create_response_stream(request: ChatRequest):
                 if lnt_intent:
                     formatted_lnt = format_lnt_response(lnt_intent)
                     yield f"data: {json.dumps({'event': 'lnt_info', 'lnt_info': formatted_lnt.get('lnt_info')})}\n\n"
+                if avalanche_intent:
+                    formatted_avy = format_avalanche_response(avalanche_intent)
+                    yield f"data: {json.dumps({'event': 'avalanche_info', 'avalanche_info': formatted_avy.get('avalanche_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1103,6 +1123,11 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_rental.get("answer", ""))
                     ]
+                elif avalanche_intent:
+                    formatted_avy = format_avalanche_response(avalanche_intent)
+                    mock_chunks = [
+                        str(formatted_avy.get("answer", ""))
+                    ]
                 elif field_reports_intent:
                     formatted_field_reports = format_field_reports_response(field_reports_intent)
                     mock_chunks = [
@@ -1138,7 +1163,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -2395,3 +2420,53 @@ async def calculate_pack_out_waste_endpoint(
     request: PackOutCalcRequest,
 ) -> PackOutCalcResponse:
     return calculate_pack_out_waste(request)
+
+
+@app.get(
+    "/api/avalanche/zones",
+    response_model=list[AvalancheZoneModel],
+    tags=["Avalanche Safety & Snowpack Assessment"],
+    summary="List avalanche forecast zones with optional zone_id filter",
+)
+async def get_avalanche_zones_endpoint(
+    zone_id: Optional[str] = None,
+) -> list[AvalancheZoneModel]:
+    return get_avalanche_zones(zone_id=zone_id)
+
+
+@app.get(
+    "/api/avalanche/zones/{zone_id}",
+    response_model=AvalancheZoneModel,
+    tags=["Avalanche Safety & Snowpack Assessment"],
+    summary="Get detailed avalanche forecast and problems for a specific zone",
+)
+async def get_avalanche_zone_by_id_endpoint(zone_id: str) -> AvalancheZoneModel:
+    zone = get_avalanche_zone_by_id(zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail=f"Avalanche zone '{zone_id}' not found")
+    return zone
+
+
+@app.post(
+    "/api/avalanche/slope-eval",
+    response_model=SlopeAssessmentResponse,
+    tags=["Avalanche Safety & Snowpack Assessment"],
+    summary="Evaluate slope angle and avalanche terrain hazard",
+)
+async def assess_slope_terrain_endpoint(
+    request: SlopeAssessmentRequest,
+) -> SlopeAssessmentResponse:
+    try:
+        return assess_slope_terrain(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/avalanche/rescue-protocol",
+    response_model=dict[str, Any],
+    tags=["Avalanche Safety & Snowpack Assessment"],
+    summary="Get companion avalanche rescue and beacon check guidelines",
+)
+async def get_avalanche_rescue_protocol_endpoint() -> dict[str, Any]:
+    return get_companion_rescue_protocol()
