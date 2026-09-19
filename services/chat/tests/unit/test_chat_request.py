@@ -4629,3 +4629,169 @@ async def test_generate_llm_response_gcp_provider_includes_volunteer_prompt():
     assert result == "gcp volunteer answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Trail Volunteer & Stewardship Grounding: VOL" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_water_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Colchuck Creek has strong water flow."),
+    ) as mock_llm:
+        result = await get_response(
+            "cust-default", "Where can I get water on the Colchuck Lake trail?", "[]"
+        )
+
+    assert result.get("water_info") is not None
+    assert result["water_info"]["action"] == "sources"
+    mock_llm.assert_awaited_once()
+    assert "water_prompt" in mock_llm.await_args.kwargs
+    assert "Backcountry Water Sources" in mock_llm.await_args.kwargs["water_prompt"]
+
+
+@pytest.mark.anyio
+async def test_get_response_omits_water_info_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Tents are great for camping."),
+    ):
+        result = await get_response(
+            "cust-default", "What are your best tents?", "[]"
+        )
+
+    assert result.get("water_info") is None
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_water_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Sawyer Squeeze removes crypto."]),
+    ):
+        generator = get_response_stream(
+            "cust-default", "Does a Sawyer Squeeze kill cryptosporidium or viruses?", "[]"
+        )
+        events = [
+            json.loads(chunk.removeprefix("data: "))
+            async for chunk in generator
+            if chunk.strip() and chunk.startswith("data: ") and chunk != "data: [DONE]"
+        ]
+
+    water_event = next((e for e in events if e.get("event") == "water_info"), None)
+    assert water_event is not None
+    assert "water_info" in water_event
+    assert water_event["water_info"]["action"] in ("filtration", "pathogens")
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_water_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["General camping gear advice."]),
+    ):
+        generator = get_response_stream(
+            "cust-default", "What are your best tents?", "[]"
+        )
+        events = [
+            json.loads(chunk.removeprefix("data: "))
+            async for chunk in generator
+            if chunk.strip() and chunk.startswith("data: ") and chunk != "data: [DONE]"
+        ]
+
+    water_event = next((e for e in events if e.get("event") == "water_info"), None)
+    assert water_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_water_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local water answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="water filtration",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            water_prompt="Contoso Outdoors Backcountry Water Sources & Pathogen Filtration Grounding: TEST",
+        )
+
+    assert result == "local water answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Backcountry Water Sources & Pathogen Filtration Grounding: TEST" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_water_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp water answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="water filtration",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            water_prompt="Contoso Outdoors Backcountry Water Sources & Pathogen Filtration Grounding: WATER",
+        )
+
+    assert result == "gcp water answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Backcountry Water Sources & Pathogen Filtration Grounding: WATER" in sent_prompt

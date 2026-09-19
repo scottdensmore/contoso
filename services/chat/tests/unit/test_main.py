@@ -2905,3 +2905,117 @@ def test_create_response_stream_mock_mode_emits_volunteer_info_event():
         assert vol_event is not None
         assert "volunteer_info" in vol_event
         assert vol_event["volunteer_info"]["action"] == "impact"
+
+
+def test_get_water_sources_endpoint():
+    res = client.get("/api/water/sources")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 4
+
+    res_cascades = client.get("/api/water/sources?region=Cascades")
+    assert res_cascades.status_code == 200
+    cascades = res_cascades.json()
+    assert len(cascades) >= 2
+    assert all(s["region"] == "Cascades" for s in cascades)
+
+    res_rel = client.get("/api/water/sources?reliability=Seasonal")
+    assert res_rel.status_code == 200
+    seasonal = res_rel.json()
+    assert len(seasonal) >= 2
+    assert all(s["reliability"] == "Seasonal" for s in seasonal)
+
+
+def test_get_water_source_by_id_endpoint():
+    res = client.get("/api/water/sources/colchuck-creek")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["source_id"] == "colchuck-creek"
+    assert data["elevation_feet"] == 4100
+    assert data["flow_status"] == "Flowing Strong"
+
+    res_404 = client.get("/api/water/sources/nonexistent-source")
+    assert res_404.status_code == 404
+
+
+def test_post_water_hydration_endpoint():
+    res = client.post(
+        "/api/water/hydration",
+        json={"distance_miles": 10.0, "elevation_gain_feet": 3000, "temp_fahrenheit": 80},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_liters_needed"] == 3.8
+    assert data["recommended_carrying_capacity_liters"] in (2.5, 3.0)
+    assert "2.5 - 3.0 L" in data["hydration_advice"]
+
+
+def test_post_water_reports_endpoint():
+    res = client.post(
+        "/api/water/reports",
+        json={
+            "source_id": "colchuck-creek",
+            "reporter_name": "Alex Honnold",
+            "flow_status": "Moderate Trickle",
+            "turbidity": "Clear",
+            "notes": "Late summer flow reduction.",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["report_id"].startswith("WTR-")
+    assert data["source_name"] == "Colchuck Creek Footbridge Crossing"
+    assert data["flow_status"] == "Moderate Trickle"
+    assert data["status"] == "verified"
+
+    res_404 = client.post(
+        "/api/water/reports",
+        json={
+            "source_id": "nonexistent-source",
+            "reporter_name": "Alex Honnold",
+            "flow_status": "Dry",
+            "turbidity": "High",
+        },
+    )
+    assert res_404.status_code == 404
+
+
+def test_get_water_pathogens_endpoint():
+    res = client.get("/api/water/pathogens")
+    assert res.status_code == 200
+    data = res.json()
+    assert "pathogens" in data
+    assert "technologies" in data
+    assert "hollow_fiber" in data["technologies"]
+
+
+def test_create_response_mock_mode_with_water_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Where can I get water on the Colchuck Lake trail?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "water_info" in data
+        assert data["water_info"]["action"] == "sources"
+        assert "Colchuck Creek" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_water_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Does a Sawyer Squeeze kill cryptosporidium or viruses?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        water_event = next((e for e in events if e.get("event") == "water_info"), None)
+        assert water_event is not None
+        assert "water_info" in water_event
+        assert water_event["water_info"]["action"] in ("filtration", "pathogens")
