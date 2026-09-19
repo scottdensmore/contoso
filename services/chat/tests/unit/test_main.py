@@ -3131,3 +3131,86 @@ def test_create_response_stream_mock_mode_emits_fire_safety_info_event():
         assert fire_event is not None
         assert "fire_safety_info" in fire_event
         assert fire_event["fire_safety_info"]["action"] == "stove_check"
+
+
+def test_get_weather_zones_endpoint():
+    res = client.get("/api/weather/zones")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) == 5
+    ids = {z["zone_id"] for z in data}
+    assert "mount-rainier" in ids
+
+    res_filt = client.get("/api/weather/zones?zone_id=mount-baker")
+    assert res_filt.status_code == 200
+    assert len(res_filt.json()) == 1
+    assert res_filt.json()[0]["zone_id"] == "mount-baker"
+
+
+def test_get_weather_zone_by_id_endpoint():
+    res = client.get("/api/weather/zones/stevens-crest")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["zone_id"] == "stevens-crest"
+    assert data["freezing_level_ft"] == 5200
+
+    res_404 = client.get("/api/weather/zones/nonexistent-peak")
+    assert res_404.status_code == 404
+
+
+def test_post_weather_microclimate_endpoint():
+    res = client.post(
+        "/api/weather/microclimate",
+        json={"zone_id": "mount-rainier", "target_elevation_ft": 10000.0, "exposure_level": "exposed_ridge"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["zone_id"] == "mount-rainier"
+    assert data["estimated_temp_f"] == 27.9
+    assert data["hypothermia_risk"] == "critical"
+
+    res_404 = client.post(
+        "/api/weather/microclimate",
+        json={"zone_id": "nonexistent-zone", "target_elevation_ft": 6000.0},
+    )
+    assert res_404.status_code == 404
+
+
+def test_get_weather_protocols_endpoint():
+    res = client.get("/api/weather/protocols")
+    assert res.status_code == 200
+    data = res.json()
+    assert "title" in data
+    assert "lightning_safety" in data
+    assert "whiteout_navigation" in data
+
+
+def test_create_response_mock_mode_with_weather_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "What is the weather and freezing level at Mount Rainier?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "weather_info" in data
+        assert data["weather_info"]["action"] in ("zone_detail", "zones")
+        assert "Mount Rainier" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_weather_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What is the wind chill and lapse rate at 10000 ft on Mount Rainier?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        w_event = next((e for e in events if e.get("event") == "weather_info"), None)
+        assert w_event is not None
+        assert "weather_info" in w_event
+        assert w_event["weather_info"]["action"] == "microclimate"

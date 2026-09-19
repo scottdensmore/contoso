@@ -4961,3 +4961,59 @@ async def test_generate_llm_response_gcp_provider_includes_fire_safety_prompt():
     assert result == "gcp fire answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Fire Safety Grounding: FIRE" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_local_provider_includes_weather_prompt():
+    mock_completion = MagicMock(
+        return_value=SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="local weather answer"))]
+        )
+    )
+
+    with patch.dict(
+        sys.modules,
+        {"litellm": SimpleNamespace(completion=mock_completion)},
+    ), patch.dict(
+        "os.environ",
+        {"OLLAMA_BASE_URL": "http://ollama:11434", "LOCAL_MODEL_NAME": "mistral"},
+        clear=False,
+    ):
+        result = await generate_llm_response(
+            prompt="rainier weather",
+            context="[]",
+            user_name="Taylor",
+            provider="local",
+            project_id="unused-project",
+            location="unused-region",
+            model_name="unused-model",
+            weather_prompt="Contoso Outdoors Wilderness Weather Grounding: TEST",
+        )
+
+    assert result == "local weather answer"
+    messages = mock_completion.call_args.kwargs["messages"]
+    system_msg = next(m["content"] for m in messages if m["role"] == "system")
+    assert "Contoso Outdoors Wilderness Weather Grounding: TEST" in system_msg
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_weather_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp weather answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="rainier weather",
+            context="[]",
+            user_name="Taylor",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            weather_prompt="Contoso Outdoors Wilderness Weather Grounding: WEATHER",
+        )
+
+    assert result == "gcp weather answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Wilderness Weather Grounding: WEATHER" in sent_prompt
