@@ -2141,6 +2141,8 @@ def test_post_loyalty_redeem_endpoint():
     data2 = res2.json()
     assert data2["success"] is False
     assert data2["remaining_points"] == 450
+    from contoso_chat.rewards import reset_rewards_state
+    reset_rewards_state()
 
 
 def test_create_response_mock_mode_with_rewards_balance_intent():
@@ -2193,6 +2195,8 @@ def test_create_response_mock_mode_with_rewards_redeem_intent():
         assert "rewards_info" in data
         assert data["rewards_info"]["action"] == "redeem"
         assert "REWARD10" in data["answer"]
+        from contoso_chat.rewards import reset_rewards_state
+        reset_rewards_state()
 
 
 def test_create_response_stream_mock_mode_emits_rewards_info_event():
@@ -2295,3 +2299,82 @@ def test_create_response_stream_mock_mode_omits_trade_in_info_when_no_intent():
         ]
         trade_in_event = next((e for e in events if e.get("event") == "trade_in_info"), None)
         assert trade_in_event is None
+
+
+def test_get_planner_templates_endpoint():
+    res = client.get("/api/planner/templates")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 3
+    ids = {t["id"] for t in data}
+    assert "weekend-backpacking" in ids
+    assert "alpine-expedition" in ids
+    assert "desert-trek" in ids
+    assert "winter-wilderness" in ids
+
+
+def test_post_planner_generate_endpoint():
+    res = client.post(
+        "/api/planner/generate",
+        json={"duration_days": 3, "group_size": 2, "climate": "cold"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["duration_days"] == 3
+    assert data["group_size"] == 2
+    assert data["total_calories_kcal"] == 20400
+    assert data["daily_calories_per_person"] == 3400
+    assert data["daily_water_liters_per_person"] == 3.0
+    assert data["total_water_capacity_liters"] == 6.0
+    assert len(data["checklist"]) >= 10
+    checklist_text = " ".join(item["name"].lower() for item in data["checklist"])
+    assert "4-season" in checklist_text
+
+
+def test_create_response_mock_mode_with_trip_planner_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Plan a 3-day backpacking trip in the Cascades with packing list and calorie needs"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "trip_planner_info" in data
+        assert data["trip_planner_info"]["duration_days"] == 3
+        assert data["trip_planner_info"]["daily_calories_per_person"] == 3000
+        assert "3-day" in data["answer"].lower() or "3 day" in data["answer"].lower()
+
+
+def test_create_response_stream_mock_mode_emits_trip_planner_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What water capacity and gear do I need for desert hiking?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        planner_event = next((e for e in events if e.get("event") == "trip_planner_info"), None)
+        assert planner_event is not None
+        assert "trip_planner_info" in planner_event
+        assert planner_event["trip_planner_info"]["daily_water_liters_per_person"] == 4.5
+
+
+def test_create_response_stream_mock_mode_omits_trip_planner_info_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Where is your retail store?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        planner_event = next((e for e in events if e.get("event") == "trip_planner_info"), None)
+        assert planner_event is None

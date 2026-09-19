@@ -3042,6 +3042,8 @@ async def test_generate_llm_response_gcp_provider_includes_trail_prompt():
 
 @pytest.mark.anyio
 async def test_get_response_includes_rewards_info_when_intent_detected():
+    from contoso_chat.rewards import reset_rewards_state
+    reset_rewards_state()
     mock_search = MagicMock()
     mock_search.search.return_value = []
     fake_customer = {"firstName": "Taylor", "membership": "Gold", "orders": []}
@@ -3869,3 +3871,108 @@ async def test_generate_llm_response_gcp_provider_includes_trade_in_prompt():
     assert result == "gcp trade-in answer"
     sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
     assert "Contoso Outdoors Re-Gear Trade-In & Sustainability Guidance: BRANDS" in sent_prompt
+
+
+@pytest.mark.anyio
+async def test_get_response_includes_trip_planner_info_when_intent_detected():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response",
+        new=AsyncMock(return_value="Here is your 3-day backpacking plan."),
+    ):
+        result = await get_response(
+            "cust-default",
+            "Plan a 3-day backpacking trip in the Cascades with packing list and calorie needs",
+            "[]",
+        )
+
+    assert result.get("trip_planner_info") is not None
+    assert result["trip_planner_info"]["duration_days"] == 3
+    assert result["trip_planner_info"]["daily_calories_per_person"] == 3000
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_yields_trip_planner_info_frame():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Desert ", "hiking ", "requires 4.5L water."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "What water capacity and gear do I need for desert hiking?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    planner_event = next((e for e in events if e.get("event") == "trip_planner_info"), None)
+    assert planner_event is not None
+    assert planner_event["trip_planner_info"]["daily_water_liters_per_person"] == 4.5
+
+
+@pytest.mark.anyio
+async def test_get_response_stream_omits_trip_planner_info_frame_when_no_intent():
+    mock_search = MagicMock()
+    mock_search.search.return_value = []
+    fake_customer = {"firstName": "Alex", "membership": "Gold", "orders": []}
+
+    with patch(
+        "contoso_chat.chat_request.get_customer_from_postgres",
+        new=AsyncMock(return_value=fake_customer),
+    ), patch(
+        "contoso_chat.chat_request.get_search_service",
+        return_value=mock_search,
+    ), patch(
+        "contoso_chat.chat_request.generate_llm_response_stream",
+        return_value=iter(["Store ", "hours."]),
+    ):
+        events = []
+        async for chunk in get_response_stream(
+            "cust-default", "Where is your retail store?", "[]"
+        ):
+            if chunk.startswith("data: "):
+                events.append(json.loads(chunk.removeprefix("data: ").strip()))
+
+    planner_event = next((e for e in events if e.get("event") == "trip_planner_info"), None)
+    assert planner_event is None
+
+
+@pytest.mark.anyio
+async def test_generate_llm_response_gcp_provider_includes_trip_planner_prompt():
+    mock_client = MagicMock()
+    mock_client.models.generate_content.return_value = SimpleNamespace(text="gcp trip planner answer")
+    mock_client_class = MagicMock(return_value=mock_client)
+
+    with patch("google.genai.Client", mock_client_class):
+        result = await generate_llm_response(
+            prompt="trip plan",
+            context="[]",
+            user_name="Alex",
+            provider="gcp",
+            project_id="project-1",
+            location="us-central1",
+            model_name="gemini-2.5-flash",
+            trip_planner_prompt="Contoso Outdoors Wilderness Trip Planning & Equipment Advisor Grounding: PLAN",
+        )
+
+    assert result == "gcp trip planner answer"
+    sent_prompt = mock_client.models.generate_content.call_args.kwargs["contents"]
+    assert "Contoso Outdoors Wilderness Trip Planning & Equipment Advisor Grounding: PLAN" in sent_prompt
