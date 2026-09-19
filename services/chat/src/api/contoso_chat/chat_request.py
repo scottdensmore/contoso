@@ -22,6 +22,11 @@ from .field_reports import (
     detect_field_reports_intent,
     format_field_reports_response,
 )
+from .huts import (
+    build_hut_prompt,
+    detect_hut_intent,
+    format_hut_response,
+)
 from .order_tracking import (
     build_order_tracking_prompt,
     detect_order_tracking_intent,
@@ -337,6 +342,7 @@ async def generate_llm_response(
     trip_planner_prompt: str = "",
     safety_prompt: str = "",
     shuttle_prompt: str = "",
+    hut_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -415,6 +421,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{safety_prompt}"
         if shuttle_prompt:
             local_system = f"{local_system}\n\n{shuttle_prompt}"
+        if hut_prompt:
+            local_system = f"{local_system}\n\n{hut_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -482,6 +490,8 @@ async def generate_llm_response(
             prompt_parts.append(safety_prompt)
         if shuttle_prompt:
             prompt_parts.append(shuttle_prompt)
+        if hut_prompt:
+            prompt_parts.append(hut_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -817,6 +827,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_shuttle = format_shuttle_response(shuttle_intent)
         shuttle_info_payload = formatted_shuttle.get("shuttle_info")
 
+    hut_intent = detect_hut_intent(question)
+    hut_prompt = ""
+    hut_info_payload = None
+    if hut_intent:
+        hut_prompt = build_hut_prompt(hut_intent)
+        formatted_hut = format_hut_response(hut_intent)
+        hut_info_payload = formatted_hut.get("hut_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -845,7 +863,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent:
         llm_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         llm_kwargs["repair_prompt"] = repair_prompt
@@ -861,6 +879,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["safety_prompt"] = safety_prompt
     if shuttle_prompt:
         llm_kwargs["shuttle_prompt"] = shuttle_prompt
+    if hut_prompt:
+        llm_kwargs["hut_prompt"] = hut_prompt
 
     answer = await generate_llm_response(
         question,
@@ -927,6 +947,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["safety_info"] = safety_info_payload
     if shuttle_intent and shuttle_info_payload:
         response_payload["shuttle_info"] = shuttle_info_payload
+    if hut_intent and hut_info_payload:
+        response_payload["hut_info"] = hut_info_payload
 
     return response_payload
 
@@ -962,6 +984,7 @@ def generate_llm_response_stream(
     trip_planner_prompt: str = "",
     safety_prompt: str = "",
     shuttle_prompt: str = "",
+    hut_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1036,6 +1059,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{safety_prompt}"
         if shuttle_prompt:
             local_system = f"{local_system}\n\n{shuttle_prompt}"
+        if hut_prompt:
+            local_system = f"{local_system}\n\n{hut_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1102,6 +1127,8 @@ def generate_llm_response_stream(
             prompt_parts.append(safety_prompt)
         if shuttle_prompt:
             prompt_parts.append(shuttle_prompt)
+        if hut_prompt:
+            prompt_parts.append(hut_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1308,6 +1335,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_shuttle = format_shuttle_response(shuttle_intent)
         shuttle_info_payload = formatted_shuttle.get("shuttle_info")
 
+    hut_intent = detect_hut_intent(question)
+    hut_prompt = ""
+    hut_info_payload = None
+    if hut_intent:
+        hut_prompt = build_hut_prompt(hut_intent)
+        formatted_hut = format_hut_response(hut_intent)
+        hut_info_payload = formatted_hut.get("hut_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1352,6 +1387,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': safety_info_payload})}\n\n"
     if shuttle_intent and shuttle_info_payload:
         yield f"data: {json.dumps({'event': 'shuttle_info', 'shuttle_info': shuttle_info_payload})}\n\n"
+    if hut_intent and hut_info_payload:
+        yield f"data: {json.dumps({'event': 'hut_info', 'hut_info': hut_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1381,7 +1418,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent:
         stream_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         stream_kwargs["repair_prompt"] = repair_prompt
@@ -1397,6 +1434,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["safety_prompt"] = safety_prompt
     if shuttle_prompt:
         stream_kwargs["shuttle_prompt"] = shuttle_prompt
+    if hut_prompt:
+        stream_kwargs["hut_prompt"] = hut_prompt
 
     for chunk in generate_llm_response_stream(
         question,

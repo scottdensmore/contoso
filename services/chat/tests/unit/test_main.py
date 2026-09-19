@@ -2686,3 +2686,119 @@ def test_create_response_stream_mock_mode_emits_shuttle_info_event():
         assert shuttle_event is not None
         assert "shuttle_info" in shuttle_event
         assert shuttle_event["shuttle_info"]["action"] == "schedule"
+
+
+def test_get_alpine_huts_endpoint():
+    res = client.get("/api/huts")
+    assert res.status_code == 200
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 4
+
+    res_cascades = client.get("/api/huts?range=cascades")
+    assert res_cascades.status_code == 200
+    cascades_huts = res_cascades.json()
+    assert len(cascades_huts) >= 1
+    assert all(h["range_name"] == "cascades" for h in cascades_huts)
+
+    res_diff = client.get("/api/huts?difficulty=Technical")
+    assert res_diff.status_code == 200
+    tech_huts = res_diff.json()
+    assert len(tech_huts) >= 1
+    assert all(h["difficulty"] == "Technical" for h in tech_huts)
+
+
+def test_get_alpine_hut_by_id_endpoint():
+    res = client.get("/api/huts/asgard-refuge")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["hut_id"] == "asgard-refuge"
+    assert data["elevation_feet"] == 7850
+    assert "Microspikes" in data["mandatory_gear"]
+
+    res_404 = client.get("/api/huts/unknown-hut")
+    assert res_404.status_code == 404
+
+
+def test_post_hut_quote_endpoint():
+    res = client.post(
+        "/api/huts/quote",
+        json={"hut_id": "asgard-refuge", "nights": 2, "guests": 2},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["hut_id"] == "asgard-refuge"
+    assert data["total_price"] == 180.0
+    assert data["nights"] == 2
+    assert data["guests"] == 2
+
+    res_404 = client.post(
+        "/api/huts/quote",
+        json={"hut_id": "nonexistent-hut", "nights": 1, "guests": 1},
+    )
+    assert res_404.status_code == 404
+
+
+def test_post_hut_book_endpoint():
+    res = client.post(
+        "/api/huts/book",
+        json={
+            "hut_id": "asgard-refuge",
+            "checkin_date": "2026-10-15",
+            "nights": 2,
+            "guests": 2,
+            "guest_name": "Jordan Romero",
+            "guest_email": "jordan@example.com",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["booking_id"].startswith("HUT-")
+    assert data["hut_id"] == "asgard-refuge"
+    assert data["total_price"] == 180.0
+    assert data["status"] == "confirmed"
+    assert "instructions" in data
+
+    res_404 = client.post(
+        "/api/huts/book",
+        json={
+            "hut_id": "nonexistent-hut",
+            "checkin_date": "2026-10-15",
+            "nights": 1,
+            "guests": 1,
+            "guest_name": "Jordan Romero",
+            "guest_email": "jordan@example.com",
+        },
+    )
+    assert res_404.status_code == 404
+
+
+def test_create_response_mock_mode_with_hut_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Can I stay at the Asgard Pass alpine refuge?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "hut_info" in data
+        assert data["hut_info"]["action"] == "huts"
+        assert "Asgard Pass" in data["answer"]
+
+
+def test_create_response_stream_mock_mode_emits_hut_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "How much does a bunk at Mueller Ridge cabin cost for 2 nights?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        hut_event = next((e for e in events if e.get("event") == "hut_info"), None)
+        assert hut_event is not None
+        assert "hut_info" in hut_event
+        assert hut_event["hut_info"]["action"] == "quote"
