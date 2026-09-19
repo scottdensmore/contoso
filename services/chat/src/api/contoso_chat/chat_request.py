@@ -8,6 +8,11 @@ from .adventures import (
     detect_adventure_intent,
     format_adventure_response,
 )
+from .avalanche import (
+    build_avalanche_prompt,
+    detect_avalanche_intent,
+    format_avalanche_response,
+)
 from .carrier_tracking import (
     build_carrier_milestone_prompt,
     detect_carrier_tracking_intent,
@@ -379,6 +384,7 @@ async def generate_llm_response(
     fire_safety_prompt: str = "",
     first_aid_prompt: str = "",
     lnt_prompt: str = "",
+    avalanche_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -471,6 +477,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{first_aid_prompt}"
         if lnt_prompt:
             local_system = f"{local_system}\n\n{lnt_prompt}"
+        if avalanche_prompt:
+            local_system = f"{local_system}\n\n{avalanche_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -552,6 +560,8 @@ async def generate_llm_response(
             prompt_parts.append(first_aid_prompt)
         if lnt_prompt:
             prompt_parts.append(lnt_prompt)
+        if avalanche_prompt:
+            prompt_parts.append(avalanche_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -943,6 +953,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_lnt = format_lnt_response(lnt_intent)
         lnt_info_payload = formatted_lnt.get("lnt_info")
 
+    avalanche_intent = detect_avalanche_intent(question)
+    avalanche_prompt = ""
+    avalanche_info_payload = None
+    if avalanche_intent:
+        avalanche_prompt = build_avalanche_prompt(avalanche_intent)
+        formatted_avy = format_avalanche_response(avalanche_intent)
+        avalanche_info_payload = formatted_avy.get("avalanche_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -977,13 +995,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["repair_prompt"] = repair_prompt
     if adventures_prompt:
         llm_kwargs["adventures_prompt"] = adventures_prompt
-    if field_reports_prompt:
+    if field_reports_prompt and not avalanche_intent:
         llm_kwargs["field_reports_prompt"] = field_reports_prompt
     if trade_in_prompt:
         llm_kwargs["trade_in_prompt"] = trade_in_prompt
     if trip_planner_prompt:
         llm_kwargs["trip_planner_prompt"] = trip_planner_prompt
-    if safety_prompt:
+    if safety_prompt and not avalanche_intent:
         llm_kwargs["safety_prompt"] = safety_prompt
     if shuttle_prompt:
         llm_kwargs["shuttle_prompt"] = shuttle_prompt
@@ -1001,6 +1019,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["first_aid_prompt"] = first_aid_prompt
     if lnt_prompt:
         llm_kwargs["lnt_prompt"] = lnt_prompt
+    if avalanche_prompt:
+        llm_kwargs["avalanche_prompt"] = avalanche_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1051,19 +1071,19 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trail_outfitting"] = trail_outfitting_payload
     if rewards_intent and rewards_info_payload:
         response_payload["rewards_info"] = rewards_info_payload
-    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent and permits_info_payload:
         response_payload["permits_info"] = permits_info_payload
     if repair_intent and repair_info_payload:
         response_payload["repair_info"] = repair_info_payload
     if adventure_intent and adventures_info_payload:
         response_payload["adventures_info"] = adventures_info_payload
-    if field_reports_intent and field_reports_info_payload:
+    if field_reports_intent and not avalanche_intent and field_reports_info_payload:
         response_payload["field_reports_info"] = field_reports_info_payload
     if trade_in_intent and trade_in_info_payload:
         response_payload["trade_in_info"] = trade_in_info_payload
     if trip_planner_intent and trip_planner_payload:
         response_payload["trip_planner_info"] = trip_planner_payload
-    if safety_intent and safety_info_payload:
+    if safety_intent and not avalanche_intent and safety_info_payload:
         response_payload["safety_info"] = safety_info_payload
     if shuttle_intent and shuttle_info_payload:
         response_payload["shuttle_info"] = shuttle_info_payload
@@ -1081,6 +1101,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["first_aid_info"] = first_aid_info_payload
     if lnt_intent and lnt_info_payload:
         response_payload["lnt_info"] = lnt_info_payload
+    if avalanche_intent and avalanche_info_payload:
+        response_payload["avalanche_info"] = avalanche_info_payload
 
     return response_payload
 
@@ -1123,6 +1145,7 @@ def generate_llm_response_stream(
     fire_safety_prompt: str = "",
     first_aid_prompt: str = "",
     lnt_prompt: str = "",
+    avalanche_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1211,6 +1234,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{first_aid_prompt}"
         if lnt_prompt:
             local_system = f"{local_system}\n\n{lnt_prompt}"
+        if avalanche_prompt:
+            local_system = f"{local_system}\n\n{avalanche_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1291,6 +1316,8 @@ def generate_llm_response_stream(
             prompt_parts.append(first_aid_prompt)
         if lnt_prompt:
             prompt_parts.append(lnt_prompt)
+        if avalanche_prompt:
+            prompt_parts.append(avalanche_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1545,6 +1572,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_first_aid = format_first_aid_response(first_aid_intent)
         first_aid_info_payload = formatted_first_aid.get("first_aid_info")
 
+    avalanche_intent = detect_avalanche_intent(question)
+    avalanche_prompt = ""
+    avalanche_info_payload = None
+    if avalanche_intent:
+        avalanche_prompt = build_avalanche_prompt(avalanche_intent)
+        formatted_avy = format_avalanche_response(avalanche_intent)
+        avalanche_info_payload = formatted_avy.get("avalanche_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1573,19 +1608,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
     if rewards_intent and rewards_info_payload:
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
-    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and permits_info_payload:
+    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent and permits_info_payload:
         yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
     if repair_intent and repair_info_payload:
         yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': repair_info_payload})}\n\n"
     if adventure_intent and adventures_info_payload:
         yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': adventures_info_payload})}\n\n"
-    if field_reports_intent and field_reports_info_payload:
+    if field_reports_intent and not avalanche_intent and field_reports_info_payload:
         yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': field_reports_info_payload})}\n\n"
     if trade_in_intent and trade_in_info_payload:
         yield f"data: {json.dumps({'event': 'trade_in_info', 'trade_in_info': trade_in_info_payload})}\n\n"
     if trip_planner_intent and trip_planner_payload:
         yield f"data: {json.dumps({'event': 'trip_planner_info', 'trip_planner_info': trip_planner_payload})}\n\n"
-    if safety_intent and safety_info_payload:
+    if safety_intent and not avalanche_intent and safety_info_payload:
         yield f"data: {json.dumps({'event': 'safety_info', 'safety_info': safety_info_payload})}\n\n"
     if shuttle_intent and shuttle_info_payload:
         yield f"data: {json.dumps({'event': 'shuttle_info', 'shuttle_info': shuttle_info_payload})}\n\n"
@@ -1601,6 +1636,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'fire_safety_info', 'fire_safety_info': fire_safety_info_payload})}\n\n"
     if first_aid_intent and first_aid_info_payload:
         yield f"data: {json.dumps({'event': 'first_aid_info', 'first_aid_info': first_aid_info_payload})}\n\n"
+    if avalanche_intent and avalanche_info_payload:
+        yield f"data: {json.dumps({'event': 'avalanche_info', 'avalanche_info': avalanche_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1630,19 +1667,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent:
+    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent:
         stream_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         stream_kwargs["repair_prompt"] = repair_prompt
     if adventures_prompt:
         stream_kwargs["adventures_prompt"] = adventures_prompt
-    if field_reports_prompt:
+    if field_reports_prompt and not avalanche_intent:
         stream_kwargs["field_reports_prompt"] = field_reports_prompt
     if trade_in_prompt:
         stream_kwargs["trade_in_prompt"] = trade_in_prompt
     if trip_planner_prompt:
         stream_kwargs["trip_planner_prompt"] = trip_planner_prompt
-    if safety_prompt:
+    if safety_prompt and not avalanche_intent:
         stream_kwargs["safety_prompt"] = safety_prompt
     if shuttle_prompt:
         stream_kwargs["shuttle_prompt"] = shuttle_prompt
@@ -1658,6 +1695,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["fire_safety_prompt"] = fire_safety_prompt
     if first_aid_prompt:
         stream_kwargs["first_aid_prompt"] = first_aid_prompt
+    if avalanche_prompt:
+        stream_kwargs["avalanche_prompt"] = avalanche_prompt
 
     for chunk in generate_llm_response_stream(
         question,
