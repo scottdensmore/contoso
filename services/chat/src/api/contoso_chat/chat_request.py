@@ -36,6 +36,11 @@ from .rentals import (
     detect_rental_intent,
     format_rental_response,
 )
+from .repair import (
+    build_repair_prompt,
+    detect_repair_intent,
+    format_repair_response,
+)
 from .return_label import (
     build_return_label_prompt,
     detect_return_label_intent,
@@ -295,6 +300,7 @@ async def generate_llm_response(
     trail_prompt: str = "",
     rewards_prompt: str = "",
     permits_prompt: str = "",
+    repair_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -359,8 +365,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{rewards_prompt}"
         if permits_prompt:
             local_system = f"{local_system}\n\n{permits_prompt}"
-        if permits_prompt:
-            local_system = f"{local_system}\n\n{permits_prompt}"
+        if repair_prompt:
+            local_system = f"{local_system}\n\n{repair_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -414,8 +420,8 @@ async def generate_llm_response(
             prompt_parts.append(rewards_prompt)
         if permits_prompt:
             prompt_parts.append(permits_prompt)
-        if permits_prompt:
-            prompt_parts.append(permits_prompt)
+        if repair_prompt:
+            prompt_parts.append(repair_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -695,6 +701,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_permits = format_permits_response(permits_intent)
         permits_info_payload = formatted_permits.get("permits_info")
 
+    repair_intent = detect_repair_intent(question)
+    repair_prompt = ""
+    repair_info_payload = None
+    if repair_intent:
+        repair_prompt = build_repair_prompt(repair_intent)
+        formatted_repair = format_repair_response(repair_intent)
+        repair_info_payload = formatted_repair.get("repair_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -725,6 +739,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["rewards_prompt"] = rewards_prompt
     if permits_prompt:
         llm_kwargs["permits_prompt"] = permits_prompt
+    if repair_prompt:
+        llm_kwargs["repair_prompt"] = repair_prompt
 
     answer = await generate_llm_response(
         question,
@@ -777,6 +793,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["rewards_info"] = rewards_info_payload
     if permits_intent and permits_info_payload:
         response_payload["permits_info"] = permits_info_payload
+    if repair_intent and repair_info_payload:
+        response_payload["repair_info"] = repair_info_payload
 
     return response_payload
 
@@ -805,6 +823,7 @@ def generate_llm_response_stream(
     trail_prompt: str = "",
     rewards_prompt: str = "",
     permits_prompt: str = "",
+    repair_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -863,6 +882,10 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{trail_prompt}"
         if rewards_prompt:
             local_system = f"{local_system}\n\n{rewards_prompt}"
+        if permits_prompt:
+            local_system = f"{local_system}\n\n{permits_prompt}"
+        if repair_prompt:
+            local_system = f"{local_system}\n\n{repair_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -913,6 +936,10 @@ def generate_llm_response_stream(
             prompt_parts.append(trail_prompt)
         if rewards_prompt:
             prompt_parts.append(rewards_prompt)
+        if permits_prompt:
+            prompt_parts.append(permits_prompt)
+        if repair_prompt:
+            prompt_parts.append(repair_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1063,6 +1090,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_permits = format_permits_response(permits_intent)
         permits_info_payload = formatted_permits.get("permits_info")
 
+    repair_intent = detect_repair_intent(question)
+    repair_prompt = ""
+    repair_info_payload = None
+    if repair_intent:
+        repair_prompt = build_repair_prompt(repair_intent)
+        formatted_repair = format_repair_response(repair_intent)
+        repair_info_payload = formatted_repair.get("repair_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1093,6 +1128,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
     if permits_intent and permits_info_payload:
         yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
+    if repair_intent and repair_info_payload:
+        yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': repair_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1124,6 +1161,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["rewards_prompt"] = rewards_prompt
     if permits_prompt:
         stream_kwargs["permits_prompt"] = permits_prompt
+    if repair_prompt:
+        stream_kwargs["repair_prompt"] = repair_prompt
 
     for chunk in generate_llm_response_stream(
         question,
