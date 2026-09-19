@@ -76,6 +76,11 @@ from .stores import (
     build_store_prompt,
     detect_store_intent,
 )
+from .trade_in import (
+    build_trade_in_prompt,
+    detect_trade_in_intent,
+    format_trade_in_response,
+)
 from .trails import (
     build_trail_prompt,
     detect_trail_intent,
@@ -313,6 +318,7 @@ async def generate_llm_response(
     repair_prompt: str = "",
     adventures_prompt: str = "",
     field_reports_prompt: str = "",
+    trade_in_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -383,6 +389,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{adventures_prompt}"
         if field_reports_prompt:
             local_system = f"{local_system}\n\n{field_reports_prompt}"
+        if trade_in_prompt:
+            local_system = f"{local_system}\n\n{trade_in_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -442,6 +450,8 @@ async def generate_llm_response(
             prompt_parts.append(adventures_prompt)
         if field_reports_prompt:
             prompt_parts.append(field_reports_prompt)
+        if trade_in_prompt:
+            prompt_parts.append(trade_in_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -745,6 +755,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_field_reports = format_field_reports_response(field_reports_intent)
         field_reports_info_payload = formatted_field_reports.get("field_reports_info")
 
+    trade_in_intent = detect_trade_in_intent(question)
+    trade_in_prompt = ""
+    trade_in_info_payload = None
+    if trade_in_intent:
+        trade_in_prompt = build_trade_in_prompt(trade_in_intent)
+        formatted_trade_in = format_trade_in_response(trade_in_intent)
+        trade_in_info_payload = formatted_trade_in.get("trade_in_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -781,6 +799,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["adventures_prompt"] = adventures_prompt
     if field_reports_prompt:
         llm_kwargs["field_reports_prompt"] = field_reports_prompt
+    if trade_in_prompt:
+        llm_kwargs["trade_in_prompt"] = trade_in_prompt
 
     answer = await generate_llm_response(
         question,
@@ -839,6 +859,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["adventures_info"] = adventures_info_payload
     if field_reports_intent and field_reports_info_payload:
         response_payload["field_reports_info"] = field_reports_info_payload
+    if trade_in_intent and trade_in_info_payload:
+        response_payload["trade_in_info"] = trade_in_info_payload
 
     return response_payload
 
@@ -870,6 +892,7 @@ def generate_llm_response_stream(
     repair_prompt: str = "",
     adventures_prompt: str = "",
     field_reports_prompt: str = "",
+    trade_in_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -936,6 +959,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{adventures_prompt}"
         if field_reports_prompt:
             local_system = f"{local_system}\n\n{field_reports_prompt}"
+        if trade_in_prompt:
+            local_system = f"{local_system}\n\n{trade_in_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -994,6 +1019,8 @@ def generate_llm_response_stream(
             prompt_parts.append(adventures_prompt)
         if field_reports_prompt:
             prompt_parts.append(field_reports_prompt)
+        if trade_in_prompt:
+            prompt_parts.append(trade_in_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1168,6 +1195,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_field_reports = format_field_reports_response(field_reports_intent)
         field_reports_info_payload = formatted_field_reports.get("field_reports_info")
 
+    trade_in_intent = detect_trade_in_intent(question)
+    trade_in_prompt = ""
+    trade_in_info_payload = None
+    if trade_in_intent:
+        trade_in_prompt = build_trade_in_prompt(trade_in_intent)
+        formatted_trade_in = format_trade_in_response(trade_in_intent)
+        trade_in_info_payload = formatted_trade_in.get("trade_in_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1204,6 +1239,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'adventures_info', 'adventures_info': adventures_info_payload})}\n\n"
     if field_reports_intent and field_reports_info_payload:
         yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': field_reports_info_payload})}\n\n"
+    if trade_in_intent and trade_in_info_payload:
+        yield f"data: {json.dumps({'event': 'trade_in_info', 'trade_in_info': trade_in_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1241,6 +1278,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["adventures_prompt"] = adventures_prompt
     if field_reports_prompt:
         stream_kwargs["field_reports_prompt"] = field_reports_prompt
+    if trade_in_prompt:
+        stream_kwargs["trade_in_prompt"] = trade_in_prompt
 
     for chunk in generate_llm_response_stream(
         question,

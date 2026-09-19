@@ -121,6 +121,15 @@ from contoso_chat.stores import (
     get_store_by_id,
     search_stores,
 )
+from contoso_chat.trade_in import (
+    EligibleBrandModel,
+    TradeInEstimateModel,
+    TradeInEstimateRequest,
+    detect_trade_in_intent,
+    estimate_trade_in_payout,
+    format_trade_in_response,
+    get_eligible_brands,
+)
 from contoso_chat.trails import (
     TrailCondition,
     TrailOutfittingRequest,
@@ -434,6 +443,7 @@ async def create_response(request: ChatRequest):
             repair_intent = detect_repair_intent(request.question)
             adventure_intent = detect_adventure_intent(request.question)
             field_reports_intent = detect_field_reports_intent(request.question)
+            trade_in_intent = detect_trade_in_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -580,6 +590,10 @@ async def create_response(request: ChatRequest):
                 formatted_field_reports = format_field_reports_response(field_reports_intent)
                 mock_payload["field_reports_info"] = formatted_field_reports.get("field_reports_info")
                 mock_payload["answer"] = formatted_field_reports.get("answer", mock_payload["answer"])
+            if trade_in_intent:
+                formatted_trade_in = format_trade_in_response(trade_in_intent)
+                mock_payload["trade_in_info"] = formatted_trade_in.get("trade_in_info")
+                mock_payload["answer"] = formatted_trade_in.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -701,6 +715,7 @@ async def create_response_stream(request: ChatRequest):
                 repair_intent = detect_repair_intent(request.question)
                 adventure_intent = detect_adventure_intent(request.question)
                 field_reports_intent = detect_field_reports_intent(request.question)
+                trade_in_intent = detect_trade_in_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -771,6 +786,9 @@ async def create_response_stream(request: ChatRequest):
                 if field_reports_intent:
                     formatted_field_reports = format_field_reports_response(field_reports_intent)
                     yield f"data: {json.dumps({'event': 'field_reports_info', 'field_reports_info': formatted_field_reports.get('field_reports_info')})}\n\n"
+                if trade_in_intent:
+                    formatted_trade_in = format_trade_in_response(trade_in_intent)
+                    yield f"data: {json.dumps({'event': 'trade_in_info', 'trade_in_info': formatted_trade_in.get('trade_in_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -887,6 +905,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_repair = format_repair_response(repair_intent)
                     mock_chunks = [
                         str(formatted_repair.get("answer", ""))
+                    ]
+                elif trade_in_intent:
+                    formatted_trade_in = format_trade_in_response(trade_in_intent)
+                    mock_chunks = [
+                        str(formatted_trade_in.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1419,3 +1442,42 @@ async def get_reports_alerts_endpoint(
     logger.info("Hazard alerts requested", extra={"trail_name": trail_name})
     return get_hazard_alerts(trail_name=trail_name)
 
+
+
+@app.get(
+    "/api/trade-in/brands",
+    response_model=list[EligibleBrandModel],
+    responses={
+        200: {"description": "Eligible trade-in brands and accepted categories retrieved"},
+    },
+)
+async def get_trade_in_brands_endpoint() -> list[EligibleBrandModel]:
+    logger.info("Eligible trade-in brands requested")
+    return get_eligible_brands()
+
+
+@app.post(
+    "/api/trade-in/estimate",
+    response_model=TradeInEstimateModel,
+    responses={
+        200: {"description": "Trade-in estimate calculated"},
+    },
+)
+async def post_trade_in_estimate_endpoint(
+    request: TradeInEstimateRequest,
+) -> TradeInEstimateModel:
+    logger.info(
+        "Trade-in estimate requested",
+        extra={
+            "category": request.category,
+            "original_msrp": request.original_msrp,
+            "condition": request.condition,
+            "brand": request.brand,
+        },
+    )
+    return estimate_trade_in_payout(
+        category=request.category,
+        original_msrp=request.original_msrp,
+        condition=request.condition or "very_good",
+        brand=request.brand,
+    )

@@ -2227,3 +2227,71 @@ def test_create_response_stream_mock_mode_omits_rewards_info_when_no_intent():
         ]
         rewards_event = next((e for e in events if e.get("event") == "rewards_info"), None)
         assert rewards_event is None
+
+
+def test_get_trade_in_brands_endpoint():
+    res = client.get("/api/trade-in/brands")
+    assert res.status_code == 200
+    brands = res.json()
+    assert len(brands) == 8
+    names = {b["name"] for b in brands}
+    assert "Contoso Outdoors" in names
+    assert "Patagonia" in names
+
+
+def test_post_trade_in_estimate_endpoint():
+    res = client.post(
+        "/api/trade-in/estimate",
+        json={"category": "tents", "original_msrp": 400.0, "condition": "excellent"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["estimated_payout"] == 200.0
+    assert data["co2_avoided_kg"] == 25.0
+
+
+def test_create_response_mock_mode_with_trade_in_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response",
+            json={"question": "Can I trade in my used Patagonia jacket for store credit?"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert "trade_in_info" in data
+        assert data["trade_in_info"]["action"] == "estimate"
+        assert data["trade_in_info"]["brand"] == "Patagonia"
+
+
+def test_create_response_stream_mock_mode_emits_trade_in_info_event():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "What brands are eligible for the Contoso Re-Gear trade-in program?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        trade_in_event = next((e for e in events if e.get("event") == "trade_in_info"), None)
+        assert trade_in_event is not None
+        assert "trade_in_info" in trade_in_event
+        assert trade_in_event["trade_in_info"]["action"] == "brands"
+
+
+def test_create_response_stream_mock_mode_omits_trade_in_info_when_no_intent():
+    with patch("main.REAL_CHAT_AVAILABLE", False):
+        res = client.post(
+            "/api/create_response/stream",
+            json={"question": "Where is your retail store?"},
+        )
+        assert res.status_code == 200
+        events = [
+            json.loads(line.removeprefix("data: "))
+            for line in res.text.split("\n\n")
+            if line.strip() and line.startswith("data: ") and line != "data: [DONE]"
+        ]
+        trade_in_event = next((e for e in events if e.get("event") == "trade_in_info"), None)
+        assert trade_in_event is None
