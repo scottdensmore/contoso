@@ -39,6 +39,19 @@ from contoso_chat.field_reports import (
     get_field_reports,
     get_hazard_alerts,
 )
+from contoso_chat.huts import (
+    AlpineHutModel,
+    HutAvailabilityRequest,
+    HutAvailabilityResponse,
+    HutBookingRequest,
+    HutBookingResponse,
+    book_alpine_hut,
+    calculate_hut_quote,
+    detect_hut_intent,
+    format_hut_response,
+    get_alpine_hut_by_id,
+    get_alpine_huts,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.permits import (
     ParkPassInfo,
@@ -486,6 +499,7 @@ async def create_response(request: ChatRequest):
             trade_in_intent = detect_trade_in_intent(request.question)
             trip_planner_intent = detect_trip_planner_intent(request.question)
             shuttle_intent = detect_shuttle_intent(request.question)
+            hut_intent = detect_hut_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -616,7 +630,7 @@ async def create_response(request: ChatRequest):
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent:
+            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent:
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -649,6 +663,10 @@ async def create_response(request: ChatRequest):
                 formatted_shuttle = format_shuttle_response(shuttle_intent)
                 mock_payload["shuttle_info"] = formatted_shuttle.get("shuttle_info")
                 mock_payload["answer"] = formatted_shuttle.get("answer", mock_payload["answer"])
+            if hut_intent:
+                formatted_hut = format_hut_response(hut_intent)
+                mock_payload["hut_info"] = formatted_hut.get("hut_info")
+                mock_payload["answer"] = formatted_hut.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -774,6 +792,7 @@ async def create_response_stream(request: ChatRequest):
                 trip_planner_intent = detect_trip_planner_intent(request.question)
                 safety_intent = detect_safety_intent(request.question)
                 shuttle_intent = detect_shuttle_intent(request.question)
+                hut_intent = detect_hut_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -856,6 +875,9 @@ async def create_response_stream(request: ChatRequest):
                 if shuttle_intent:
                     formatted_shuttle = format_shuttle_response(shuttle_intent)
                     yield f"data: {json.dumps({'event': 'shuttle_info', 'shuttle_info': formatted_shuttle.get('shuttle_info')})}\n\n"
+                if hut_intent:
+                    formatted_hut = format_hut_response(hut_intent)
+                    yield f"data: {json.dumps({'event': 'hut_info', 'hut_info': formatted_hut.get('hut_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -963,7 +985,7 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_adventure.get("answer", ""))
                     ]
-                elif permits_intent and not shuttle_intent:
+                elif permits_intent and not shuttle_intent and not hut_intent:
                     formatted_permits = format_permits_response(permits_intent)
                     mock_chunks = [
                         str(formatted_permits.get("answer", ""))
@@ -992,6 +1014,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_shuttle = format_shuttle_response(shuttle_intent)
                     mock_chunks = [
                         str(formatted_shuttle.get("answer", ""))
+                    ]
+                elif hut_intent:
+                    formatted_hut = format_hut_response(hut_intent)
+                    mock_chunks = [
+                        str(formatted_hut.get("answer", ""))
                     ]
                 else:
                     mock_chunks = [
@@ -1765,3 +1792,75 @@ async def post_shuttle_carpools_endpoint(
 ) -> CarpoolOfferResponse:
     logger.info("New community carpool offer submitted", extra={"origin": request.origin_city, "dest": request.destination_trailhead})
     return create_carpool_offer(request)
+
+
+@app.get(
+    "/api/huts",
+    response_model=list[AlpineHutModel],
+    tags=["Alpine Huts"],
+    responses={
+        200: {"description": "Alpine huts retrieved successfully"},
+    },
+)
+async def get_alpine_huts_endpoint(
+    range: Optional[str] = None,
+    difficulty: Optional[str] = None,
+) -> list[AlpineHutModel]:
+    logger.info("Alpine huts requested", extra={"range": range, "difficulty": difficulty})
+    return get_alpine_huts(range_name=range, difficulty=difficulty)
+
+
+@app.get(
+    "/api/huts/{hut_id}",
+    response_model=AlpineHutModel,
+    tags=["Alpine Huts"],
+    responses={
+        200: {"description": "Alpine hut details retrieved"},
+        404: {"description": "Alpine hut not found"},
+    },
+)
+async def get_alpine_hut_by_id_endpoint(hut_id: str) -> AlpineHutModel:
+    logger.info("Alpine hut details requested", extra={"hut_id": hut_id})
+    hut = get_alpine_hut_by_id(hut_id)
+    if not hut:
+        raise HTTPException(status_code=404, detail=f"Alpine hut '{hut_id}' not found")
+    return hut
+
+
+@app.post(
+    "/api/huts/quote",
+    response_model=HutAvailabilityResponse,
+    tags=["Alpine Huts"],
+    responses={
+        200: {"description": "Alpine hut quote calculated"},
+        404: {"description": "Alpine hut not found"},
+    },
+)
+async def post_hut_quote_endpoint(
+    request: HutAvailabilityRequest,
+) -> HutAvailabilityResponse:
+    logger.info("Alpine hut quote requested", extra={"hut_id": request.hut_id, "range_name": request.range_name})
+    quote = calculate_hut_quote(request)
+    if not quote:
+        identifier = request.hut_id or request.range_name or "specified"
+        raise HTTPException(status_code=404, detail=f"Alpine hut '{identifier}' not found")
+    return quote
+
+
+@app.post(
+    "/api/huts/book",
+    response_model=HutBookingResponse,
+    tags=["Alpine Huts"],
+    responses={
+        200: {"description": "Alpine hut reservation confirmed"},
+        404: {"description": "Alpine hut not found"},
+    },
+)
+async def post_hut_book_endpoint(
+    request: HutBookingRequest,
+) -> HutBookingResponse:
+    logger.info("Alpine hut booking submitted", extra={"hut_id": request.hut_id, "guest_name": request.guest_name})
+    try:
+        return book_alpine_hut(request)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
