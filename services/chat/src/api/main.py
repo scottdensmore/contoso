@@ -89,6 +89,17 @@ from contoso_chat.first_aid import (
     get_medical_condition_by_id,
     get_medical_conditions,
 )
+from contoso_chat.foraging import (
+    SafetyScreenerRequest,
+    SafetyScreenerResponse,
+    SpeciesModel,
+    assess_foraging_safety,
+    detect_foraging_intent,
+    format_foraging_response,
+    get_foraging_guidelines,
+    get_foraging_species,
+    get_foraging_species_by_id,
+)
 from contoso_chat.huts import (
     AlpineHutModel,
     HutAvailabilityRequest,
@@ -645,6 +656,7 @@ async def create_response(request: ChatRequest):
             ski_tour_intent = detect_ski_tour_intent(request.question)
             whitewater_intent = detect_whitewater_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
+            foraging_intent = detect_foraging_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -857,6 +869,10 @@ async def create_response(request: ChatRequest):
                 formatted_climbing = format_climbing_response(climbing_intent)
                 mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
                 mock_payload["answer"] = formatted_climbing.get("answer", mock_payload["answer"])
+            if foraging_intent:
+                formatted_foraging = format_foraging_response(foraging_intent)
+                mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
+                mock_payload["answer"] = formatted_foraging.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -994,6 +1010,7 @@ async def create_response_stream(request: ChatRequest):
                 ski_tour_intent = detect_ski_tour_intent(request.question)
                 whitewater_intent = detect_whitewater_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
+                foraging_intent = detect_foraging_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1112,6 +1129,9 @@ async def create_response_stream(request: ChatRequest):
                 if climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
+                if foraging_intent:
+                    formatted_foraging = format_foraging_response(foraging_intent)
+                    yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1213,6 +1233,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_climbing = format_climbing_response(climbing_intent)
                     mock_chunks = [
                         str(formatted_climbing.get("answer", ""))
+                    ]
+                elif foraging_intent:
+                    formatted_foraging = format_foraging_response(foraging_intent)
+                    mock_chunks = [
+                        str(formatted_foraging.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2767,3 +2792,51 @@ async def calculate_climbing_rack_endpoint(
 async def get_climbing_rappel_safety_endpoint() -> dict[str, Any]:
     return get_rappel_safety_protocol()
 
+
+
+@app.get(
+    "/api/foraging/species",
+    response_model=list[SpeciesModel],
+    tags=["Wilderness Foraging & Flora Safety Tooling"],
+    summary="List wild edible plants and mushrooms",
+)
+async def get_foraging_species_endpoint(
+    category: Optional[str] = None,
+    season: Optional[str] = None,
+) -> list[SpeciesModel]:
+    return get_foraging_species(category=category, season=season)
+
+
+@app.get(
+    "/api/foraging/species/{species_id}",
+    response_model=SpeciesModel,
+    tags=["Wilderness Foraging & Flora Safety Tooling"],
+    summary="Get details for a specific wild edible plant or mushroom",
+)
+async def get_foraging_species_by_id_endpoint(species_id: str) -> SpeciesModel:
+    sp = get_foraging_species_by_id(species_id)
+    if not sp:
+        raise HTTPException(status_code=404, detail=f"Species '{species_id}' not found")
+    return sp
+
+
+@app.post(
+    "/api/foraging/safety-check",
+    response_model=SafetyScreenerResponse,
+    tags=["Wilderness Foraging & Flora Safety Tooling"],
+    summary="Evaluate candidate traits and return safety screening assessment",
+)
+async def assess_foraging_safety_endpoint(
+    request: SafetyScreenerRequest,
+) -> SafetyScreenerResponse:
+    return assess_foraging_safety(request)
+
+
+@app.get(
+    "/api/foraging/guidelines",
+    response_model=dict[str, Any],
+    tags=["Wilderness Foraging & Flora Safety Tooling"],
+    summary="Get ethical foraging guidelines and harvest permits info",
+)
+async def get_foraging_guidelines_endpoint() -> dict[str, Any]:
+    return get_foraging_guidelines()
