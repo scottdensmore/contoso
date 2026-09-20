@@ -141,6 +141,11 @@ from .trade_in import (
     detect_trade_in_intent,
     format_trade_in_response,
 )
+from .trail_running import (
+    build_trail_running_prompt,
+    detect_trail_running_intent,
+    format_trail_running_response,
+)
 from .trails import (
     build_trail_prompt,
     detect_trail_intent,
@@ -429,6 +434,7 @@ async def generate_llm_response(
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
+    trail_running_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -537,6 +543,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{stargazing_prompt}"
         if wildlife_prompt:
             local_system = f"{local_system}\n\n{wildlife_prompt}"
+        if trail_running_prompt:
+            local_system = f"{local_system}\n\n{trail_running_prompt}"
+        if trail_running_prompt:
+            local_system = f"{local_system}\n\n{trail_running_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -634,6 +644,10 @@ async def generate_llm_response(
             prompt_parts.append(stargazing_prompt)
         if wildlife_prompt:
             prompt_parts.append(wildlife_prompt)
+        if trail_running_prompt:
+            prompt_parts.append(trail_running_prompt)
+        if trail_running_prompt:
+            prompt_parts.append(trail_running_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1090,6 +1104,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_wildlife = format_wildlife_response(wildlife_intent)
         wildlife_info_payload = formatted_wildlife.get("wildlife_info")
 
+    trail_running_intent = detect_trail_running_intent(question)
+    trail_running_prompt = ""
+    trail_running_info_payload = None
+    if trail_running_intent:
+        trail_running_prompt = build_trail_running_prompt(trail_running_intent)
+        formatted_trail_running = format_trail_running_response(trail_running_intent)
+        trail_running_info_payload = formatted_trail_running.get("trail_running_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1176,6 +1198,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["stargazing_prompt"] = stargazing_prompt
     if wildlife_prompt:
         llm_kwargs["wildlife_prompt"] = wildlife_prompt
+    if trail_running_prompt:
+        llm_kwargs["trail_running_prompt"] = trail_running_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1285,6 +1309,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["stargazing_info"] = stargazing_info_payload
     if wildlife_intent and wildlife_info_payload:
         response_payload["wildlife_info"] = wildlife_info_payload
+    if trail_running_intent and trail_running_info_payload:
+        response_payload["trail_running_info"] = trail_running_info_payload
 
     return response_payload
 
@@ -1335,6 +1361,7 @@ def generate_llm_response_stream(
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
+    trail_running_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1859,6 +1886,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_wildlife = format_wildlife_response(wildlife_intent)
         wildlife_info_payload = formatted_wildlife.get("wildlife_info")
 
+    trail_running_intent = detect_trail_running_intent(question)
+    trail_running_prompt = ""
+    trail_running_info_payload = None
+    if trail_running_intent:
+        trail_running_prompt = build_trail_running_prompt(trail_running_intent)
+        formatted_trail_running = format_trail_running_response(trail_running_intent)
+        trail_running_info_payload = formatted_trail_running.get("trail_running_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1944,6 +1979,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'stargazing_info', 'stargazing_info': stargazing_info_payload})}\n\n"
     if wildlife_intent and wildlife_info_payload:
         yield f"data: {json.dumps({'event': 'wildlife_info', 'wildlife_info': wildlife_info_payload})}\n\n"
+    if trail_running_intent and trail_running_info_payload:
+        yield f"data: {json.dumps({'event': 'trail_running_info', 'trail_running_info': trail_running_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2029,6 +2066,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["stargazing_prompt"] = stargazing_prompt
     if wildlife_prompt:
         stream_kwargs["wildlife_prompt"] = wildlife_prompt
+    if trail_running_prompt:
+        stream_kwargs["trail_running_prompt"] = trail_running_prompt
 
     for chunk in generate_llm_response_stream(
         question,

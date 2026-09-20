@@ -284,6 +284,18 @@ from contoso_chat.trade_in import (
     format_trade_in_response,
     get_eligible_brands,
 )
+from contoso_chat.trail_running import (
+    MandatoryGearRequirement,
+    PacingCalculationRequest,
+    PacingCalculationResponse,
+    TrailRunRouteModel,
+    calculate_trail_run_pacing,
+    detect_trail_running_intent,
+    format_trail_running_response,
+    get_mandatory_gear_requirements,
+    get_trail_run_route_by_id,
+    get_trail_run_routes,
+)
 from contoso_chat.trails import (
     TrailCondition,
     TrailOutfittingRequest,
@@ -683,6 +695,7 @@ async def create_response(request: ChatRequest):
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
+            trail_running_intent = detect_trail_running_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -907,6 +920,10 @@ async def create_response(request: ChatRequest):
                 formatted_wildlife = format_wildlife_response(wildlife_intent)
                 mock_payload["wildlife_info"] = formatted_wildlife.get("wildlife_info")
                 mock_payload["answer"] = formatted_wildlife.get("answer", mock_payload["answer"])
+            if trail_running_intent:
+                formatted_trail_running = format_trail_running_response(trail_running_intent)
+                mock_payload["trail_running_info"] = formatted_trail_running.get("trail_running_info")
+                mock_payload["answer"] = formatted_trail_running.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1047,6 +1064,7 @@ async def create_response_stream(request: ChatRequest):
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
+                trail_running_intent = detect_trail_running_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1174,6 +1192,9 @@ async def create_response_stream(request: ChatRequest):
                 if wildlife_intent:
                     formatted_wildlife = format_wildlife_response(wildlife_intent)
                     yield f"data: {json.dumps({'event': 'wildlife_info', 'wildlife_info': formatted_wildlife.get('wildlife_info')})}\n\n"
+                if trail_running_intent:
+                    formatted_trail_running = format_trail_running_response(trail_running_intent)
+                    yield f"data: {json.dumps({'event': 'trail_running_info', 'trail_running_info': formatted_trail_running.get('trail_running_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1290,6 +1311,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_wildlife = format_wildlife_response(wildlife_intent)
                     mock_chunks = [
                         str(formatted_wildlife.get("answer", ""))
+                    ]
+                elif trail_running_intent:
+                    formatted_trail_running = format_trail_running_response(trail_running_intent)
+                    mock_chunks = [
+                        str(formatted_trail_running.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2989,3 +3015,53 @@ async def assess_wildlife_encounter_endpoint(
 )
 async def get_food_storage_guidelines_endpoint() -> list[FoodStorageGuidelineModel]:
     return get_food_storage_guidelines()
+
+
+@app.get(
+    "/api/trail-running/routes",
+    response_model=list[TrailRunRouteModel],
+    tags=["Mountain Ultra Outfitting & Pacing Tooling"],
+    summary="List mountain ultra and trail running routes with optional difficulty filter",
+)
+async def get_trail_running_routes_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[TrailRunRouteModel]:
+    return get_trail_run_routes(difficulty=difficulty)
+
+
+@app.get(
+    "/api/trail-running/routes/{route_id}",
+    response_model=TrailRunRouteModel,
+    tags=["Mountain Ultra Outfitting & Pacing Tooling"],
+    summary="Get details for a specific mountain ultra route",
+)
+async def get_trail_running_route_by_id_endpoint(route_id: str) -> TrailRunRouteModel:
+    route = get_trail_run_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Trail running route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/trail-running/pacing-calc",
+    response_model=PacingCalculationResponse,
+    tags=["Mountain Ultra Outfitting & Pacing Tooling"],
+    summary="Calculate pacing, calories, hydration, and splits for mountain ultra route",
+)
+async def calculate_trail_running_pacing_endpoint(
+    request: PacingCalculationRequest,
+) -> PacingCalculationResponse:
+    try:
+        return calculate_trail_run_pacing(request)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/trail-running/mandatory-gear",
+    response_model=list[MandatoryGearRequirement],
+    tags=["Mountain Ultra Outfitting & Pacing Tooling"],
+    summary="Get mandatory mountain ultra gear compliance items",
+)
+async def get_mandatory_gear_requirements_endpoint() -> list[MandatoryGearRequirement]:
+    return get_mandatory_gear_requirements()
