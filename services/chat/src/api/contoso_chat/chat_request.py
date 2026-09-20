@@ -152,6 +152,11 @@ from .weather import (
     detect_weather_intent,
     format_weather_response,
 )
+from .whitewater import (
+    build_whitewater_prompt,
+    detect_whitewater_intent,
+    format_whitewater_response,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -189,13 +194,15 @@ def extract_product_citations(product_context: list) -> list[dict]:
         if slug:
             seen_slugs.add(slug)
 
-        citations.append({
-            "name": name,
-            "slug": slug,
-            "price": price,
-            "image": image,
-            "category": category,
-        })
+        citations.append(
+            {
+                "name": name,
+                "slug": slug,
+                "price": price,
+                "image": image,
+                "category": category,
+            }
+        )
 
     return citations
 
@@ -397,6 +404,7 @@ async def generate_llm_response(
     avalanche_prompt: str = "",
     weather_prompt: str = "",
     ski_tour_prompt: str = "",
+    whitewater_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -495,6 +503,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{weather_prompt}"
         if ski_tour_prompt:
             local_system = f"{local_system}\n\n{ski_tour_prompt}"
+        if whitewater_prompt:
+            local_system = f"{local_system}\n\n{whitewater_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -582,6 +592,8 @@ async def generate_llm_response(
             prompt_parts.append(weather_prompt)
         if ski_tour_prompt:
             prompt_parts.append(ski_tour_prompt)
+        if whitewater_prompt:
+            prompt_parts.append(whitewater_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -590,7 +602,6 @@ async def generate_llm_response(
             contents=full_prompt,
         )
         return response.text
-
 
 
 SUPPORT_CONTACT = {
@@ -773,7 +784,9 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if carrier_intent.get("is_carrier_intent") and carrier_intent.get("extracted_identifier"):
         carrier_tracking_info = lookup_carrier_tracking(carrier_intent["extracted_identifier"])
         if carrier_tracking_info:
-            carrier_tracking_prompt = build_carrier_milestone_prompt(carrier_tracking_info, question)
+            carrier_tracking_prompt = build_carrier_milestone_prompt(
+                carrier_tracking_info, question
+            )
 
     faq_result = detect_faq_intent(question)
     faq_prompt = ""
@@ -997,6 +1010,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_ski_tour = format_ski_tour_response(ski_tour_intent)
         ski_tour_info_payload = formatted_ski_tour.get("ski_tour_info")
 
+    whitewater_intent = detect_whitewater_intent(question)
+    whitewater_prompt = ""
+    whitewater_info_payload = None
+    if whitewater_intent:
+        whitewater_prompt = build_whitewater_prompt(whitewater_intent)
+        formatted_whitewater = format_whitewater_response(whitewater_intent)
+        whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1025,7 +1046,19 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         llm_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent:
+    if (
+        permits_prompt
+        and not adventure_intent
+        and not field_reports_intent
+        and not shuttle_intent
+        and not hut_intent
+        and not volunteer_intent
+        and not water_intent
+        and not route_intent
+        and not fire_safety_intent
+        and not first_aid_intent
+        and not lnt_intent
+    ):
         llm_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         llm_kwargs["repair_prompt"] = repair_prompt
@@ -1061,6 +1094,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["weather_prompt"] = weather_prompt
     if ski_tour_prompt:
         llm_kwargs["ski_tour_prompt"] = ski_tour_prompt
+    if whitewater_prompt:
+        llm_kwargs["whitewater_prompt"] = whitewater_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1111,7 +1146,20 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trail_outfitting"] = trail_outfitting_payload
     if rewards_intent and rewards_info_payload:
         response_payload["rewards_info"] = rewards_info_payload
-    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent and permits_info_payload:
+    if (
+        permits_intent
+        and not adventure_intent
+        and not field_reports_intent
+        and not shuttle_intent
+        and not hut_intent
+        and not volunteer_intent
+        and not water_intent
+        and not route_intent
+        and not fire_safety_intent
+        and not first_aid_intent
+        and not avalanche_intent
+        and permits_info_payload
+    ):
         response_payload["permits_info"] = permits_info_payload
     if repair_intent and repair_info_payload:
         response_payload["repair_info"] = repair_info_payload
@@ -1147,6 +1195,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["weather_info"] = weather_info_payload
     if ski_tour_intent and ski_tour_info_payload:
         response_payload["ski_tour_info"] = ski_tour_info_payload
+    if whitewater_intent and whitewater_info_payload:
+        response_payload["whitewater_info"] = whitewater_info_payload
 
     return response_payload
 
@@ -1192,6 +1242,7 @@ def generate_llm_response_stream(
     avalanche_prompt: str = "",
     weather_prompt: str = "",
     ski_tour_prompt: str = "",
+    whitewater_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1286,6 +1337,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{weather_prompt}"
         if ski_tour_prompt:
             local_system = f"{local_system}\n\n{ski_tour_prompt}"
+        if whitewater_prompt:
+            local_system = f"{local_system}\n\n{whitewater_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1301,7 +1354,11 @@ def generate_llm_response_stream(
             stream=True,
         )
         for chunk in response:
-            if chunk.choices and hasattr(chunk.choices[0], "delta") and getattr(chunk.choices[0].delta, "content", None):
+            if (
+                chunk.choices
+                and hasattr(chunk.choices[0], "delta")
+                and getattr(chunk.choices[0].delta, "content", None)
+            ):
                 yield chunk.choices[0].delta.content
     else:
         from google import genai
@@ -1372,6 +1429,8 @@ def generate_llm_response_stream(
             prompt_parts.append(weather_prompt)
         if ski_tour_prompt:
             prompt_parts.append(ski_tour_prompt)
+        if whitewater_prompt:
+            prompt_parts.append(whitewater_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1447,7 +1506,9 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if carrier_intent.get("is_carrier_intent") and carrier_intent.get("extracted_identifier"):
         carrier_tracking_info = lookup_carrier_tracking(carrier_intent["extracted_identifier"])
         if carrier_tracking_info:
-            carrier_tracking_prompt = build_carrier_milestone_prompt(carrier_tracking_info, question)
+            carrier_tracking_prompt = build_carrier_milestone_prompt(
+                carrier_tracking_info, question
+            )
 
     faq_result = detect_faq_intent(question)
     faq_prompt = ""
@@ -1650,6 +1711,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_ski_tour = format_ski_tour_response(ski_tour_intent)
         ski_tour_info_payload = formatted_ski_tour.get("ski_tour_info")
 
+    whitewater_intent = detect_whitewater_intent(question)
+    whitewater_prompt = ""
+    whitewater_info_payload = None
+    if whitewater_intent:
+        whitewater_prompt = build_whitewater_prompt(whitewater_intent)
+        formatted_whitewater = format_whitewater_response(whitewater_intent)
+        whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1678,7 +1747,20 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': trail_outfitting_payload})}\n\n"
     if rewards_intent and rewards_info_payload:
         yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': rewards_info_payload})}\n\n"
-    if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent and permits_info_payload:
+    if (
+        permits_intent
+        and not adventure_intent
+        and not field_reports_intent
+        and not shuttle_intent
+        and not hut_intent
+        and not volunteer_intent
+        and not water_intent
+        and not route_intent
+        and not fire_safety_intent
+        and not first_aid_intent
+        and not avalanche_intent
+        and permits_info_payload
+    ):
         yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': permits_info_payload})}\n\n"
     if repair_intent and repair_info_payload:
         yield f"data: {json.dumps({'event': 'repair_info', 'repair_info': repair_info_payload})}\n\n"
@@ -1712,6 +1794,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'weather_info', 'weather_info': weather_info_payload})}\n\n"
     if ski_tour_intent and ski_tour_info_payload:
         yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': ski_tour_info_payload})}\n\n"
+    if whitewater_intent and whitewater_info_payload:
+        yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': whitewater_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1741,7 +1825,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_prompt"] = trail_prompt
     if rewards_prompt:
         stream_kwargs["rewards_prompt"] = rewards_prompt
-    if permits_prompt and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not avalanche_intent:
+    if (
+        permits_prompt
+        and not adventure_intent
+        and not field_reports_intent
+        and not shuttle_intent
+        and not hut_intent
+        and not volunteer_intent
+        and not water_intent
+        and not route_intent
+        and not fire_safety_intent
+        and not first_aid_intent
+        and not avalanche_intent
+    ):
         stream_kwargs["permits_prompt"] = permits_prompt
     if repair_prompt:
         stream_kwargs["repair_prompt"] = repair_prompt
@@ -1775,6 +1871,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["weather_prompt"] = weather_prompt
     if ski_tour_prompt:
         stream_kwargs["ski_tour_prompt"] = ski_tour_prompt
+    if whitewater_prompt:
+        stream_kwargs["whitewater_prompt"] = whitewater_prompt
 
     for chunk in generate_llm_response_stream(
         question,
