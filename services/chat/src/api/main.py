@@ -305,6 +305,17 @@ from contoso_chat.weather import (
     get_mountain_zone_by_id,
     get_mountain_zones,
 )
+from contoso_chat.whitewater import (
+    RiverRunModel,
+    RiverSafetyRequest,
+    RiverSafetyResponse,
+    assess_river_safety,
+    detect_whitewater_intent,
+    format_whitewater_response,
+    get_whitewater_run_by_id,
+    get_whitewater_runs,
+    get_whitewater_safety_protocols,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -621,6 +632,7 @@ async def create_response(request: ChatRequest):
             avalanche_intent = detect_avalanche_intent(request.question)
             weather_intent = detect_weather_intent(request.question)
             ski_tour_intent = detect_ski_tour_intent(request.question)
+            whitewater_intent = detect_whitewater_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -825,6 +837,10 @@ async def create_response(request: ChatRequest):
                 formatted_tour = format_ski_tour_response(ski_tour_intent)
                 mock_payload["ski_tour_info"] = formatted_tour.get("ski_tour_info")
                 mock_payload["answer"] = formatted_tour.get("answer", mock_payload["answer"])
+            if whitewater_intent:
+                formatted_ww = format_whitewater_response(whitewater_intent)
+                mock_payload["whitewater_info"] = formatted_ww.get("whitewater_info")
+                mock_payload["answer"] = formatted_ww.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -960,6 +976,7 @@ async def create_response_stream(request: ChatRequest):
                 avalanche_intent = detect_avalanche_intent(request.question)
                 weather_intent = detect_weather_intent(request.question)
                 ski_tour_intent = detect_ski_tour_intent(request.question)
+                whitewater_intent = detect_whitewater_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1072,6 +1089,9 @@ async def create_response_stream(request: ChatRequest):
                 if ski_tour_intent:
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': formatted_tour.get('ski_tour_info')})}\n\n"
+                if whitewater_intent:
+                    formatted_ww = format_whitewater_response(whitewater_intent)
+                    yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': formatted_ww.get('whitewater_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2622,3 +2642,55 @@ async def calculate_skinning_pace_endpoint(
 )
 async def get_ski_tour_etiquette_endpoint() -> dict[str, Any]:
     return get_skin_track_etiquette_and_policies()
+
+
+@app.get(
+    "/api/whitewater/runs",
+    response_model=list[RiverRunModel],
+    tags=["Wilderness Waterway & Whitewater Tooling"],
+    summary="List whitewater river runs",
+)
+async def get_whitewater_runs_endpoint(
+    class_rating: Optional[str] = None,
+    region: Optional[str] = None,
+) -> list[RiverRunModel]:
+    return get_whitewater_runs(class_rating=class_rating, region=region)
+
+
+@app.get(
+    "/api/whitewater/runs/{run_id}",
+    response_model=RiverRunModel,
+    tags=["Wilderness Waterway & Whitewater Tooling"],
+    summary="Get run details for a specific whitewater river run",
+)
+async def get_whitewater_run_by_id_endpoint(run_id: str) -> RiverRunModel:
+    run = get_whitewater_run_by_id(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"River run '{run_id}' not found")
+    return run
+
+
+@app.post(
+    "/api/whitewater/safety-eval",
+    response_model=RiverSafetyResponse,
+    tags=["Wilderness Waterway & Whitewater Tooling"],
+    summary="Evaluate river flow status and paddler safety",
+)
+async def assess_river_safety_endpoint(
+    request: RiverSafetyRequest,
+) -> RiverSafetyResponse:
+    try:
+        return assess_river_safety(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/whitewater/protocols",
+    response_model=dict[str, Any],
+    tags=["Wilderness Waterway & Whitewater Tooling"],
+    summary="Get whitewater safety protocols, river hazards, and cold water guidelines",
+)
+async def get_whitewater_protocols_endpoint() -> dict[str, Any]:
+    return get_whitewater_safety_protocols()
+
