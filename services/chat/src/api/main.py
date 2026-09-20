@@ -29,6 +29,17 @@ from contoso_chat.carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from contoso_chat.climbing import (
+    CragModel,
+    RackCalcRequest,
+    RackCalcResponse,
+    calculate_climbing_rack,
+    detect_climbing_intent,
+    format_climbing_response,
+    get_climbing_crag_by_id,
+    get_climbing_crags,
+    get_rappel_safety_protocol,
+)
 from contoso_chat.faq import (
     FaqItem,
     detect_faq_intent,
@@ -633,6 +644,7 @@ async def create_response(request: ChatRequest):
             weather_intent = detect_weather_intent(request.question)
             ski_tour_intent = detect_ski_tour_intent(request.question)
             whitewater_intent = detect_whitewater_intent(request.question)
+            climbing_intent = detect_climbing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -841,6 +853,10 @@ async def create_response(request: ChatRequest):
                 formatted_ww = format_whitewater_response(whitewater_intent)
                 mock_payload["whitewater_info"] = formatted_ww.get("whitewater_info")
                 mock_payload["answer"] = formatted_ww.get("answer", mock_payload["answer"])
+            if climbing_intent and not adventure_intent:
+                formatted_climbing = format_climbing_response(climbing_intent)
+                mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
+                mock_payload["answer"] = formatted_climbing.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -977,6 +993,7 @@ async def create_response_stream(request: ChatRequest):
                 weather_intent = detect_weather_intent(request.question)
                 ski_tour_intent = detect_ski_tour_intent(request.question)
                 whitewater_intent = detect_whitewater_intent(request.question)
+                climbing_intent = detect_climbing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1092,6 +1109,9 @@ async def create_response_stream(request: ChatRequest):
                 if whitewater_intent:
                     formatted_ww = format_whitewater_response(whitewater_intent)
                     yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': formatted_ww.get('whitewater_info')})}\n\n"
+                if climbing_intent and not adventure_intent:
+                    formatted_climbing = format_climbing_response(climbing_intent)
+                    yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1188,6 +1208,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     mock_chunks = [
                         str(formatted_tour.get("answer", ""))
+                    ]
+                elif climbing_intent and not adventure_intent:
+                    formatted_climbing = format_climbing_response(climbing_intent)
+                    mock_chunks = [
+                        str(formatted_climbing.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2693,4 +2718,52 @@ async def assess_river_safety_endpoint(
 )
 async def get_whitewater_protocols_endpoint() -> dict[str, Any]:
     return get_whitewater_safety_protocols()
+
+
+@app.get(
+    "/api/climbing/crags",
+    response_model=list[CragModel],
+    tags=["Backcountry Climbing & Alpine Crag Beta Tooling"],
+    summary="List rock climbing crags",
+)
+async def get_climbing_crags_endpoint(
+    discipline: Optional[str] = None,
+    rock_type: Optional[str] = None,
+) -> list[CragModel]:
+    return get_climbing_crags(discipline=discipline, rock_type=rock_type)
+
+
+@app.get(
+    "/api/climbing/crags/{crag_id}",
+    response_model=CragModel,
+    tags=["Backcountry Climbing & Alpine Crag Beta Tooling"],
+    summary="Get crag details for a specific rock climbing crag",
+)
+async def get_climbing_crag_by_id_endpoint(crag_id: str) -> CragModel:
+    crag = get_climbing_crag_by_id(crag_id)
+    if not crag:
+        raise HTTPException(status_code=404, detail=f"Climbing crag '{crag_id}' not found")
+    return crag
+
+
+@app.post(
+    "/api/climbing/rack-calc",
+    response_model=RackCalcResponse,
+    tags=["Backcountry Climbing & Alpine Crag Beta Tooling"],
+    summary="Calculate climbing rack and rope requirements",
+)
+async def calculate_climbing_rack_endpoint(
+    request: RackCalcRequest,
+) -> RackCalcResponse:
+    return calculate_climbing_rack(request)
+
+
+@app.get(
+    "/api/climbing/rappel-safety",
+    response_model=dict[str, Any],
+    tags=["Backcountry Climbing & Alpine Crag Beta Tooling"],
+    summary="Get rock climbing rappel and anchor safety protocols",
+)
+async def get_climbing_rappel_safety_endpoint() -> dict[str, Any]:
+    return get_rappel_safety_protocol()
 

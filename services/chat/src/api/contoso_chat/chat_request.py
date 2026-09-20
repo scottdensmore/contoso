@@ -18,6 +18,11 @@ from .carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from .climbing import (
+    build_climbing_prompt,
+    detect_climbing_intent,
+    format_climbing_response,
+)
 from .faq import (
     build_faq_prompt,
     detect_faq_intent,
@@ -405,6 +410,7 @@ async def generate_llm_response(
     weather_prompt: str = "",
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
+    climbing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -505,6 +511,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{ski_tour_prompt}"
         if whitewater_prompt:
             local_system = f"{local_system}\n\n{whitewater_prompt}"
+        if climbing_prompt:
+            local_system = f"{local_system}\n\n{climbing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -594,6 +602,8 @@ async def generate_llm_response(
             prompt_parts.append(ski_tour_prompt)
         if whitewater_prompt:
             prompt_parts.append(whitewater_prompt)
+        if climbing_prompt:
+            prompt_parts.append(climbing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1018,6 +1028,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
 
+    climbing_intent = detect_climbing_intent(question)
+    climbing_prompt = ""
+    climbing_info_payload = None
+    if climbing_intent:
+        climbing_prompt = build_climbing_prompt(climbing_intent)
+        formatted_climbing = format_climbing_response(climbing_intent)
+        climbing_info_payload = formatted_climbing.get("climbing_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1096,6 +1114,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["ski_tour_prompt"] = ski_tour_prompt
     if whitewater_prompt:
         llm_kwargs["whitewater_prompt"] = whitewater_prompt
+    if climbing_prompt:
+        llm_kwargs["climbing_prompt"] = climbing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1197,6 +1217,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["ski_tour_info"] = ski_tour_info_payload
     if whitewater_intent and whitewater_info_payload:
         response_payload["whitewater_info"] = whitewater_info_payload
+    if climbing_intent and climbing_info_payload:
+        response_payload["climbing_info"] = climbing_info_payload
 
     return response_payload
 
@@ -1243,6 +1265,7 @@ def generate_llm_response_stream(
     weather_prompt: str = "",
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
+    climbing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1339,6 +1362,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{ski_tour_prompt}"
         if whitewater_prompt:
             local_system = f"{local_system}\n\n{whitewater_prompt}"
+        if climbing_prompt:
+            local_system = f"{local_system}\n\n{climbing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1431,6 +1456,8 @@ def generate_llm_response_stream(
             prompt_parts.append(ski_tour_prompt)
         if whitewater_prompt:
             prompt_parts.append(whitewater_prompt)
+        if climbing_prompt:
+            prompt_parts.append(climbing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1719,6 +1746,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
 
+    climbing_intent = detect_climbing_intent(question)
+    climbing_prompt = ""
+    climbing_info_payload = None
+    if climbing_intent:
+        climbing_prompt = build_climbing_prompt(climbing_intent)
+        formatted_climbing = format_climbing_response(climbing_intent)
+        climbing_info_payload = formatted_climbing.get("climbing_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1796,6 +1831,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': ski_tour_info_payload})}\n\n"
     if whitewater_intent and whitewater_info_payload:
         yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': whitewater_info_payload})}\n\n"
+    if climbing_intent and climbing_info_payload:
+        yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1873,6 +1910,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["ski_tour_prompt"] = ski_tour_prompt
     if whitewater_prompt:
         stream_kwargs["whitewater_prompt"] = whitewater_prompt
+    if climbing_prompt:
+        stream_kwargs["climbing_prompt"] = climbing_prompt
 
     for chunk in generate_llm_response_stream(
         question,
