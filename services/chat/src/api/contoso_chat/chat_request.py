@@ -47,6 +47,11 @@ from .foraging import (
     detect_foraging_intent,
     format_foraging_response,
 )
+from .hot_springs import (
+    build_hot_spring_prompt,
+    detect_hot_spring_intent,
+    format_hot_spring_response,
+)
 from .huts import (
     build_hut_prompt,
     detect_hut_intent,
@@ -435,6 +440,7 @@ async def generate_llm_response(
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
     trail_running_prompt: str = "",
+    hot_springs_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -545,8 +551,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{wildlife_prompt}"
         if trail_running_prompt:
             local_system = f"{local_system}\n\n{trail_running_prompt}"
-        if trail_running_prompt:
-            local_system = f"{local_system}\n\n{trail_running_prompt}"
+        if hot_springs_prompt:
+            local_system = f"{local_system}\n\n{hot_springs_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -646,8 +652,8 @@ async def generate_llm_response(
             prompt_parts.append(wildlife_prompt)
         if trail_running_prompt:
             prompt_parts.append(trail_running_prompt)
-        if trail_running_prompt:
-            prompt_parts.append(trail_running_prompt)
+        if hot_springs_prompt:
+            prompt_parts.append(hot_springs_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1112,6 +1118,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_trail_running = format_trail_running_response(trail_running_intent)
         trail_running_info_payload = formatted_trail_running.get("trail_running_info")
 
+    hot_springs_intent = detect_hot_spring_intent(question)
+    hot_springs_prompt = ""
+    hot_springs_info_payload = None
+    if hot_springs_intent:
+        hot_springs_prompt = build_hot_spring_prompt(hot_springs_intent)
+        formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
+        hot_springs_info_payload = formatted_hot_springs.get("hot_springs_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1200,6 +1214,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["wildlife_prompt"] = wildlife_prompt
     if trail_running_prompt:
         llm_kwargs["trail_running_prompt"] = trail_running_prompt
+    if hot_springs_prompt:
+        llm_kwargs["hot_springs_prompt"] = hot_springs_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1311,6 +1327,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["wildlife_info"] = wildlife_info_payload
     if trail_running_intent and trail_running_info_payload:
         response_payload["trail_running_info"] = trail_running_info_payload
+    if hot_springs_intent and hot_springs_info_payload:
+        response_payload["hot_springs_info"] = hot_springs_info_payload
 
     return response_payload
 
@@ -1362,6 +1380,7 @@ def generate_llm_response_stream(
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
     trail_running_prompt: str = "",
+    hot_springs_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1466,6 +1485,10 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{stargazing_prompt}"
         if wildlife_prompt:
             local_system = f"{local_system}\n\n{wildlife_prompt}"
+        if trail_running_prompt:
+            local_system = f"{local_system}\n\n{trail_running_prompt}"
+        if hot_springs_prompt:
+            local_system = f"{local_system}\n\n{hot_springs_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1566,6 +1589,10 @@ def generate_llm_response_stream(
             prompt_parts.append(stargazing_prompt)
         if wildlife_prompt:
             prompt_parts.append(wildlife_prompt)
+        if trail_running_prompt:
+            prompt_parts.append(trail_running_prompt)
+        if hot_springs_prompt:
+            prompt_parts.append(hot_springs_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1894,6 +1921,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_trail_running = format_trail_running_response(trail_running_intent)
         trail_running_info_payload = formatted_trail_running.get("trail_running_info")
 
+    hot_springs_intent = detect_hot_spring_intent(question)
+    hot_springs_prompt = ""
+    hot_springs_info_payload = None
+    if hot_springs_intent:
+        hot_springs_prompt = build_hot_spring_prompt(hot_springs_intent)
+        formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
+        hot_springs_info_payload = formatted_hot_springs.get("hot_springs_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1981,6 +2016,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'wildlife_info', 'wildlife_info': wildlife_info_payload})}\n\n"
     if trail_running_intent and trail_running_info_payload:
         yield f"data: {json.dumps({'event': 'trail_running_info', 'trail_running_info': trail_running_info_payload})}\n\n"
+    if hot_springs_intent and hot_springs_info_payload:
+        yield f"data: {json.dumps({'event': 'hot_springs_info', 'hot_springs_info': hot_springs_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2068,6 +2105,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["wildlife_prompt"] = wildlife_prompt
     if trail_running_prompt:
         stream_kwargs["trail_running_prompt"] = trail_running_prompt
+    if hot_springs_prompt:
+        stream_kwargs["hot_springs_prompt"] = hot_springs_prompt
 
     for chunk in generate_llm_response_stream(
         question,
