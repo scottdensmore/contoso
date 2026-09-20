@@ -127,6 +127,11 @@ from .ski_touring import (
     detect_ski_tour_intent,
     format_ski_tour_response,
 )
+from .stargazing import (
+    build_stargazing_prompt,
+    detect_stargazing_intent,
+    format_stargazing_response,
+)
 from .stores import (
     build_store_prompt,
     detect_store_intent,
@@ -417,6 +422,7 @@ async def generate_llm_response(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     foraging_prompt: str = "",
+    stargazing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -521,6 +527,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
+        if stargazing_prompt:
+            local_system = f"{local_system}\n\n{stargazing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -614,6 +622,8 @@ async def generate_llm_response(
             prompt_parts.append(climbing_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
+        if stargazing_prompt:
+            prompt_parts.append(stargazing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1054,6 +1064,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_foraging = format_foraging_response(foraging_intent)
         foraging_info_payload = formatted_foraging.get("foraging_info")
 
+    stargazing_intent = detect_stargazing_intent(question)
+    stargazing_prompt = ""
+    stargazing_info_payload = None
+    if stargazing_intent:
+        stargazing_prompt = build_stargazing_prompt(stargazing_intent)
+        formatted_stargazing = format_stargazing_response(stargazing_intent)
+        stargazing_info_payload = formatted_stargazing.get("stargazing_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1136,6 +1154,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["climbing_prompt"] = climbing_prompt
     if foraging_prompt:
         llm_kwargs["foraging_prompt"] = foraging_prompt
+    if stargazing_prompt:
+        llm_kwargs["stargazing_prompt"] = stargazing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1241,6 +1261,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["climbing_info"] = climbing_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
+    if stargazing_intent and stargazing_info_payload:
+        response_payload["stargazing_info"] = stargazing_info_payload
 
     return response_payload
 
@@ -1289,6 +1311,7 @@ def generate_llm_response_stream(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     foraging_prompt: str = "",
+    stargazing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1389,6 +1412,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
+        if stargazing_prompt:
+            local_system = f"{local_system}\n\n{stargazing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1485,6 +1510,8 @@ def generate_llm_response_stream(
             prompt_parts.append(climbing_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
+        if stargazing_prompt:
+            prompt_parts.append(stargazing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1789,6 +1816,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_foraging = format_foraging_response(foraging_intent)
         foraging_info_payload = formatted_foraging.get("foraging_info")
 
+    stargazing_intent = detect_stargazing_intent(question)
+    stargazing_prompt = ""
+    stargazing_info_payload = None
+    if stargazing_intent:
+        stargazing_prompt = build_stargazing_prompt(stargazing_intent)
+        formatted_stargazing = format_stargazing_response(stargazing_intent)
+        stargazing_info_payload = formatted_stargazing.get("stargazing_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1870,6 +1905,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
+    if stargazing_intent and stargazing_info_payload:
+        yield f"data: {json.dumps({'event': 'stargazing_info', 'stargazing_info': stargazing_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1951,6 +1988,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["climbing_prompt"] = climbing_prompt
     if foraging_prompt:
         stream_kwargs["foraging_prompt"] = foraging_prompt
+    if stargazing_prompt:
+        stream_kwargs["stargazing_prompt"] = stargazing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

@@ -257,6 +257,18 @@ from contoso_chat.ski_touring import (
     get_ski_tour_routes,
     get_skin_track_etiquette_and_policies,
 )
+from contoso_chat.stargazing import (
+    MeteorShowerModel,
+    ObservingSiteModel,
+    ViewingWindowRequest,
+    ViewingWindowResponse,
+    calculate_viewing_window,
+    detect_stargazing_intent,
+    format_stargazing_response,
+    get_meteor_shower_calendar,
+    get_stargazing_site_by_id,
+    get_stargazing_sites,
+)
 from contoso_chat.stores import (
     detect_store_intent,
     get_all_stores,
@@ -657,6 +669,7 @@ async def create_response(request: ChatRequest):
             whitewater_intent = detect_whitewater_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
+            stargazing_intent = detect_stargazing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -873,6 +886,10 @@ async def create_response(request: ChatRequest):
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
                 mock_payload["answer"] = formatted_foraging.get("answer", mock_payload["answer"])
+            if stargazing_intent:
+                formatted_stargazing = format_stargazing_response(stargazing_intent)
+                mock_payload["stargazing_info"] = formatted_stargazing.get("stargazing_info")
+                mock_payload["answer"] = formatted_stargazing.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1011,6 +1028,7 @@ async def create_response_stream(request: ChatRequest):
                 whitewater_intent = detect_whitewater_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
+                stargazing_intent = detect_stargazing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1132,6 +1150,9 @@ async def create_response_stream(request: ChatRequest):
                 if foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
+                if stargazing_intent:
+                    formatted_stargazing = format_stargazing_response(stargazing_intent)
+                    yield f"data: {json.dumps({'event': 'stargazing_info', 'stargazing_info': formatted_stargazing.get('stargazing_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1238,6 +1259,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [
                         str(formatted_foraging.get("answer", ""))
+                    ]
+                elif stargazing_intent:
+                    formatted_stargazing = format_stargazing_response(stargazing_intent)
+                    mock_chunks = [
+                        str(formatted_stargazing.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2840,3 +2866,53 @@ async def assess_foraging_safety_endpoint(
 )
 async def get_foraging_guidelines_endpoint() -> dict[str, Any]:
     return get_foraging_guidelines()
+
+
+@app.get(
+    "/api/stargazing/sites",
+    response_model=list[ObservingSiteModel],
+    tags=["Celestial & Dark Sky Observation Tooling"],
+    summary="List dark sky observation sites with optional Bortle class filter",
+)
+async def get_stargazing_sites_endpoint(
+    bortle_max: Optional[int] = None,
+) -> list[ObservingSiteModel]:
+    return get_stargazing_sites(bortle_max=bortle_max)
+
+
+@app.get(
+    "/api/stargazing/sites/{site_id}",
+    response_model=ObservingSiteModel,
+    tags=["Celestial & Dark Sky Observation Tooling"],
+    summary="Get details for a specific dark sky observing site",
+)
+async def get_stargazing_site_by_id_endpoint(site_id: str) -> ObservingSiteModel:
+    site = get_stargazing_site_by_id(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Observing site '{site_id}' not found")
+    return site
+
+
+@app.post(
+    "/api/stargazing/viewing-window",
+    response_model=ViewingWindowResponse,
+    tags=["Celestial & Dark Sky Observation Tooling"],
+    summary="Calculate viewing window quality score, condition reasons, and optics advice",
+)
+async def calculate_viewing_window_endpoint(
+    request: ViewingWindowRequest,
+) -> ViewingWindowResponse:
+    try:
+        return calculate_viewing_window(request)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/stargazing/meteor-showers",
+    response_model=list[MeteorShowerModel],
+    tags=["Celestial & Dark Sky Observation Tooling"],
+    summary="Get annual meteor shower calendar",
+)
+async def get_meteor_shower_calendar_endpoint() -> list[MeteorShowerModel]:
+    return get_meteor_shower_calendar()
