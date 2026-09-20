@@ -172,6 +172,11 @@ from .whitewater import (
     detect_whitewater_intent,
     format_whitewater_response,
 )
+from .wildlife import (
+    build_wildlife_prompt,
+    detect_wildlife_intent,
+    format_wildlife_response,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -423,6 +428,7 @@ async def generate_llm_response(
     climbing_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
+    wildlife_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -529,6 +535,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
             local_system = f"{local_system}\n\n{stargazing_prompt}"
+        if wildlife_prompt:
+            local_system = f"{local_system}\n\n{wildlife_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -624,6 +632,8 @@ async def generate_llm_response(
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
             prompt_parts.append(stargazing_prompt)
+        if wildlife_prompt:
+            prompt_parts.append(wildlife_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1072,6 +1082,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_stargazing = format_stargazing_response(stargazing_intent)
         stargazing_info_payload = formatted_stargazing.get("stargazing_info")
 
+    wildlife_intent = detect_wildlife_intent(question)
+    wildlife_prompt = ""
+    wildlife_info_payload = None
+    if wildlife_intent:
+        wildlife_prompt = build_wildlife_prompt(wildlife_intent)
+        formatted_wildlife = format_wildlife_response(wildlife_intent)
+        wildlife_info_payload = formatted_wildlife.get("wildlife_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1156,6 +1174,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["foraging_prompt"] = foraging_prompt
     if stargazing_prompt:
         llm_kwargs["stargazing_prompt"] = stargazing_prompt
+    if wildlife_prompt:
+        llm_kwargs["wildlife_prompt"] = wildlife_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1263,6 +1283,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
         response_payload["stargazing_info"] = stargazing_info_payload
+    if wildlife_intent and wildlife_info_payload:
+        response_payload["wildlife_info"] = wildlife_info_payload
 
     return response_payload
 
@@ -1312,6 +1334,7 @@ def generate_llm_response_stream(
     climbing_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
+    wildlife_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1414,6 +1437,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
             local_system = f"{local_system}\n\n{stargazing_prompt}"
+        if wildlife_prompt:
+            local_system = f"{local_system}\n\n{wildlife_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1512,6 +1537,8 @@ def generate_llm_response_stream(
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
             prompt_parts.append(stargazing_prompt)
+        if wildlife_prompt:
+            prompt_parts.append(wildlife_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1824,6 +1851,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_stargazing = format_stargazing_response(stargazing_intent)
         stargazing_info_payload = formatted_stargazing.get("stargazing_info")
 
+    wildlife_intent = detect_wildlife_intent(question)
+    wildlife_prompt = ""
+    wildlife_info_payload = None
+    if wildlife_intent:
+        wildlife_prompt = build_wildlife_prompt(wildlife_intent)
+        formatted_wildlife = format_wildlife_response(wildlife_intent)
+        wildlife_info_payload = formatted_wildlife.get("wildlife_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1907,6 +1942,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
         yield f"data: {json.dumps({'event': 'stargazing_info', 'stargazing_info': stargazing_info_payload})}\n\n"
+    if wildlife_intent and wildlife_info_payload:
+        yield f"data: {json.dumps({'event': 'wildlife_info', 'wildlife_info': wildlife_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1990,6 +2027,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["foraging_prompt"] = foraging_prompt
     if stargazing_prompt:
         stream_kwargs["stargazing_prompt"] = stargazing_prompt
+    if wildlife_prompt:
+        stream_kwargs["wildlife_prompt"] = wildlife_prompt
 
     for chunk in generate_llm_response_stream(
         question,

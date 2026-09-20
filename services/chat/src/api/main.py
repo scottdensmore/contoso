@@ -350,6 +350,18 @@ from contoso_chat.whitewater import (
     get_whitewater_runs,
     get_whitewater_safety_protocols,
 )
+from contoso_chat.wildlife import (
+    EncounterAssessmentRequest,
+    EncounterAssessmentResponse,
+    FoodStorageGuidelineModel,
+    WildlifeSpeciesModel,
+    assess_wildlife_encounter,
+    detect_wildlife_intent,
+    format_wildlife_response,
+    get_food_storage_guidelines,
+    get_wildlife_species,
+    get_wildlife_species_by_id,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -670,6 +682,7 @@ async def create_response(request: ChatRequest):
             climbing_intent = detect_climbing_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
+            wildlife_intent = detect_wildlife_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -890,6 +903,10 @@ async def create_response(request: ChatRequest):
                 formatted_stargazing = format_stargazing_response(stargazing_intent)
                 mock_payload["stargazing_info"] = formatted_stargazing.get("stargazing_info")
                 mock_payload["answer"] = formatted_stargazing.get("answer", mock_payload["answer"])
+            if wildlife_intent:
+                formatted_wildlife = format_wildlife_response(wildlife_intent)
+                mock_payload["wildlife_info"] = formatted_wildlife.get("wildlife_info")
+                mock_payload["answer"] = formatted_wildlife.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1029,6 +1046,7 @@ async def create_response_stream(request: ChatRequest):
                 climbing_intent = detect_climbing_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
+                wildlife_intent = detect_wildlife_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1153,6 +1171,9 @@ async def create_response_stream(request: ChatRequest):
                 if stargazing_intent:
                     formatted_stargazing = format_stargazing_response(stargazing_intent)
                     yield f"data: {json.dumps({'event': 'stargazing_info', 'stargazing_info': formatted_stargazing.get('stargazing_info')})}\n\n"
+                if wildlife_intent:
+                    formatted_wildlife = format_wildlife_response(wildlife_intent)
+                    yield f"data: {json.dumps({'event': 'wildlife_info', 'wildlife_info': formatted_wildlife.get('wildlife_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1264,6 +1285,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_stargazing = format_stargazing_response(stargazing_intent)
                     mock_chunks = [
                         str(formatted_stargazing.get("answer", ""))
+                    ]
+                elif wildlife_intent:
+                    formatted_wildlife = format_wildlife_response(wildlife_intent)
+                    mock_chunks = [
+                        str(formatted_wildlife.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -2916,3 +2942,50 @@ async def calculate_viewing_window_endpoint(
 )
 async def get_meteor_shower_calendar_endpoint() -> list[MeteorShowerModel]:
     return get_meteor_shower_calendar()
+
+
+@app.get(
+    "/api/wildlife/species",
+    response_model=list[WildlifeSpeciesModel],
+    tags=["Backcountry Wildlife & Bear Country Tooling"],
+    summary="List wildlife species with optional category filter",
+)
+async def get_wildlife_species_endpoint(
+    category: Optional[str] = None,
+) -> list[WildlifeSpeciesModel]:
+    return get_wildlife_species(category=category)
+
+
+@app.get(
+    "/api/wildlife/species/{species_id}",
+    response_model=WildlifeSpeciesModel,
+    tags=["Backcountry Wildlife & Bear Country Tooling"],
+    summary="Get details for a specific wildlife species",
+)
+async def get_wildlife_species_by_id_endpoint(species_id: str) -> WildlifeSpeciesModel:
+    sp = get_wildlife_species_by_id(species_id)
+    if not sp:
+        raise HTTPException(status_code=404, detail=f"Wildlife species '{species_id}' not found")
+    return sp
+
+
+@app.post(
+    "/api/wildlife/encounter-assess",
+    response_model=EncounterAssessmentResponse,
+    tags=["Backcountry Wildlife & Bear Country Tooling"],
+    summary="Evaluate wildlife encounter parameters and return safety protocols",
+)
+async def assess_wildlife_encounter_endpoint(
+    request: EncounterAssessmentRequest,
+) -> EncounterAssessmentResponse:
+    return assess_wildlife_encounter(request)
+
+
+@app.get(
+    "/api/wildlife/food-storage",
+    response_model=list[FoodStorageGuidelineModel],
+    tags=["Backcountry Wildlife & Bear Country Tooling"],
+    summary="Get food storage guidelines and mandatory bear canister zone regulations",
+)
+async def get_food_storage_guidelines_endpoint() -> list[FoodStorageGuidelineModel]:
+    return get_food_storage_guidelines()
