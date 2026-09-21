@@ -199,6 +199,18 @@ from contoso_chat.mountaineering import (
     get_glacier_route_by_id,
     get_glacier_routes,
 )
+from contoso_chat.nordic_skiing import (
+    NordicGearRequirement,
+    NordicTrailModel,
+    WaxAdvisorRequest,
+    WaxAdvisorResponse,
+    calculate_wax_plan,
+    detect_nordic_skiing_intent,
+    format_nordic_skiing_response,
+    get_nordic_gear,
+    get_nordic_trail_by_id,
+    get_nordic_trails,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.packrafting import (
     PackraftGearRequirement,
@@ -805,6 +817,7 @@ async def create_response(request: ChatRequest):
             packrafting_intent = detect_packrafting_intent(request.question)
             canyoneering_intent = detect_canyoneering_intent(request.question)
             acclimatization_intent = detect_acclimatization_intent(request.question)
+            nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1115,6 +1128,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_acclimatization.get(
                     "answer", mock_payload["answer"]
                 )
+            if nordic_skiing_intent:
+                formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
+                mock_payload["nordic_skiing_info"] = formatted_nordic.get(
+                    "nordic_skiing_info"
+                )
+                mock_payload["answer"] = formatted_nordic.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1268,6 +1289,7 @@ async def create_response_stream(request: ChatRequest):
                 packrafting_intent = detect_packrafting_intent(request.question)
                 canyoneering_intent = detect_canyoneering_intent(request.question)
                 acclimatization_intent = detect_acclimatization_intent(request.question)
+                nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1441,6 +1463,9 @@ async def create_response_stream(request: ChatRequest):
                         acclimatization_intent
                     )
                     yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': formatted_acclimatization.get('acclimatization_info')})}\n\n"
+                if nordic_skiing_intent:
+                    formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
+                    yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': formatted_nordic.get('nordic_skiing_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1576,6 +1601,9 @@ async def create_response_stream(request: ChatRequest):
                         acclimatization_intent
                     )
                     mock_chunks = [str(formatted_acclimatization.get("answer", ""))]
+                elif nordic_skiing_intent:
+                    formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
+                    mock_chunks = [str(formatted_nordic.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -3734,3 +3762,53 @@ async def calculate_acclimatization_plan_endpoint(
 )
 async def get_altitude_gear_checklist_endpoint() -> list[AltitudeMedicalGearRequirement]:
     return get_altitude_medical_gear()
+
+
+@app.get(
+    "/api/nordic-skiing/trails",
+    response_model=list[NordicTrailModel],
+    tags=["Nordic & Cross-Country Ski Grooming & Kick Wax Advisor Tooling"],
+    summary="List Nordic & cross-country ski trails with optional discipline filter",
+)
+async def get_nordic_trails_endpoint(
+    discipline: Optional[str] = None,
+) -> list[NordicTrailModel]:
+    return get_nordic_trails(discipline=discipline)
+
+
+@app.get(
+    "/api/nordic-skiing/trails/{trail_id}",
+    response_model=NordicTrailModel,
+    tags=["Nordic & Cross-Country Ski Grooming & Kick Wax Advisor Tooling"],
+    summary="Get details, daily grooming report, and track specifications for a specific Nordic trail",
+)
+async def get_nordic_trail_by_id_endpoint(trail_id: str) -> NordicTrailModel:
+    trail = get_nordic_trail_by_id(trail_id)
+    if not trail:
+        raise HTTPException(status_code=404, detail=f"Nordic trail '{trail_id}' not found")
+    return trail
+
+
+@app.post(
+    "/api/nordic-skiing/wax-plan",
+    response_model=WaxAdvisorResponse,
+    tags=["Nordic & Cross-Country Ski Grooming & Kick Wax Advisor Tooling"],
+    summary="Calculate kick wax, glide wax, wax pocket pressure, and klister advisory",
+)
+async def calculate_wax_plan_endpoint(
+    req: WaxAdvisorRequest,
+) -> WaxAdvisorResponse:
+    try:
+        return calculate_wax_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/nordic-skiing/gear-checklist",
+    response_model=list[NordicGearRequirement],
+    tags=["Nordic & Cross-Country Ski Grooming & Kick Wax Advisor Tooling"],
+    summary="List mandatory Nordic equipment compliance checklist",
+)
+async def get_nordic_gear_checklist_endpoint() -> list[NordicGearRequirement]:
+    return get_nordic_gear()

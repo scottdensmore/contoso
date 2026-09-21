@@ -87,6 +87,11 @@ from .mountaineering import (
     detect_mountaineering_intent,
     format_mountaineering_response,
 )
+from .nordic_skiing import (
+    build_nordic_skiing_prompt,
+    detect_nordic_skiing_intent,
+    format_nordic_skiing_response,
+)
 from .order_tracking import (
     build_order_tracking_prompt,
     detect_order_tracking_intent,
@@ -483,6 +488,7 @@ async def generate_llm_response(
     packrafting_prompt: str = "",
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
+    nordic_skiing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -615,6 +621,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
         if acclimatization_prompt:
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
+        if nordic_skiing_prompt:
+            local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -734,6 +742,8 @@ async def generate_llm_response(
             prompt_parts.append(canyoneering_prompt)
         if acclimatization_prompt:
             prompt_parts.append(acclimatization_prompt)
+        if nordic_skiing_prompt:
+            prompt_parts.append(nordic_skiing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1254,6 +1264,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_acclimatization = format_acclimatization_response(acclimatization_intent)
         acclimatization_info_payload = formatted_acclimatization.get("acclimatization_info")
 
+    nordic_skiing_intent = detect_nordic_skiing_intent(question)
+    nordic_skiing_prompt = ""
+    nordic_skiing_info_payload = None
+    if nordic_skiing_intent:
+        nordic_skiing_prompt = build_nordic_skiing_prompt(nordic_skiing_intent)
+        formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
+        nordic_skiing_info_payload = formatted_nordic.get("nordic_skiing_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1366,6 +1384,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["canyoneering_prompt"] = canyoneering_prompt
     if acclimatization_prompt:
         llm_kwargs["acclimatization_prompt"] = acclimatization_prompt
+    if nordic_skiing_prompt:
+        llm_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1493,6 +1513,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["canyoneering_info"] = canyoneering_info_payload
     if acclimatization_intent and acclimatization_info_payload:
         response_payload["acclimatization_info"] = acclimatization_info_payload
+    if nordic_skiing_intent and nordic_skiing_info_payload:
+        response_payload["nordic_skiing_info"] = nordic_skiing_info_payload
 
     return response_payload
 
@@ -1552,6 +1574,7 @@ def generate_llm_response_stream(
     packrafting_prompt: str = "",
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
+    nordic_skiing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1668,6 +1691,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
         if acclimatization_prompt:
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
+        if nordic_skiing_prompt:
+            local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1782,6 +1807,8 @@ def generate_llm_response_stream(
             prompt_parts.append(canyoneering_prompt)
         if acclimatization_prompt:
             prompt_parts.append(acclimatization_prompt)
+        if nordic_skiing_prompt:
+            prompt_parts.append(nordic_skiing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2166,6 +2193,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_acclimatization = format_acclimatization_response(acclimatization_intent)
         acclimatization_info_payload = formatted_acclimatization.get("acclimatization_info")
 
+    nordic_skiing_intent = detect_nordic_skiing_intent(question)
+    nordic_skiing_prompt = ""
+    nordic_skiing_info_payload = None
+    if nordic_skiing_intent:
+        nordic_skiing_prompt = build_nordic_skiing_prompt(nordic_skiing_intent)
+        formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
+        nordic_skiing_info_payload = formatted_nordic.get("nordic_skiing_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -2277,6 +2312,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': canyoneering_info_payload})}\n\n"
     if acclimatization_intent and acclimatization_info_payload:
         yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': acclimatization_info_payload})}\n\n"
+    if nordic_skiing_intent and nordic_skiing_info_payload:
+        yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': nordic_skiing_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2380,6 +2417,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["canyoneering_prompt"] = canyoneering_prompt
     if acclimatization_prompt:
         stream_kwargs["acclimatization_prompt"] = acclimatization_prompt
+    if nordic_skiing_prompt:
+        stream_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
 
     for chunk in generate_llm_response_stream(
         question,
