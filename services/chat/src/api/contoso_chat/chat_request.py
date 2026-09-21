@@ -3,6 +3,11 @@ import os
 import re
 from typing import Any
 
+from .acclimatization import (
+    build_acclimatization_prompt,
+    detect_acclimatization_intent,
+    format_acclimatization_response,
+)
 from .adventures import (
     build_adventure_prompt,
     detect_adventure_intent,
@@ -477,6 +482,7 @@ async def generate_llm_response(
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
     canyoneering_prompt: str = "",
+    acclimatization_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -607,6 +613,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{packrafting_prompt}"
         if canyoneering_prompt:
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
+        if acclimatization_prompt:
+            local_system = f"{local_system}\n\n{acclimatization_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -724,6 +732,8 @@ async def generate_llm_response(
             prompt_parts.append(packrafting_prompt)
         if canyoneering_prompt:
             prompt_parts.append(canyoneering_prompt)
+        if acclimatization_prompt:
+            prompt_parts.append(acclimatization_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1236,6 +1246,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
         canyoneering_info_payload = formatted_canyoneering.get("canyoneering_info")
 
+    acclimatization_intent = detect_acclimatization_intent(question)
+    acclimatization_prompt = ""
+    acclimatization_info_payload = None
+    if acclimatization_intent:
+        acclimatization_prompt = build_acclimatization_prompt(acclimatization_intent)
+        formatted_acclimatization = format_acclimatization_response(acclimatization_intent)
+        acclimatization_info_payload = formatted_acclimatization.get("acclimatization_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1346,6 +1364,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["packrafting_prompt"] = packrafting_prompt
     if canyoneering_prompt:
         llm_kwargs["canyoneering_prompt"] = canyoneering_prompt
+    if acclimatization_prompt:
+        llm_kwargs["acclimatization_prompt"] = acclimatization_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1471,6 +1491,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["packrafting_info"] = packrafting_info_payload
     if canyoneering_intent and canyoneering_info_payload:
         response_payload["canyoneering_info"] = canyoneering_info_payload
+    if acclimatization_intent and acclimatization_info_payload:
+        response_payload["acclimatization_info"] = acclimatization_info_payload
 
     return response_payload
 
@@ -1529,6 +1551,7 @@ def generate_llm_response_stream(
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
     canyoneering_prompt: str = "",
+    acclimatization_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1643,6 +1666,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{packrafting_prompt}"
         if canyoneering_prompt:
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
+        if acclimatization_prompt:
+            local_system = f"{local_system}\n\n{acclimatization_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1755,6 +1780,8 @@ def generate_llm_response_stream(
             prompt_parts.append(packrafting_prompt)
         if canyoneering_prompt:
             prompt_parts.append(canyoneering_prompt)
+        if acclimatization_prompt:
+            prompt_parts.append(acclimatization_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2131,6 +2158,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
         canyoneering_info_payload = formatted_canyoneering.get("canyoneering_info")
 
+    acclimatization_intent = detect_acclimatization_intent(question)
+    acclimatization_prompt = ""
+    acclimatization_info_payload = None
+    if acclimatization_intent:
+        acclimatization_prompt = build_acclimatization_prompt(acclimatization_intent)
+        formatted_acclimatization = format_acclimatization_response(acclimatization_intent)
+        acclimatization_info_payload = formatted_acclimatization.get("acclimatization_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -2240,6 +2275,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': packrafting_info_payload})}\n\n"
     if canyoneering_intent and canyoneering_info_payload:
         yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': canyoneering_info_payload})}\n\n"
+    if acclimatization_intent and acclimatization_info_payload:
+        yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': acclimatization_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2341,6 +2378,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["packrafting_prompt"] = packrafting_prompt
     if canyoneering_prompt:
         stream_kwargs["canyoneering_prompt"] = canyoneering_prompt
+    if acclimatization_prompt:
+        stream_kwargs["acclimatization_prompt"] = acclimatization_prompt
 
     for chunk in generate_llm_response_stream(
         question,
