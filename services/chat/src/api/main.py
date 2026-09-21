@@ -36,6 +36,18 @@ from contoso_chat.bikepacking import (
     get_bikepacking_route_by_id,
     get_bikepacking_routes,
 )
+from contoso_chat.canyoneering import (
+    CanyoneeringGearRequirement,
+    RopeRiggingRequest,
+    RopeRiggingResponse,
+    SlotCanyonRouteModel,
+    calculate_rope_rigging_plan,
+    detect_canyoneering_intent,
+    format_canyoneering_response,
+    get_canyon_route_by_id,
+    get_canyon_routes,
+    get_canyoneering_gear,
+)
 from contoso_chat.carrier_tracking import (
     CarrierTrackingInfo,
     detect_carrier_tracking_intent,
@@ -774,6 +786,7 @@ async def create_response(request: ChatRequest):
             mountaineering_intent = detect_mountaineering_intent(request.question)
             sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
             packrafting_intent = detect_packrafting_intent(request.question)
+            canyoneering_intent = detect_canyoneering_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1026,6 +1039,11 @@ async def create_response(request: ChatRequest):
                 formatted_packrafting = format_packrafting_response(packrafting_intent)
                 mock_payload["packrafting_info"] = formatted_packrafting.get("packrafting_info")
                 mock_payload["answer"] = formatted_packrafting.get("answer", mock_payload["answer"])
+            if canyoneering_intent:
+                formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
+                mock_payload["canyoneering_info"] = formatted_canyoneering.get("canyoneering_info")
+                mock_payload["answer"] = formatted_canyoneering.get("answer", mock_payload["answer"])
+
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1173,6 +1191,7 @@ async def create_response_stream(request: ChatRequest):
                 mountaineering_intent = detect_mountaineering_intent(request.question)
                 sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
                 packrafting_intent = detect_packrafting_intent(request.question)
+                canyoneering_intent = detect_canyoneering_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1321,6 +1340,10 @@ async def create_response_stream(request: ChatRequest):
                 if packrafting_intent:
                     formatted_packrafting = format_packrafting_response(packrafting_intent)
                     yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': formatted_packrafting.get('packrafting_info')})}\n\n"
+                if canyoneering_intent:
+                    formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
+                    yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': formatted_canyoneering.get('canyoneering_info')})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1473,6 +1496,12 @@ async def create_response_stream(request: ChatRequest):
                     mock_chunks = [
                         str(formatted_packrafting.get("answer", ""))
                     ]
+                elif canyoneering_intent:
+                    formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
+                    mock_chunks = [
+                        str(formatted_canyoneering.get("answer", ""))
+                    ]
+
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
                     mock_chunks = [
@@ -3523,3 +3552,53 @@ async def calculate_packraft_plan_endpoint(
 )
 async def get_packraft_gear_checklist_endpoint() -> list[PackraftGearRequirement]:
     return get_packraft_gear()
+
+
+@app.get(
+    "/api/canyoneering/routes",
+    response_model=list[SlotCanyonRouteModel],
+    tags=["Alpine Canyoneering & Technical Slot Canyon Outfitting Tooling"],
+    summary="List slot canyon routes with optional technical grade filter",
+)
+async def get_canyon_routes_endpoint(
+    technical_grade: Optional[str] = None,
+) -> list[SlotCanyonRouteModel]:
+    return get_canyon_routes(grade=technical_grade)
+
+
+@app.get(
+    "/api/canyoneering/routes/{route_id}",
+    response_model=SlotCanyonRouteModel,
+    tags=["Alpine Canyoneering & Technical Slot Canyon Outfitting Tooling"],
+    summary="Get details for a specific slot canyon route",
+)
+async def get_canyon_route_by_id_endpoint(route_id: str) -> SlotCanyonRouteModel:
+    route = get_canyon_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Slot canyon route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/canyoneering/rigging-plan",
+    response_model=RopeRiggingResponse,
+    tags=["Alpine Canyoneering & Technical Slot Canyon Outfitting Tooling"],
+    summary="Calculate rope lengths, pull cord, anchor system, and thermal spec",
+)
+async def calculate_rope_rigging_plan_endpoint(
+    req: RopeRiggingRequest,
+) -> RopeRiggingResponse:
+    try:
+        return calculate_rope_rigging_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/canyoneering/gear-checklist",
+    response_model=list[CanyoneeringGearRequirement],
+    tags=["Alpine Canyoneering & Technical Slot Canyon Outfitting Tooling"],
+    summary="List mandatory technical canyoneering kit and gear checklist",
+)
+async def get_canyoneering_gear_checklist_endpoint() -> list[CanyoneeringGearRequirement]:
+    return get_canyoneering_gear()
