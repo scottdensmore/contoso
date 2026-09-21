@@ -422,6 +422,18 @@ from contoso_chat.trip_planner import (
     generate_wilderness_trip_plan,
     get_trip_templates,
 )
+from contoso_chat.via_ferrata import (
+    RiggingPlanRequest,
+    RiggingPlanResponse,
+    ViaFerrataGearRequirement,
+    ViaFerrataRouteModel,
+    calculate_rigging_plan,
+    detect_via_ferrata_intent,
+    format_via_ferrata_response,
+    get_via_ferrata_gear,
+    get_via_ferrata_route_by_id,
+    get_via_ferrata_routes,
+)
 from contoso_chat.volunteer import (
     StewardshipImpactModel,
     VolunteerRegistrationRequest,
@@ -818,6 +830,7 @@ async def create_response(request: ChatRequest):
             canyoneering_intent = detect_canyoneering_intent(request.question)
             acclimatization_intent = detect_acclimatization_intent(request.question)
             nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
+            via_ferrata_intent = detect_via_ferrata_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1136,6 +1149,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_nordic.get(
                     "answer", mock_payload["answer"]
                 )
+            if via_ferrata_intent:
+                formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+                mock_payload["via_ferrata_info"] = formatted_via_ferrata.get(
+                    "via_ferrata_info"
+                )
+                mock_payload["answer"] = formatted_via_ferrata.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1290,6 +1311,7 @@ async def create_response_stream(request: ChatRequest):
                 canyoneering_intent = detect_canyoneering_intent(request.question)
                 acclimatization_intent = detect_acclimatization_intent(request.question)
                 nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
+                via_ferrata_intent = detect_via_ferrata_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1466,6 +1488,9 @@ async def create_response_stream(request: ChatRequest):
                 if nordic_skiing_intent:
                     formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
                     yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': formatted_nordic.get('nordic_skiing_info')})}\n\n"
+                if via_ferrata_intent:
+                    formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+                    yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': formatted_via_ferrata.get('via_ferrata_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1604,6 +1629,9 @@ async def create_response_stream(request: ChatRequest):
                 elif nordic_skiing_intent:
                     formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
                     mock_chunks = [str(formatted_nordic.get("answer", ""))]
+                elif via_ferrata_intent:
+                    formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+                    mock_chunks = [str(formatted_via_ferrata.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -3812,3 +3840,53 @@ async def calculate_wax_plan_endpoint(
 )
 async def get_nordic_gear_checklist_endpoint() -> list[NordicGearRequirement]:
     return get_nordic_gear()
+
+
+@app.get(
+    "/api/via-ferrata/routes",
+    response_model=list[ViaFerrataRouteModel],
+    tags=["Alpine Via Ferrata & Fall-Arrest Rigging Tooling"],
+    summary="List alpine via ferrata and iron way routes with optional Schall difficulty grade filter",
+)
+async def get_via_ferrata_routes_endpoint(
+    grade: Optional[str] = None,
+) -> list[ViaFerrataRouteModel]:
+    return get_via_ferrata_routes(grade=grade)
+
+
+@app.get(
+    "/api/via-ferrata/routes/{route_id}",
+    response_model=ViaFerrataRouteModel,
+    tags=["Alpine Via Ferrata & Fall-Arrest Rigging Tooling"],
+    summary="Get details, cable specs, and exposure ratings for a specific via ferrata route",
+)
+async def get_via_ferrata_route_endpoint(route_id: str) -> ViaFerrataRouteModel:
+    route = get_via_ferrata_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Via ferrata route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/via-ferrata/rigging-plan",
+    response_model=RiggingPlanResponse,
+    tags=["Alpine Via Ferrata & Fall-Arrest Rigging Tooling"],
+    summary="Calculate via ferrata rigging plan, fall factor impact force, and EN 958 compliance",
+)
+async def calculate_via_ferrata_rigging_plan_endpoint(
+    req: RiggingPlanRequest,
+) -> RiggingPlanResponse:
+    try:
+        return calculate_rigging_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/via-ferrata/gear-checklist",
+    response_model=list[ViaFerrataGearRequirement],
+    tags=["Alpine Via Ferrata & Fall-Arrest Rigging Tooling"],
+    summary="List mandatory via ferrata equipment compliance checklist",
+)
+async def get_via_ferrata_gear_checklist_endpoint() -> list[ViaFerrataGearRequirement]:
+    return get_via_ferrata_gear()

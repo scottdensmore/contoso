@@ -202,6 +202,11 @@ from .trip_planner import (
     detect_trip_planner_intent,
     format_trip_planner_response,
 )
+from .via_ferrata import (
+    build_via_ferrata_prompt,
+    detect_via_ferrata_intent,
+    format_via_ferrata_response,
+)
 from .volunteer import (
     build_volunteer_prompt,
     detect_volunteer_intent,
@@ -489,6 +494,7 @@ async def generate_llm_response(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    via_ferrata_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -623,6 +629,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
         if nordic_skiing_prompt:
             local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
+        if via_ferrata_prompt:
+            local_system = f"{local_system}\n\n{via_ferrata_prompt}"
+        if via_ferrata_prompt:
+            local_system = f"{local_system}\n\n{via_ferrata_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -744,6 +754,10 @@ async def generate_llm_response(
             prompt_parts.append(acclimatization_prompt)
         if nordic_skiing_prompt:
             prompt_parts.append(nordic_skiing_prompt)
+        if via_ferrata_prompt:
+            prompt_parts.append(via_ferrata_prompt)
+        if via_ferrata_prompt:
+            prompt_parts.append(via_ferrata_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1272,6 +1286,22 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
         nordic_skiing_info_payload = formatted_nordic.get("nordic_skiing_info")
 
+    via_ferrata_intent = detect_via_ferrata_intent(question)
+    via_ferrata_prompt = ""
+    via_ferrata_info_payload = None
+    if via_ferrata_intent:
+        via_ferrata_prompt = build_via_ferrata_prompt(via_ferrata_intent)
+        formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+        via_ferrata_info_payload = formatted_via_ferrata.get("via_ferrata_info")
+
+    via_ferrata_intent = detect_via_ferrata_intent(question)
+    via_ferrata_prompt = ""
+    via_ferrata_info_payload = None
+    if via_ferrata_intent:
+        via_ferrata_prompt = build_via_ferrata_prompt(via_ferrata_intent)
+        formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+        via_ferrata_info_payload = formatted_via_ferrata.get("via_ferrata_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1386,6 +1416,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["acclimatization_prompt"] = acclimatization_prompt
     if nordic_skiing_prompt:
         llm_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
+    if via_ferrata_prompt:
+        llm_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1515,6 +1547,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["acclimatization_info"] = acclimatization_info_payload
     if nordic_skiing_intent and nordic_skiing_info_payload:
         response_payload["nordic_skiing_info"] = nordic_skiing_info_payload
+    if via_ferrata_intent and via_ferrata_info_payload:
+        response_payload["via_ferrata_info"] = via_ferrata_info_payload
 
     return response_payload
 
@@ -1575,6 +1609,7 @@ def generate_llm_response_stream(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    via_ferrata_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2209,6 +2244,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_packrafting = format_packrafting_response(packrafting_intent)
         packrafting_info_payload = formatted_packrafting.get("packrafting_info")
 
+    via_ferrata_intent = detect_via_ferrata_intent(question)
+    via_ferrata_prompt = ""
+    via_ferrata_info_payload = None
+    if via_ferrata_intent:
+        via_ferrata_prompt = build_via_ferrata_prompt(via_ferrata_intent)
+        formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
+        via_ferrata_info_payload = formatted_via_ferrata.get("via_ferrata_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2314,6 +2357,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': acclimatization_info_payload})}\n\n"
     if nordic_skiing_intent and nordic_skiing_info_payload:
         yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': nordic_skiing_info_payload})}\n\n"
+    if via_ferrata_intent and via_ferrata_info_payload:
+        yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': via_ferrata_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2419,6 +2464,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["acclimatization_prompt"] = acclimatization_prompt
     if nordic_skiing_prompt:
         stream_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
+    if via_ferrata_prompt:
+        stream_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
 
     for chunk in generate_llm_response_stream(
         question,
