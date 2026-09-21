@@ -163,6 +163,18 @@ from contoso_chat.leave_no_trace import (
     get_lnt_principles,
     get_wilderness_zones,
 )
+from contoso_chat.mountaineering import (
+    GlacierGearRequirement,
+    GlacierRouteModel,
+    RopeTeamPlanRequest,
+    RopeTeamPlanResponse,
+    calculate_rope_team_plan,
+    detect_mountaineering_intent,
+    format_mountaineering_response,
+    get_glacier_gear,
+    get_glacier_route_by_id,
+    get_glacier_routes,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.permits import (
     ParkPassInfo,
@@ -735,6 +747,7 @@ async def create_response(request: ChatRequest):
             fly_fishing_intent = detect_fly_fishing_intent(request.question)
             hot_springs_intent = detect_hot_spring_intent(request.question)
             bikepacking_intent = detect_bikepacking_intent(request.question)
+            mountaineering_intent = detect_mountaineering_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -975,6 +988,10 @@ async def create_response(request: ChatRequest):
                 formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
                 mock_payload["bikepacking_info"] = formatted_bikepacking.get("bikepacking_info")
                 mock_payload["answer"] = formatted_bikepacking.get("answer", mock_payload["answer"])
+            if mountaineering_intent and not adventure_intent:
+                formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
+                mock_payload["mountaineering_info"] = formatted_mountaineering.get("mountaineering_info")
+                mock_payload["answer"] = formatted_mountaineering.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1119,6 +1136,7 @@ async def create_response_stream(request: ChatRequest):
                 fly_fishing_intent = detect_fly_fishing_intent(request.question)
                 hot_springs_intent = detect_hot_spring_intent(request.question)
                 bikepacking_intent = detect_bikepacking_intent(request.question)
+                mountaineering_intent = detect_mountaineering_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1258,6 +1276,9 @@ async def create_response_stream(request: ChatRequest):
                 if bikepacking_intent:
                     formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
                     yield f"data: {json.dumps({'event': 'bikepacking_info', 'bikepacking_info': formatted_bikepacking.get('bikepacking_info')})}\n\n"
+                if mountaineering_intent and not adventure_intent:
+                    formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
+                    yield f"data: {json.dumps({'event': 'mountaineering_info', 'mountaineering_info': formatted_mountaineering.get('mountaineering_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1394,6 +1415,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
                     mock_chunks = [
                         str(formatted_bikepacking.get("answer", ""))
+                    ]
+                elif mountaineering_intent and not adventure_intent:
+                    formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
+                    mock_chunks = [
+                        str(formatted_mountaineering.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -3294,4 +3320,54 @@ async def calculate_bikepacking_rig_endpoint(
 )
 async def get_bikepacking_gear_checklist_endpoint() -> list[BikepackingGearRequirement]:
     return get_bikepacking_gear()
+
+
+@app.get(
+    "/api/mountaineering/routes",
+    response_model=list[GlacierRouteModel],
+    tags=["Glaciated Peak Technical Outfitting Tooling"],
+    summary="List glaciated peak mountaineering routes with optional grade filter",
+)
+async def get_mountaineering_routes_endpoint(
+    grade: Optional[str] = None,
+) -> list[GlacierRouteModel]:
+    return get_glacier_routes(grade=grade)
+
+
+@app.get(
+    "/api/mountaineering/routes/{route_id}",
+    response_model=GlacierRouteModel,
+    tags=["Glaciated Peak Technical Outfitting Tooling"],
+    summary="Get details for a specific glaciated peak route",
+)
+async def get_mountaineering_route_by_id_endpoint(route_id: str) -> GlacierRouteModel:
+    route = get_glacier_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Glacier route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/mountaineering/rope-team-plan",
+    response_model=RopeTeamPlanResponse,
+    tags=["Glaciated Peak Technical Outfitting Tooling"],
+    summary="Calculate rope team spacing, brake knots, snow pickets, and turnaround time",
+)
+async def calculate_rope_team_plan_endpoint(
+    req: RopeTeamPlanRequest,
+) -> RopeTeamPlanResponse:
+    try:
+        return calculate_rope_team_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/mountaineering/gear-checklist",
+    response_model=list[GlacierGearRequirement],
+    tags=["Glaciated Peak Technical Outfitting Tooling"],
+    summary="List required technical glacier gear and rescue kit",
+)
+async def get_mountaineering_gear_checklist_endpoint() -> list[GlacierGearRequirement]:
+    return get_glacier_gear()
 
