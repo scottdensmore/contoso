@@ -38,6 +38,11 @@ from .carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from .caving import (
+    build_caving_prompt,
+    detect_caving_intent,
+    format_caving_response,
+)
 from .climbing import (
     build_climbing_prompt,
     detect_climbing_intent,
@@ -507,6 +512,7 @@ async def generate_llm_response(
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
+    caving_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -647,6 +653,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{ice_climbing_prompt}"
         if bushcraft_prompt:
             local_system = f"{local_system}\n\n{bushcraft_prompt}"
+        if caving_prompt:
+            local_system = f"{local_system}\n\n{caving_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -774,6 +782,8 @@ async def generate_llm_response(
             prompt_parts.append(ice_climbing_prompt)
         if bushcraft_prompt:
             prompt_parts.append(bushcraft_prompt)
+        if caving_prompt:
+            prompt_parts.append(caving_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1326,6 +1336,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
         bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
 
+    caving_intent = detect_caving_intent(question)
+    caving_prompt = ""
+    caving_info_payload = None
+    if caving_intent:
+        caving_prompt = build_caving_prompt(caving_intent)
+        formatted_caving = format_caving_response(caving_intent)
+        caving_info_payload = formatted_caving.get("caving_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1446,6 +1464,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["ice_climbing_prompt"] = ice_climbing_prompt
     if bushcraft_prompt:
         llm_kwargs["bushcraft_prompt"] = bushcraft_prompt
+    if caving_prompt:
+        llm_kwargs["caving_prompt"] = caving_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1581,6 +1601,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["ice_climbing_info"] = ice_climbing_info_payload
     if bushcraft_intent and bushcraft_info_payload:
         response_payload["bushcraft_info"] = bushcraft_info_payload
+    if caving_intent and caving_info_payload:
+        response_payload["caving_info"] = caving_info_payload
 
     return response_payload
 
@@ -1644,6 +1666,7 @@ def generate_llm_response_stream(
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
+    caving_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1768,6 +1791,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{ice_climbing_prompt}"
         if bushcraft_prompt:
             local_system = f"{local_system}\n\n{bushcraft_prompt}"
+        if caving_prompt:
+            local_system = f"{local_system}\n\n{caving_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1890,6 +1915,8 @@ def generate_llm_response_stream(
             prompt_parts.append(ice_climbing_prompt)
         if bushcraft_prompt:
             prompt_parts.append(bushcraft_prompt)
+        if caving_prompt:
+            prompt_parts.append(caving_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2314,6 +2341,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
         bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
 
+    caving_intent = detect_caving_intent(question)
+    caving_prompt = ""
+    caving_info_payload = None
+    if caving_intent:
+        caving_prompt = build_caving_prompt(caving_intent)
+        formatted_caving = format_caving_response(caving_intent)
+        caving_info_payload = formatted_caving.get("caving_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2425,6 +2460,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'ice_climbing_info', 'ice_climbing_info': ice_climbing_info_payload})}\n\n"
     if bushcraft_intent and bushcraft_info_payload:
         yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': bushcraft_info_payload})}\n\n"
+    if caving_intent and caving_info_payload:
+        yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': caving_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2536,6 +2573,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["ice_climbing_prompt"] = ice_climbing_prompt
     if bushcraft_prompt:
         stream_kwargs["bushcraft_prompt"] = bushcraft_prompt
+    if caving_prompt:
+        stream_kwargs["caving_prompt"] = caving_prompt
 
     for chunk in generate_llm_response_stream(
         question,
