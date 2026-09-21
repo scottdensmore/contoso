@@ -23,6 +23,11 @@ from .bikepacking import (
     detect_bikepacking_intent,
     format_bikepacking_response,
 )
+from .bushcraft import (
+    build_bushcraft_prompt,
+    detect_bushcraft_intent,
+    format_bushcraft_response,
+)
 from .canyoneering import (
     build_canyoneering_prompt,
     detect_canyoneering_intent,
@@ -501,6 +506,7 @@ async def generate_llm_response(
     nordic_skiing_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
+    bushcraft_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -639,6 +645,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{via_ferrata_prompt}"
         if ice_climbing_prompt:
             local_system = f"{local_system}\n\n{ice_climbing_prompt}"
+        if bushcraft_prompt:
+            local_system = f"{local_system}\n\n{bushcraft_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -764,6 +772,8 @@ async def generate_llm_response(
             prompt_parts.append(via_ferrata_prompt)
         if ice_climbing_prompt:
             prompt_parts.append(ice_climbing_prompt)
+        if bushcraft_prompt:
+            prompt_parts.append(bushcraft_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1308,6 +1318,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
         ice_climbing_info_payload = formatted_ice_climbing.get("ice_climbing_info")
 
+    bushcraft_intent = detect_bushcraft_intent(question)
+    bushcraft_prompt = ""
+    bushcraft_info_payload = None
+    if bushcraft_intent:
+        bushcraft_prompt = build_bushcraft_prompt(bushcraft_intent)
+        formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
+        bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1426,6 +1444,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
     if ice_climbing_prompt:
         llm_kwargs["ice_climbing_prompt"] = ice_climbing_prompt
+    if bushcraft_prompt:
+        llm_kwargs["bushcraft_prompt"] = bushcraft_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1559,6 +1579,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["via_ferrata_info"] = via_ferrata_info_payload
     if ice_climbing_intent and ice_climbing_info_payload:
         response_payload["ice_climbing_info"] = ice_climbing_info_payload
+    if bushcraft_intent and bushcraft_info_payload:
+        response_payload["bushcraft_info"] = bushcraft_info_payload
 
     return response_payload
 
@@ -1621,6 +1643,7 @@ def generate_llm_response_stream(
     nordic_skiing_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
+    bushcraft_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1743,6 +1766,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{via_ferrata_prompt}"
         if ice_climbing_prompt:
             local_system = f"{local_system}\n\n{ice_climbing_prompt}"
+        if bushcraft_prompt:
+            local_system = f"{local_system}\n\n{bushcraft_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1863,6 +1888,8 @@ def generate_llm_response_stream(
             prompt_parts.append(via_ferrata_prompt)
         if ice_climbing_prompt:
             prompt_parts.append(ice_climbing_prompt)
+        if bushcraft_prompt:
+            prompt_parts.append(bushcraft_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2279,6 +2306,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
         ice_climbing_info_payload = formatted_ice_climbing.get("ice_climbing_info")
 
+    bushcraft_intent = detect_bushcraft_intent(question)
+    bushcraft_prompt = ""
+    bushcraft_info_payload = None
+    if bushcraft_intent:
+        bushcraft_prompt = build_bushcraft_prompt(bushcraft_intent)
+        formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
+        bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2388,6 +2423,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': via_ferrata_info_payload})}\n\n"
     if ice_climbing_intent and ice_climbing_info_payload:
         yield f"data: {json.dumps({'event': 'ice_climbing_info', 'ice_climbing_info': ice_climbing_info_payload})}\n\n"
+    if bushcraft_intent and bushcraft_info_payload:
+        yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': bushcraft_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2497,6 +2534,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
     if ice_climbing_prompt:
         stream_kwargs["ice_climbing_prompt"] = ice_climbing_prompt
+    if bushcraft_prompt:
+        stream_kwargs["bushcraft_prompt"] = bushcraft_prompt
 
     for chunk in generate_llm_response_stream(
         question,

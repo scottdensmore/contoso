@@ -48,6 +48,18 @@ from contoso_chat.bikepacking import (
     get_bikepacking_route_by_id,
     get_bikepacking_routes,
 )
+from contoso_chat.bushcraft import (
+    BushcraftGearRequirement,
+    BushcraftProjectModel,
+    ShelterThermalRequest,
+    ShelterThermalResponse,
+    calculate_shelter_thermal,
+    detect_bushcraft_intent,
+    format_bushcraft_response,
+    get_bushcraft_gear,
+    get_bushcraft_project_by_id,
+    get_bushcraft_projects,
+)
 from contoso_chat.canyoneering import (
     CanyoneeringGearRequirement,
     RopeRiggingRequest,
@@ -844,6 +856,7 @@ async def create_response(request: ChatRequest):
             nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
             via_ferrata_intent = detect_via_ferrata_intent(request.question)
             ice_climbing_intent = detect_ice_climbing_intent(request.question)
+            bushcraft_intent = detect_bushcraft_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1178,6 +1191,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_ice_climbing.get(
                     "answer", mock_payload["answer"]
                 )
+            if bushcraft_intent:
+                formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
+                mock_payload["bushcraft_info"] = formatted_bushcraft.get("bushcraft_info")
+                mock_payload["answer"] = formatted_bushcraft.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1334,6 +1353,7 @@ async def create_response_stream(request: ChatRequest):
                 nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
                 via_ferrata_intent = detect_via_ferrata_intent(request.question)
                 ice_climbing_intent = detect_ice_climbing_intent(request.question)
+                bushcraft_intent = detect_bushcraft_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1516,6 +1536,9 @@ async def create_response_stream(request: ChatRequest):
                 if ice_climbing_intent:
                     formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
                     yield f"data: {json.dumps({'event': 'ice_climbing_info', 'ice_climbing_info': formatted_ice_climbing.get('ice_climbing_info')})}\n\n"
+                if bushcraft_intent:
+                    formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
+                    yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': formatted_bushcraft.get('bushcraft_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1660,6 +1683,9 @@ async def create_response_stream(request: ChatRequest):
                 elif ice_climbing_intent:
                     formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
                     mock_chunks = [str(formatted_ice_climbing.get("answer", ""))]
+                elif bushcraft_intent:
+                    formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
+                    mock_chunks = [str(formatted_bushcraft.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -3968,3 +3994,53 @@ async def calculate_ice_rigging_plan_endpoint(
 )
 async def get_ice_climbing_gear_checklist_endpoint() -> list[IceClimbingGearRequirement]:
     return get_ice_climbing_gear()
+
+
+@app.get(
+    "/api/bushcraft/projects",
+    response_model=list[BushcraftProjectModel],
+    tags=["Wilderness Bushcraft & Traditional Fieldcraft Tooling"],
+    summary="List wilderness bushcraft and fieldcraft projects with optional discipline filter",
+)
+async def get_bushcraft_projects_endpoint(
+    discipline: Optional[str] = None,
+) -> list[BushcraftProjectModel]:
+    return get_bushcraft_projects(discipline=discipline)
+
+
+@app.get(
+    "/api/bushcraft/projects/{project_id}",
+    response_model=BushcraftProjectModel,
+    tags=["Wilderness Bushcraft & Traditional Fieldcraft Tooling"],
+    summary="Get details for a specific wilderness bushcraft project",
+)
+async def get_bushcraft_project_by_id_endpoint(project_id: str) -> BushcraftProjectModel:
+    project = get_bushcraft_project_by_id(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail=f"Bushcraft project '{project_id}' not found")
+    return project
+
+
+@app.post(
+    "/api/bushcraft/thermal-calc",
+    response_model=ShelterThermalResponse,
+    tags=["Wilderness Bushcraft & Traditional Fieldcraft Tooling"],
+    summary="Calculate shelter effective R-value, interior temperature, and ground conductive loss",
+)
+async def calculate_shelter_thermal_endpoint(
+    req: ShelterThermalRequest,
+) -> ShelterThermalResponse:
+    try:
+        return calculate_shelter_thermal(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/bushcraft/gear-checklist",
+    response_model=list[BushcraftGearRequirement],
+    tags=["Wilderness Bushcraft & Traditional Fieldcraft Tooling"],
+    summary="List mandatory wilderness bushcraft kit checklist",
+)
+async def get_bushcraft_gear_checklist_endpoint() -> list[BushcraftGearRequirement]:
+    return get_bushcraft_gear()
