@@ -5,6 +5,18 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from contoso_chat.acclimatization import (
+    AcclimatizationPlanRequest,
+    AcclimatizationPlanResponse,
+    AltitudeMedicalGearRequirement,
+    AltitudePeakProfileModel,
+    calculate_acclimatization_plan,
+    detect_acclimatization_intent,
+    format_acclimatization_response,
+    get_altitude_medical_gear,
+    get_altitude_profile_by_id,
+    get_altitude_profiles,
+)
 from contoso_chat.adventures import (
     AdventureGuideInfo,
     AdventureTourInfo,
@@ -472,6 +484,7 @@ try:
         get_response,
         get_response_stream,
     )
+
     REAL_CHAT_AVAILABLE = True
 except ImportError:
     REAL_CHAT_AVAILABLE = False
@@ -485,10 +498,9 @@ except ImportError:
             "support_contact": None,
         }
 
+
 _DEFAULT_CARRIER_INFO = lookup_carrier_tracking("CTSO-TRK-DEMO123")
-MOCK_CARRIER_TRACKING = (
-    _DEFAULT_CARRIER_INFO.model_dump() if _DEFAULT_CARRIER_INFO else {}
-)
+MOCK_CARRIER_TRACKING = _DEFAULT_CARRIER_INFO.model_dump() if _DEFAULT_CARRIER_INFO else {}
 
 MOCK_ORDER_TRACKING = {
     "order_id": "ord_mock_123",
@@ -525,12 +537,12 @@ CHAT_SERVICE_MODEL = (
 
 # Configure structured logging for Cloud Logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Contoso Chat", version="1.0.0")
+
 
 # Middleware for request logging
 @app.middleware("http")
@@ -539,16 +551,17 @@ async def log_requests(request: Request, call_next):
 
     # Log request details (filter sensitive headers)
     _sensitive_headers = {"authorization", "cookie", "x-api-key", "x-auth-token"}
-    filtered_headers = {k: v for k, v in request.headers.items()
-                        if k.lower() not in _sensitive_headers}
+    filtered_headers = {
+        k: v for k, v in request.headers.items() if k.lower() not in _sensitive_headers
+    }
     logger.info(
         "Request started",
         extra={
             "method": request.method,
             "url": str(request.url),
             "headers": filtered_headers,
-            "client_ip": request.client.host if request.client else None
-        }
+            "client_ip": request.client.host if request.client else None,
+        },
     )
 
     response = await call_next(request)
@@ -564,14 +577,15 @@ async def log_requests(request: Request, call_next):
             "url": str(request.url),
             "status_code": response.status_code,
             "process_time": process_time,
-            "client_ip": request.client.host if request.client else None
-        }
+            "client_ip": request.client.host if request.client else None,
+        },
     )
 
     # Add response time header
     response.headers["X-Process-Time"] = str(process_time)
 
     return response
+
 
 # CORS middleware - restrict to known origins
 _allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3100").split(",")
@@ -615,6 +629,7 @@ class ChatRequest(BaseModel):
     chat_history: Optional[Any] = "[]"
     session_id: Optional[str] = None
 
+
 @app.get("/")
 async def root():
     logger.info("Root endpoint accessed")
@@ -622,8 +637,9 @@ async def root():
         "message": "Contoso Chat API",
         "version": "1.0.0",
         "status": "running",
-        "real_chat": REAL_CHAT_AVAILABLE
+        "real_chat": REAL_CHAT_AVAILABLE,
     }
+
 
 @app.get("/health")
 async def health():
@@ -694,6 +710,7 @@ async def health_dependencies():
         "local_provider": local_provider,
     }
 
+
 @app.post("/api/create_response")
 async def create_response(request: ChatRequest):
     logger.info(
@@ -703,8 +720,8 @@ async def create_response(request: ChatRequest):
             "session_id": request.session_id,
             "question_length": len(request.question),
             "has_chat_history": len(str(request.chat_history or "")) > 2,
-            "real_chat_available": REAL_CHAT_AVAILABLE
-        }
+            "real_chat_available": REAL_CHAT_AVAILABLE,
+        },
     )
 
     chat_history = request.chat_history
@@ -726,8 +743,8 @@ async def create_response(request: ChatRequest):
                     "customer_id": request.customer_id,
                     "response_length": len(result.get("answer", "")),
                     "context_items": len(result.get("context", [])),
-                    "success": True
-                }
+                    "success": True,
+                },
             )
             if request.session_id:
                 result["session_id"] = request.session_id
@@ -787,6 +804,7 @@ async def create_response(request: ChatRequest):
             sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
             packrafting_intent = detect_packrafting_intent(request.question)
             canyoneering_intent = detect_canyoneering_intent(request.question)
+            acclimatization_intent = detect_acclimatization_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -835,7 +853,11 @@ async def create_response(request: ChatRequest):
                     "Use code WELCOME20 for 20% off your order, OUTDOORS10 for 10% off site-wide, "
                     "or TRAIL15 for 15% off trail equipment. Apply them in your cart drawer at checkout!"
                 )
-            if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy") and not return_intent:
+            if (
+                policy_intent.get("is_policy_query")
+                and policy_intent.get("matched_policy")
+                and not return_intent
+            ):
                 mock_payload["policy"] = policy_intent["matched_policy"]
                 p_obj = policy_intent["matched_policy"]
                 mock_payload["answer"] = (
@@ -908,16 +930,36 @@ async def create_response(request: ChatRequest):
                 formatted_return = format_return_label_response(return_intent, rl_info)
                 mock_payload["return_label"] = formatted_return.get("return_label")
                 mock_payload["answer"] = formatted_return.get("answer", mock_payload["answer"])
-            if trail_intent and not field_reports_intent and not trip_planner_intent and not route_intent:
+            if (
+                trail_intent
+                and not field_reports_intent
+                and not trip_planner_intent
+                and not route_intent
+            ):
                 formatted_trail = format_trail_response(trail_intent)
                 mock_payload["trail_outfitting"] = formatted_trail.get("trail_outfitting")
                 mock_payload["answer"] = formatted_trail.get("answer", mock_payload["answer"])
             if rewards_intent:
-                rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                rewards_loyalty = get_customer_loyalty(
+                    rewards_intent.customer_id or request.customer_id
+                )
                 formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                 mock_payload["rewards_info"] = formatted_rewards.get("rewards_info")
                 mock_payload["answer"] = formatted_rewards.get("answer", mock_payload["answer"])
-            if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
+            if (
+                permits_intent
+                and not adventure_intent
+                and not field_reports_intent
+                and not shuttle_intent
+                and not hut_intent
+                and not volunteer_intent
+                and not water_intent
+                and not route_intent
+                and not fire_safety_intent
+                and not first_aid_intent
+                and not lnt_intent
+                and not avalanche_intent
+            ):
                 formatted_permits = format_permits_response(permits_intent)
                 mock_payload["permits_info"] = formatted_permits.get("permits_info")
                 mock_payload["answer"] = formatted_permits.get("answer", mock_payload["answer"])
@@ -931,8 +973,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_adventure.get("answer", mock_payload["answer"])
             if field_reports_intent and not avalanche_intent:
                 formatted_field_reports = format_field_reports_response(field_reports_intent)
-                mock_payload["field_reports_info"] = formatted_field_reports.get("field_reports_info")
-                mock_payload["answer"] = formatted_field_reports.get("answer", mock_payload["answer"])
+                mock_payload["field_reports_info"] = formatted_field_reports.get(
+                    "field_reports_info"
+                )
+                mock_payload["answer"] = formatted_field_reports.get(
+                    "answer", mock_payload["answer"]
+                )
             if trade_in_intent:
                 formatted_trade_in = format_trade_in_response(trade_in_intent)
                 mock_payload["trade_in_info"] = formatted_trade_in.get("trade_in_info")
@@ -985,7 +1031,13 @@ async def create_response(request: ChatRequest):
             if weather_intent:
                 formatted_weather = format_weather_response(weather_intent)
                 mock_payload["weather_info"] = formatted_weather.get("weather_info")
-                if not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
+                if not (
+                    trail_intent
+                    or adventure_intent
+                    or shuttle_intent
+                    or permits_intent
+                    or safety_intent
+                ):
                     mock_payload["answer"] = formatted_weather.get("answer", mock_payload["answer"])
             if ski_tour_intent:
                 formatted_tour = format_ski_tour_response(ski_tour_intent)
@@ -1013,8 +1065,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_wildlife.get("answer", mock_payload["answer"])
             if trail_running_intent:
                 formatted_trail_running = format_trail_running_response(trail_running_intent)
-                mock_payload["trail_running_info"] = formatted_trail_running.get("trail_running_info")
-                mock_payload["answer"] = formatted_trail_running.get("answer", mock_payload["answer"])
+                mock_payload["trail_running_info"] = formatted_trail_running.get(
+                    "trail_running_info"
+                )
+                mock_payload["answer"] = formatted_trail_running.get(
+                    "answer", mock_payload["answer"]
+                )
             if fly_fishing_intent:
                 formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
                 mock_payload["fly_fishing_info"] = formatted_fly_fishing.get("fly_fishing_info")
@@ -1029,12 +1085,18 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_bikepacking.get("answer", mock_payload["answer"])
             if mountaineering_intent and not adventure_intent:
                 formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
-                mock_payload["mountaineering_info"] = formatted_mountaineering.get("mountaineering_info")
-                mock_payload["answer"] = formatted_mountaineering.get("answer", mock_payload["answer"])
+                mock_payload["mountaineering_info"] = formatted_mountaineering.get(
+                    "mountaineering_info"
+                )
+                mock_payload["answer"] = formatted_mountaineering.get(
+                    "answer", mock_payload["answer"]
+                )
             if sea_kayaking_intent:
                 formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
                 mock_payload["sea_kayaking_info"] = formatted_sea_kayaking.get("sea_kayaking_info")
-                mock_payload["answer"] = formatted_sea_kayaking.get("answer", mock_payload["answer"])
+                mock_payload["answer"] = formatted_sea_kayaking.get(
+                    "answer", mock_payload["answer"]
+                )
             if packrafting_intent:
                 formatted_packrafting = format_packrafting_response(packrafting_intent)
                 mock_payload["packrafting_info"] = formatted_packrafting.get("packrafting_info")
@@ -1042,7 +1104,17 @@ async def create_response(request: ChatRequest):
             if canyoneering_intent:
                 formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                 mock_payload["canyoneering_info"] = formatted_canyoneering.get("canyoneering_info")
-                mock_payload["answer"] = formatted_canyoneering.get("answer", mock_payload["answer"])
+                mock_payload["answer"] = formatted_canyoneering.get(
+                    "answer", mock_payload["answer"]
+                )
+            if acclimatization_intent:
+                formatted_acclimatization = format_acclimatization_response(acclimatization_intent)
+                mock_payload["acclimatization_info"] = formatted_acclimatization.get(
+                    "acclimatization_info"
+                )
+                mock_payload["answer"] = formatted_acclimatization.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1065,9 +1137,9 @@ async def create_response(request: ChatRequest):
             extra={
                 "customer_id": request.customer_id,
                 "error": str(e),
-                "error_type": type(e).__name__
+                "error_type": type(e).__name__,
             },
-            exc_info=True
+            exc_info=True,
         )
 
         # Fallback response if real chat fails
@@ -1109,7 +1181,12 @@ async def create_response_stream(request: ChatRequest):
         chat_history = request.chat_history
         if request.session_id:
             create_or_get_session(request.session_id, customer_id=request.customer_id)
-            if chat_history is None or chat_history == "" or chat_history == "[]" or chat_history == []:
+            if (
+                chat_history is None
+                or chat_history == ""
+                or chat_history == "[]"
+                or chat_history == []
+            ):
                 chat_history = get_history_for_llm(request.session_id)
             append_message(session_id=request.session_id, role="user", content=request.question)
             yield f"data: {json.dumps({'event': 'session', 'session_id': request.session_id})}\n\n"
@@ -1142,9 +1219,7 @@ async def create_response_stream(request: ChatRequest):
                         accumulated_chunks.append(chunk)
                         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
             else:
-                logger.warning(
-                    "Using mock streaming response - real chat logic not available"
-                )
+                logger.warning("Using mock streaming response - real chat logic not available")
                 yield f"data: {json.dumps({'event': 'status', 'status': 'analyzing_query', 'message': 'Analyzing question...'})}\n\n"
                 yield f"data: {json.dumps({'event': 'status', 'status': 'searching_catalog', 'message': 'Searching catalog...'})}\n\n"
                 yield f"data: {json.dumps({'event': 'status', 'status': 'generating_response', 'message': 'Generating response...'})}\n\n"
@@ -1192,6 +1267,7 @@ async def create_response_stream(request: ChatRequest):
                 sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
                 packrafting_intent = detect_packrafting_intent(request.question)
                 canyoneering_intent = detect_canyoneering_intent(request.question)
+                acclimatization_intent = detect_acclimatization_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1204,9 +1280,7 @@ async def create_response_stream(request: ChatRequest):
                         else None
                     )
                     formatted_return = format_return_label_response(return_intent, rl_info)
-                    mock_chunks = [
-                        str(formatted_return.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_return.get("answer", ""))]
                 elif carrier_intent.get("is_carrier_intent"):
                     ext_id = carrier_intent.get("extracted_identifier")
                     c_info = lookup_carrier_tracking(ext_id) if ext_id else None
@@ -1222,7 +1296,11 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': 'order_tracking', 'order_tracking': MOCK_ORDER_TRACKING})}\n\n"
                 if promo_intent.get("is_promo_intent"):
                     yield f"data: {json.dumps({'event': 'promotions', 'promotions': get_active_promotions()})}\n\n"
-                if policy_intent.get("is_policy_query") and policy_intent.get("matched_policy") and not return_intent:
+                if (
+                    policy_intent.get("is_policy_query")
+                    and policy_intent.get("matched_policy")
+                    and not return_intent
+                ):
                     yield f"data: {json.dumps({'event': 'policy', 'policy': policy_intent['matched_policy']})}\n\n"
                 if store_intent.get("is_store_query") and store_intent.get("matched_stores"):
                     yield f"data: {json.dumps({'event': 'stores', 'stores': store_intent['matched_stores']})}\n\n"
@@ -1247,10 +1325,25 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trail = format_trail_response(trail_intent)
                     yield f"data: {json.dumps({'event': 'trail_outfitting', 'trail_outfitting': formatted_trail.get('trail_outfitting')})}\n\n"
                 if rewards_intent:
-                    rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                    rewards_loyalty = get_customer_loyalty(
+                        rewards_intent.customer_id or request.customer_id
+                    )
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
                     yield f"data: {json.dumps({'event': 'rewards_info', 'rewards_info': formatted_rewards.get('rewards_info')})}\n\n"
-                if permits_intent and not adventure_intent and not field_reports_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
+                if (
+                    permits_intent
+                    and not adventure_intent
+                    and not field_reports_intent
+                    and not shuttle_intent
+                    and not hut_intent
+                    and not volunteer_intent
+                    and not water_intent
+                    and not route_intent
+                    and not fire_safety_intent
+                    and not first_aid_intent
+                    and not lnt_intent
+                    and not avalanche_intent
+                ):
                     formatted_permits = format_permits_response(permits_intent)
                     yield f"data: {json.dumps({'event': 'permits_info', 'permits_info': formatted_permits.get('permits_info')})}\n\n"
                 if repair_intent:
@@ -1343,6 +1436,11 @@ async def create_response_stream(request: ChatRequest):
                 if canyoneering_intent:
                     formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                     yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': formatted_canyoneering.get('canyoneering_info')})}\n\n"
+                if acclimatization_intent:
+                    formatted_acclimatization = format_acclimatization_response(
+                        acclimatization_intent
+                    )
+                    yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': formatted_acclimatization.get('acclimatization_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1365,11 +1463,11 @@ async def create_response_stream(request: ChatRequest):
                         f"Estimated delivery: {MOCK_ORDER_TRACKING['estimated_delivery']}.",
                     ]
                 elif rewards_intent:
-                    rewards_loyalty = get_customer_loyalty(rewards_intent.customer_id or request.customer_id)
+                    rewards_loyalty = get_customer_loyalty(
+                        rewards_intent.customer_id or request.customer_id
+                    )
                     formatted_rewards = format_rewards_response(rewards_intent, rewards_loyalty)
-                    mock_chunks = [
-                        str(formatted_rewards.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_rewards.get("answer", ""))]
                 elif promo_intent.get("is_promo_intent"):
                     mock_chunks = [
                         "Mock response: We have great promotions available! ",
@@ -1433,165 +1531,123 @@ async def create_response_stream(request: ChatRequest):
                     ]
                 elif rental_intent:
                     formatted_rental = format_rental_response(rental_intent)
-                    mock_chunks = [
-                        str(formatted_rental.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_rental.get("answer", ""))]
                 elif ski_tour_intent:
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
-                    mock_chunks = [
-                        str(formatted_tour.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_tour.get("answer", ""))]
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
-                    mock_chunks = [
-                        str(formatted_climbing.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_climbing.get("answer", ""))]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
-                    mock_chunks = [
-                        str(formatted_foraging.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_foraging.get("answer", ""))]
                 elif stargazing_intent:
                     formatted_stargazing = format_stargazing_response(stargazing_intent)
-                    mock_chunks = [
-                        str(formatted_stargazing.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_stargazing.get("answer", ""))]
                 elif wildlife_intent:
                     formatted_wildlife = format_wildlife_response(wildlife_intent)
-                    mock_chunks = [
-                        str(formatted_wildlife.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_wildlife.get("answer", ""))]
                 elif trail_running_intent:
                     formatted_trail_running = format_trail_running_response(trail_running_intent)
-                    mock_chunks = [
-                        str(formatted_trail_running.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_trail_running.get("answer", ""))]
                 elif fly_fishing_intent:
                     formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
-                    mock_chunks = [
-                        str(formatted_fly_fishing.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_fly_fishing.get("answer", ""))]
                 elif hot_springs_intent:
                     formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
-                    mock_chunks = [
-                        str(formatted_hot_springs.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_hot_springs.get("answer", ""))]
                 elif bikepacking_intent:
                     formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
-                    mock_chunks = [
-                        str(formatted_bikepacking.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_bikepacking.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
-                    mock_chunks = [
-                        str(formatted_mountaineering.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
                 elif sea_kayaking_intent:
                     formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
-                    mock_chunks = [
-                        str(formatted_sea_kayaking.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_sea_kayaking.get("answer", ""))]
                 elif packrafting_intent:
                     formatted_packrafting = format_packrafting_response(packrafting_intent)
-                    mock_chunks = [
-                        str(formatted_packrafting.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_packrafting.get("answer", ""))]
                 elif canyoneering_intent:
                     formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
-                    mock_chunks = [
-                        str(formatted_canyoneering.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_canyoneering.get("answer", ""))]
+                elif acclimatization_intent:
+                    formatted_acclimatization = format_acclimatization_response(
+                        acclimatization_intent
+                    )
+                    mock_chunks = [str(formatted_acclimatization.get("answer", ""))]
 
-                elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
+                elif weather_intent and not (
+                    trail_intent
+                    or adventure_intent
+                    or shuttle_intent
+                    or permits_intent
+                    or safety_intent
+                ):
                     formatted_weather = format_weather_response(weather_intent)
-                    mock_chunks = [
-                        str(formatted_weather.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_weather.get("answer", ""))]
                 elif avalanche_intent:
                     formatted_avy = format_avalanche_response(avalanche_intent)
-                    mock_chunks = [
-                        str(formatted_avy.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_avy.get("answer", ""))]
                 elif field_reports_intent:
                     formatted_field_reports = format_field_reports_response(field_reports_intent)
-                    mock_chunks = [
-                        str(formatted_field_reports.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_field_reports.get("answer", ""))]
                 elif route_intent and not shuttle_intent:
                     formatted_route = format_route_response(route_intent)
-                    mock_chunks = [
-                        str(formatted_route.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_route.get("answer", ""))]
                 elif fire_safety_intent:
                     formatted_fire = format_fire_safety_response(fire_safety_intent)
-                    mock_chunks = [
-                        str(formatted_fire.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_fire.get("answer", ""))]
                 elif first_aid_intent:
                     formatted_first_aid = format_first_aid_response(first_aid_intent)
-                    mock_chunks = [
-                        str(formatted_first_aid.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_first_aid.get("answer", ""))]
                 elif lnt_intent:
                     formatted_lnt = format_lnt_response(lnt_intent)
-                    mock_chunks = [
-                        str(formatted_lnt.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_lnt.get("answer", ""))]
                 elif trail_intent:
                     formatted_trail = format_trail_response(trail_intent)
-                    mock_chunks = [
-                        str(formatted_trail.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_trail.get("answer", ""))]
                 elif adventure_intent:
                     formatted_adventure = format_adventure_response(adventure_intent)
-                    mock_chunks = [
-                        str(formatted_adventure.get("answer", ""))
-                    ]
-                elif permits_intent and not shuttle_intent and not hut_intent and not volunteer_intent and not water_intent and not route_intent and not fire_safety_intent and not first_aid_intent and not lnt_intent and not avalanche_intent:
+                    mock_chunks = [str(formatted_adventure.get("answer", ""))]
+                elif (
+                    permits_intent
+                    and not shuttle_intent
+                    and not hut_intent
+                    and not volunteer_intent
+                    and not water_intent
+                    and not route_intent
+                    and not fire_safety_intent
+                    and not first_aid_intent
+                    and not lnt_intent
+                    and not avalanche_intent
+                ):
                     formatted_permits = format_permits_response(permits_intent)
-                    mock_chunks = [
-                        str(formatted_permits.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_permits.get("answer", ""))]
                 elif repair_intent:
                     formatted_repair = format_repair_response(repair_intent)
-                    mock_chunks = [
-                        str(formatted_repair.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_repair.get("answer", ""))]
                 elif trade_in_intent:
                     formatted_trade_in = format_trade_in_response(trade_in_intent)
-                    mock_chunks = [
-                        str(formatted_trade_in.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_trade_in.get("answer", ""))]
                 elif trip_planner_intent:
                     formatted_trip = format_trip_planner_response(trip_planner_intent)
-                    mock_chunks = [
-                        str(formatted_trip.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_trip.get("answer", ""))]
                 elif safety_intent:
                     formatted_safety = format_safety_response(safety_intent)
-                    mock_chunks = [
-                        str(formatted_safety.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_safety.get("answer", ""))]
                 elif shuttle_intent:
                     formatted_shuttle = format_shuttle_response(shuttle_intent)
-                    mock_chunks = [
-                        str(formatted_shuttle.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_shuttle.get("answer", ""))]
                 elif hut_intent:
                     formatted_hut = format_hut_response(hut_intent)
-                    mock_chunks = [
-                        str(formatted_hut.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_hut.get("answer", ""))]
                 elif volunteer_intent:
                     formatted_vol = format_volunteer_response(volunteer_intent)
-                    mock_chunks = [
-                        str(formatted_vol.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_vol.get("answer", ""))]
                 elif water_intent:
                     formatted_water = format_water_response(water_intent)
-                    mock_chunks = [
-                        str(formatted_water.get("answer", ""))
-                    ]
+                    mock_chunks = [str(formatted_water.get("answer", ""))]
                 else:
                     mock_chunks = [
                         f"Mock response: You asked about '{request.question}'. ",
@@ -1712,6 +1768,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
 async def feedback_summary() -> dict[str, Any]:
     return get_feedback_summary()
 
+
 @app.get("/api/promotions")
 async def get_promotions() -> list[dict[str, Any]]:
     logger.info("Promotions endpoint accessed")
@@ -1722,7 +1779,6 @@ async def get_promotions() -> list[dict[str, Any]]:
 async def validate_promotion(request: PromoValidateRequest) -> dict[str, Any]:
     logger.info("Promo validation requested", extra={"code": request.code})
     return validate_promo_code(request.code)
-
 
 
 @app.get(
@@ -1889,7 +1945,6 @@ async def post_rental_quote_endpoint(
             detail=f"Rental package not found for gear type: {request.gear_type}",
         )
     return quote
-
 
 
 @app.post(
@@ -2064,7 +2119,9 @@ async def get_repair_services_endpoint(
 async def post_repair_diagnose_endpoint(
     request: RepairDiagnoseRequest,
 ) -> RepairDiagnosis:
-    logger.info("Repair diagnosis requested", extra={"issue": request.issue, "gear_type": request.gear_type})
+    logger.info(
+        "Repair diagnosis requested", extra={"issue": request.issue, "gear_type": request.gear_type}
+    )
     return diagnose_repair_issue(issue=request.issue, gear_type=request.gear_type)
 
 
@@ -2122,7 +2179,6 @@ async def get_reports_alerts_endpoint(
 ) -> list[HazardAlertModel]:
     logger.info("Hazard alerts requested", extra={"trail_name": trail_name})
     return get_hazard_alerts(trail_name=trail_name)
-
 
 
 @app.get(
@@ -2291,7 +2347,9 @@ async def get_shuttle_routes_endpoint(
     region: Optional[str] = None,
     connector_only: bool = False,
 ) -> list[ShuttleRouteModel]:
-    logger.info("Shuttle routes requested", extra={"region": region, "connector_only": connector_only})
+    logger.info(
+        "Shuttle routes requested", extra={"region": region, "connector_only": connector_only}
+    )
     return get_shuttle_routes(region=region, connector_only=connector_only)
 
 
@@ -2306,7 +2364,9 @@ async def get_shuttle_routes_endpoint(
 async def post_shuttle_quote_endpoint(
     request: ShuttleQuoteRequest,
 ) -> ShuttleQuoteResponse:
-    logger.info("Shuttle fare quote requested", extra={"route_id": request.route_id, "seats": request.seats})
+    logger.info(
+        "Shuttle fare quote requested", extra={"route_id": request.route_id, "seats": request.seats}
+    )
     target_route_id = request.route_id
     if not target_route_id and request.region:
         matching = get_shuttle_routes(region=request.region)
@@ -2331,7 +2391,10 @@ async def post_shuttle_quote_endpoint(
 async def post_shuttle_book_endpoint(
     request: ShuttleBookingRequest,
 ) -> ShuttleBookingResponse:
-    logger.info("Shuttle seat booking requested", extra={"route_id": request.route_id, "seats": request.seats})
+    logger.info(
+        "Shuttle seat booking requested",
+        extra={"route_id": request.route_id, "seats": request.seats},
+    )
     try:
         return book_shuttle(request)
     except ValueError as exc:
@@ -2362,7 +2425,10 @@ async def get_shuttle_carpools_endpoint(
 async def post_shuttle_carpools_endpoint(
     request: CarpoolOfferRequest,
 ) -> CarpoolOfferResponse:
-    logger.info("New community carpool offer submitted", extra={"origin": request.origin_city, "dest": request.destination_trailhead})
+    logger.info(
+        "New community carpool offer submitted",
+        extra={"origin": request.origin_city, "dest": request.destination_trailhead},
+    )
     return create_carpool_offer(request)
 
 
@@ -2411,7 +2477,10 @@ async def get_alpine_hut_by_id_endpoint(hut_id: str) -> AlpineHutModel:
 async def post_hut_quote_endpoint(
     request: HutAvailabilityRequest,
 ) -> HutAvailabilityResponse:
-    logger.info("Alpine hut quote requested", extra={"hut_id": request.hut_id, "range_name": request.range_name})
+    logger.info(
+        "Alpine hut quote requested",
+        extra={"hut_id": request.hut_id, "range_name": request.range_name},
+    )
     quote = calculate_hut_quote(request)
     if not quote:
         identifier = request.hut_id or request.range_name or "specified"
@@ -2431,7 +2500,10 @@ async def post_hut_quote_endpoint(
 async def post_hut_book_endpoint(
     request: HutBookingRequest,
 ) -> HutBookingResponse:
-    logger.info("Alpine hut booking submitted", extra={"hut_id": request.hut_id, "guest_name": request.guest_name})
+    logger.info(
+        "Alpine hut booking submitted",
+        extra={"hut_id": request.hut_id, "guest_name": request.guest_name},
+    )
     try:
         return book_alpine_hut(request)
     except ValueError as e:
@@ -2450,7 +2522,9 @@ async def get_volunteer_projects_endpoint(
     region: Optional[str] = None,
     difficulty: Optional[str] = None,
 ) -> list[VolunteerWorkpartyModel]:
-    logger.info("Volunteer workparties requested", extra={"region": region, "difficulty": difficulty})
+    logger.info(
+        "Volunteer workparties requested", extra={"region": region, "difficulty": difficulty}
+    )
     return get_volunteer_projects(region=region, difficulty=difficulty)
 
 
@@ -2483,7 +2557,10 @@ async def get_volunteer_project_by_id_endpoint(project_id: str) -> VolunteerWork
 async def post_volunteer_register_endpoint(
     request: VolunteerRegistrationRequest,
 ) -> VolunteerRegistrationResponse:
-    logger.info("Volunteer registration submitted", extra={"project_id": request.project_id, "volunteer": request.volunteer_name})
+    logger.info(
+        "Volunteer registration submitted",
+        extra={"project_id": request.project_id, "volunteer": request.volunteer_name},
+    )
     try:
         return register_volunteer(request)
     except ValueError as exc:
@@ -2547,7 +2624,10 @@ async def get_water_source_by_id_endpoint(source_id: str) -> WaterSourceModel:
 async def post_water_hydration_endpoint(
     request: HydrationEstimateRequest,
 ) -> HydrationEstimateResponse:
-    logger.info("Hydration estimate requested", extra={"distance": request.distance_miles, "elevation": request.elevation_gain_feet})
+    logger.info(
+        "Hydration estimate requested",
+        extra={"distance": request.distance_miles, "elevation": request.elevation_gain_feet},
+    )
     return calculate_hydration_estimate(request)
 
 
@@ -2563,7 +2643,10 @@ async def post_water_hydration_endpoint(
 async def post_water_reports_endpoint(
     request: WaterReportRequest,
 ) -> WaterReportResponse:
-    logger.info("Water report submitted", extra={"source_id": request.source_id, "reporter": request.reporter_name})
+    logger.info(
+        "Water report submitted",
+        extra={"source_id": request.source_id, "reporter": request.reporter_name},
+    )
     try:
         return submit_water_report(request)
     except ValueError as exc:
@@ -3056,7 +3139,6 @@ async def get_climbing_rappel_safety_endpoint() -> dict[str, Any]:
     return get_rappel_safety_protocol()
 
 
-
 @app.get(
     "/api/foraging/species",
     response_model=list[SpeciesModel],
@@ -3252,7 +3334,6 @@ async def get_mandatory_gear_requirements_endpoint() -> list[MandatoryGearRequir
     return get_mandatory_gear_requirements()
 
 
-
 @app.get(
     "/api/hot-springs/springs",
     response_model=list[HotSpringModel],
@@ -3303,6 +3384,7 @@ async def calculate_soaking_plan_endpoint(
 async def get_hot_spring_gear_ethics_endpoint() -> HotSpringGearEthicsResponse:
     return get_hot_spring_gear_and_ethics()
 
+
 @app.get(
     "/api/fly-fishing/locations",
     response_model=list[FishingLocationModel],
@@ -3352,6 +3434,7 @@ async def calculate_fly_match_endpoint(
 )
 async def get_fly_fishing_gear_regulations_endpoint() -> FlyFishingGearRegulationsResponse:
     return get_fly_fishing_gear_and_regulations()
+
 
 @app.get(
     "/api/bikepacking/routes",
@@ -3451,7 +3534,6 @@ async def calculate_rope_team_plan_endpoint(
 )
 async def get_mountaineering_gear_checklist_endpoint() -> list[GlacierGearRequirement]:
     return get_glacier_gear()
-
 
 
 @app.get(
@@ -3602,3 +3684,53 @@ async def calculate_rope_rigging_plan_endpoint(
 )
 async def get_canyoneering_gear_checklist_endpoint() -> list[CanyoneeringGearRequirement]:
     return get_canyoneering_gear()
+
+
+@app.get(
+    "/api/acclimatization/peaks",
+    response_model=list[AltitudePeakProfileModel],
+    tags=["High-Altitude Acclimatization & Symptom Triage Tooling"],
+    summary="List high-altitude mountaineering peaks with optional altitude zone filter",
+)
+async def get_altitude_peaks_endpoint(
+    zone: Optional[str] = None,
+) -> list[AltitudePeakProfileModel]:
+    return get_altitude_profiles(zone=zone)
+
+
+@app.get(
+    "/api/acclimatization/peaks/{peak_id}",
+    response_model=AltitudePeakProfileModel,
+    tags=["High-Altitude Acclimatization & Symptom Triage Tooling"],
+    summary="Get details and acclimatization camps for a specific high-altitude peak",
+)
+async def get_altitude_peak_by_id_endpoint(peak_id: str) -> AltitudePeakProfileModel:
+    peak = get_altitude_profile_by_id(peak_id)
+    if not peak:
+        raise HTTPException(status_code=404, detail=f"Altitude peak profile '{peak_id}' not found")
+    return peak
+
+
+@app.post(
+    "/api/acclimatization/plan",
+    response_model=AcclimatizationPlanResponse,
+    tags=["High-Altitude Acclimatization & Symptom Triage Tooling"],
+    summary="Calculate ascent pacing, rest days, AMS risk level, and hydration schedule",
+)
+async def calculate_acclimatization_plan_endpoint(
+    req: AcclimatizationPlanRequest,
+) -> AcclimatizationPlanResponse:
+    try:
+        return calculate_acclimatization_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/acclimatization/gear-checklist",
+    response_model=list[AltitudeMedicalGearRequirement],
+    tags=["High-Altitude Acclimatization & Symptom Triage Tooling"],
+    summary="List mandatory high-altitude medical kit compliance checklist",
+)
+async def get_altitude_gear_checklist_endpoint() -> list[AltitudeMedicalGearRequirement]:
+    return get_altitude_medical_gear()
