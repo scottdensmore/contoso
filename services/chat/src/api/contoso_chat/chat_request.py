@@ -13,6 +13,11 @@ from .avalanche import (
     detect_avalanche_intent,
     format_avalanche_response,
 )
+from .bikepacking import (
+    build_bikepacking_prompt,
+    detect_bikepacking_intent,
+    format_bikepacking_response,
+)
 from .carrier_tracking import (
     build_carrier_milestone_prompt,
     detect_carrier_tracking_intent,
@@ -447,6 +452,7 @@ async def generate_llm_response(
     trail_running_prompt: str = "",
     hot_springs_prompt: str = "",
     fly_fishing_prompt: str = "",
+    bikepacking_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -561,6 +567,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{hot_springs_prompt}"
         if fly_fishing_prompt:
             local_system = f"{local_system}\n\n{fly_fishing_prompt}"
+        if bikepacking_prompt:
+            local_system = f"{local_system}\n\n{bikepacking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -664,6 +672,8 @@ async def generate_llm_response(
             prompt_parts.append(hot_springs_prompt)
         if fly_fishing_prompt:
             prompt_parts.append(fly_fishing_prompt)
+        if bikepacking_prompt:
+            prompt_parts.append(bikepacking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1144,6 +1154,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
         fly_fishing_info_payload = formatted_fly_fishing.get("fly_fishing_info")
 
+    bikepacking_intent = detect_bikepacking_intent(question)
+    bikepacking_prompt = ""
+    bikepacking_info_payload = None
+    if bikepacking_intent:
+        bikepacking_prompt = build_bikepacking_prompt(bikepacking_intent)
+        formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
+        bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1236,6 +1254,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["hot_springs_prompt"] = hot_springs_prompt
     if fly_fishing_prompt:
         llm_kwargs["fly_fishing_prompt"] = fly_fishing_prompt
+    if bikepacking_prompt:
+        llm_kwargs["bikepacking_prompt"] = bikepacking_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1351,6 +1371,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["hot_springs_info"] = hot_springs_info_payload
     if fly_fishing_intent and fly_fishing_info_payload:
         response_payload["fly_fishing_info"] = fly_fishing_info_payload
+    if bikepacking_intent and bikepacking_info_payload:
+        response_payload["bikepacking_info"] = bikepacking_info_payload
 
     return response_payload
 
@@ -1404,6 +1426,7 @@ def generate_llm_response_stream(
     trail_running_prompt: str = "",
     hot_springs_prompt: str = "",
     fly_fishing_prompt: str = "",
+    bikepacking_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1620,6 +1643,8 @@ def generate_llm_response_stream(
             prompt_parts.append(hot_springs_prompt)
         if fly_fishing_prompt:
             prompt_parts.append(fly_fishing_prompt)
+        if bikepacking_prompt:
+            prompt_parts.append(bikepacking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1964,6 +1989,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
         fly_fishing_info_payload = formatted_fly_fishing.get("fly_fishing_info")
 
+    bikepacking_intent = detect_bikepacking_intent(question)
+    bikepacking_prompt = ""
+    bikepacking_info_payload = None
+    if bikepacking_intent:
+        bikepacking_prompt = build_bikepacking_prompt(bikepacking_intent)
+        formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
+        bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2055,6 +2088,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'hot_springs_info', 'hot_springs_info': hot_springs_info_payload})}\n\n"
     if fly_fishing_intent and fly_fishing_info_payload:
         yield f"data: {json.dumps({'event': 'fly_fishing_info', 'fly_fishing_info': fly_fishing_info_payload})}\n\n"
+    if bikepacking_intent and bikepacking_info_payload:
+        yield f"data: {json.dumps({'event': 'bikepacking_info', 'bikepacking_info': bikepacking_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2146,6 +2181,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["hot_springs_prompt"] = hot_springs_prompt
     if fly_fishing_prompt:
         stream_kwargs["fly_fishing_prompt"] = fly_fishing_prompt
+    if bikepacking_prompt:
+        stream_kwargs["bikepacking_prompt"] = bikepacking_prompt
 
     for chunk in generate_llm_response_stream(
         question,
