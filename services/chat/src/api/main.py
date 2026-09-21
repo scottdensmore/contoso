@@ -89,6 +89,18 @@ from contoso_chat.first_aid import (
     get_medical_condition_by_id,
     get_medical_conditions,
 )
+from contoso_chat.fly_fishing import (
+    FishingLocationModel,
+    FlyFishingGearRegulationsResponse,
+    FlyMatchRequest,
+    FlyMatchResponse,
+    calculate_fly_match,
+    detect_fly_fishing_intent,
+    format_fly_fishing_response,
+    get_fishing_location_by_id,
+    get_fishing_locations,
+    get_fly_fishing_gear_and_regulations,
+)
 from contoso_chat.foraging import (
     SafetyScreenerRequest,
     SafetyScreenerResponse,
@@ -708,6 +720,7 @@ async def create_response(request: ChatRequest):
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
             trail_running_intent = detect_trail_running_intent(request.question)
+            fly_fishing_intent = detect_fly_fishing_intent(request.question)
             hot_springs_intent = detect_hot_spring_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
@@ -937,6 +950,10 @@ async def create_response(request: ChatRequest):
                 formatted_trail_running = format_trail_running_response(trail_running_intent)
                 mock_payload["trail_running_info"] = formatted_trail_running.get("trail_running_info")
                 mock_payload["answer"] = formatted_trail_running.get("answer", mock_payload["answer"])
+            if fly_fishing_intent:
+                formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
+                mock_payload["fly_fishing_info"] = formatted_fly_fishing.get("fly_fishing_info")
+                mock_payload["answer"] = formatted_fly_fishing.get("answer", mock_payload["answer"])
             if hot_springs_intent:
                 formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
                 mock_payload["hot_springs_info"] = formatted_hot_springs.get("hot_springs_info")
@@ -1082,6 +1099,7 @@ async def create_response_stream(request: ChatRequest):
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
                 trail_running_intent = detect_trail_running_intent(request.question)
+                fly_fishing_intent = detect_fly_fishing_intent(request.question)
                 hot_springs_intent = detect_hot_spring_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
@@ -1213,6 +1231,9 @@ async def create_response_stream(request: ChatRequest):
                 if trail_running_intent:
                     formatted_trail_running = format_trail_running_response(trail_running_intent)
                     yield f"data: {json.dumps({'event': 'trail_running_info', 'trail_running_info': formatted_trail_running.get('trail_running_info')})}\n\n"
+                if fly_fishing_intent:
+                    formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
+                    yield f"data: {json.dumps({'event': 'fly_fishing_info', 'fly_fishing_info': formatted_fly_fishing.get('fly_fishing_info')})}\n\n"
                 if hot_springs_intent:
                     formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
                     yield f"data: {json.dumps({'event': 'hot_springs_info', 'hot_springs_info': formatted_hot_springs.get('hot_springs_info')})}\n\n"
@@ -1337,6 +1358,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_trail_running = format_trail_running_response(trail_running_intent)
                     mock_chunks = [
                         str(formatted_trail_running.get("answer", ""))
+                    ]
+                elif fly_fishing_intent:
+                    formatted_fly_fishing = format_fly_fishing_response(fly_fishing_intent)
+                    mock_chunks = [
+                        str(formatted_fly_fishing.get("answer", ""))
                     ]
                 elif hot_springs_intent:
                     formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
@@ -3143,3 +3169,54 @@ async def calculate_soaking_plan_endpoint(
 )
 async def get_hot_spring_gear_ethics_endpoint() -> HotSpringGearEthicsResponse:
     return get_hot_spring_gear_and_ethics()
+
+@app.get(
+    "/api/fly-fishing/locations",
+    response_model=list[FishingLocationModel],
+    tags=["Mountain Angling & Fly Fishing Tooling"],
+    summary="List mountain and alpine fishing waters with optional water_type or state filters",
+)
+async def get_fly_fishing_locations_endpoint(
+    water_type: Optional[str] = None,
+    state: Optional[str] = None,
+) -> list[FishingLocationModel]:
+    return get_fishing_locations(water_type=water_type, state=state)
+
+
+@app.get(
+    "/api/fly-fishing/locations/{location_id}",
+    response_model=FishingLocationModel,
+    tags=["Mountain Angling & Fly Fishing Tooling"],
+    summary="Get details for a specific fly fishing water",
+)
+async def get_fly_fishing_location_by_id_endpoint(location_id: str) -> FishingLocationModel:
+    loc = get_fishing_location_by_id(location_id)
+    if not loc:
+        raise HTTPException(status_code=404, detail=f"Fishing location '{location_id}' not found")
+    return loc
+
+
+@app.post(
+    "/api/fly-fishing/fly-match",
+    response_model=FlyMatchResponse,
+    tags=["Mountain Angling & Fly Fishing Tooling"],
+    summary="Calculate suggested fly pattern, presentation, tippet size, and thermal water warning",
+)
+async def calculate_fly_match_endpoint(
+    req: FlyMatchRequest,
+) -> FlyMatchResponse:
+    try:
+        return calculate_fly_match(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/fly-fishing/gear-regulations",
+    response_model=FlyFishingGearRegulationsResponse,
+    tags=["Mountain Angling & Fly Fishing Tooling"],
+    summary="List required conservation tackle and barbless/LNT rules",
+)
+async def get_fly_fishing_gear_regulations_endpoint() -> FlyFishingGearRegulationsResponse:
+    return get_fly_fishing_gear_and_regulations()
+
