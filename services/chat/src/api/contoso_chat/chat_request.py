@@ -18,6 +18,11 @@ from .bikepacking import (
     detect_bikepacking_intent,
     format_bikepacking_response,
 )
+from .canyoneering import (
+    build_canyoneering_prompt,
+    detect_canyoneering_intent,
+    format_canyoneering_response,
+)
 from .carrier_tracking import (
     build_carrier_milestone_prompt,
     detect_carrier_tracking_intent,
@@ -471,6 +476,7 @@ async def generate_llm_response(
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
+    canyoneering_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -599,6 +605,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{sea_kayaking_prompt}"
         if packrafting_prompt:
             local_system = f"{local_system}\n\n{packrafting_prompt}"
+        if canyoneering_prompt:
+            local_system = f"{local_system}\n\n{canyoneering_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -714,6 +722,8 @@ async def generate_llm_response(
             prompt_parts.append(sea_kayaking_prompt)
         if packrafting_prompt:
             prompt_parts.append(packrafting_prompt)
+        if canyoneering_prompt:
+            prompt_parts.append(canyoneering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1218,6 +1228,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    canyoneering_intent = detect_canyoneering_intent(question)
+    canyoneering_prompt = ""
+    canyoneering_info_payload = None
+    if canyoneering_intent:
+        canyoneering_prompt = build_canyoneering_prompt(canyoneering_intent)
+        formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
+        canyoneering_info_payload = formatted_canyoneering.get("canyoneering_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1326,6 +1344,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
     if packrafting_prompt:
         llm_kwargs["packrafting_prompt"] = packrafting_prompt
+    if canyoneering_prompt:
+        llm_kwargs["canyoneering_prompt"] = canyoneering_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1449,6 +1469,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["sea_kayaking_info"] = sea_kayaking_info_payload
     if packrafting_intent and packrafting_info_payload:
         response_payload["packrafting_info"] = packrafting_info_payload
+    if canyoneering_intent and canyoneering_info_payload:
+        response_payload["canyoneering_info"] = canyoneering_info_payload
 
     return response_payload
 
@@ -1506,6 +1528,7 @@ def generate_llm_response_stream(
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
+    canyoneering_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1618,6 +1641,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{fly_fishing_prompt}"
         if packrafting_prompt:
             local_system = f"{local_system}\n\n{packrafting_prompt}"
+        if canyoneering_prompt:
+            local_system = f"{local_system}\n\n{canyoneering_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1728,6 +1753,8 @@ def generate_llm_response_stream(
             prompt_parts.append(bikepacking_prompt)
         if packrafting_prompt:
             prompt_parts.append(packrafting_prompt)
+        if canyoneering_prompt:
+            prompt_parts.append(canyoneering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2096,6 +2123,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    canyoneering_intent = detect_canyoneering_intent(question)
+    canyoneering_prompt = ""
+    canyoneering_info_payload = None
+    if canyoneering_intent:
+        canyoneering_prompt = build_canyoneering_prompt(canyoneering_intent)
+        formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
+        canyoneering_info_payload = formatted_canyoneering.get("canyoneering_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -2203,6 +2238,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': sea_kayaking_info_payload})}\n\n"
     if packrafting_intent and packrafting_info_payload:
         yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': packrafting_info_payload})}\n\n"
+    if canyoneering_intent and canyoneering_info_payload:
+        yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': canyoneering_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2302,6 +2339,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
     if packrafting_prompt:
         stream_kwargs["packrafting_prompt"] = packrafting_prompt
+    if canyoneering_prompt:
+        stream_kwargs["canyoneering_prompt"] = canyoneering_prompt
 
     for chunk in generate_llm_response_stream(
         question,
