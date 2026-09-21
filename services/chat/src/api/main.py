@@ -176,6 +176,18 @@ from contoso_chat.mountaineering import (
     get_glacier_routes,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.packrafting import (
+    PackraftGearRequirement,
+    PackraftPlanRequest,
+    PackraftPlanResponse,
+    PackraftRouteModel,
+    calculate_packraft_plan,
+    detect_packrafting_intent,
+    format_packrafting_response,
+    get_packraft_gear,
+    get_packraft_route_by_id,
+    get_packraft_routes,
+)
 from contoso_chat.permits import (
     ParkPassInfo,
     PermitLotteryInfo,
@@ -761,6 +773,7 @@ async def create_response(request: ChatRequest):
             bikepacking_intent = detect_bikepacking_intent(request.question)
             mountaineering_intent = detect_mountaineering_intent(request.question)
             sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
+            packrafting_intent = detect_packrafting_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1009,6 +1022,10 @@ async def create_response(request: ChatRequest):
                 formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
                 mock_payload["sea_kayaking_info"] = formatted_sea_kayaking.get("sea_kayaking_info")
                 mock_payload["answer"] = formatted_sea_kayaking.get("answer", mock_payload["answer"])
+            if packrafting_intent:
+                formatted_packrafting = format_packrafting_response(packrafting_intent)
+                mock_payload["packrafting_info"] = formatted_packrafting.get("packrafting_info")
+                mock_payload["answer"] = formatted_packrafting.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1155,6 +1172,7 @@ async def create_response_stream(request: ChatRequest):
                 bikepacking_intent = detect_bikepacking_intent(request.question)
                 mountaineering_intent = detect_mountaineering_intent(request.question)
                 sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
+                packrafting_intent = detect_packrafting_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1300,6 +1318,9 @@ async def create_response_stream(request: ChatRequest):
                 if sea_kayaking_intent:
                     formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
                     yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': formatted_sea_kayaking.get('sea_kayaking_info')})}\n\n"
+                if packrafting_intent:
+                    formatted_packrafting = format_packrafting_response(packrafting_intent)
+                    yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': formatted_packrafting.get('packrafting_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1446,6 +1467,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
                     mock_chunks = [
                         str(formatted_sea_kayaking.get("answer", ""))
+                    ]
+                elif packrafting_intent:
+                    formatted_packrafting = format_packrafting_response(packrafting_intent)
+                    mock_chunks = [
+                        str(formatted_packrafting.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -3447,3 +3473,53 @@ async def calculate_tide_plan_endpoint(
 )
 async def get_sea_kayak_gear_checklist_endpoint() -> list[SeaKayakGearRequirement]:
     return get_sea_kayak_gear()
+
+
+@app.get(
+    "/api/packrafting/routes",
+    response_model=list[PackraftRouteModel],
+    tags=["Backcountry Packrafting River Expedition Outfitting Tooling"],
+    summary="List packraft routes with optional river grade filter",
+)
+async def get_packraft_routes_endpoint(
+    river_grade: Optional[str] = None,
+) -> list[PackraftRouteModel]:
+    return get_packraft_routes(grade=river_grade)
+
+
+@app.get(
+    "/api/packrafting/routes/{route_id}",
+    response_model=PackraftRouteModel,
+    tags=["Backcountry Packrafting River Expedition Outfitting Tooling"],
+    summary="Get details for a specific packrafting route",
+)
+async def get_packraft_route_by_id_endpoint(route_id: str) -> PackraftRouteModel:
+    route = get_packraft_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Packraft route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/packrafting/plan",
+    response_model=PackraftPlanResponse,
+    tags=["Backcountry Packrafting River Expedition Outfitting Tooling"],
+    summary="Calculate river flow feasibility, spraydeck, payload margin, and paddle length",
+)
+async def calculate_packraft_plan_endpoint(
+    req: PackraftPlanRequest,
+) -> PackraftPlanResponse:
+    try:
+        return calculate_packraft_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/packrafting/gear-checklist",
+    response_model=list[PackraftGearRequirement],
+    tags=["Backcountry Packrafting River Expedition Outfitting Tooling"],
+    summary="List mandatory packraft kit and ultralight gear checklist",
+)
+async def get_packraft_gear_checklist_endpoint() -> list[PackraftGearRequirement]:
+    return get_packraft_gear()
