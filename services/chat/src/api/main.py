@@ -77,6 +77,18 @@ from contoso_chat.carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from contoso_chat.caving import (
+    CavingGearRequirement,
+    CavingRouteModel,
+    SrtRiggingRequest,
+    SrtRiggingResponse,
+    calculate_srt_rigging_plan,
+    detect_caving_intent,
+    format_caving_response,
+    get_caving_gear,
+    get_caving_route_by_id,
+    get_caving_routes,
+)
 from contoso_chat.climbing import (
     CragModel,
     RackCalcRequest,
@@ -857,6 +869,7 @@ async def create_response(request: ChatRequest):
             via_ferrata_intent = detect_via_ferrata_intent(request.question)
             ice_climbing_intent = detect_ice_climbing_intent(request.question)
             bushcraft_intent = detect_bushcraft_intent(request.question)
+            caving_intent = detect_caving_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1169,34 +1182,26 @@ async def create_response(request: ChatRequest):
                 )
             if nordic_skiing_intent:
                 formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
-                mock_payload["nordic_skiing_info"] = formatted_nordic.get(
-                    "nordic_skiing_info"
-                )
-                mock_payload["answer"] = formatted_nordic.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["nordic_skiing_info"] = formatted_nordic.get("nordic_skiing_info")
+                mock_payload["answer"] = formatted_nordic.get("answer", mock_payload["answer"])
             if via_ferrata_intent:
                 formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
-                mock_payload["via_ferrata_info"] = formatted_via_ferrata.get(
-                    "via_ferrata_info"
-                )
-                mock_payload["answer"] = formatted_via_ferrata.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["via_ferrata_info"] = formatted_via_ferrata.get("via_ferrata_info")
+                mock_payload["answer"] = formatted_via_ferrata.get("answer", mock_payload["answer"])
             if ice_climbing_intent:
                 formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
-                mock_payload["ice_climbing_info"] = formatted_ice_climbing.get(
-                    "ice_climbing_info"
-                )
+                mock_payload["ice_climbing_info"] = formatted_ice_climbing.get("ice_climbing_info")
                 mock_payload["answer"] = formatted_ice_climbing.get(
                     "answer", mock_payload["answer"]
                 )
             if bushcraft_intent:
                 formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                 mock_payload["bushcraft_info"] = formatted_bushcraft.get("bushcraft_info")
-                mock_payload["answer"] = formatted_bushcraft.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_bushcraft.get("answer", mock_payload["answer"])
+            if caving_intent:
+                formatted_caving = format_caving_response(caving_intent)
+                mock_payload["caving_info"] = formatted_caving.get("caving_info")
+                mock_payload["answer"] = formatted_caving.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1354,6 +1359,7 @@ async def create_response_stream(request: ChatRequest):
                 via_ferrata_intent = detect_via_ferrata_intent(request.question)
                 ice_climbing_intent = detect_ice_climbing_intent(request.question)
                 bushcraft_intent = detect_bushcraft_intent(request.question)
+                caving_intent = detect_caving_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1539,6 +1545,9 @@ async def create_response_stream(request: ChatRequest):
                 if bushcraft_intent:
                     formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                     yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': formatted_bushcraft.get('bushcraft_info')})}\n\n"
+                if caving_intent:
+                    formatted_caving = format_caving_response(caving_intent)
+                    yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': formatted_caving.get('caving_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1686,6 +1695,9 @@ async def create_response_stream(request: ChatRequest):
                 elif bushcraft_intent:
                     formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                     mock_chunks = [str(formatted_bushcraft.get("answer", ""))]
+                elif caving_intent:
+                    formatted_caving = format_caving_response(caving_intent)
+                    mock_chunks = [str(formatted_caving.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4044,3 +4056,53 @@ async def calculate_shelter_thermal_endpoint(
 )
 async def get_bushcraft_gear_checklist_endpoint() -> list[BushcraftGearRequirement]:
     return get_bushcraft_gear()
+
+
+@app.get(
+    "/api/caving/caves",
+    response_model=list[CavingRouteModel],
+    tags=["Alpine Caving & Single Rope Technique (SRT) Tooling"],
+    summary="List iconic caving systems and karst vertical shafts with optional cave grade filter",
+)
+async def get_caving_caves_endpoint(
+    grade: Optional[str] = None,
+) -> list[CavingRouteModel]:
+    return get_caving_routes(grade=grade)
+
+
+@app.get(
+    "/api/caving/caves/{cave_id}",
+    response_model=CavingRouteModel,
+    tags=["Alpine Caving & Single Rope Technique (SRT) Tooling"],
+    summary="Get details, vertical depth, pitch breakdown, and oversuit requirements for a specific cave",
+)
+async def get_caving_cave_by_id_endpoint(cave_id: str) -> CavingRouteModel:
+    cave = get_caving_route_by_id(cave_id)
+    if not cave:
+        raise HTTPException(status_code=404, detail=f"Caving route '{cave_id}' not found")
+    return cave
+
+
+@app.post(
+    "/api/caving/rigging-plan",
+    response_model=SrtRiggingResponse,
+    tags=["Alpine Caving & Single Rope Technique (SRT) Tooling"],
+    summary="Calculate Single Rope Technique (SRT) rigging plan, rope stretch, descender, and safety status",
+)
+async def calculate_caving_rigging_plan_endpoint(
+    req: SrtRiggingRequest,
+) -> SrtRiggingResponse:
+    try:
+        return calculate_srt_rigging_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/caving/gear-checklist",
+    response_model=list[CavingGearRequirement],
+    tags=["Alpine Caving & Single Rope Technique (SRT) Tooling"],
+    summary="List mandatory caving and SRT equipment compliance checklist",
+)
+async def get_caving_gear_checklist_endpoint() -> list[CavingGearRequirement]:
+    return get_caving_gear()
