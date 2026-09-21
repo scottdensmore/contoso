@@ -264,6 +264,18 @@ from contoso_chat.safety import (
     record_beacon_checkin,
     register_safety_beacon,
 )
+from contoso_chat.sea_kayaking import (
+    SeaKayakGearRequirement,
+    SeaKayakRouteModel,
+    TidePlanRequest,
+    TidePlanResponse,
+    calculate_tide_plan,
+    detect_sea_kayaking_intent,
+    format_sea_kayaking_response,
+    get_sea_kayak_gear,
+    get_sea_kayak_route_by_id,
+    get_sea_kayak_routes,
+)
 from contoso_chat.session_store import (
     ChatSession,
     append_message,
@@ -748,6 +760,7 @@ async def create_response(request: ChatRequest):
             hot_springs_intent = detect_hot_spring_intent(request.question)
             bikepacking_intent = detect_bikepacking_intent(request.question)
             mountaineering_intent = detect_mountaineering_intent(request.question)
+            sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -992,6 +1005,10 @@ async def create_response(request: ChatRequest):
                 formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                 mock_payload["mountaineering_info"] = formatted_mountaineering.get("mountaineering_info")
                 mock_payload["answer"] = formatted_mountaineering.get("answer", mock_payload["answer"])
+            if sea_kayaking_intent:
+                formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
+                mock_payload["sea_kayaking_info"] = formatted_sea_kayaking.get("sea_kayaking_info")
+                mock_payload["answer"] = formatted_sea_kayaking.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1137,6 +1154,7 @@ async def create_response_stream(request: ChatRequest):
                 hot_springs_intent = detect_hot_spring_intent(request.question)
                 bikepacking_intent = detect_bikepacking_intent(request.question)
                 mountaineering_intent = detect_mountaineering_intent(request.question)
+                sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1279,6 +1297,9 @@ async def create_response_stream(request: ChatRequest):
                 if mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     yield f"data: {json.dumps({'event': 'mountaineering_info', 'mountaineering_info': formatted_mountaineering.get('mountaineering_info')})}\n\n"
+                if sea_kayaking_intent:
+                    formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
+                    yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': formatted_sea_kayaking.get('sea_kayaking_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1420,6 +1441,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [
                         str(formatted_mountaineering.get("answer", ""))
+                    ]
+                elif sea_kayaking_intent:
+                    formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
+                    mock_chunks = [
+                        str(formatted_sea_kayaking.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -3371,3 +3397,53 @@ async def calculate_rope_team_plan_endpoint(
 async def get_mountaineering_gear_checklist_endpoint() -> list[GlacierGearRequirement]:
     return get_glacier_gear()
 
+
+
+@app.get(
+    "/api/sea-kayaking/routes",
+    response_model=list[SeaKayakRouteModel],
+    tags=["Coastal Sea Kayaking & Marine Expedition Outfitting Tooling"],
+    summary="List sea kayaking routes with optional water grade filter",
+)
+async def get_sea_kayak_routes_endpoint(
+    water_grade: Optional[str] = None,
+) -> list[SeaKayakRouteModel]:
+    return get_sea_kayak_routes(water_grade=water_grade)
+
+
+@app.get(
+    "/api/sea-kayaking/routes/{route_id}",
+    response_model=SeaKayakRouteModel,
+    tags=["Coastal Sea Kayaking & Marine Expedition Outfitting Tooling"],
+    summary="Get details for a specific sea kayaking route",
+)
+async def get_sea_kayak_route_by_id_endpoint(route_id: str) -> SeaKayakRouteModel:
+    route = get_sea_kayak_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Sea kayak route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/sea-kayaking/tide-plan",
+    response_model=TidePlanResponse,
+    tags=["Coastal Sea Kayaking & Marine Expedition Outfitting Tooling"],
+    summary="Calculate tidal window, crossing safety, and ferry angle",
+)
+async def calculate_tide_plan_endpoint(
+    req: TidePlanRequest,
+) -> TidePlanResponse:
+    try:
+        return calculate_tide_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/sea-kayaking/gear-checklist",
+    response_model=list[SeaKayakGearRequirement],
+    tags=["Coastal Sea Kayaking & Marine Expedition Outfitting Tooling"],
+    summary="List required coastal sea kayaking safety gear and immersion kit",
+)
+async def get_sea_kayak_gear_checklist_endpoint() -> list[SeaKayakGearRequirement]:
+    return get_sea_kayak_gear()

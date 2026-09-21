@@ -132,6 +132,11 @@ from .safety import (
     detect_safety_intent,
     format_safety_response,
 )
+from .sea_kayaking import (
+    build_sea_kayaking_prompt,
+    detect_sea_kayaking_intent,
+    format_sea_kayaking_response,
+)
 from .search_service import get_search_service
 from .shuttles import (
     build_shuttle_prompt,
@@ -459,6 +464,7 @@ async def generate_llm_response(
     fly_fishing_prompt: str = "",
     bikepacking_prompt: str = "",
     mountaineering_prompt: str = "",
+    sea_kayaking_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -577,6 +583,14 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{bikepacking_prompt}"
         if mountaineering_prompt:
             local_system = f"{local_system}\n\n{mountaineering_prompt}"
+        if sea_kayaking_prompt:
+            local_system = f"{local_system}\n\n{sea_kayaking_prompt}"
+        if bikepacking_prompt:
+            local_system = f"{local_system}\n\n{bikepacking_prompt}"
+        if mountaineering_prompt:
+            local_system = f"{local_system}\n\n{mountaineering_prompt}"
+        if sea_kayaking_prompt:
+            local_system = f"{local_system}\n\n{sea_kayaking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -684,6 +698,12 @@ async def generate_llm_response(
             prompt_parts.append(bikepacking_prompt)
         if mountaineering_prompt:
             prompt_parts.append(mountaineering_prompt)
+        if sea_kayaking_prompt:
+            prompt_parts.append(sea_kayaking_prompt)
+        if mountaineering_prompt:
+            prompt_parts.append(mountaineering_prompt)
+        if sea_kayaking_prompt:
+            prompt_parts.append(sea_kayaking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1180,6 +1200,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
         mountaineering_info_payload = formatted_mountaineering.get("mountaineering_info")
 
+    sea_kayaking_intent = detect_sea_kayaking_intent(question)
+    sea_kayaking_prompt = ""
+    sea_kayaking_info_payload = None
+    if sea_kayaking_intent:
+        sea_kayaking_prompt = build_sea_kayaking_prompt(sea_kayaking_intent)
+        formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
+        sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1276,6 +1304,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["bikepacking_prompt"] = bikepacking_prompt
     if mountaineering_prompt:
         llm_kwargs["mountaineering_prompt"] = mountaineering_prompt
+    if sea_kayaking_prompt:
+        llm_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1395,6 +1425,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["bikepacking_info"] = bikepacking_info_payload
     if mountaineering_intent and mountaineering_info_payload:
         response_payload["mountaineering_info"] = mountaineering_info_payload
+    if sea_kayaking_intent and sea_kayaking_info_payload:
+        response_payload["sea_kayaking_info"] = sea_kayaking_info_payload
 
     return response_payload
 
@@ -1450,6 +1482,7 @@ def generate_llm_response_stream(
     fly_fishing_prompt: str = "",
     bikepacking_prompt: str = "",
     mountaineering_prompt: str = "",
+    sea_kayaking_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2028,6 +2061,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
         mountaineering_info_payload = formatted_mountaineering.get("mountaineering_info")
 
+    sea_kayaking_intent = detect_sea_kayaking_intent(question)
+    sea_kayaking_prompt = ""
+    sea_kayaking_info_payload = None
+    if sea_kayaking_intent:
+        sea_kayaking_prompt = build_sea_kayaking_prompt(sea_kayaking_intent)
+        formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
+        sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2123,6 +2164,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'bikepacking_info', 'bikepacking_info': bikepacking_info_payload})}\n\n"
     if mountaineering_intent and mountaineering_info_payload:
         yield f"data: {json.dumps({'event': 'mountaineering_info', 'mountaineering_info': mountaineering_info_payload})}\n\n"
+    if sea_kayaking_intent and sea_kayaking_info_payload:
+        yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': sea_kayaking_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2218,6 +2261,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["bikepacking_prompt"] = bikepacking_prompt
     if mountaineering_prompt:
         stream_kwargs["mountaineering_prompt"] = mountaineering_prompt
+    if sea_kayaking_prompt:
+        stream_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
 
     for chunk in generate_llm_response_stream(
         question,
