@@ -173,6 +173,18 @@ from contoso_chat.huts import (
     get_alpine_hut_by_id,
     get_alpine_huts,
 )
+from contoso_chat.ice_climbing import (
+    IceClimbingGearRequirement,
+    IceClimbingRouteModel,
+    IceRiggingRequest,
+    IceRiggingResponse,
+    calculate_ice_rigging_plan,
+    detect_ice_climbing_intent,
+    format_ice_climbing_response,
+    get_ice_climbing_gear,
+    get_ice_climbing_route_by_id,
+    get_ice_climbing_routes,
+)
 from contoso_chat.leave_no_trace import (
     LntPrincipleModel,
     PackOutCalcRequest,
@@ -831,6 +843,7 @@ async def create_response(request: ChatRequest):
             acclimatization_intent = detect_acclimatization_intent(request.question)
             nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
             via_ferrata_intent = detect_via_ferrata_intent(request.question)
+            ice_climbing_intent = detect_ice_climbing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1157,6 +1170,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_via_ferrata.get(
                     "answer", mock_payload["answer"]
                 )
+            if ice_climbing_intent:
+                formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
+                mock_payload["ice_climbing_info"] = formatted_ice_climbing.get(
+                    "ice_climbing_info"
+                )
+                mock_payload["answer"] = formatted_ice_climbing.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1312,6 +1333,7 @@ async def create_response_stream(request: ChatRequest):
                 acclimatization_intent = detect_acclimatization_intent(request.question)
                 nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
                 via_ferrata_intent = detect_via_ferrata_intent(request.question)
+                ice_climbing_intent = detect_ice_climbing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1491,6 +1513,9 @@ async def create_response_stream(request: ChatRequest):
                 if via_ferrata_intent:
                     formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
                     yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': formatted_via_ferrata.get('via_ferrata_info')})}\n\n"
+                if ice_climbing_intent:
+                    formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
+                    yield f"data: {json.dumps({'event': 'ice_climbing_info', 'ice_climbing_info': formatted_ice_climbing.get('ice_climbing_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1632,6 +1657,9 @@ async def create_response_stream(request: ChatRequest):
                 elif via_ferrata_intent:
                     formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
                     mock_chunks = [str(formatted_via_ferrata.get("answer", ""))]
+                elif ice_climbing_intent:
+                    formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
+                    mock_chunks = [str(formatted_ice_climbing.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -3890,3 +3918,53 @@ async def calculate_via_ferrata_rigging_plan_endpoint(
 )
 async def get_via_ferrata_gear_checklist_endpoint() -> list[ViaFerrataGearRequirement]:
     return get_via_ferrata_gear()
+
+
+@app.get(
+    "/api/ice-climbing/routes",
+    response_model=list[IceClimbingRouteModel],
+    tags=["Waterfall Ice Climbing & Anchor Rigging Tooling"],
+    summary="List iconic waterfall ice climbing routes with optional grade filtering",
+)
+async def get_ice_climbing_routes_endpoint(
+    grade: Optional[str] = None,
+) -> list[IceClimbingRouteModel]:
+    return get_ice_climbing_routes(grade=grade)
+
+
+@app.get(
+    "/api/ice-climbing/routes/{route_id}",
+    response_model=IceClimbingRouteModel,
+    tags=["Waterfall Ice Climbing & Anchor Rigging Tooling"],
+    summary="Get details, pitches, and ice structures for a specific waterfall ice climbing route",
+)
+async def get_ice_climbing_route_endpoint(route_id: str) -> IceClimbingRouteModel:
+    route = get_ice_climbing_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Ice climbing route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/ice-climbing/rigging-plan",
+    response_model=IceRiggingResponse,
+    tags=["Waterfall Ice Climbing & Anchor Rigging Tooling"],
+    summary="Calculate ice rigging plan, screw holding force, and V-thread anchor suitability",
+)
+async def calculate_ice_rigging_plan_endpoint(
+    req: IceRiggingRequest,
+) -> IceRiggingResponse:
+    try:
+        return calculate_ice_rigging_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/ice-climbing/gear-checklist",
+    response_model=list[IceClimbingGearRequirement],
+    tags=["Waterfall Ice Climbing & Anchor Rigging Tooling"],
+    summary="List mandatory waterfall ice climbing gear checklist",
+)
+async def get_ice_climbing_gear_checklist_endpoint() -> list[IceClimbingGearRequirement]:
+    return get_ice_climbing_gear()
