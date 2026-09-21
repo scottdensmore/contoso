@@ -82,6 +82,11 @@ from .order_tracking import (
     detect_order_tracking_intent,
     lookup_order_tracking,
 )
+from .packrafting import (
+    build_packrafting_prompt,
+    detect_packrafting_intent,
+    format_packrafting_response,
+)
 from .permits import (
     build_permits_prompt,
     detect_permits_intent,
@@ -465,6 +470,7 @@ async def generate_llm_response(
     bikepacking_prompt: str = "",
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
+    packrafting_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -591,6 +597,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{mountaineering_prompt}"
         if sea_kayaking_prompt:
             local_system = f"{local_system}\n\n{sea_kayaking_prompt}"
+        if packrafting_prompt:
+            local_system = f"{local_system}\n\n{packrafting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -704,6 +712,8 @@ async def generate_llm_response(
             prompt_parts.append(mountaineering_prompt)
         if sea_kayaking_prompt:
             prompt_parts.append(sea_kayaking_prompt)
+        if packrafting_prompt:
+            prompt_parts.append(packrafting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1208,6 +1218,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    packrafting_intent = detect_packrafting_intent(question)
+    packrafting_prompt = ""
+    packrafting_info_payload = None
+    if packrafting_intent:
+        packrafting_prompt = build_packrafting_prompt(packrafting_intent)
+        formatted_packrafting = format_packrafting_response(packrafting_intent)
+        packrafting_info_payload = formatted_packrafting.get("packrafting_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1306,6 +1324,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["mountaineering_prompt"] = mountaineering_prompt
     if sea_kayaking_prompt:
         llm_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
+    if packrafting_prompt:
+        llm_kwargs["packrafting_prompt"] = packrafting_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1427,6 +1447,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["mountaineering_info"] = mountaineering_info_payload
     if sea_kayaking_intent and sea_kayaking_info_payload:
         response_payload["sea_kayaking_info"] = sea_kayaking_info_payload
+    if packrafting_intent and packrafting_info_payload:
+        response_payload["packrafting_info"] = packrafting_info_payload
 
     return response_payload
 
@@ -1483,6 +1505,7 @@ def generate_llm_response_stream(
     bikepacking_prompt: str = "",
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
+    packrafting_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1593,6 +1616,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{hot_springs_prompt}"
         if fly_fishing_prompt:
             local_system = f"{local_system}\n\n{fly_fishing_prompt}"
+        if packrafting_prompt:
+            local_system = f"{local_system}\n\n{packrafting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1701,6 +1726,8 @@ def generate_llm_response_stream(
             prompt_parts.append(fly_fishing_prompt)
         if bikepacking_prompt:
             prompt_parts.append(bikepacking_prompt)
+        if packrafting_prompt:
+            prompt_parts.append(packrafting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2069,6 +2096,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    packrafting_intent = detect_packrafting_intent(question)
+    packrafting_prompt = ""
+    packrafting_info_payload = None
+    if packrafting_intent:
+        packrafting_prompt = build_packrafting_prompt(packrafting_intent)
+        formatted_packrafting = format_packrafting_response(packrafting_intent)
+        packrafting_info_payload = formatted_packrafting.get("packrafting_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2166,6 +2201,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'mountaineering_info', 'mountaineering_info': mountaineering_info_payload})}\n\n"
     if sea_kayaking_intent and sea_kayaking_info_payload:
         yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': sea_kayaking_info_payload})}\n\n"
+    if packrafting_intent and packrafting_info_payload:
+        yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': packrafting_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2263,6 +2300,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["mountaineering_prompt"] = mountaineering_prompt
     if sea_kayaking_prompt:
         stream_kwargs["sea_kayaking_prompt"] = sea_kayaking_prompt
+    if packrafting_prompt:
+        stream_kwargs["packrafting_prompt"] = packrafting_prompt
 
     for chunk in generate_llm_response_stream(
         question,
