@@ -24,6 +24,18 @@ from contoso_chat.avalanche import (
     get_avalanche_zones,
     get_companion_rescue_protocol,
 )
+from contoso_chat.bikepacking import (
+    BikepackingGearRequirement,
+    BikepackingRigRequest,
+    BikepackingRigResponse,
+    BikepackingRouteModel,
+    calculate_bikepacking_rig,
+    detect_bikepacking_intent,
+    format_bikepacking_response,
+    get_bikepacking_gear,
+    get_bikepacking_route_by_id,
+    get_bikepacking_routes,
+)
 from contoso_chat.carrier_tracking import (
     CarrierTrackingInfo,
     detect_carrier_tracking_intent,
@@ -722,6 +734,7 @@ async def create_response(request: ChatRequest):
             trail_running_intent = detect_trail_running_intent(request.question)
             fly_fishing_intent = detect_fly_fishing_intent(request.question)
             hot_springs_intent = detect_hot_spring_intent(request.question)
+            bikepacking_intent = detect_bikepacking_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -958,6 +971,10 @@ async def create_response(request: ChatRequest):
                 formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
                 mock_payload["hot_springs_info"] = formatted_hot_springs.get("hot_springs_info")
                 mock_payload["answer"] = formatted_hot_springs.get("answer", mock_payload["answer"])
+            if bikepacking_intent:
+                formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
+                mock_payload["bikepacking_info"] = formatted_bikepacking.get("bikepacking_info")
+                mock_payload["answer"] = formatted_bikepacking.get("answer", mock_payload["answer"])
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
                 mock_citations: list[dict[str, Any]] | None = MOCK_CITATIONS
@@ -1101,6 +1118,7 @@ async def create_response_stream(request: ChatRequest):
                 trail_running_intent = detect_trail_running_intent(request.question)
                 fly_fishing_intent = detect_fly_fishing_intent(request.question)
                 hot_springs_intent = detect_hot_spring_intent(request.question)
+                bikepacking_intent = detect_bikepacking_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1237,6 +1255,9 @@ async def create_response_stream(request: ChatRequest):
                 if hot_springs_intent:
                     formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
                     yield f"data: {json.dumps({'event': 'hot_springs_info', 'hot_springs_info': formatted_hot_springs.get('hot_springs_info')})}\n\n"
+                if bikepacking_intent:
+                    formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
+                    yield f"data: {json.dumps({'event': 'bikepacking_info', 'bikepacking_info': formatted_bikepacking.get('bikepacking_info')})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1368,6 +1389,11 @@ async def create_response_stream(request: ChatRequest):
                     formatted_hot_springs = format_hot_spring_response(hot_springs_intent)
                     mock_chunks = [
                         str(formatted_hot_springs.get("answer", ""))
+                    ]
+                elif bikepacking_intent:
+                    formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
+                    mock_chunks = [
+                        str(formatted_bikepacking.get("answer", ""))
                     ]
                 elif weather_intent and not (trail_intent or adventure_intent or shuttle_intent or permits_intent or safety_intent):
                     formatted_weather = format_weather_response(weather_intent)
@@ -3219,4 +3245,53 @@ async def calculate_fly_match_endpoint(
 )
 async def get_fly_fishing_gear_regulations_endpoint() -> FlyFishingGearRegulationsResponse:
     return get_fly_fishing_gear_and_regulations()
+
+@app.get(
+    "/api/bikepacking/routes",
+    response_model=list[BikepackingRouteModel],
+    tags=["Wilderness Bikepacking & Route Outfitting Tooling"],
+    summary="List bikepacking routes with optional terrain filter",
+)
+async def get_bikepacking_routes_endpoint(
+    terrain: Optional[str] = None,
+) -> list[BikepackingRouteModel]:
+    return get_bikepacking_routes(terrain=terrain)
+
+
+@app.get(
+    "/api/bikepacking/routes/{route_id}",
+    response_model=BikepackingRouteModel,
+    tags=["Wilderness Bikepacking & Route Outfitting Tooling"],
+    summary="Get details for a specific bikepacking route",
+)
+async def get_bikepacking_route_by_id_endpoint(route_id: str) -> BikepackingRouteModel:
+    route = get_bikepacking_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Bikepacking route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/bikepacking/rig-calc",
+    response_model=BikepackingRigResponse,
+    tags=["Wilderness Bikepacking & Route Outfitting Tooling"],
+    summary="Calculate tire pressure, bag volume, calorie demands, and trailside spares",
+)
+async def calculate_bikepacking_rig_endpoint(
+    req: BikepackingRigRequest,
+) -> BikepackingRigResponse:
+    try:
+        return calculate_bikepacking_rig(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/bikepacking/gear-checklist",
+    response_model=list[BikepackingGearRequirement],
+    tags=["Wilderness Bikepacking & Route Outfitting Tooling"],
+    summary="List required bikepacking repair tools and gear checklist",
+)
+async def get_bikepacking_gear_checklist_endpoint() -> list[BikepackingGearRequirement]:
+    return get_bikepacking_gear()
 
