@@ -48,6 +48,11 @@ from .climbing import (
     detect_climbing_intent,
     format_climbing_response,
 )
+from .desert_trekking import (
+    build_desert_trekking_prompt,
+    detect_desert_trekking_intent,
+    format_desert_trekking_response,
+)
 from .faq import (
     build_faq_prompt,
     detect_faq_intent,
@@ -513,6 +518,7 @@ async def generate_llm_response(
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
     caving_prompt: str = "",
+    desert_trekking_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -655,6 +661,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{bushcraft_prompt}"
         if caving_prompt:
             local_system = f"{local_system}\n\n{caving_prompt}"
+        if desert_trekking_prompt:
+            local_system = f"{local_system}\n\n{desert_trekking_prompt}"
+        if desert_trekking_prompt:
+            local_system = f"{local_system}\n\n{desert_trekking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -784,6 +794,10 @@ async def generate_llm_response(
             prompt_parts.append(bushcraft_prompt)
         if caving_prompt:
             prompt_parts.append(caving_prompt)
+        if desert_trekking_prompt:
+            prompt_parts.append(desert_trekking_prompt)
+        if desert_trekking_prompt:
+            prompt_parts.append(desert_trekking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1344,6 +1358,22 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_caving = format_caving_response(caving_intent)
         caving_info_payload = formatted_caving.get("caving_info")
 
+    desert_trekking_intent = detect_desert_trekking_intent(question)
+    desert_trekking_prompt = ""
+    desert_trekking_info_payload = None
+    if desert_trekking_intent:
+        desert_trekking_prompt = build_desert_trekking_prompt(desert_trekking_intent)
+        formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+        desert_trekking_info_payload = formatted_desert.get("desert_trekking_info")
+
+    desert_trekking_intent = detect_desert_trekking_intent(question)
+    desert_trekking_prompt = ""
+    desert_trekking_info_payload = None
+    if desert_trekking_intent:
+        desert_trekking_prompt = build_desert_trekking_prompt(desert_trekking_intent)
+        formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+        desert_trekking_info_payload = formatted_desert.get("desert_trekking_info")
+
     packrafting_intent = detect_packrafting_intent(question)
     packrafting_prompt = ""
     packrafting_info_payload = None
@@ -1466,6 +1496,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["bushcraft_prompt"] = bushcraft_prompt
     if caving_prompt:
         llm_kwargs["caving_prompt"] = caving_prompt
+    if desert_trekking_prompt:
+        llm_kwargs["desert_trekking_prompt"] = desert_trekking_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1603,6 +1635,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["bushcraft_info"] = bushcraft_info_payload
     if caving_intent and caving_info_payload:
         response_payload["caving_info"] = caving_info_payload
+    if desert_trekking_intent and desert_trekking_info_payload:
+        response_payload["desert_trekking_info"] = desert_trekking_info_payload
 
     return response_payload
 
@@ -1667,6 +1701,7 @@ def generate_llm_response_stream(
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
     caving_prompt: str = "",
+    desert_trekking_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2349,6 +2384,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_caving = format_caving_response(caving_intent)
         caving_info_payload = formatted_caving.get("caving_info")
 
+    desert_trekking_intent = detect_desert_trekking_intent(question)
+    desert_trekking_prompt = ""
+    desert_trekking_info_payload = None
+    if desert_trekking_intent:
+        desert_trekking_prompt = build_desert_trekking_prompt(desert_trekking_intent)
+        formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+        desert_trekking_info_payload = formatted_desert.get("desert_trekking_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2462,6 +2505,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': bushcraft_info_payload})}\n\n"
     if caving_intent and caving_info_payload:
         yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': caving_info_payload})}\n\n"
+    if desert_trekking_intent and desert_trekking_info_payload:
+        yield f"data: {json.dumps({'event': 'desert_trekking_info', 'desert_trekking_info': desert_trekking_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2575,6 +2620,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["bushcraft_prompt"] = bushcraft_prompt
     if caving_prompt:
         stream_kwargs["caving_prompt"] = caving_prompt
+    if desert_trekking_prompt:
+        stream_kwargs["desert_trekking_prompt"] = desert_trekking_prompt
 
     for chunk in generate_llm_response_stream(
         question,

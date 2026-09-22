@@ -100,6 +100,18 @@ from contoso_chat.climbing import (
     get_climbing_crags,
     get_rappel_safety_protocol,
 )
+from contoso_chat.desert_trekking import (
+    DesertGearRequirement,
+    DesertRouteModel,
+    HydrationPlanRequest,
+    HydrationPlanResponse,
+    calculate_hydration_plan,
+    detect_desert_trekking_intent,
+    format_desert_trekking_response,
+    get_desert_gear,
+    get_desert_route_by_id,
+    get_desert_routes,
+)
 from contoso_chat.faq import (
     FaqItem,
     detect_faq_intent,
@@ -870,6 +882,7 @@ async def create_response(request: ChatRequest):
             ice_climbing_intent = detect_ice_climbing_intent(request.question)
             bushcraft_intent = detect_bushcraft_intent(request.question)
             caving_intent = detect_caving_intent(request.question)
+            desert_trekking_intent = detect_desert_trekking_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1202,6 +1215,10 @@ async def create_response(request: ChatRequest):
                 formatted_caving = format_caving_response(caving_intent)
                 mock_payload["caving_info"] = formatted_caving.get("caving_info")
                 mock_payload["answer"] = formatted_caving.get("answer", mock_payload["answer"])
+            if desert_trekking_intent:
+                formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+                mock_payload["desert_trekking_info"] = formatted_desert.get("desert_trekking_info")
+                mock_payload["answer"] = formatted_desert.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1360,6 +1377,7 @@ async def create_response_stream(request: ChatRequest):
                 ice_climbing_intent = detect_ice_climbing_intent(request.question)
                 bushcraft_intent = detect_bushcraft_intent(request.question)
                 caving_intent = detect_caving_intent(request.question)
+                desert_trekking_intent = detect_desert_trekking_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1548,6 +1566,9 @@ async def create_response_stream(request: ChatRequest):
                 if caving_intent:
                     formatted_caving = format_caving_response(caving_intent)
                     yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': formatted_caving.get('caving_info')})}\n\n"
+                if desert_trekking_intent:
+                    formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+                    yield f"data: {json.dumps({'event': 'desert_trekking_info', 'desert_trekking_info': formatted_desert.get('desert_trekking_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1698,6 +1719,9 @@ async def create_response_stream(request: ChatRequest):
                 elif caving_intent:
                     formatted_caving = format_caving_response(caving_intent)
                     mock_chunks = [str(formatted_caving.get("answer", ""))]
+                elif desert_trekking_intent:
+                    formatted_desert = format_desert_trekking_response(desert_trekking_intent)
+                    mock_chunks = [str(formatted_desert.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4106,3 +4130,53 @@ async def calculate_caving_rigging_plan_endpoint(
 )
 async def get_caving_gear_checklist_endpoint() -> list[CavingGearRequirement]:
     return get_caving_gear()
+
+
+@app.get(
+    "/api/desert-trekking/routes",
+    response_model=list[DesertRouteModel],
+    tags=["Desert Trekking & Water Cache Tooling"],
+    summary="List iconic desert trekking routes with optional aridity zone filter",
+)
+async def get_desert_routes_endpoint(
+    zone: Optional[str] = None,
+) -> list[DesertRouteModel]:
+    return get_desert_routes(zone=zone)
+
+
+@app.get(
+    "/api/desert-trekking/routes/{route_id}",
+    response_model=DesertRouteModel,
+    tags=["Desert Trekking & Water Cache Tooling"],
+    summary="Get details, aridity zone, elevation gain, and water cache requirements for a specific desert route",
+)
+async def get_desert_route_by_id_endpoint(route_id: str) -> DesertRouteModel:
+    route = get_desert_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Desert route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/desert-trekking/hydration-plan",
+    response_model=HydrationPlanResponse,
+    tags=["Desert Trekking & Water Cache Tooling"],
+    summary="Calculate hydration plan, heat index, hourly sweat rate, water cache, and safety advisory",
+)
+async def calculate_desert_hydration_plan_endpoint(
+    req: HydrationPlanRequest,
+) -> HydrationPlanResponse:
+    try:
+        return calculate_hydration_plan(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/desert-trekking/gear-checklist",
+    response_model=list[DesertGearRequirement],
+    tags=["Desert Trekking & Water Cache Tooling"],
+    summary="List mandatory desert trekking kit checklist",
+)
+async def get_desert_gear_checklist_endpoint() -> list[DesertGearRequirement]:
+    return get_desert_gear()
