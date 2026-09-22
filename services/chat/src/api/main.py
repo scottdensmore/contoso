@@ -196,6 +196,18 @@ from contoso_chat.foraging import (
     get_foraging_species,
     get_foraging_species_by_id,
 )
+from contoso_chat.highline import (
+    HighlineGearRequirement,
+    HighlineSpanModel,
+    RiggingCalculationRequest,
+    RiggingCalculationResponse,
+    calculate_rigging_physics,
+    extract_highline_intent,
+    format_highline_response,
+    get_highline_gear,
+    get_highline_span_by_id,
+    get_highline_spans,
+)
 from contoso_chat.hot_springs import (
     HotSpringGearEthicsResponse,
     HotSpringModel,
@@ -909,6 +921,7 @@ async def create_response(request: ChatRequest):
             desert_trekking_intent = detect_desert_trekking_intent(request.question)
             coasteering_intent = detect_coasteering_intent(request.question)
             orienteering_intent = extract_orienteering_intent(request.question)
+            highline_intent = extract_highline_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1248,15 +1261,17 @@ async def create_response(request: ChatRequest):
             if coasteering_intent:
                 formatted_coasteering = format_coasteering_response(coasteering_intent)
                 mock_payload["coasteering_info"] = formatted_coasteering.get("coasteering_info")
-                mock_payload["answer"] = formatted_coasteering.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_coasteering.get("answer", mock_payload["answer"])
             if orienteering_intent:
                 formatted_orienteering = format_orienteering_response(orienteering_intent)
                 mock_payload["orienteering_info"] = formatted_orienteering.get("orienteering_info")
                 mock_payload["answer"] = formatted_orienteering.get(
                     "answer", mock_payload["answer"]
                 )
+            if highline_intent:
+                formatted_highline = format_highline_response(highline_intent)
+                mock_payload["highline_info"] = formatted_highline.get("highline_info")
+                mock_payload["answer"] = formatted_highline.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1418,6 +1433,7 @@ async def create_response_stream(request: ChatRequest):
                 desert_trekking_intent = detect_desert_trekking_intent(request.question)
                 coasteering_intent = detect_coasteering_intent(request.question)
                 orienteering_intent = extract_orienteering_intent(request.question)
+                highline_intent = extract_highline_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1621,10 +1637,25 @@ async def create_response_stream(request: ChatRequest):
                         "calculate_leg": "orienteering_leg",
                         "gear_checklist": "orienteering_gear",
                     }
-                    event_name = action_to_event.get(orienteering_intent.action, "orienteering_info")
+                    event_name = action_to_event.get(
+                        orienteering_intent.action, "orienteering_info"
+                    )
                     yield f"data: {json.dumps({'event': event_name, 'orienteering_info': o_payload, event_name: o_payload})}\n\n"
                     if event_name != "orienteering_info":
                         yield f"data: {json.dumps({'event': 'orienteering_info', 'orienteering_info': o_payload})}\n\n"
+                if highline_intent:
+                    formatted_highline = format_highline_response(highline_intent)
+                    h_payload = formatted_highline.get("highline_info")
+                    action_to_event = {
+                        "spans_list": "highline_spans",
+                        "span_detail": "highline_detail",
+                        "calculate_rigging": "highline_rigging",
+                        "gear_checklist": "highline_gear",
+                    }
+                    event_name = action_to_event.get(highline_intent.action, "highline_info")
+                    yield f"data: {json.dumps({'event': event_name, 'highline_info': h_payload, event_name: h_payload})}\n\n"
+                    if event_name != "highline_info":
+                        yield f"data: {json.dumps({'event': 'highline_info', 'highline_info': h_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1784,6 +1815,9 @@ async def create_response_stream(request: ChatRequest):
                 elif orienteering_intent:
                     formatted_orienteering = format_orienteering_response(orienteering_intent)
                     mock_chunks = [str(formatted_orienteering.get("answer", ""))]
+                elif highline_intent:
+                    formatted_highline = format_highline_response(highline_intent)
+                    mock_chunks = [str(formatted_highline.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4243,6 +4277,7 @@ async def calculate_desert_hydration_plan_endpoint(
 async def get_desert_gear_checklist_endpoint() -> list[DesertGearRequirement]:
     return get_desert_gear()
 
+
 @app.get(
     "/api/coasteering/routes",
     response_model=list[CoasteeringRouteModel],
@@ -4342,3 +4377,52 @@ async def calculate_navigation_leg_endpoint(
 async def get_orienteering_gear_endpoint() -> list[OrienteeringGearRequirement]:
     return get_orienteering_gear()
 
+
+@app.get(
+    "/api/highline/spans",
+    response_model=list[HighlineSpanModel],
+    tags=["Alpine Highline & Slackline Rigging Tooling"],
+    summary="List iconic alpine highline spans with optional difficulty filtering",
+)
+async def get_highline_spans_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[HighlineSpanModel]:
+    return get_highline_spans(difficulty=difficulty)
+
+
+@app.get(
+    "/api/highline/spans/{span_id}",
+    response_model=HighlineSpanModel,
+    tags=["Alpine Highline & Slackline Rigging Tooling"],
+    summary="Get details, length, void exposure, and webbings for a specific highline span",
+)
+async def get_highline_span_endpoint(span_id: str) -> HighlineSpanModel:
+    span = get_highline_span_by_id(span_id)
+    if not span:
+        raise HTTPException(status_code=404, detail=f"Highline span '{span_id}' not found")
+    return span
+
+
+@app.post(
+    "/api/highline/calculate-rigging",
+    response_model=RiggingCalculationResponse,
+    tags=["Alpine Highline & Slackline Rigging Tooling"],
+    summary="Calculate highline sag, line tension, anchor vector loads, and safety factors",
+)
+async def calculate_highline_rigging_endpoint(
+    request: RiggingCalculationRequest,
+) -> RiggingCalculationResponse:
+    try:
+        return calculate_rigging_physics(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.get(
+    "/api/highline/gear",
+    response_model=list[HighlineGearRequirement],
+    tags=["Alpine Highline & Slackline Rigging Tooling"],
+    summary="List mandatory alpine highline rigging kit compliance checklist",
+)
+async def get_highline_gear_endpoint() -> list[HighlineGearRequirement]:
+    return get_highline_gear()
