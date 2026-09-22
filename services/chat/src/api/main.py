@@ -100,6 +100,18 @@ from contoso_chat.climbing import (
     get_climbing_crags,
     get_rappel_safety_protocol,
 )
+from contoso_chat.coasteering import (
+    CoasteeringGearRequirement,
+    CoasteeringRouteModel,
+    JumpSafetyRequest,
+    JumpSafetyResponse,
+    calculate_jump_safety,
+    detect_coasteering_intent,
+    format_coasteering_response,
+    get_coasteering_gear,
+    get_coasteering_route_by_id,
+    get_coasteering_routes,
+)
 from contoso_chat.desert_trekking import (
     DesertGearRequirement,
     DesertRouteModel,
@@ -883,6 +895,7 @@ async def create_response(request: ChatRequest):
             bushcraft_intent = detect_bushcraft_intent(request.question)
             caving_intent = detect_caving_intent(request.question)
             desert_trekking_intent = detect_desert_trekking_intent(request.question)
+            coasteering_intent = detect_coasteering_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1219,6 +1232,12 @@ async def create_response(request: ChatRequest):
                 formatted_desert = format_desert_trekking_response(desert_trekking_intent)
                 mock_payload["desert_trekking_info"] = formatted_desert.get("desert_trekking_info")
                 mock_payload["answer"] = formatted_desert.get("answer", mock_payload["answer"])
+            if coasteering_intent:
+                formatted_coasteering = format_coasteering_response(coasteering_intent)
+                mock_payload["coasteering_info"] = formatted_coasteering.get("coasteering_info")
+                mock_payload["answer"] = formatted_coasteering.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1378,6 +1397,7 @@ async def create_response_stream(request: ChatRequest):
                 bushcraft_intent = detect_bushcraft_intent(request.question)
                 caving_intent = detect_caving_intent(request.question)
                 desert_trekking_intent = detect_desert_trekking_intent(request.question)
+                coasteering_intent = detect_coasteering_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1569,6 +1589,9 @@ async def create_response_stream(request: ChatRequest):
                 if desert_trekking_intent:
                     formatted_desert = format_desert_trekking_response(desert_trekking_intent)
                     yield f"data: {json.dumps({'event': 'desert_trekking_info', 'desert_trekking_info': formatted_desert.get('desert_trekking_info')})}\n\n"
+                if coasteering_intent:
+                    formatted_coasteering = format_coasteering_response(coasteering_intent)
+                    yield f"data: {json.dumps({'event': 'coasteering_info', 'coasteering_info': formatted_coasteering.get('coasteering_info')})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1722,6 +1745,9 @@ async def create_response_stream(request: ChatRequest):
                 elif desert_trekking_intent:
                     formatted_desert = format_desert_trekking_response(desert_trekking_intent)
                     mock_chunks = [str(formatted_desert.get("answer", ""))]
+                elif coasteering_intent:
+                    formatted_coasteering = format_coasteering_response(coasteering_intent)
+                    mock_chunks = [str(formatted_coasteering.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4180,3 +4206,53 @@ async def calculate_desert_hydration_plan_endpoint(
 )
 async def get_desert_gear_checklist_endpoint() -> list[DesertGearRequirement]:
     return get_desert_gear()
+
+@app.get(
+    "/api/coasteering/routes",
+    response_model=list[CoasteeringRouteModel],
+    tags=["Coastal Sea Cliff Coasteering & Swell Safety Tooling"],
+    summary="List iconic coastal sea cliff coasteering routes with optional grade filtering",
+)
+async def get_coasteering_routes_endpoint(
+    grade: Optional[str] = None,
+) -> list[CoasteeringRouteModel]:
+    return get_coasteering_routes(grade=grade)
+
+
+@app.get(
+    "/api/coasteering/routes/{route_id}",
+    response_model=CoasteeringRouteModel,
+    tags=["Coastal Sea Cliff Coasteering & Swell Safety Tooling"],
+    summary="Get details, jump heights, and sea caves for a specific coasteering route",
+)
+async def get_coasteering_route_endpoint(route_id: str) -> CoasteeringRouteModel:
+    route = get_coasteering_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Coasteering route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/coasteering/jump-safety",
+    response_model=JumpSafetyResponse,
+    tags=["Coastal Sea Cliff Coasteering & Swell Safety Tooling"],
+    summary="Calculate cliff jump safety, aerated foam depth requirements, and surge timing",
+)
+async def calculate_jump_safety_endpoint(
+    req: JumpSafetyRequest,
+) -> JumpSafetyResponse:
+    try:
+        return calculate_jump_safety(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/coasteering/gear-checklist",
+    response_model=list[CoasteeringGearRequirement],
+    tags=["Coastal Sea Cliff Coasteering & Swell Safety Tooling"],
+    summary="List mandatory coastal sea cliff coasteering gear checklist",
+)
+async def get_coasteering_gear_checklist_endpoint() -> list[CoasteeringGearRequirement]:
+    return get_coasteering_gear()
+
