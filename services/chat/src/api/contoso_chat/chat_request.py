@@ -122,6 +122,11 @@ from .order_tracking import (
     detect_order_tracking_intent,
     lookup_order_tracking,
 )
+from .orienteering import (
+    build_orienteering_prompt,
+    extract_orienteering_intent,
+    format_orienteering_response,
+)
 from .packrafting import (
     build_packrafting_prompt,
     detect_packrafting_intent,
@@ -525,6 +530,7 @@ async def generate_llm_response(
     caving_prompt: str = "",
     desert_trekking_prompt: str = "",
     coasteering_prompt: str = "",
+    orienteering_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -673,6 +679,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{desert_trekking_prompt}"
         if coasteering_prompt:
             local_system = f"{local_system}\n\n{coasteering_prompt}"
+        if orienteering_prompt:
+            local_system = f"{local_system}\n\n{orienteering_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -808,6 +816,8 @@ async def generate_llm_response(
             prompt_parts.append(desert_trekking_prompt)
         if coasteering_prompt:
             prompt_parts.append(coasteering_prompt)
+        if orienteering_prompt:
+            prompt_parts.append(orienteering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1400,6 +1410,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_coasteering = format_coasteering_response(coasteering_intent)
         coasteering_info_payload = formatted_coasteering.get("coasteering_info")
 
+    orienteering_intent = extract_orienteering_intent(question)
+    orienteering_prompt = ""
+    orienteering_info_payload = None
+    if orienteering_intent:
+        orienteering_prompt = build_orienteering_prompt(orienteering_intent)
+        formatted_orienteering = format_orienteering_response(orienteering_intent)
+        orienteering_info_payload = formatted_orienteering.get("orienteering_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1518,6 +1536,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["desert_trekking_prompt"] = desert_trekking_prompt
     if coasteering_prompt:
         llm_kwargs["coasteering_prompt"] = coasteering_prompt
+    if orienteering_prompt:
+        llm_kwargs["orienteering_prompt"] = orienteering_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1659,6 +1679,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["desert_trekking_info"] = desert_trekking_info_payload
     if coasteering_intent and coasteering_info_payload:
         response_payload["coasteering_info"] = coasteering_info_payload
+    if orienteering_intent and orienteering_info_payload:
+        response_payload["orienteering_info"] = orienteering_info_payload
 
     return response_payload
 
@@ -1725,6 +1747,7 @@ def generate_llm_response_stream(
     caving_prompt: str = "",
     desert_trekking_prompt: str = "",
     coasteering_prompt: str = "",
+    orienteering_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1853,6 +1876,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{caving_prompt}"
         if coasteering_prompt:
             local_system = f"{local_system}\n\n{coasteering_prompt}"
+        if orienteering_prompt:
+            local_system = f"{local_system}\n\n{orienteering_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1979,6 +2004,8 @@ def generate_llm_response_stream(
             prompt_parts.append(caving_prompt)
         if coasteering_prompt:
             prompt_parts.append(coasteering_prompt)
+        if orienteering_prompt:
+            prompt_parts.append(orienteering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2427,6 +2454,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_coasteering = format_coasteering_response(coasteering_intent)
         coasteering_info_payload = formatted_coasteering.get("coasteering_info")
 
+    orienteering_intent = extract_orienteering_intent(question)
+    orienteering_prompt = ""
+    orienteering_info_payload = None
+    if orienteering_intent:
+        orienteering_prompt = build_orienteering_prompt(orienteering_intent)
+        formatted_orienteering = format_orienteering_response(orienteering_intent)
+        orienteering_info_payload = formatted_orienteering.get("orienteering_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2544,6 +2579,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'desert_trekking_info', 'desert_trekking_info': desert_trekking_info_payload})}\n\n"
     if coasteering_intent and coasteering_info_payload:
         yield f"data: {json.dumps({'event': 'coasteering_info', 'coasteering_info': coasteering_info_payload})}\n\n"
+    if orienteering_intent and orienteering_info_payload:
+        action_to_event = {
+            "courses_list": "orienteering_courses",
+            "course_detail": "orienteering_detail",
+            "calculate_leg": "orienteering_leg",
+            "gear_checklist": "orienteering_gear",
+        }
+        event_name = action_to_event.get(orienteering_intent.action, "orienteering_info")
+        yield f"data: {json.dumps({'event': event_name, 'orienteering_info': orienteering_info_payload, event_name: orienteering_info_payload})}\n\n"
+        if event_name != "orienteering_info":
+            yield f"data: {json.dumps({'event': 'orienteering_info', 'orienteering_info': orienteering_info_payload})}\n\n"
 
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -2661,6 +2707,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["desert_trekking_prompt"] = desert_trekking_prompt
     if coasteering_prompt:
         stream_kwargs["coasteering_prompt"] = coasteering_prompt
+    if orienteering_prompt:
+        stream_kwargs["orienteering_prompt"] = orienteering_prompt
 
     for chunk in generate_llm_response_stream(
         question,
