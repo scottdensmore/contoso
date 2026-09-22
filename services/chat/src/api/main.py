@@ -272,6 +272,18 @@ from contoso_chat.nordic_skiing import (
     get_nordic_trails,
 )
 from contoso_chat.order_tracking import detect_order_tracking_intent
+from contoso_chat.orienteering import (
+    NavigationLegRequest,
+    NavigationLegResponse,
+    OrienteeringCourseModel,
+    OrienteeringGearRequirement,
+    calculate_navigation_leg,
+    extract_orienteering_intent,
+    format_orienteering_response,
+    get_orienteering_course_by_id,
+    get_orienteering_courses,
+    get_orienteering_gear,
+)
 from contoso_chat.packrafting import (
     PackraftGearRequirement,
     PackraftPlanRequest,
@@ -896,6 +908,7 @@ async def create_response(request: ChatRequest):
             caving_intent = detect_caving_intent(request.question)
             desert_trekking_intent = detect_desert_trekking_intent(request.question)
             coasteering_intent = detect_coasteering_intent(request.question)
+            orienteering_intent = extract_orienteering_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1238,6 +1251,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_coasteering.get(
                     "answer", mock_payload["answer"]
                 )
+            if orienteering_intent:
+                formatted_orienteering = format_orienteering_response(orienteering_intent)
+                mock_payload["orienteering_info"] = formatted_orienteering.get("orienteering_info")
+                mock_payload["answer"] = formatted_orienteering.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1398,6 +1417,7 @@ async def create_response_stream(request: ChatRequest):
                 caving_intent = detect_caving_intent(request.question)
                 desert_trekking_intent = detect_desert_trekking_intent(request.question)
                 coasteering_intent = detect_coasteering_intent(request.question)
+                orienteering_intent = extract_orienteering_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1592,6 +1612,19 @@ async def create_response_stream(request: ChatRequest):
                 if coasteering_intent:
                     formatted_coasteering = format_coasteering_response(coasteering_intent)
                     yield f"data: {json.dumps({'event': 'coasteering_info', 'coasteering_info': formatted_coasteering.get('coasteering_info')})}\n\n"
+                if orienteering_intent:
+                    formatted_orienteering = format_orienteering_response(orienteering_intent)
+                    o_payload = formatted_orienteering.get("orienteering_info")
+                    action_to_event = {
+                        "courses_list": "orienteering_courses",
+                        "course_detail": "orienteering_detail",
+                        "calculate_leg": "orienteering_leg",
+                        "gear_checklist": "orienteering_gear",
+                    }
+                    event_name = action_to_event.get(orienteering_intent.action, "orienteering_info")
+                    yield f"data: {json.dumps({'event': event_name, 'orienteering_info': o_payload, event_name: o_payload})}\n\n"
+                    if event_name != "orienteering_info":
+                        yield f"data: {json.dumps({'event': 'orienteering_info', 'orienteering_info': o_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1748,6 +1781,9 @@ async def create_response_stream(request: ChatRequest):
                 elif coasteering_intent:
                     formatted_coasteering = format_coasteering_response(coasteering_intent)
                     mock_chunks = [str(formatted_coasteering.get("answer", ""))]
+                elif orienteering_intent:
+                    formatted_orienteering = format_orienteering_response(orienteering_intent)
+                    mock_chunks = [str(formatted_orienteering.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4255,4 +4291,54 @@ async def calculate_jump_safety_endpoint(
 )
 async def get_coasteering_gear_checklist_endpoint() -> list[CoasteeringGearRequirement]:
     return get_coasteering_gear()
+
+
+@app.get(
+    "/api/orienteering/courses",
+    response_model=list[OrienteeringCourseModel],
+    tags=["Wilderness Orienteering & Off-Trail Land Navigation Tooling"],
+    summary="List wilderness orienteering courses with optional difficulty filtering",
+)
+async def get_orienteering_courses_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[OrienteeringCourseModel]:
+    return get_orienteering_courses(difficulty=difficulty)
+
+
+@app.get(
+    "/api/orienteering/courses/{course_id}",
+    response_model=OrienteeringCourseModel,
+    tags=["Wilderness Orienteering & Off-Trail Land Navigation Tooling"],
+    summary="Get details, declination, and control checkpoints for an orienteering course",
+)
+async def get_orienteering_course_endpoint(course_id: str) -> OrienteeringCourseModel:
+    course = get_orienteering_course_by_id(course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail=f"Orienteering course '{course_id}' not found")
+    return course
+
+
+@app.post(
+    "/api/orienteering/calculate-leg",
+    response_model=NavigationLegResponse,
+    tags=["Wilderness Orienteering & Off-Trail Land Navigation Tooling"],
+    summary="Calculate navigation leg bearing, back bearing, aim off, pace counts, and travel time",
+)
+async def calculate_navigation_leg_endpoint(
+    req: NavigationLegRequest,
+) -> NavigationLegResponse:
+    try:
+        return calculate_navigation_leg(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/orienteering/gear",
+    response_model=list[OrienteeringGearRequirement],
+    tags=["Wilderness Orienteering & Off-Trail Land Navigation Tooling"],
+    summary="List mandatory wilderness orienteering and navigation gear requirements",
+)
+async def get_orienteering_gear_endpoint() -> list[OrienteeringGearRequirement]:
+    return get_orienteering_gear()
 
