@@ -97,6 +97,11 @@ from .foraging import (
     detect_foraging_intent,
     format_foraging_response,
 )
+from .glacier_navigation import (
+    build_glacier_prompt,
+    detect_glacier_intent,
+    format_glacier_response,
+)
 from .highline import (
     build_highline_prompt,
     extract_highline_intent,
@@ -555,6 +560,7 @@ async def generate_llm_response(
     dogsled_prompt: str = "",
     canoe_prompt: str = "",
     shelter_prompt: str = "",
+    glacier_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -713,6 +719,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{canoe_prompt}"
         if shelter_prompt:
             local_system = f"{local_system}\n\n{shelter_prompt}"
+        if glacier_prompt:
+            local_system = f"{local_system}\n\n{glacier_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -858,6 +866,8 @@ async def generate_llm_response(
             prompt_parts.append(canoe_prompt)
         if shelter_prompt:
             prompt_parts.append(shelter_prompt)
+        if glacier_prompt:
+            prompt_parts.append(glacier_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1346,6 +1356,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
         bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
 
+    glacier_intent = detect_glacier_intent(question)
+    glacier_prompt = ""
+    glacier_info_payload = None
+    if glacier_intent:
+        glacier_prompt = build_glacier_prompt(glacier_intent)
+        formatted_glacier = format_glacier_response(glacier_intent, question)
+        glacier_info_payload = formatted_glacier.get("glacier_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1618,6 +1635,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["canoe_prompt"] = canoe_prompt
     if shelter_prompt:
         llm_kwargs["shelter_prompt"] = shelter_prompt
+    if glacier_prompt:
+        llm_kwargs["glacier_prompt"] = glacier_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1769,6 +1788,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["canoe_info"] = canoe_info_payload
     if shelter_intent and shelter_info_payload:
         response_payload["shelter_info"] = shelter_info_payload
+    if glacier_intent and glacier_info_payload:
+        response_payload["glacier_info"] = glacier_info_payload
 
     return response_payload
 
@@ -1840,6 +1861,7 @@ def generate_llm_response_stream(
     dogsled_prompt: str = "",
     canoe_prompt: str = "",
     shelter_prompt: str = "",
+    glacier_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1978,6 +2000,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{canoe_prompt}"
         if shelter_prompt:
             local_system = f"{local_system}\n\n{shelter_prompt}"
+        if glacier_prompt:
+            local_system = f"{local_system}\n\n{glacier_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2114,6 +2138,8 @@ def generate_llm_response_stream(
             prompt_parts.append(canoe_prompt)
         if shelter_prompt:
             prompt_parts.append(shelter_prompt)
+        if glacier_prompt:
+            prompt_parts.append(glacier_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2466,6 +2492,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
         bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
 
+    glacier_intent = detect_glacier_intent(question)
+    glacier_prompt = ""
+    glacier_info_payload = None
+    if glacier_intent:
+        glacier_prompt = build_glacier_prompt(glacier_intent)
+        formatted_glacier = format_glacier_response(glacier_intent, question)
+        glacier_info_payload = formatted_glacier.get("glacier_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -2776,6 +2809,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'shelter_info': shelter_info_payload, event_name: shelter_info_payload})}\n\n"
         if event_name != "shelter_info":
             yield f"data: {json.dumps({'event': 'shelter_info', 'shelter_info': shelter_info_payload})}\n\n"
+
+    if glacier_intent and glacier_info_payload:
+        action_to_event = {
+            "zones_list": "glacier_zones",
+            "zone_detail": "glacier_zone_detail",
+            "calculate_navigation": "glacier_calculation",
+            "gear_checklist": "glacier_gear",
+        }
+        event_name = action_to_event.get(glacier_intent.action, "glacier_info")
+        yield f"data: {json.dumps({'event': event_name, 'glacier_info': glacier_info_payload, event_name: glacier_info_payload})}\n\n"
+        if event_name != "glacier_info":
+            yield f"data: {json.dumps({'event': 'glacier_info', 'glacier_info': glacier_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -2902,6 +2947,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["canoe_prompt"] = canoe_prompt
     if shelter_prompt:
         stream_kwargs["shelter_prompt"] = shelter_prompt
+    if glacier_prompt:
+        stream_kwargs["glacier_prompt"] = glacier_prompt
 
     for chunk in generate_llm_response_stream(
         question,
