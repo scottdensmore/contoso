@@ -18,6 +18,11 @@ from .avalanche import (
     detect_avalanche_intent,
     format_avalanche_response,
 )
+from .big_wall import (
+    build_big_wall_prompt,
+    detect_big_wall_intent,
+    format_big_wall_response,
+)
 from .bikepacking import (
     build_bikepacking_prompt,
     detect_bikepacking_intent,
@@ -585,6 +590,7 @@ async def generate_llm_response(
     wilderness_tracking_prompt: str = "",
     snowkiting_prompt: str = "",
     psicobloc_prompt: str = "",
+    big_wall_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -753,8 +759,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{snowkiting_prompt}"
         if psicobloc_prompt:
             local_system = f"{local_system}\n\n{psicobloc_prompt}"
-        if psicobloc_prompt:
-            local_system = f"{local_system}\n\n{psicobloc_prompt}"
+        if big_wall_prompt:
+            local_system = f"{local_system}\n\n{big_wall_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -910,8 +916,8 @@ async def generate_llm_response(
             prompt_parts.append(snowkiting_prompt)
         if psicobloc_prompt:
             prompt_parts.append(psicobloc_prompt)
-        if psicobloc_prompt:
-            prompt_parts.append(psicobloc_prompt)
+        if big_wall_prompt:
+            prompt_parts.append(big_wall_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1439,13 +1445,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         psicobloc_prompt = build_psicobloc_prompt(psicobloc_intent)
         formatted_psicobloc = format_psicobloc_response(psicobloc_intent, question)
         psicobloc_info_payload = formatted_psicobloc.get("psicobloc_info")
-    psicobloc_intent = detect_psicobloc_intent(question)
-    psicobloc_prompt = ""
-    psicobloc_info_payload = None
-    if psicobloc_intent:
-        psicobloc_prompt = build_psicobloc_prompt(psicobloc_intent)
-        formatted_psicobloc = format_psicobloc_response(psicobloc_intent, question)
-        psicobloc_info_payload = formatted_psicobloc.get("psicobloc_info")
+    big_wall_intent = detect_big_wall_intent(question)
+    big_wall_prompt = ""
+    big_wall_info_payload = None
+    if big_wall_intent:
+        big_wall_prompt = build_big_wall_prompt(big_wall_intent)
+        formatted_big_wall = format_big_wall_response(big_wall_intent, question)
+        big_wall_info_payload = formatted_big_wall.get("big_wall_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1728,6 +1734,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["snowkiting_prompt"] = snowkiting_prompt
     if psicobloc_prompt:
         llm_kwargs["psicobloc_prompt"] = psicobloc_prompt
+    if big_wall_prompt:
+        llm_kwargs["big_wall_prompt"] = big_wall_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1889,6 +1897,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["snowkiting_info"] = snowkiting_info_payload
     if psicobloc_intent and psicobloc_info_payload:
         response_payload["psicobloc_info"] = psicobloc_info_payload
+    if big_wall_intent and big_wall_info_payload:
+        response_payload["big_wall_info"] = big_wall_info_payload
 
     return response_payload
 
@@ -1965,6 +1975,7 @@ def generate_llm_response_stream(
     wilderness_tracking_prompt: str = "",
     snowkiting_prompt: str = "",
     psicobloc_prompt: str = "",
+    big_wall_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2113,6 +2124,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{snowkiting_prompt}"
         if psicobloc_prompt:
             local_system = f"{local_system}\n\n{psicobloc_prompt}"
+        if big_wall_prompt:
+            local_system = f"{local_system}\n\n{big_wall_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2259,6 +2272,8 @@ def generate_llm_response_stream(
             prompt_parts.append(snowkiting_prompt)
         if psicobloc_prompt:
             prompt_parts.append(psicobloc_prompt)
+        if big_wall_prompt:
+            prompt_parts.append(big_wall_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2650,6 +2665,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         psicobloc_prompt = build_psicobloc_prompt(psicobloc_intent)
         formatted_psicobloc = format_psicobloc_response(psicobloc_intent, question)
         psicobloc_info_payload = formatted_psicobloc.get("psicobloc_info")
+    big_wall_intent = detect_big_wall_intent(question)
+    big_wall_prompt = ""
+    big_wall_info_payload = None
+    if big_wall_intent:
+        big_wall_prompt = build_big_wall_prompt(big_wall_intent)
+        formatted_big_wall = format_big_wall_response(big_wall_intent, question)
+        big_wall_info_payload = formatted_big_wall.get("big_wall_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3018,6 +3040,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'psicobloc_info': psicobloc_info_payload, event_name: psicobloc_info_payload})}\n\n"
         if event_name != "psicobloc_info":
             yield f"data: {json.dumps({'event': 'psicobloc_info', 'psicobloc_info': psicobloc_info_payload})}\n\n"
+    if big_wall_intent and big_wall_info_payload:
+        action_to_event = {
+            "routes_list": "big_wall_routes",
+            "route_detail": "big_wall_route_detail",
+            "calculate_haul": "big_wall_calculation",
+            "gear_checklist": "big_wall_gear",
+        }
+        event_name = action_to_event.get(big_wall_intent.action, "big_wall_info")
+        yield f"data: {json.dumps({'event': event_name, 'big_wall_info': big_wall_info_payload, event_name: big_wall_info_payload})}\n\n"
+        if event_name != "big_wall_info":
+            yield f"data: {json.dumps({'event': 'big_wall_info', 'big_wall_info': big_wall_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3154,6 +3187,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["snowkiting_prompt"] = snowkiting_prompt
     if psicobloc_prompt:
         stream_kwargs["psicobloc_prompt"] = psicobloc_prompt
+    if big_wall_prompt:
+        stream_kwargs["big_wall_prompt"] = big_wall_prompt
 
     for chunk in generate_llm_response_stream(
         question,

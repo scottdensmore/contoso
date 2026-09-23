@@ -36,6 +36,18 @@ from contoso_chat.avalanche import (
     get_avalanche_zones,
     get_companion_rescue_protocol,
 )
+from contoso_chat.big_wall import (
+    BigWallGearRequirement,
+    BigWallRouteModel,
+    HaulCalculationRequest,
+    HaulCalculationResponse,
+    calculate_haul_effort,
+    detect_big_wall_intent,
+    format_big_wall_response,
+    get_big_wall_gear,
+    get_big_wall_route_by_id,
+    get_big_wall_routes,
+)
 from contoso_chat.bikepacking import (
     BikepackingGearRequirement,
     BikepackingRigRequest,
@@ -1030,6 +1042,7 @@ async def create_response(request: ChatRequest):
             wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
             snowkiting_intent = detect_snowkiting_intent(request.question)
             psicobloc_intent = detect_psicobloc_intent(request.question)
+            big_wall_intent = detect_big_wall_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1416,6 +1429,10 @@ async def create_response(request: ChatRequest):
                 formatted_psicobloc = format_psicobloc_response(psicobloc_intent, request.question)
                 mock_payload["psicobloc_info"] = formatted_psicobloc.get("psicobloc_info")
                 mock_payload["answer"] = formatted_psicobloc.get("answer", mock_payload["answer"])
+            if big_wall_intent:
+                formatted_big_wall = format_big_wall_response(big_wall_intent, request.question)
+                mock_payload["big_wall_info"] = formatted_big_wall.get("big_wall_info")
+                mock_payload["answer"] = formatted_big_wall.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1586,6 +1603,7 @@ async def create_response_stream(request: ChatRequest):
                 wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
                 snowkiting_intent = detect_snowkiting_intent(request.question)
                 psicobloc_intent = detect_psicobloc_intent(request.question)
+                big_wall_intent = detect_big_wall_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1927,6 +1945,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'psicobloc_info': p_payload, event_name: p_payload})}\n\n"
                     if event_name != "psicobloc_info":
                         yield f"data: {json.dumps({'event': 'psicobloc_info', 'psicobloc_info': p_payload})}\n\n"
+                if big_wall_intent:
+                    formatted_big_wall = format_big_wall_response(big_wall_intent, request.question)
+                    b_payload = formatted_big_wall.get("big_wall_info")
+                    action_to_event = {
+                        "routes_list": "big_wall_routes",
+                        "route_detail": "big_wall_route_detail",
+                        "calculate_haul": "big_wall_calculation",
+                        "gear_checklist": "big_wall_gear",
+                    }
+                    event_name = action_to_event.get(big_wall_intent.action, "big_wall_info")
+                    yield f"data: {json.dumps({'event': event_name, 'big_wall_info': b_payload, event_name: b_payload})}\n\n"
+                    if event_name != "big_wall_info":
+                        yield f"data: {json.dumps({'event': 'big_wall_info', 'big_wall_info': b_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -2068,6 +2099,9 @@ async def create_response_stream(request: ChatRequest):
                         psicobloc_intent, request.question
                     )
                     mock_chunks = [str(formatted_psicobloc.get("answer", ""))]
+                elif big_wall_intent:
+                    formatted_big_wall = format_big_wall_response(big_wall_intent, request.question)
+                    mock_chunks = [str(formatted_big_wall.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5137,3 +5171,55 @@ async def calculate_psicobloc_endpoint(
 )
 async def get_psicobloc_gear_endpoint() -> list[PsicoblocGearRequirement]:
     return get_psicobloc_gear()
+
+
+@app.get(
+    "/api/big-wall/routes",
+    response_model=list[BigWallRouteModel],
+    tags=["Alpine Big Wall Aid Climbing & Portaledge Tooling"],
+    summary="List big wall routes with optional aid rating filtering",
+)
+async def get_big_wall_routes_endpoint(
+    aid_rating: Optional[str] = None,
+) -> list[BigWallRouteModel]:
+    return get_big_wall_routes(aid_rating=aid_rating)
+
+
+@app.get(
+    "/api/big-wall/routes/{route_id}",
+    response_model=BigWallRouteModel,
+    tags=["Alpine Big Wall Aid Climbing & Portaledge Tooling"],
+    summary="Get details, pitches, height, aid rating, and pig weight for a big wall route",
+)
+async def get_big_wall_route_detail_endpoint(
+    route_id: str,
+) -> BigWallRouteModel:
+    route = get_big_wall_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Big wall route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/big-wall/calculate",
+    response_model=HaulCalculationResponse,
+    tags=["Alpine Big Wall Aid Climbing & Portaledge Tooling"],
+    summary="Calculate hauling mechanical advantage, effective pull force, and counterweight effort",
+)
+async def calculate_haul_endpoint(
+    req: HaulCalculationRequest,
+) -> HaulCalculationResponse:
+    try:
+        return calculate_haul_effort(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/big-wall/gear",
+    response_model=list[BigWallGearRequirement],
+    tags=["Alpine Big Wall Aid Climbing & Portaledge Tooling"],
+    summary="List mandatory big wall aid climbing and portaledge safety kit items",
+)
+async def get_big_wall_gear_endpoint() -> list[BigWallGearRequirement]:
+    return get_big_wall_gear()
