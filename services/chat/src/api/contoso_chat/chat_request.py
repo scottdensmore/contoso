@@ -192,6 +192,11 @@ from .rewards import (
     format_rewards_response,
     get_customer_loyalty,
 )
+from .river_sup import (
+    build_river_sup_prompt,
+    detect_river_sup_intent,
+    format_river_sup_response,
+)
 from .routes import (
     build_route_prompt,
     detect_route_intent,
@@ -561,6 +566,7 @@ async def generate_llm_response(
     canoe_prompt: str = "",
     shelter_prompt: str = "",
     glacier_prompt: str = "",
+    river_sup_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -721,6 +727,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{shelter_prompt}"
         if glacier_prompt:
             local_system = f"{local_system}\n\n{glacier_prompt}"
+        if river_sup_prompt:
+            local_system = f"{local_system}\n\n{river_sup_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -868,6 +876,8 @@ async def generate_llm_response(
             prompt_parts.append(shelter_prompt)
         if glacier_prompt:
             prompt_parts.append(glacier_prompt)
+        if river_sup_prompt:
+            prompt_parts.append(river_sup_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1363,6 +1373,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         glacier_prompt = build_glacier_prompt(glacier_intent)
         formatted_glacier = format_glacier_response(glacier_intent, question)
         glacier_info_payload = formatted_glacier.get("glacier_info")
+
+    river_sup_intent = detect_river_sup_intent(question)
+    river_sup_prompt = ""
+    river_sup_info_payload = None
+    if river_sup_intent:
+        river_sup_prompt = build_river_sup_prompt(river_sup_intent)
+        formatted_river_sup = format_river_sup_response(river_sup_intent, question)
+        river_sup_info_payload = formatted_river_sup.get("river_sup_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1637,6 +1655,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["shelter_prompt"] = shelter_prompt
     if glacier_prompt:
         llm_kwargs["glacier_prompt"] = glacier_prompt
+    if river_sup_prompt:
+        llm_kwargs["river_sup_prompt"] = river_sup_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1790,6 +1810,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["shelter_info"] = shelter_info_payload
     if glacier_intent and glacier_info_payload:
         response_payload["glacier_info"] = glacier_info_payload
+    if river_sup_intent and river_sup_info_payload:
+        response_payload["river_sup_info"] = river_sup_info_payload
 
     return response_payload
 
@@ -1862,6 +1884,7 @@ def generate_llm_response_stream(
     canoe_prompt: str = "",
     shelter_prompt: str = "",
     glacier_prompt: str = "",
+    river_sup_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2002,6 +2025,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{shelter_prompt}"
         if glacier_prompt:
             local_system = f"{local_system}\n\n{glacier_prompt}"
+        if river_sup_prompt:
+            local_system = f"{local_system}\n\n{river_sup_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2140,6 +2165,8 @@ def generate_llm_response_stream(
             prompt_parts.append(shelter_prompt)
         if glacier_prompt:
             prompt_parts.append(glacier_prompt)
+        if river_sup_prompt:
+            prompt_parts.append(river_sup_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2499,6 +2526,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         glacier_prompt = build_glacier_prompt(glacier_intent)
         formatted_glacier = format_glacier_response(glacier_intent, question)
         glacier_info_payload = formatted_glacier.get("glacier_info")
+
+    river_sup_intent = detect_river_sup_intent(question)
+    river_sup_prompt = ""
+    river_sup_info_payload = None
+    if river_sup_intent:
+        river_sup_prompt = build_river_sup_prompt(river_sup_intent)
+        formatted_river_sup = format_river_sup_response(river_sup_intent, question)
+        river_sup_info_payload = formatted_river_sup.get("river_sup_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -2821,6 +2856,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'glacier_info': glacier_info_payload, event_name: glacier_info_payload})}\n\n"
         if event_name != "glacier_info":
             yield f"data: {json.dumps({'event': 'glacier_info', 'glacier_info': glacier_info_payload})}\n\n"
+
+    if river_sup_intent and river_sup_info_payload:
+        action_to_event = {
+            "runs_list": "river_sup_runs",
+            "run_detail": "river_sup_run_detail",
+            "river_sup_calculation": "river_sup_calculation",
+            "gear_checklist": "river_sup_gear",
+        }
+        event_name = action_to_event.get(river_sup_intent.action, "river_sup_info")
+        yield f"data: {json.dumps({'event': event_name, 'river_sup_info': river_sup_info_payload, event_name: river_sup_info_payload})}\n\n"
+        if event_name != "river_sup_info":
+            yield f"data: {json.dumps({'event': 'river_sup_info', 'river_sup_info': river_sup_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -2949,6 +2996,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["shelter_prompt"] = shelter_prompt
     if glacier_prompt:
         stream_kwargs["glacier_prompt"] = glacier_prompt
+    if river_sup_prompt:
+        stream_kwargs["river_sup_prompt"] = river_sup_prompt
 
     for chunk in generate_llm_response_stream(
         question,

@@ -409,6 +409,18 @@ from contoso_chat.rewards import (
     get_tier_perks,
     redeem_voucher,
 )
+from contoso_chat.river_sup import (
+    RiverSupCalculationRequest,
+    RiverSupCalculationResponse,
+    RiverSupGearRequirement,
+    RiverSupRunModel,
+    calculate_river_sup,
+    detect_river_sup_intent,
+    format_river_sup_response,
+    get_river_sup_gear,
+    get_river_sup_run_by_id,
+    get_river_sup_runs,
+)
 from contoso_chat.routes import (
     RouteExportRequest,
     RouteExportResponse,
@@ -978,6 +990,7 @@ async def create_response(request: ChatRequest):
             canoe_intent = extract_canoe_intent(request.question)
             shelter_intent = extract_shelter_intent(request.question)
             glacier_intent = detect_glacier_intent(request.question)
+            river_sup_intent = detect_river_sup_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1344,6 +1357,10 @@ async def create_response(request: ChatRequest):
                 formatted_glacier = format_glacier_response(glacier_intent, request.question)
                 mock_payload["glacier_info"] = formatted_glacier.get("glacier_info")
                 mock_payload["answer"] = formatted_glacier.get("answer", mock_payload["answer"])
+            if river_sup_intent:
+                formatted_river_sup = format_river_sup_response(river_sup_intent, request.question)
+                mock_payload["river_sup_info"] = formatted_river_sup.get("river_sup_info")
+                mock_payload["answer"] = formatted_river_sup.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1510,6 +1527,7 @@ async def create_response_stream(request: ChatRequest):
                 canoe_intent = extract_canoe_intent(request.question)
                 shelter_intent = extract_shelter_intent(request.question)
                 glacier_intent = detect_glacier_intent(request.question)
+                river_sup_intent = detect_river_sup_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1788,6 +1806,22 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "glacier_info":
                         yield f"data: {json.dumps({'event': 'glacier_info', 'glacier_info': g_payload})}\n\n"
 
+                if river_sup_intent:
+                    formatted_river_sup = format_river_sup_response(
+                        river_sup_intent, request.question
+                    )
+                    r_payload = formatted_river_sup.get("river_sup_info")
+                    action_to_event = {
+                        "runs_list": "river_sup_runs",
+                        "run_detail": "river_sup_run_detail",
+                        "river_sup_calculation": "river_sup_calculation",
+                        "gear_checklist": "river_sup_gear",
+                    }
+                    event_name = action_to_event.get(river_sup_intent.action, "river_sup_info")
+                    yield f"data: {json.dumps({'event': event_name, 'river_sup_info': r_payload, event_name: r_payload})}\n\n"
+                    if event_name != "river_sup_info":
+                        yield f"data: {json.dumps({'event': 'river_sup_info', 'river_sup_info': r_payload})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1908,6 +1942,11 @@ async def create_response_stream(request: ChatRequest):
                 elif glacier_intent:
                     formatted_glacier = format_glacier_response(glacier_intent, request.question)
                     mock_chunks = [str(formatted_glacier.get("answer", ""))]
+                elif river_sup_intent:
+                    formatted_river_sup = format_river_sup_response(
+                        river_sup_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_river_sup.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -4769,3 +4808,53 @@ async def calculate_glacier_navigation_endpoint(
 )
 async def get_glacier_gear_endpoint() -> list[GlacierNavigationGearRequirement]:
     return get_glacier_navigation_gear()
+
+
+@app.get(
+    "/api/river-sup/runs",
+    response_model=list[RiverSupRunModel],
+    tags=["Whitewater Stand-Up Paddleboarding & River SUP Tooling"],
+    summary="List whitewater stand-up paddleboarding runs with optional difficulty filtering",
+)
+async def get_river_sup_runs_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[RiverSupRunModel]:
+    return get_river_sup_runs(difficulty=difficulty)
+
+
+@app.get(
+    "/api/river-sup/runs/{run_id}",
+    response_model=RiverSupRunModel,
+    tags=["Whitewater Stand-Up Paddleboarding & River SUP Tooling"],
+    summary="Get details, gradient, flow, and duration for a river SUP reach",
+)
+async def get_river_sup_run_endpoint(run_id: str) -> RiverSupRunModel:
+    run = get_river_sup_run_by_id(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"River SUP run '{run_id}' not found")
+    return run
+
+
+@app.post(
+    "/api/river-sup/calculate",
+    response_model=RiverSupCalculationResponse,
+    tags=["Whitewater Stand-Up Paddleboarding & River SUP Tooling"],
+    summary="Calculate river SUP volume ratio, buoyancy, fin clearance, and leash safety",
+)
+async def calculate_river_sup_endpoint(
+    req: RiverSupCalculationRequest,
+) -> RiverSupCalculationResponse:
+    try:
+        return calculate_river_sup(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/river-sup/gear",
+    response_model=list[RiverSupGearRequirement],
+    tags=["Whitewater Stand-Up Paddleboarding & River SUP Tooling"],
+    summary="List mandatory whitewater stand-up paddleboarding safety kit items",
+)
+async def get_river_sup_gear_endpoint() -> list[RiverSupGearRequirement]:
+    return get_river_sup_gear()
