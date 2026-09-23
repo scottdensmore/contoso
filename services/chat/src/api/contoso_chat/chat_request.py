@@ -272,6 +272,11 @@ from .whitewater import (
     detect_whitewater_intent,
     format_whitewater_response,
 )
+from .wilderness_shelters import (
+    build_shelter_prompt,
+    extract_shelter_intent,
+    format_shelter_response,
+)
 from .wildlife import (
     build_wildlife_prompt,
     detect_wildlife_intent,
@@ -549,6 +554,7 @@ async def generate_llm_response(
     highline_prompt: str = "",
     dogsled_prompt: str = "",
     canoe_prompt: str = "",
+    shelter_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -705,6 +711,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{dogsled_prompt}"
         if canoe_prompt:
             local_system = f"{local_system}\n\n{canoe_prompt}"
+        if shelter_prompt:
+            local_system = f"{local_system}\n\n{shelter_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -848,6 +856,8 @@ async def generate_llm_response(
             prompt_parts.append(dogsled_prompt)
         if canoe_prompt:
             prompt_parts.append(canoe_prompt)
+        if shelter_prompt:
+            prompt_parts.append(shelter_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1472,6 +1482,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_canoe = format_canoe_response(canoe_intent)
         canoe_info_payload = formatted_canoe.get("canoe_info")
 
+    shelter_intent = extract_shelter_intent(question)
+    shelter_prompt = ""
+    shelter_info_payload = None
+    if shelter_intent:
+        shelter_prompt = build_shelter_prompt(shelter_intent)
+        formatted_shelter = format_shelter_response(shelter_intent)
+        shelter_info_payload = formatted_shelter.get("shelter_info")
+
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -1598,6 +1616,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["dogsled_prompt"] = dogsled_prompt
     if canoe_prompt:
         llm_kwargs["canoe_prompt"] = canoe_prompt
+    if shelter_prompt:
+        llm_kwargs["shelter_prompt"] = shelter_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1747,6 +1767,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["dogsled_info"] = dogsled_info_payload
     if canoe_intent and canoe_info_payload:
         response_payload["canoe_info"] = canoe_info_payload
+    if shelter_intent and shelter_info_payload:
+        response_payload["shelter_info"] = shelter_info_payload
 
     return response_payload
 
@@ -1817,6 +1839,7 @@ def generate_llm_response_stream(
     highline_prompt: str = "",
     dogsled_prompt: str = "",
     canoe_prompt: str = "",
+    shelter_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1953,6 +1976,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{dogsled_prompt}"
         if canoe_prompt:
             local_system = f"{local_system}\n\n{canoe_prompt}"
+        if shelter_prompt:
+            local_system = f"{local_system}\n\n{shelter_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2087,6 +2112,8 @@ def generate_llm_response_stream(
             prompt_parts.append(dogsled_prompt)
         if canoe_prompt:
             prompt_parts.append(canoe_prompt)
+        if shelter_prompt:
+            prompt_parts.append(shelter_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2567,6 +2594,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_canoe = format_canoe_response(canoe_intent)
         canoe_info_payload = formatted_canoe.get("canoe_info")
 
+    shelter_intent = extract_shelter_intent(question)
+    shelter_prompt = ""
+    shelter_info_payload = None
+    if shelter_intent:
+        shelter_prompt = build_shelter_prompt(shelter_intent)
+        formatted_shelter = format_shelter_response(shelter_intent)
+        shelter_info_payload = formatted_shelter.get("shelter_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2730,6 +2765,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'canoe_info': canoe_info_payload, event_name: canoe_info_payload})}\n\n"
         if event_name != "canoe_info":
             yield f"data: {json.dumps({'event': 'canoe_info', 'canoe_info': canoe_info_payload})}\n\n"
+    if shelter_intent and shelter_info_payload:
+        action_to_event = {
+            "shelters_list": "shelter_list",
+            "shelter_detail": "shelter_detail",
+            "calculate_thermodynamics": "shelter_thermo",
+            "gear_checklist": "shelter_gear",
+        }
+        event_name = action_to_event.get(shelter_intent.action, "shelter_info")
+        yield f"data: {json.dumps({'event': event_name, 'shelter_info': shelter_info_payload, event_name: shelter_info_payload})}\n\n"
+        if event_name != "shelter_info":
+            yield f"data: {json.dumps({'event': 'shelter_info', 'shelter_info': shelter_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -2854,6 +2900,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["dogsled_prompt"] = dogsled_prompt
     if canoe_prompt:
         stream_kwargs["canoe_prompt"] = canoe_prompt
+    if shelter_prompt:
+        stream_kwargs["shelter_prompt"] = shelter_prompt
 
     for chunk in generate_llm_response_stream(
         question,

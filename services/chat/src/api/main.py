@@ -590,6 +590,18 @@ from contoso_chat.whitewater import (
     get_whitewater_runs,
     get_whitewater_safety_protocols,
 )
+from contoso_chat.wilderness_shelters import (
+    ShelterGearRequirement,
+    ShelterThermodynamicsRequest,
+    ShelterThermodynamicsResponse,
+    SurvivalShelterModel,
+    calculate_shelter_thermodynamics,
+    extract_shelter_intent,
+    format_shelter_response,
+    get_shelter_gear,
+    get_survival_shelter_by_id,
+    get_survival_shelters,
+)
 from contoso_chat.wildlife import (
     EncounterAssessmentRequest,
     EncounterAssessmentResponse,
@@ -948,6 +960,7 @@ async def create_response(request: ChatRequest):
             highline_intent = extract_highline_intent(request.question)
             dogsled_intent = extract_dogsled_intent(request.question)
             canoe_intent = extract_canoe_intent(request.question)
+            shelter_intent = extract_shelter_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1306,6 +1319,10 @@ async def create_response(request: ChatRequest):
                 formatted_canoe = format_canoe_response(canoe_intent)
                 mock_payload["canoe_info"] = formatted_canoe.get("canoe_info")
                 mock_payload["answer"] = formatted_canoe.get("answer", mock_payload["answer"])
+            if shelter_intent:
+                formatted_shelter = format_shelter_response(shelter_intent)
+                mock_payload["shelter_info"] = formatted_shelter.get("shelter_info")
+                mock_payload["answer"] = formatted_shelter.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1470,6 +1487,7 @@ async def create_response_stream(request: ChatRequest):
                 highline_intent = extract_highline_intent(request.question)
                 dogsled_intent = extract_dogsled_intent(request.question)
                 canoe_intent = extract_canoe_intent(request.question)
+                shelter_intent = extract_shelter_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1720,6 +1738,20 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "canoe_info":
                         yield f"data: {json.dumps({'event': 'canoe_info', 'canoe_info': c_payload})}\n\n"
 
+                if shelter_intent:
+                    formatted_shelter = format_shelter_response(shelter_intent)
+                    s_payload = formatted_shelter.get("shelter_info")
+                    action_to_event = {
+                        "shelters_list": "shelter_list",
+                        "shelter_detail": "shelter_detail",
+                        "calculate_thermodynamics": "shelter_thermo",
+                        "gear_checklist": "shelter_gear",
+                    }
+                    event_name = action_to_event.get(shelter_intent.action, "shelter_info")
+                    yield f"data: {json.dumps({'event': event_name, 'shelter_info': s_payload, event_name: s_payload})}\n\n"
+                    if event_name != "shelter_info":
+                        yield f"data: {json.dumps({'event': 'shelter_info', 'shelter_info': s_payload})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1887,6 +1919,9 @@ async def create_response_stream(request: ChatRequest):
                 elif canoe_intent:
                     formatted_canoe = format_canoe_response(canoe_intent)
                     mock_chunks = [str(formatted_canoe.get("answer", ""))]
+                elif shelter_intent:
+                    formatted_shelter = format_shelter_response(shelter_intent)
+                    mock_chunks = [str(formatted_shelter.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4496,6 +4531,7 @@ async def calculate_highline_rigging_endpoint(
 async def get_highline_gear_endpoint() -> list[HighlineGearRequirement]:
     return get_highline_gear()
 
+
 @app.get(
     "/api/dogsledding/routes",
     response_model=list[DogsledRouteModel],
@@ -4546,7 +4582,6 @@ async def get_dogsled_gear_endpoint() -> list[MushingGearRequirement]:
     return get_dogsled_gear()
 
 
-
 @app.get(
     "/api/canoe-expedition/routes",
     response_model=list[CanoeRouteModel],
@@ -4595,3 +4630,53 @@ async def calculate_canoe_trim_endpoint(
 )
 async def get_canoe_gear_endpoint() -> list[CanoeGearRequirement]:
     return get_canoe_gear()
+
+
+@app.get(
+    "/api/wilderness-shelters/shelters",
+    response_model=list[SurvivalShelterModel],
+    tags=["Wilderness Survival Shelters & Snow Bivouac Tooling"],
+    summary="List wilderness survival shelters and snow bivouacs with optional difficulty filtering",
+)
+async def get_wilderness_shelters_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[SurvivalShelterModel]:
+    return get_survival_shelters(difficulty=difficulty)
+
+
+@app.get(
+    "/api/wilderness-shelters/shelters/{shelter_id}",
+    response_model=SurvivalShelterModel,
+    tags=["Wilderness Survival Shelters & Snow Bivouac Tooling"],
+    summary="Get details, snow depth, R-value, and architecture for a survival shelter",
+)
+async def get_wilderness_shelter_endpoint(shelter_id: str) -> SurvivalShelterModel:
+    shelter = get_survival_shelter_by_id(shelter_id)
+    if not shelter:
+        raise HTTPException(status_code=404, detail=f"Survival shelter '{shelter_id}' not found")
+    return shelter
+
+
+@app.post(
+    "/api/wilderness-shelters/calculate-thermodynamics",
+    response_model=ShelterThermodynamicsResponse,
+    tags=["Wilderness Survival Shelters & Snow Bivouac Tooling"],
+    summary="Calculate snow shelter interior temp, cold-air well drainage, and ventilation adequacy",
+)
+async def calculate_wilderness_shelter_thermodynamics_endpoint(
+    req: ShelterThermodynamicsRequest,
+) -> ShelterThermodynamicsResponse:
+    try:
+        return calculate_shelter_thermodynamics(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/wilderness-shelters/gear",
+    response_model=list[ShelterGearRequirement],
+    tags=["Wilderness Survival Shelters & Snow Bivouac Tooling"],
+    summary="List mandatory wilderness survival shelter and snow bivouac compliance gear",
+)
+async def get_wilderness_shelters_gear_endpoint() -> list[ShelterGearRequirement]:
+    return get_shelter_gear()
