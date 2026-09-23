@@ -333,6 +333,18 @@ class TestWildernessTrackingIntentDetection:
             is None
         )
 
+        # GPS route navigation / GPX tracks
+        assert (
+            detect_wilderness_tracking_intent(
+                "Can I download the GPX track and waypoints for the Enchantments Thru-Hike?"
+            )
+            is None
+        )
+        assert (
+            detect_wilderness_tracking_intent("Export GPS route track with elevation profile")
+            is None
+        )
+
         # General unrelated question
         assert detect_wilderness_tracking_intent("What is the weather in Seattle?") is None
 
