@@ -227,6 +227,11 @@ from .ski_touring import (
     detect_ski_tour_intent,
     format_ski_tour_response,
 )
+from .snowkiting import (
+    build_snowkiting_prompt,
+    detect_snowkiting_intent,
+    format_snowkiting_response,
+)
 from .stargazing import (
     build_stargazing_prompt,
     detect_stargazing_intent,
@@ -573,6 +578,7 @@ async def generate_llm_response(
     glacier_prompt: str = "",
     river_sup_prompt: str = "",
     wilderness_tracking_prompt: str = "",
+    snowkiting_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -737,6 +743,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{river_sup_prompt}"
         if wilderness_tracking_prompt:
             local_system = f"{local_system}\n\n{wilderness_tracking_prompt}"
+        if snowkiting_prompt:
+            local_system = f"{local_system}\n\n{snowkiting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -888,6 +896,8 @@ async def generate_llm_response(
             prompt_parts.append(river_sup_prompt)
         if wilderness_tracking_prompt:
             prompt_parts.append(wilderness_tracking_prompt)
+        if snowkiting_prompt:
+            prompt_parts.append(snowkiting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1401,6 +1411,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
             wilderness_tracking_intent, question
         )
         wilderness_tracking_info_payload = formatted_tracking.get("tracking_info")
+    snowkiting_intent = detect_snowkiting_intent(question)
+    snowkiting_prompt = ""
+    snowkiting_info_payload = None
+    if snowkiting_intent:
+        snowkiting_prompt = build_snowkiting_prompt(snowkiting_intent)
+        formatted_snowkiting = format_snowkiting_response(snowkiting_intent, question)
+        snowkiting_info_payload = formatted_snowkiting.get("snowkiting_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1679,6 +1696,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["river_sup_prompt"] = river_sup_prompt
     if wilderness_tracking_prompt:
         llm_kwargs["wilderness_tracking_prompt"] = wilderness_tracking_prompt
+    if snowkiting_prompt:
+        llm_kwargs["snowkiting_prompt"] = snowkiting_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1836,6 +1855,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["river_sup_info"] = river_sup_info_payload
     if wilderness_tracking_intent and wilderness_tracking_info_payload:
         response_payload["tracking_info"] = wilderness_tracking_info_payload
+    if snowkiting_intent and snowkiting_info_payload:
+        response_payload["snowkiting_info"] = snowkiting_info_payload
 
     return response_payload
 
@@ -1910,6 +1931,7 @@ def generate_llm_response_stream(
     glacier_prompt: str = "",
     river_sup_prompt: str = "",
     wilderness_tracking_prompt: str = "",
+    snowkiting_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2054,6 +2076,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{river_sup_prompt}"
         if wilderness_tracking_prompt:
             local_system = f"{local_system}\n\n{wilderness_tracking_prompt}"
+        if snowkiting_prompt:
+            local_system = f"{local_system}\n\n{snowkiting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2196,6 +2220,8 @@ def generate_llm_response_stream(
             prompt_parts.append(river_sup_prompt)
         if wilderness_tracking_prompt:
             prompt_parts.append(wilderness_tracking_prompt)
+        if snowkiting_prompt:
+            prompt_parts.append(snowkiting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2573,6 +2599,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             wilderness_tracking_intent, question
         )
         wilderness_tracking_info_payload = formatted_tracking.get("tracking_info")
+    snowkiting_intent = detect_snowkiting_intent(question)
+    snowkiting_prompt = ""
+    snowkiting_info_payload = None
+    if snowkiting_intent:
+        snowkiting_prompt = build_snowkiting_prompt(snowkiting_intent)
+        formatted_snowkiting = format_snowkiting_response(snowkiting_intent, question)
+        snowkiting_info_payload = formatted_snowkiting.get("snowkiting_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -2919,6 +2952,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'tracking_info': wilderness_tracking_info_payload, event_name: wilderness_tracking_info_payload})}\n\n"
         if event_name != "tracking_info":
             yield f"data: {json.dumps({'event': 'tracking_info', 'tracking_info': wilderness_tracking_info_payload})}\n\n"
+    if snowkiting_intent and snowkiting_info_payload:
+        action_to_event = {
+            "spots_list": "snowkiting_spots",
+            "spot_detail": "snowkiting_spot_detail",
+            "calculate_snowkiting": "snowkiting_calculation",
+            "gear_checklist": "snowkiting_gear",
+        }
+        event_name = action_to_event.get(snowkiting_intent.action, "snowkiting_info")
+        yield f"data: {json.dumps({'event': event_name, 'snowkiting_info': snowkiting_info_payload, event_name: snowkiting_info_payload})}\n\n"
+        if event_name != "snowkiting_info":
+            yield f"data: {json.dumps({'event': 'snowkiting_info', 'snowkiting_info': snowkiting_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3051,6 +3095,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["river_sup_prompt"] = river_sup_prompt
     if wilderness_tracking_prompt:
         stream_kwargs["wilderness_tracking_prompt"] = wilderness_tracking_prompt
+    if snowkiting_prompt:
+        stream_kwargs["snowkiting_prompt"] = snowkiting_prompt
 
     for chunk in generate_llm_response_stream(
         question,
