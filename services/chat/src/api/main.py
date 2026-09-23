@@ -368,6 +368,18 @@ from contoso_chat.promotions import (
     get_active_promotions,
     validate_promo_code,
 )
+from contoso_chat.psicobloc import (
+    PsicoblocCalculationRequest,
+    PsicoblocCalculationResponse,
+    PsicoblocCragModel,
+    PsicoblocGearRequirement,
+    calculate_psicobloc,
+    detect_psicobloc_intent,
+    format_psicobloc_response,
+    get_psicobloc_crag_by_id,
+    get_psicobloc_crags,
+    get_psicobloc_gear,
+)
 from contoso_chat.rentals import (
     RentalPackage,
     RentalQuoteRequest,
@@ -1017,6 +1029,7 @@ async def create_response(request: ChatRequest):
             river_sup_intent = detect_river_sup_intent(request.question)
             wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
             snowkiting_intent = detect_snowkiting_intent(request.question)
+            psicobloc_intent = detect_psicobloc_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1399,6 +1412,10 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["snowkiting_info"] = formatted_snowkiting.get("snowkiting_info")
                 mock_payload["answer"] = formatted_snowkiting.get("answer", mock_payload["answer"])
+            if psicobloc_intent:
+                formatted_psicobloc = format_psicobloc_response(psicobloc_intent, request.question)
+                mock_payload["psicobloc_info"] = formatted_psicobloc.get("psicobloc_info")
+                mock_payload["answer"] = formatted_psicobloc.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1568,6 +1585,7 @@ async def create_response_stream(request: ChatRequest):
                 river_sup_intent = detect_river_sup_intent(request.question)
                 wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
                 snowkiting_intent = detect_snowkiting_intent(request.question)
+                psicobloc_intent = detect_psicobloc_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1894,6 +1912,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'snowkiting_info': s_payload, event_name: s_payload})}\n\n"
                     if event_name != "snowkiting_info":
                         yield f"data: {json.dumps({'event': 'snowkiting_info', 'snowkiting_info': s_payload})}\n\n"
+                if psicobloc_intent:
+                    formatted_psicobloc = format_psicobloc_response(
+                        psicobloc_intent, request.question
+                    )
+                    p_payload = formatted_psicobloc.get("psicobloc_info")
+                    action_to_event = {
+                        "crags_list": "psicobloc_crags",
+                        "crag_detail": "psicobloc_crag_detail",
+                        "calculate_psicobloc": "psicobloc_calculation",
+                        "gear_checklist": "psicobloc_gear",
+                    }
+                    event_name = action_to_event.get(psicobloc_intent.action, "psicobloc_info")
+                    yield f"data: {json.dumps({'event': event_name, 'psicobloc_info': p_payload, event_name: p_payload})}\n\n"
+                    if event_name != "psicobloc_info":
+                        yield f"data: {json.dumps({'event': 'psicobloc_info', 'psicobloc_info': p_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -2030,6 +2063,11 @@ async def create_response_stream(request: ChatRequest):
                         snowkiting_intent, request.question
                     )
                     mock_chunks = [str(formatted_snowkiting.get("answer", ""))]
+                elif psicobloc_intent:
+                    formatted_psicobloc = format_psicobloc_response(
+                        psicobloc_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_psicobloc.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5047,3 +5085,55 @@ async def calculate_snowkiting_endpoint(
 )
 async def get_snowkiting_gear_endpoint() -> list[SnowkitingGearRequirement]:
     return get_snowkiting_gear()
+
+
+@app.get(
+    "/api/psicobloc/crags",
+    response_model=list[PsicoblocCragModel],
+    tags=["Deep Water Soloing & Psicobloc Tooling"],
+    summary="List psicobloc crags with optional rock type filtering",
+)
+async def get_psicobloc_crags_endpoint(
+    rock_type: Optional[str] = None,
+) -> list[PsicoblocCragModel]:
+    return get_psicobloc_crags(rock_type=rock_type)
+
+
+@app.get(
+    "/api/psicobloc/crags/{crag_id}",
+    response_model=PsicoblocCragModel,
+    tags=["Deep Water Soloing & Psicobloc Tooling"],
+    summary="Get details, max height, rock type, water depth, and access for a psicobloc crag",
+)
+async def get_psicobloc_crag_detail_endpoint(
+    crag_id: str,
+) -> PsicoblocCragModel:
+    crag = get_psicobloc_crag_by_id(crag_id)
+    if not crag:
+        raise HTTPException(status_code=404, detail=f"Psicobloc crag '{crag_id}' not found")
+    return crag
+
+
+@app.post(
+    "/api/psicobloc/calculate",
+    response_model=PsicoblocCalculationResponse,
+    tags=["Deep Water Soloing & Psicobloc Tooling"],
+    summary="Calculate impact velocity, minimum safe water depth clearance, and dive trauma safety status",
+)
+async def calculate_psicobloc_endpoint(
+    req: PsicoblocCalculationRequest,
+) -> PsicoblocCalculationResponse:
+    try:
+        return calculate_psicobloc(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/psicobloc/gear",
+    response_model=list[PsicoblocGearRequirement],
+    tags=["Deep Water Soloing & Psicobloc Tooling"],
+    summary="List mandatory deep water soloing safety kit items",
+)
+async def get_psicobloc_gear_endpoint() -> list[PsicoblocGearRequirement]:
+    return get_psicobloc_gear()
