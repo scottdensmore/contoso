@@ -60,6 +60,18 @@ from contoso_chat.bushcraft import (
     get_bushcraft_project_by_id,
     get_bushcraft_projects,
 )
+from contoso_chat.canoe_expedition import (
+    CanoeGearRequirement,
+    CanoeRouteModel,
+    CanoeTrimRequest,
+    CanoeTrimResponse,
+    calculate_canoe_trim,
+    extract_canoe_intent,
+    format_canoe_response,
+    get_canoe_gear,
+    get_canoe_route_by_id,
+    get_canoe_routes,
+)
 from contoso_chat.canyoneering import (
     CanyoneeringGearRequirement,
     RopeRiggingRequest,
@@ -935,6 +947,7 @@ async def create_response(request: ChatRequest):
             orienteering_intent = extract_orienteering_intent(request.question)
             highline_intent = extract_highline_intent(request.question)
             dogsled_intent = extract_dogsled_intent(request.question)
+            canoe_intent = extract_canoe_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1289,6 +1302,10 @@ async def create_response(request: ChatRequest):
                 formatted_dogsled = format_dogsled_response(dogsled_intent)
                 mock_payload["dogsled_info"] = formatted_dogsled.get("dogsled_info")
                 mock_payload["answer"] = formatted_dogsled.get("answer", mock_payload["answer"])
+            if canoe_intent:
+                formatted_canoe = format_canoe_response(canoe_intent)
+                mock_payload["canoe_info"] = formatted_canoe.get("canoe_info")
+                mock_payload["answer"] = formatted_canoe.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1452,6 +1469,7 @@ async def create_response_stream(request: ChatRequest):
                 orienteering_intent = extract_orienteering_intent(request.question)
                 highline_intent = extract_highline_intent(request.question)
                 dogsled_intent = extract_dogsled_intent(request.question)
+                canoe_intent = extract_canoe_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1688,6 +1706,20 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "dogsled_info":
                         yield f"data: {json.dumps({'event': 'dogsled_info', 'dogsled_info': d_payload})}\n\n"
 
+                if canoe_intent:
+                    formatted_canoe = format_canoe_response(canoe_intent)
+                    c_payload = formatted_canoe.get("canoe_info")
+                    action_to_event = {
+                        "routes_list": "canoe_routes",
+                        "route_detail": "canoe_detail",
+                        "calculate_trim": "canoe_trim",
+                        "gear_checklist": "canoe_gear",
+                    }
+                    event_name = action_to_event.get(canoe_intent.action, "canoe_info")
+                    yield f"data: {json.dumps({'event': event_name, 'canoe_info': c_payload, event_name: c_payload})}\n\n"
+                    if event_name != "canoe_info":
+                        yield f"data: {json.dumps({'event': 'canoe_info', 'canoe_info': c_payload})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1852,6 +1884,9 @@ async def create_response_stream(request: ChatRequest):
                 elif dogsled_intent:
                     formatted_dogsled = format_dogsled_response(dogsled_intent)
                     mock_chunks = [str(formatted_dogsled.get("answer", ""))]
+                elif canoe_intent:
+                    formatted_canoe = format_canoe_response(canoe_intent)
+                    mock_chunks = [str(formatted_canoe.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4510,3 +4545,53 @@ async def calculate_mushing_pacing_endpoint(
 async def get_dogsled_gear_endpoint() -> list[MushingGearRequirement]:
     return get_dogsled_gear()
 
+
+
+@app.get(
+    "/api/canoe-expedition/routes",
+    response_model=list[CanoeRouteModel],
+    tags=["Whitewater Pack-Canoeing & Open Canoe Expedition Tooling"],
+    summary="List whitewater pack-canoeing and open canoe wilderness expedition routes",
+)
+async def get_canoe_routes_endpoint(
+    whitewater_class: Optional[str] = None,
+) -> list[CanoeRouteModel]:
+    return get_canoe_routes(whitewater_class=whitewater_class)
+
+
+@app.get(
+    "/api/canoe-expedition/routes/{route_id}",
+    response_model=CanoeRouteModel,
+    tags=["Whitewater Pack-Canoeing & Open Canoe Expedition Tooling"],
+    summary="Get details, distance, portages, and hull recommendations for a canoe route",
+)
+async def get_canoe_route_endpoint(route_id: str) -> CanoeRouteModel:
+    route = get_canoe_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Canoe route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/canoe-expedition/calculate-trim",
+    response_model=CanoeTrimResponse,
+    tags=["Whitewater Pack-Canoeing & Open Canoe Expedition Tooling"],
+    summary="Calculate canoe hull ballast, capacity %, gunwale freeboard, and trim balance",
+)
+async def calculate_canoe_trim_endpoint(
+    req: CanoeTrimRequest,
+) -> CanoeTrimResponse:
+    try:
+        return calculate_canoe_trim(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/canoe-expedition/gear",
+    response_model=list[CanoeGearRequirement],
+    tags=["Whitewater Pack-Canoeing & Open Canoe Expedition Tooling"],
+    summary="List mandatory whitewater pack-canoeing and open boat wilderness expedition gear",
+)
+async def get_canoe_gear_endpoint() -> list[CanoeGearRequirement]:
+    return get_canoe_gear()
