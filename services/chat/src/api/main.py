@@ -124,6 +124,18 @@ from contoso_chat.desert_trekking import (
     get_desert_route_by_id,
     get_desert_routes,
 )
+from contoso_chat.dogsledding import (
+    DogsledRouteModel,
+    MushingGearRequirement,
+    MushingPacingRequest,
+    MushingPacingResponse,
+    calculate_mushing_pacing,
+    extract_dogsled_intent,
+    format_dogsled_response,
+    get_dogsled_gear,
+    get_dogsled_route_by_id,
+    get_dogsled_routes,
+)
 from contoso_chat.faq import (
     FaqItem,
     detect_faq_intent,
@@ -922,6 +934,7 @@ async def create_response(request: ChatRequest):
             coasteering_intent = detect_coasteering_intent(request.question)
             orienteering_intent = extract_orienteering_intent(request.question)
             highline_intent = extract_highline_intent(request.question)
+            dogsled_intent = extract_dogsled_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1272,6 +1285,10 @@ async def create_response(request: ChatRequest):
                 formatted_highline = format_highline_response(highline_intent)
                 mock_payload["highline_info"] = formatted_highline.get("highline_info")
                 mock_payload["answer"] = formatted_highline.get("answer", mock_payload["answer"])
+            if dogsled_intent:
+                formatted_dogsled = format_dogsled_response(dogsled_intent)
+                mock_payload["dogsled_info"] = formatted_dogsled.get("dogsled_info")
+                mock_payload["answer"] = formatted_dogsled.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1434,6 +1451,7 @@ async def create_response_stream(request: ChatRequest):
                 coasteering_intent = detect_coasteering_intent(request.question)
                 orienteering_intent = extract_orienteering_intent(request.question)
                 highline_intent = extract_highline_intent(request.question)
+                dogsled_intent = extract_dogsled_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1656,6 +1674,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'highline_info': h_payload, event_name: h_payload})}\n\n"
                     if event_name != "highline_info":
                         yield f"data: {json.dumps({'event': 'highline_info', 'highline_info': h_payload})}\n\n"
+                if dogsled_intent:
+                    formatted_dogsled = format_dogsled_response(dogsled_intent)
+                    d_payload = formatted_dogsled.get("dogsled_info")
+                    action_to_event = {
+                        "routes_list": "dogsled_routes",
+                        "route_detail": "dogsled_detail",
+                        "calculate_pacing": "dogsled_pacing",
+                        "gear_checklist": "dogsled_gear",
+                    }
+                    event_name = action_to_event.get(dogsled_intent.action, "dogsled_info")
+                    yield f"data: {json.dumps({'event': event_name, 'dogsled_info': d_payload, event_name: d_payload})}\n\n"
+                    if event_name != "dogsled_info":
+                        yield f"data: {json.dumps({'event': 'dogsled_info', 'dogsled_info': d_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1818,6 +1849,9 @@ async def create_response_stream(request: ChatRequest):
                 elif highline_intent:
                     formatted_highline = format_highline_response(highline_intent)
                     mock_chunks = [str(formatted_highline.get("answer", ""))]
+                elif dogsled_intent:
+                    formatted_dogsled = format_dogsled_response(dogsled_intent)
+                    mock_chunks = [str(formatted_dogsled.get("answer", ""))]
 
                 elif weather_intent and not (
                     trail_intent
@@ -4426,3 +4460,53 @@ async def calculate_highline_rigging_endpoint(
 )
 async def get_highline_gear_endpoint() -> list[HighlineGearRequirement]:
     return get_highline_gear()
+
+@app.get(
+    "/api/dogsledding/routes",
+    response_model=list[DogsledRouteModel],
+    tags=["Winter Wilderness Dogsledding & Mushing Tooling"],
+    summary="List winter wilderness dogsledding and mushing expedition routes",
+)
+async def get_dogsled_routes_endpoint(
+    difficulty: Optional[str] = None,
+) -> list[DogsledRouteModel]:
+    return get_dogsled_routes(difficulty=difficulty)
+
+
+@app.get(
+    "/api/dogsledding/routes/{route_id}",
+    response_model=DogsledRouteModel,
+    tags=["Winter Wilderness Dogsledding & Mushing Tooling"],
+    summary="Get details, distance, team size, and highlights for a dogsledding route",
+)
+async def get_dogsled_route_endpoint(route_id: str) -> DogsledRouteModel:
+    route = get_dogsled_route_by_id(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Dogsled route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/api/dogsledding/calculate-pacing",
+    response_model=MushingPacingResponse,
+    tags=["Winter Wilderness Dogsledding & Mushing Tooling"],
+    summary="Calculate mushing trail pacing, canine caloric burn, broth hydration, and booties",
+)
+async def calculate_mushing_pacing_endpoint(
+    req: MushingPacingRequest,
+) -> MushingPacingResponse:
+    try:
+        return calculate_mushing_pacing(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/dogsledding/gear",
+    response_model=list[MushingGearRequirement],
+    tags=["Winter Wilderness Dogsledding & Mushing Tooling"],
+    summary="List mandatory winter wilderness dogsledding and expedition gear requirements",
+)
+async def get_dogsled_gear_endpoint() -> list[MushingGearRequirement]:
+    return get_dogsled_gear()
+

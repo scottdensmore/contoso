@@ -58,6 +58,11 @@ from .desert_trekking import (
     detect_desert_trekking_intent,
     format_desert_trekking_response,
 )
+from .dogsledding import (
+    build_dogsled_prompt,
+    extract_dogsled_intent,
+    format_dogsled_response,
+)
 from .faq import (
     build_faq_prompt,
     detect_faq_intent,
@@ -537,6 +542,7 @@ async def generate_llm_response(
     coasteering_prompt: str = "",
     orienteering_prompt: str = "",
     highline_prompt: str = "",
+    dogsled_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -689,6 +695,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{orienteering_prompt}"
         if highline_prompt:
             local_system = f"{local_system}\n\n{highline_prompt}"
+        if dogsled_prompt:
+            local_system = f"{local_system}\n\n{dogsled_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -828,6 +836,8 @@ async def generate_llm_response(
             prompt_parts.append(orienteering_prompt)
         if highline_prompt:
             prompt_parts.append(highline_prompt)
+        if dogsled_prompt:
+            prompt_parts.append(dogsled_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1436,13 +1446,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_highline = format_highline_response(highline_intent)
         highline_info_payload = formatted_highline.get("highline_info")
 
-    highline_intent = extract_highline_intent(question)
-    highline_prompt = ""
-    highline_info_payload = None
-    if highline_intent:
-        highline_prompt = build_highline_prompt(highline_intent)
-        formatted_highline = format_highline_response(highline_intent)
-        highline_info_payload = formatted_highline.get("highline_info")
+    dogsled_intent = extract_dogsled_intent(question)
+    dogsled_prompt = ""
+    dogsled_info_payload = None
+    if dogsled_intent:
+        dogsled_prompt = build_dogsled_prompt(dogsled_intent)
+        formatted_dogsled = format_dogsled_response(dogsled_intent)
+        dogsled_info_payload = formatted_dogsled.get("dogsled_info")
 
     llm_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
@@ -1566,6 +1576,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["orienteering_prompt"] = orienteering_prompt
     if highline_prompt:
         llm_kwargs["highline_prompt"] = highline_prompt
+    if dogsled_prompt:
+        llm_kwargs["dogsled_prompt"] = dogsled_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1711,6 +1723,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["orienteering_info"] = orienteering_info_payload
     if highline_intent and highline_info_payload:
         response_payload["highline_info"] = highline_info_payload
+    if dogsled_intent and dogsled_info_payload:
+        response_payload["dogsled_info"] = dogsled_info_payload
 
     return response_payload
 
@@ -1779,6 +1793,7 @@ def generate_llm_response_stream(
     coasteering_prompt: str = "",
     orienteering_prompt: str = "",
     highline_prompt: str = "",
+    dogsled_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -1911,6 +1926,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{orienteering_prompt}"
         if highline_prompt:
             local_system = f"{local_system}\n\n{highline_prompt}"
+        if dogsled_prompt:
+            local_system = f"{local_system}\n\n{dogsled_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2041,6 +2058,8 @@ def generate_llm_response_stream(
             prompt_parts.append(orienteering_prompt)
         if highline_prompt:
             prompt_parts.append(highline_prompt)
+        if dogsled_prompt:
+            prompt_parts.append(dogsled_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2505,6 +2524,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_highline = format_highline_response(highline_intent)
         highline_info_payload = formatted_highline.get("highline_info")
 
+    dogsled_intent = extract_dogsled_intent(question)
+    dogsled_prompt = ""
+    dogsled_info_payload = None
+    if dogsled_intent:
+        dogsled_prompt = build_dogsled_prompt(dogsled_intent)
+        formatted_dogsled = format_dogsled_response(dogsled_intent)
+        dogsled_info_payload = formatted_dogsled.get("dogsled_info")
+
     # Initial SSE frames with citations, handoff, customer profile, order tracking, promotions, and policy
     yield f"data: {json.dumps({'event': 'citations', 'citations': citations})}\n\n"
     yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2645,6 +2672,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         if event_name != "highline_info":
             yield f"data: {json.dumps({'event': 'highline_info', 'highline_info': highline_info_payload})}\n\n"
 
+    if dogsled_intent and dogsled_info_payload:
+        action_to_event = {
+            "routes_list": "dogsled_routes",
+            "route_detail": "dogsled_detail",
+            "calculate_pacing": "dogsled_pacing",
+            "gear_checklist": "dogsled_gear",
+        }
+        event_name = action_to_event.get(dogsled_intent.action, "dogsled_info")
+        yield f"data: {json.dumps({'event': event_name, 'dogsled_info': dogsled_info_payload, event_name: dogsled_info_payload})}\n\n"
+        if event_name != "dogsled_info":
+            yield f"data: {json.dumps({'event': 'dogsled_info', 'dogsled_info': dogsled_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -2765,6 +2803,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["orienteering_prompt"] = orienteering_prompt
     if highline_prompt:
         stream_kwargs["highline_prompt"] = highline_prompt
+    if dogsled_prompt:
+        stream_kwargs["dogsled_prompt"] = dogsled_prompt
 
     for chunk in generate_llm_response_stream(
         question,
