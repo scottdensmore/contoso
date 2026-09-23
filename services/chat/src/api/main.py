@@ -220,6 +220,22 @@ from contoso_chat.foraging import (
     get_foraging_species,
     get_foraging_species_by_id,
 )
+from contoso_chat.glacier_navigation import (
+    CrevasseNavigationRequest,
+    CrevasseNavigationResponse,
+    GlacierZoneModel,
+    calculate_crevasse_navigation,
+    detect_glacier_intent,
+    format_glacier_response,
+    get_glacier_zone_by_id,
+    get_glacier_zones,
+)
+from contoso_chat.glacier_navigation import (
+    GlacierGearRequirement as GlacierNavigationGearRequirement,
+)
+from contoso_chat.glacier_navigation import (
+    get_glacier_gear as get_glacier_navigation_gear,
+)
 from contoso_chat.highline import (
     HighlineGearRequirement,
     HighlineSpanModel,
@@ -961,6 +977,7 @@ async def create_response(request: ChatRequest):
             dogsled_intent = extract_dogsled_intent(request.question)
             canoe_intent = extract_canoe_intent(request.question)
             shelter_intent = extract_shelter_intent(request.question)
+            glacier_intent = detect_glacier_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1323,6 +1340,10 @@ async def create_response(request: ChatRequest):
                 formatted_shelter = format_shelter_response(shelter_intent)
                 mock_payload["shelter_info"] = formatted_shelter.get("shelter_info")
                 mock_payload["answer"] = formatted_shelter.get("answer", mock_payload["answer"])
+            if glacier_intent:
+                formatted_glacier = format_glacier_response(glacier_intent, request.question)
+                mock_payload["glacier_info"] = formatted_glacier.get("glacier_info")
+                mock_payload["answer"] = formatted_glacier.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1488,6 +1509,7 @@ async def create_response_stream(request: ChatRequest):
                 dogsled_intent = extract_dogsled_intent(request.question)
                 canoe_intent = extract_canoe_intent(request.question)
                 shelter_intent = extract_shelter_intent(request.question)
+                glacier_intent = detect_glacier_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1752,6 +1774,20 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "shelter_info":
                         yield f"data: {json.dumps({'event': 'shelter_info', 'shelter_info': s_payload})}\n\n"
 
+                if glacier_intent:
+                    formatted_glacier = format_glacier_response(glacier_intent, request.question)
+                    g_payload = formatted_glacier.get("glacier_info")
+                    action_to_event = {
+                        "zones_list": "glacier_zones",
+                        "zone_detail": "glacier_zone_detail",
+                        "calculate_navigation": "glacier_calculation",
+                        "gear_checklist": "glacier_gear",
+                    }
+                    event_name = action_to_event.get(glacier_intent.action, "glacier_info")
+                    yield f"data: {json.dumps({'event': event_name, 'glacier_info': g_payload, event_name: g_payload})}\n\n"
+                    if event_name != "glacier_info":
+                        yield f"data: {json.dumps({'event': 'glacier_info', 'glacier_info': g_payload})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1869,6 +1905,9 @@ async def create_response_stream(request: ChatRequest):
                 elif bikepacking_intent:
                     formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
                     mock_chunks = [str(formatted_bikepacking.get("answer", ""))]
+                elif glacier_intent:
+                    formatted_glacier = format_glacier_response(glacier_intent, request.question)
+                    mock_chunks = [str(formatted_glacier.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -4680,3 +4719,53 @@ async def calculate_wilderness_shelter_thermodynamics_endpoint(
 )
 async def get_wilderness_shelters_gear_endpoint() -> list[ShelterGearRequirement]:
     return get_shelter_gear()
+
+
+@app.get(
+    "/api/glacier-navigation/zones",
+    response_model=list[GlacierZoneModel],
+    tags=["Glacier Crevasse Navigation & Icefall Routefinding Tooling"],
+    summary="List glacier zones and icefalls with optional hazard level filtering",
+)
+async def get_glacier_zones_endpoint(
+    hazard: Optional[str] = None,
+) -> list[GlacierZoneModel]:
+    return get_glacier_zones(hazard=hazard)
+
+
+@app.get(
+    "/api/glacier-navigation/zones/{zone_id}",
+    response_model=GlacierZoneModel,
+    tags=["Glacier Crevasse Navigation & Icefall Routefinding Tooling"],
+    summary="Get details, crevasse pattern, ladders, and crossing duration for an icefall zone",
+)
+async def get_glacier_zone_endpoint(zone_id: str) -> GlacierZoneModel:
+    zone = get_glacier_zone_by_id(zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail=f"Glacier zone '{zone_id}' not found")
+    return zone
+
+
+@app.post(
+    "/api/glacier-navigation/calculate",
+    response_model=CrevasseNavigationResponse,
+    tags=["Glacier Crevasse Navigation & Icefall Routefinding Tooling"],
+    summary="Calculate snow bridge span ratio, rope team interval, safety status, and rescue reserve",
+)
+async def calculate_glacier_navigation_endpoint(
+    req: CrevasseNavigationRequest,
+) -> CrevasseNavigationResponse:
+    try:
+        return calculate_crevasse_navigation(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/glacier-navigation/gear",
+    response_model=list[GlacierNavigationGearRequirement],
+    tags=["Glacier Crevasse Navigation & Icefall Routefinding Tooling"],
+    summary="List mandatory glacier crevasse navigation and rescue kit safety requirements",
+)
+async def get_glacier_gear_endpoint() -> list[GlacierNavigationGearRequirement]:
+    return get_glacier_navigation_gear()
