@@ -501,6 +501,18 @@ from contoso_chat.ski_touring import (
     get_ski_tour_routes,
     get_skin_track_etiquette_and_policies,
 )
+from contoso_chat.snowkiting import (
+    SnowkitingCalculationRequest,
+    SnowkitingCalculationResponse,
+    SnowkitingGearRequirement,
+    SnowkitingSpotModel,
+    calculate_snowkiting,
+    detect_snowkiting_intent,
+    format_snowkiting_response,
+    get_snowkiting_gear,
+    get_snowkiting_spot_by_id,
+    get_snowkiting_spots,
+)
 from contoso_chat.stargazing import (
     MeteorShowerModel,
     ObservingSiteModel,
@@ -1004,6 +1016,7 @@ async def create_response(request: ChatRequest):
             glacier_intent = detect_glacier_intent(request.question)
             river_sup_intent = detect_river_sup_intent(request.question)
             wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
+            snowkiting_intent = detect_snowkiting_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1380,6 +1393,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["tracking_info"] = formatted_tracking.get("tracking_info")
                 mock_payload["answer"] = formatted_tracking.get("answer", mock_payload["answer"])
+            if snowkiting_intent:
+                formatted_snowkiting = format_snowkiting_response(
+                    snowkiting_intent, request.question
+                )
+                mock_payload["snowkiting_info"] = formatted_snowkiting.get("snowkiting_info")
+                mock_payload["answer"] = formatted_snowkiting.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1548,6 +1567,7 @@ async def create_response_stream(request: ChatRequest):
                 glacier_intent = detect_glacier_intent(request.question)
                 river_sup_intent = detect_river_sup_intent(request.question)
                 wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
+                snowkiting_intent = detect_snowkiting_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1859,6 +1879,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'tracking_info': t_payload, event_name: t_payload})}\n\n"
                     if event_name != "tracking_info":
                         yield f"data: {json.dumps({'event': 'tracking_info', 'tracking_info': t_payload})}\n\n"
+                if snowkiting_intent:
+                    formatted_snowkiting = format_snowkiting_response(
+                        snowkiting_intent, request.question
+                    )
+                    s_payload = formatted_snowkiting.get("snowkiting_info")
+                    action_to_event = {
+                        "spots_list": "snowkiting_spots",
+                        "spot_detail": "snowkiting_spot_detail",
+                        "calculate_snowkiting": "snowkiting_calculation",
+                        "gear_checklist": "snowkiting_gear",
+                    }
+                    event_name = action_to_event.get(snowkiting_intent.action, "snowkiting_info")
+                    yield f"data: {json.dumps({'event': event_name, 'snowkiting_info': s_payload, event_name: s_payload})}\n\n"
+                    if event_name != "snowkiting_info":
+                        yield f"data: {json.dumps({'event': 'snowkiting_info', 'snowkiting_info': s_payload})}\n\n"
 
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
@@ -1990,6 +2025,11 @@ async def create_response_stream(request: ChatRequest):
                         wilderness_tracking_intent, request.question
                     )
                     mock_chunks = [str(formatted_tracking.get("answer", ""))]
+                elif snowkiting_intent:
+                    formatted_snowkiting = format_snowkiting_response(
+                        snowkiting_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_snowkiting.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -4955,3 +4995,55 @@ async def calculate_track_aging_endpoint(
 )
 async def get_wilderness_tracking_gear_endpoint() -> list[TrackingGearRequirement]:
     return get_tracking_gear()
+
+
+@app.get(
+    "/api/snowkiting/spots",
+    response_model=list[SnowkitingSpotModel],
+    tags=["Backcountry Snowkiting & Polar Kite Expeditions Tooling"],
+    summary="List backcountry snowkiting spots with optional terrain filtering",
+)
+async def get_snowkiting_spots_endpoint(
+    terrain: Optional[str] = None,
+) -> list[SnowkitingSpotModel]:
+    return get_snowkiting_spots(terrain=terrain)
+
+
+@app.get(
+    "/api/snowkiting/spots/{spot_id}",
+    response_model=SnowkitingSpotModel,
+    tags=["Backcountry Snowkiting & Polar Kite Expeditions Tooling"],
+    summary="Get details, elevation, wind patterns, and pulk suitability for a snowkiting spot",
+)
+async def get_snowkiting_spot_detail_endpoint(
+    spot_id: str,
+) -> SnowkitingSpotModel:
+    spot = get_snowkiting_spot_by_id(spot_id)
+    if not spot:
+        raise HTTPException(status_code=404, detail=f"Snowkiting spot '{spot_id}' not found")
+    return spot
+
+
+@app.post(
+    "/api/snowkiting/calculate",
+    response_model=SnowkitingCalculationResponse,
+    tags=["Backcountry Snowkiting & Polar Kite Expeditions Tooling"],
+    summary="Calculate depower foil kite sizing, power rating, glide efficiency, and storm force safety status",
+)
+async def calculate_snowkiting_endpoint(
+    req: SnowkitingCalculationRequest,
+) -> SnowkitingCalculationResponse:
+    try:
+        return calculate_snowkiting(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/snowkiting/gear",
+    response_model=list[SnowkitingGearRequirement],
+    tags=["Backcountry Snowkiting & Polar Kite Expeditions Tooling"],
+    summary="List mandatory polar snowkiting and kite expedition safety kit items",
+)
+async def get_snowkiting_gear_endpoint() -> list[SnowkitingGearRequirement]:
+    return get_snowkiting_gear()
