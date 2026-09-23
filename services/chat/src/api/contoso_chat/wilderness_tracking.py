@@ -409,7 +409,26 @@ def detect_wilderness_tracking_intent(query: str) -> Optional[WildernessTracking
     if any(hw in q for hw in hunting_words):
         return None
 
-    # Disambiguation guard 3: General bear attacks / food storage without tracking keywords
+    # Disambiguation guard 3: GPS route navigation / GPX tracks / waypoints
+    gps_route_words = [
+        "gpx",
+        "gps",
+        "waypoint",
+        "waypoints",
+        "thru-hike",
+        "thru hike",
+        "route track",
+        "trail track",
+        "gps track",
+        "track file",
+        "download track",
+        "export track",
+        "elevation gain",
+    ]
+    if any(gr in q for gr in gps_route_words):
+        return None
+
+    # Disambiguation guard 4: General bear attacks / food storage without tracking keywords
     tracking_keywords = [
         "track",
         "tracks",
