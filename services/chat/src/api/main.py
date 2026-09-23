@@ -630,6 +630,18 @@ from contoso_chat.wilderness_shelters import (
     get_survival_shelter_by_id,
     get_survival_shelters,
 )
+from contoso_chat.wilderness_tracking import (
+    AnimalTrackProfileModel,
+    TrackAgingCalculationRequest,
+    TrackAgingCalculationResponse,
+    TrackingGearRequirement,
+    calculate_track_aging,
+    detect_wilderness_tracking_intent,
+    format_wilderness_tracking_response,
+    get_animal_track_by_id,
+    get_animal_tracks,
+    get_tracking_gear,
+)
 from contoso_chat.wildlife import (
     EncounterAssessmentRequest,
     EncounterAssessmentResponse,
@@ -991,6 +1003,7 @@ async def create_response(request: ChatRequest):
             shelter_intent = extract_shelter_intent(request.question)
             glacier_intent = detect_glacier_intent(request.question)
             river_sup_intent = detect_river_sup_intent(request.question)
+            wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1361,6 +1374,12 @@ async def create_response(request: ChatRequest):
                 formatted_river_sup = format_river_sup_response(river_sup_intent, request.question)
                 mock_payload["river_sup_info"] = formatted_river_sup.get("river_sup_info")
                 mock_payload["answer"] = formatted_river_sup.get("answer", mock_payload["answer"])
+            if wilderness_tracking_intent:
+                formatted_tracking = format_wilderness_tracking_response(
+                    wilderness_tracking_intent, request.question
+                )
+                mock_payload["tracking_info"] = formatted_tracking.get("tracking_info")
+                mock_payload["answer"] = formatted_tracking.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1528,6 +1547,7 @@ async def create_response_stream(request: ChatRequest):
                 shelter_intent = extract_shelter_intent(request.question)
                 glacier_intent = detect_glacier_intent(request.question)
                 river_sup_intent = detect_river_sup_intent(request.question)
+                wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1822,6 +1842,24 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "river_sup_info":
                         yield f"data: {json.dumps({'event': 'river_sup_info', 'river_sup_info': r_payload})}\n\n"
 
+                if wilderness_tracking_intent:
+                    formatted_tracking = format_wilderness_tracking_response(
+                        wilderness_tracking_intent, request.question
+                    )
+                    t_payload = formatted_tracking.get("tracking_info")
+                    action_to_event = {
+                        "species_list": "tracking_species",
+                        "species_detail": "tracking_species_detail",
+                        "calculate_track_aging": "tracking_calculation",
+                        "gear_checklist": "tracking_gear",
+                    }
+                    event_name = action_to_event.get(
+                        wilderness_tracking_intent.action, "tracking_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'tracking_info': t_payload, event_name: t_payload})}\n\n"
+                    if event_name != "tracking_info":
+                        yield f"data: {json.dumps({'event': 'tracking_info', 'tracking_info': t_payload})}\n\n"
+
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -1947,6 +1985,11 @@ async def create_response_stream(request: ChatRequest):
                         river_sup_intent, request.question
                     )
                     mock_chunks = [str(formatted_river_sup.get("answer", ""))]
+                elif wilderness_tracking_intent:
+                    formatted_tracking = format_wilderness_tracking_response(
+                        wilderness_tracking_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_tracking.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -4858,3 +4901,57 @@ async def calculate_river_sup_endpoint(
 )
 async def get_river_sup_gear_endpoint() -> list[RiverSupGearRequirement]:
     return get_river_sup_gear()
+
+
+@app.get(
+    "/api/wilderness-tracking/species",
+    response_model=list[AnimalTrackProfileModel],
+    tags=["Wilderness Tracking & Animal Sign Reading Tooling"],
+    summary="List wildlife animal track profiles with optional family filtering",
+)
+async def get_wilderness_tracking_species_endpoint(
+    family: Optional[str] = None,
+) -> list[AnimalTrackProfileModel]:
+    return get_animal_tracks(family=family)
+
+
+@app.get(
+    "/api/wilderness-tracking/species/{species_id}",
+    response_model=AnimalTrackProfileModel,
+    tags=["Wilderness Tracking & Animal Sign Reading Tooling"],
+    summary="Get details, gait, stride, and identifying signs for an animal track species",
+)
+async def get_wilderness_tracking_species_detail_endpoint(
+    species_id: str,
+) -> AnimalTrackProfileModel:
+    species = get_animal_track_by_id(species_id)
+    if not species:
+        raise HTTPException(
+            status_code=404, detail=f"Wilderness tracking species '{species_id}' not found"
+        )
+    return species
+
+
+@app.post(
+    "/api/wilderness-tracking/calculate",
+    response_model=TrackAgingCalculationResponse,
+    tags=["Wilderness Tracking & Animal Sign Reading Tooling"],
+    summary="Calculate track wall degradation, estimated age, gait speed, and predator alert",
+)
+async def calculate_track_aging_endpoint(
+    req: TrackAgingCalculationRequest,
+) -> TrackAgingCalculationResponse:
+    try:
+        return calculate_track_aging(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/wilderness-tracking/gear",
+    response_model=list[TrackingGearRequirement],
+    tags=["Wilderness Tracking & Animal Sign Reading Tooling"],
+    summary="List mandatory wilderness tracking and spoor safety kit items",
+)
+async def get_wilderness_tracking_gear_endpoint() -> list[TrackingGearRequirement]:
+    return get_tracking_gear()

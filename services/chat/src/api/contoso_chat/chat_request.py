@@ -287,6 +287,11 @@ from .wilderness_shelters import (
     extract_shelter_intent,
     format_shelter_response,
 )
+from .wilderness_tracking import (
+    build_wilderness_tracking_prompt,
+    detect_wilderness_tracking_intent,
+    format_wilderness_tracking_response,
+)
 from .wildlife import (
     build_wildlife_prompt,
     detect_wildlife_intent,
@@ -567,6 +572,7 @@ async def generate_llm_response(
     shelter_prompt: str = "",
     glacier_prompt: str = "",
     river_sup_prompt: str = "",
+    wilderness_tracking_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -729,6 +735,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{glacier_prompt}"
         if river_sup_prompt:
             local_system = f"{local_system}\n\n{river_sup_prompt}"
+        if wilderness_tracking_prompt:
+            local_system = f"{local_system}\n\n{wilderness_tracking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -878,6 +886,8 @@ async def generate_llm_response(
             prompt_parts.append(glacier_prompt)
         if river_sup_prompt:
             prompt_parts.append(river_sup_prompt)
+        if wilderness_tracking_prompt:
+            prompt_parts.append(wilderness_tracking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1381,6 +1391,16 @@ async def get_response(customer_id, question, chat_history: Any = None):
         river_sup_prompt = build_river_sup_prompt(river_sup_intent)
         formatted_river_sup = format_river_sup_response(river_sup_intent, question)
         river_sup_info_payload = formatted_river_sup.get("river_sup_info")
+
+    wilderness_tracking_intent = detect_wilderness_tracking_intent(question)
+    wilderness_tracking_prompt = ""
+    wilderness_tracking_info_payload = None
+    if wilderness_tracking_intent:
+        wilderness_tracking_prompt = build_wilderness_tracking_prompt(wilderness_tracking_intent)
+        formatted_tracking = format_wilderness_tracking_response(
+            wilderness_tracking_intent, question
+        )
+        wilderness_tracking_info_payload = formatted_tracking.get("tracking_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1657,6 +1677,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["glacier_prompt"] = glacier_prompt
     if river_sup_prompt:
         llm_kwargs["river_sup_prompt"] = river_sup_prompt
+    if wilderness_tracking_prompt:
+        llm_kwargs["wilderness_tracking_prompt"] = wilderness_tracking_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1812,6 +1834,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["glacier_info"] = glacier_info_payload
     if river_sup_intent and river_sup_info_payload:
         response_payload["river_sup_info"] = river_sup_info_payload
+    if wilderness_tracking_intent and wilderness_tracking_info_payload:
+        response_payload["tracking_info"] = wilderness_tracking_info_payload
 
     return response_payload
 
@@ -1885,6 +1909,7 @@ def generate_llm_response_stream(
     shelter_prompt: str = "",
     glacier_prompt: str = "",
     river_sup_prompt: str = "",
+    wilderness_tracking_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2027,6 +2052,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{glacier_prompt}"
         if river_sup_prompt:
             local_system = f"{local_system}\n\n{river_sup_prompt}"
+        if wilderness_tracking_prompt:
+            local_system = f"{local_system}\n\n{wilderness_tracking_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2167,6 +2194,8 @@ def generate_llm_response_stream(
             prompt_parts.append(glacier_prompt)
         if river_sup_prompt:
             prompt_parts.append(river_sup_prompt)
+        if wilderness_tracking_prompt:
+            prompt_parts.append(wilderness_tracking_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2534,6 +2563,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         river_sup_prompt = build_river_sup_prompt(river_sup_intent)
         formatted_river_sup = format_river_sup_response(river_sup_intent, question)
         river_sup_info_payload = formatted_river_sup.get("river_sup_info")
+
+    wilderness_tracking_intent = detect_wilderness_tracking_intent(question)
+    wilderness_tracking_prompt = ""
+    wilderness_tracking_info_payload = None
+    if wilderness_tracking_intent:
+        wilderness_tracking_prompt = build_wilderness_tracking_prompt(wilderness_tracking_intent)
+        formatted_tracking = format_wilderness_tracking_response(
+            wilderness_tracking_intent, question
+        )
+        wilderness_tracking_info_payload = formatted_tracking.get("tracking_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -2868,6 +2907,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'river_sup_info': river_sup_info_payload, event_name: river_sup_info_payload})}\n\n"
         if event_name != "river_sup_info":
             yield f"data: {json.dumps({'event': 'river_sup_info', 'river_sup_info': river_sup_info_payload})}\n\n"
+
+    if wilderness_tracking_intent and wilderness_tracking_info_payload:
+        action_to_event = {
+            "species_list": "tracking_species",
+            "species_detail": "tracking_species_detail",
+            "calculate_track_aging": "tracking_calculation",
+            "gear_checklist": "tracking_gear",
+        }
+        event_name = action_to_event.get(wilderness_tracking_intent.action, "tracking_info")
+        yield f"data: {json.dumps({'event': event_name, 'tracking_info': wilderness_tracking_info_payload, event_name: wilderness_tracking_info_payload})}\n\n"
+        if event_name != "tracking_info":
+            yield f"data: {json.dumps({'event': 'tracking_info', 'tracking_info': wilderness_tracking_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -2998,6 +3049,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["glacier_prompt"] = glacier_prompt
     if river_sup_prompt:
         stream_kwargs["river_sup_prompt"] = river_sup_prompt
+    if wilderness_tracking_prompt:
+        stream_kwargs["wilderness_tracking_prompt"] = wilderness_tracking_prompt
 
     for chunk in generate_llm_response_stream(
         question,
