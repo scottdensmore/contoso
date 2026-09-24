@@ -445,6 +445,18 @@ from contoso_chat.rewards import (
     get_tier_perks,
     redeem_voucher,
 )
+from contoso_chat.river_rafting import (
+    RaftCalculationRequest,
+    RaftCalculationResponse,
+    RaftingExpeditionModel,
+    RaftingGearRequirement,
+    calculate_river_rafting,
+    detect_river_rafting_intent,
+    format_river_rafting_response,
+    get_river_rafting_expedition_by_id,
+    get_river_rafting_expeditions,
+    get_river_rafting_gear,
+)
 from contoso_chat.river_sup import (
     RiverSupCalculationRequest,
     RiverSupCalculationResponse,
@@ -1070,6 +1082,7 @@ async def create_response(request: ChatRequest):
             big_wall_intent = detect_big_wall_intent(request.question)
             snowmobiling_intent = detect_snowmobiling_intent(request.question)
             alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
+            river_rafting_intent = detect_river_rafting_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1476,6 +1489,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_alpine_scuba.get(
                     "answer", mock_payload["answer"]
                 )
+            if river_rafting_intent:
+                formatted_river_rafting = format_river_rafting_response(
+                    river_rafting_intent, request.question
+                )
+                mock_payload["river_rafting_info"] = formatted_river_rafting.get(
+                    "river_rafting_info"
+                )
+                mock_payload["answer"] = formatted_river_rafting.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1650,6 +1673,7 @@ async def create_response_stream(request: ChatRequest):
                 big_wall_intent = detect_big_wall_intent(request.question)
                 snowmobiling_intent = detect_snowmobiling_intent(request.question)
                 alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
+                river_rafting_intent = detect_river_rafting_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2039,6 +2063,23 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'alpine_scuba_info': a_payload, event_name: a_payload})}\n\n"
                     if event_name != "alpine_scuba_info":
                         yield f"data: {json.dumps({'event': 'alpine_scuba_info', 'alpine_scuba_info': a_payload})}\n\n"
+                if river_rafting_intent:
+                    formatted_river_rafting = format_river_rafting_response(
+                        river_rafting_intent, request.question
+                    )
+                    r_payload = formatted_river_rafting.get("river_rafting_info")
+                    action_to_event = {
+                        "expeditions_list": "river_rafting_expeditions",
+                        "expedition_detail": "river_rafting_expedition_detail",
+                        "calculate_raft": "river_rafting_calculation",
+                        "gear_checklist": "river_rafting_gear",
+                    }
+                    event_name = action_to_event.get(
+                        river_rafting_intent.action, "river_rafting_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'river_rafting_info': r_payload, event_name: r_payload})}\n\n"
+                    if event_name != "river_rafting_info":
+                        yield f"data: {json.dumps({'event': 'river_rafting_info', 'river_rafting_info': r_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2192,6 +2233,11 @@ async def create_response_stream(request: ChatRequest):
                         alpine_scuba_intent, request.question
                     )
                     mock_chunks = [str(formatted_alpine_scuba.get("answer", ""))]
+                elif river_rafting_intent:
+                    formatted_river_rafting = format_river_rafting_response(
+                        river_rafting_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_river_rafting.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5418,3 +5464,58 @@ async def calculate_alpine_scuba_endpoint(
 )
 async def get_alpine_scuba_gear_endpoint() -> list[AlpineScubaGearRequirement]:
     return get_alpine_scuba_gear()
+
+
+@app.get(
+    "/api/river-rafting/expeditions",
+    response_model=list[RaftingExpeditionModel],
+    tags=["Backcountry Whitewater Rafting & Oar-Frame Assistant Tooling"],
+    summary="List river rafting expeditions with optional filtering",
+)
+async def get_river_rafting_expeditions_endpoint(
+    difficulty: Optional[str] = None,
+    river: Optional[str] = None,
+) -> list[RaftingExpeditionModel]:
+    return get_river_rafting_expeditions(difficulty=difficulty, river=river)
+
+
+@app.get(
+    "/api/river-rafting/expeditions/{expedition_id}",
+    response_model=RaftingExpeditionModel,
+    tags=["Backcountry Whitewater Rafting & Oar-Frame Assistant Tooling"],
+    summary="Get details for a river rafting expedition",
+)
+async def get_river_rafting_expedition_detail_endpoint(
+    expedition_id: str,
+) -> RaftingExpeditionModel:
+    expedition = get_river_rafting_expedition_by_id(expedition_id)
+    if not expedition:
+        raise HTTPException(
+            status_code=404, detail=f"River rafting expedition '{expedition_id}' not found"
+        )
+    return expedition
+
+
+@app.post(
+    "/api/river-rafting/calculate",
+    response_model=RaftCalculationResponse,
+    tags=["Backcountry Whitewater Rafting & Oar-Frame Assistant Tooling"],
+    summary="Calculate oar frame leverage ratio, hydraulic hole punch momentum, and back ferry efficiency",
+)
+async def calculate_river_rafting_endpoint(
+    req: RaftCalculationRequest,
+) -> RaftCalculationResponse:
+    try:
+        return calculate_river_rafting(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/river-rafting/gear",
+    response_model=list[RaftingGearRequirement],
+    tags=["Backcountry Whitewater Rafting & Oar-Frame Assistant Tooling"],
+    summary="List mandatory multi-day river rafting and oar frame safety gear checklist items",
+)
+async def get_river_rafting_gear_endpoint() -> list[RaftingGearRequirement]:
+    return get_river_rafting_gear()
