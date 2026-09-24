@@ -242,6 +242,11 @@ from .snowkiting import (
     detect_snowkiting_intent,
     format_snowkiting_response,
 )
+from .snowmobiling import (
+    build_snowmobiling_prompt,
+    detect_snowmobiling_intent,
+    format_snowmobiling_response,
+)
 from .stargazing import (
     build_stargazing_prompt,
     detect_stargazing_intent,
@@ -591,6 +596,7 @@ async def generate_llm_response(
     snowkiting_prompt: str = "",
     psicobloc_prompt: str = "",
     big_wall_prompt: str = "",
+    snowmobiling_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -761,6 +767,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{psicobloc_prompt}"
         if big_wall_prompt:
             local_system = f"{local_system}\n\n{big_wall_prompt}"
+        if snowmobiling_prompt:
+            local_system = f"{local_system}\n\n{snowmobiling_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -918,6 +926,8 @@ async def generate_llm_response(
             prompt_parts.append(psicobloc_prompt)
         if big_wall_prompt:
             prompt_parts.append(big_wall_prompt)
+        if snowmobiling_prompt:
+            prompt_parts.append(snowmobiling_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1452,6 +1462,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         big_wall_prompt = build_big_wall_prompt(big_wall_intent)
         formatted_big_wall = format_big_wall_response(big_wall_intent, question)
         big_wall_info_payload = formatted_big_wall.get("big_wall_info")
+    snowmobiling_intent = detect_snowmobiling_intent(question)
+    snowmobiling_prompt = ""
+    snowmobiling_info_payload = None
+    if snowmobiling_intent:
+        snowmobiling_prompt = build_snowmobiling_prompt(snowmobiling_intent)
+        formatted_snowmobiling = format_snowmobiling_response(snowmobiling_intent, question)
+        snowmobiling_info_payload = formatted_snowmobiling.get("snowmobiling_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1736,6 +1753,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["psicobloc_prompt"] = psicobloc_prompt
     if big_wall_prompt:
         llm_kwargs["big_wall_prompt"] = big_wall_prompt
+    if snowmobiling_prompt:
+        llm_kwargs["snowmobiling_prompt"] = snowmobiling_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1899,6 +1918,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["psicobloc_info"] = psicobloc_info_payload
     if big_wall_intent and big_wall_info_payload:
         response_payload["big_wall_info"] = big_wall_info_payload
+    if snowmobiling_intent and snowmobiling_info_payload:
+        response_payload["snowmobiling_info"] = snowmobiling_info_payload
 
     return response_payload
 
@@ -1976,6 +1997,7 @@ def generate_llm_response_stream(
     snowkiting_prompt: str = "",
     psicobloc_prompt: str = "",
     big_wall_prompt: str = "",
+    snowmobiling_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2126,6 +2148,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{psicobloc_prompt}"
         if big_wall_prompt:
             local_system = f"{local_system}\n\n{big_wall_prompt}"
+        if snowmobiling_prompt:
+            local_system = f"{local_system}\n\n{snowmobiling_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2274,6 +2298,8 @@ def generate_llm_response_stream(
             prompt_parts.append(psicobloc_prompt)
         if big_wall_prompt:
             prompt_parts.append(big_wall_prompt)
+        if snowmobiling_prompt:
+            prompt_parts.append(snowmobiling_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2672,6 +2698,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         big_wall_prompt = build_big_wall_prompt(big_wall_intent)
         formatted_big_wall = format_big_wall_response(big_wall_intent, question)
         big_wall_info_payload = formatted_big_wall.get("big_wall_info")
+    snowmobiling_intent = detect_snowmobiling_intent(question)
+    snowmobiling_prompt = ""
+    snowmobiling_info_payload = None
+    if snowmobiling_intent:
+        snowmobiling_prompt = build_snowmobiling_prompt(snowmobiling_intent)
+        formatted_snowmobiling = format_snowmobiling_response(snowmobiling_intent, question)
+        snowmobiling_info_payload = formatted_snowmobiling.get("snowmobiling_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3051,6 +3084,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'big_wall_info': big_wall_info_payload, event_name: big_wall_info_payload})}\n\n"
         if event_name != "big_wall_info":
             yield f"data: {json.dumps({'event': 'big_wall_info', 'big_wall_info': big_wall_info_payload})}\n\n"
+    if snowmobiling_intent and snowmobiling_info_payload:
+        action_to_event = {
+            "zones_list": "snowmobiling_zones",
+            "zone_detail": "snowmobiling_zone_detail",
+            "calculate_sled": "snowmobiling_calculation",
+            "gear_checklist": "snowmobiling_gear",
+        }
+        event_name = action_to_event.get(snowmobiling_intent.action, "snowmobiling_info")
+        yield f"data: {json.dumps({'event': event_name, 'snowmobiling_info': snowmobiling_info_payload, event_name: snowmobiling_info_payload})}\n\n"
+        if event_name != "snowmobiling_info":
+            yield f"data: {json.dumps({'event': 'snowmobiling_info', 'snowmobiling_info': snowmobiling_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3189,6 +3233,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["psicobloc_prompt"] = psicobloc_prompt
     if big_wall_prompt:
         stream_kwargs["big_wall_prompt"] = big_wall_prompt
+    if snowmobiling_prompt:
+        stream_kwargs["snowmobiling_prompt"] = snowmobiling_prompt
 
     for chunk in generate_llm_response_stream(
         question,

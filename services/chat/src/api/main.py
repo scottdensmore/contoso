@@ -537,6 +537,18 @@ from contoso_chat.snowkiting import (
     get_snowkiting_spot_by_id,
     get_snowkiting_spots,
 )
+from contoso_chat.snowmobiling import (
+    SledCalculationRequest,
+    SledCalculationResponse,
+    SnowmobileGearRequirement,
+    SnowmobileZoneModel,
+    calculate_sled_performance,
+    detect_snowmobiling_intent,
+    format_snowmobiling_response,
+    get_snowmobile_gear,
+    get_snowmobile_zone_by_id,
+    get_snowmobile_zones,
+)
 from contoso_chat.stargazing import (
     MeteorShowerModel,
     ObservingSiteModel,
@@ -932,6 +944,7 @@ async def health_dependencies():
 
 
 @app.post("/api/create_response")
+@app.post("/api/chat/service/create_response")
 async def create_response(request: ChatRequest):
     logger.info(
         "Chat request received",
@@ -1043,6 +1056,7 @@ async def create_response(request: ChatRequest):
             snowkiting_intent = detect_snowkiting_intent(request.question)
             psicobloc_intent = detect_psicobloc_intent(request.question)
             big_wall_intent = detect_big_wall_intent(request.question)
+            snowmobiling_intent = detect_snowmobiling_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1433,6 +1447,14 @@ async def create_response(request: ChatRequest):
                 formatted_big_wall = format_big_wall_response(big_wall_intent, request.question)
                 mock_payload["big_wall_info"] = formatted_big_wall.get("big_wall_info")
                 mock_payload["answer"] = formatted_big_wall.get("answer", mock_payload["answer"])
+            if snowmobiling_intent:
+                formatted_snowmobiling = format_snowmobiling_response(
+                    snowmobiling_intent, request.question
+                )
+                mock_payload["snowmobiling_info"] = formatted_snowmobiling.get("snowmobiling_info")
+                mock_payload["answer"] = formatted_snowmobiling.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1483,6 +1505,7 @@ async def create_response(request: ChatRequest):
 
 
 @app.post("/api/create_response/stream")
+@app.post("/api/chat/service/create_response/stream")
 async def create_response_stream(request: ChatRequest):
     logger.info(
         "Chat streaming request received",
@@ -1604,6 +1627,7 @@ async def create_response_stream(request: ChatRequest):
                 snowkiting_intent = detect_snowkiting_intent(request.question)
                 psicobloc_intent = detect_psicobloc_intent(request.question)
                 big_wall_intent = detect_big_wall_intent(request.question)
+                snowmobiling_intent = detect_snowmobiling_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -1959,6 +1983,23 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "big_wall_info":
                         yield f"data: {json.dumps({'event': 'big_wall_info', 'big_wall_info': b_payload})}\n\n"
 
+                if snowmobiling_intent:
+                    formatted_snowmobiling = format_snowmobiling_response(
+                        snowmobiling_intent, request.question
+                    )
+                    s_payload = formatted_snowmobiling.get("snowmobiling_info")
+                    action_to_event = {
+                        "zones_list": "snowmobiling_zones",
+                        "zone_detail": "snowmobiling_zone_detail",
+                        "calculate_sled": "snowmobiling_calculation",
+                        "gear_checklist": "snowmobiling_gear",
+                    }
+                    event_name = action_to_event.get(
+                        snowmobiling_intent.action, "snowmobiling_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'snowmobiling_info': s_payload, event_name: s_payload})}\n\n"
+                    if event_name != "snowmobiling_info":
+                        yield f"data: {json.dumps({'event': 'snowmobiling_info', 'snowmobiling_info': s_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2102,6 +2143,11 @@ async def create_response_stream(request: ChatRequest):
                 elif big_wall_intent:
                     formatted_big_wall = format_big_wall_response(big_wall_intent, request.question)
                     mock_chunks = [str(formatted_big_wall.get("answer", ""))]
+                elif snowmobiling_intent:
+                    formatted_snowmobiling = format_snowmobiling_response(
+                        snowmobiling_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_snowmobiling.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5223,3 +5269,55 @@ async def calculate_haul_endpoint(
 )
 async def get_big_wall_gear_endpoint() -> list[BigWallGearRequirement]:
     return get_big_wall_gear()
+
+
+@app.get(
+    "/api/snowmobiling/zones",
+    response_model=list[SnowmobileZoneModel],
+    tags=["Backcountry Snowmobiling & Avalanche Mountain Riding Tooling"],
+    summary="List mountain snowmobile zones with optional ATES rating filtering",
+)
+async def get_snowmobiling_zones_endpoint(
+    ates_rating: Optional[str] = None,
+) -> list[SnowmobileZoneModel]:
+    return get_snowmobile_zones(ates_rating=ates_rating)
+
+
+@app.get(
+    "/api/snowmobiling/zones/{zone_id}",
+    response_model=SnowmobileZoneModel,
+    tags=["Backcountry Snowmobiling & Avalanche Mountain Riding Tooling"],
+    summary="Get details, elevation, snowfall, ATES rating, and riding style for a snowmobile zone",
+)
+async def get_snowmobiling_zone_detail_endpoint(
+    zone_id: str,
+) -> SnowmobileZoneModel:
+    zone = get_snowmobile_zone_by_id(zone_id)
+    if not zone:
+        raise HTTPException(status_code=404, detail=f"Snowmobile zone '{zone_id}' not found")
+    return zone
+
+
+@app.post(
+    "/api/snowmobiling/calculate",
+    response_model=SledCalculationResponse,
+    tags=["Backcountry Snowmobiling & Avalanche Mountain Riding Tooling"],
+    summary="Calculate mountain sled track flotation, trenching risk, elevation horsepower derating, and stability",
+)
+async def calculate_snowmobiling_endpoint(
+    req: SledCalculationRequest,
+) -> SledCalculationResponse:
+    try:
+        return calculate_sled_performance(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/snowmobiling/gear",
+    response_model=list[SnowmobileGearRequirement],
+    tags=["Backcountry Snowmobiling & Avalanche Mountain Riding Tooling"],
+    summary="List mandatory avalanche and mountain sled recovery gear checklist items",
+)
+async def get_snowmobiling_gear_endpoint() -> list[SnowmobileGearRequirement]:
+    return get_snowmobile_gear()
