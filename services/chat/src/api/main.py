@@ -25,6 +25,18 @@ from contoso_chat.adventures import (
     get_adventure_guides,
     get_adventure_tours,
 )
+from contoso_chat.alpine_scuba import (
+    AlpineScubaGearRequirement,
+    AlpineScubaSiteModel,
+    ScubaCalculationRequest,
+    ScubaCalculationResponse,
+    calculate_scuba_decompression,
+    detect_alpine_scuba_intent,
+    format_alpine_scuba_response,
+    get_alpine_scuba_gear,
+    get_alpine_scuba_site_by_id,
+    get_alpine_scuba_sites,
+)
 from contoso_chat.avalanche import (
     AvalancheZoneModel,
     SlopeAssessmentRequest,
@@ -1057,6 +1069,7 @@ async def create_response(request: ChatRequest):
             psicobloc_intent = detect_psicobloc_intent(request.question)
             big_wall_intent = detect_big_wall_intent(request.question)
             snowmobiling_intent = detect_snowmobiling_intent(request.question)
+            alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1455,6 +1468,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_snowmobiling.get(
                     "answer", mock_payload["answer"]
                 )
+            if alpine_scuba_intent:
+                formatted_alpine_scuba = format_alpine_scuba_response(
+                    alpine_scuba_intent, request.question
+                )
+                mock_payload["alpine_scuba_info"] = formatted_alpine_scuba.get("alpine_scuba_info")
+                mock_payload["answer"] = formatted_alpine_scuba.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1628,6 +1649,7 @@ async def create_response_stream(request: ChatRequest):
                 psicobloc_intent = detect_psicobloc_intent(request.question)
                 big_wall_intent = detect_big_wall_intent(request.question)
                 snowmobiling_intent = detect_snowmobiling_intent(request.question)
+                alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2000,6 +2022,23 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'snowmobiling_info': s_payload, event_name: s_payload})}\n\n"
                     if event_name != "snowmobiling_info":
                         yield f"data: {json.dumps({'event': 'snowmobiling_info', 'snowmobiling_info': s_payload})}\n\n"
+                if alpine_scuba_intent:
+                    formatted_alpine_scuba = format_alpine_scuba_response(
+                        alpine_scuba_intent, request.question
+                    )
+                    a_payload = formatted_alpine_scuba.get("alpine_scuba_info")
+                    action_to_event = {
+                        "sites_list": "alpine_scuba_sites",
+                        "site_detail": "alpine_scuba_site_detail",
+                        "calculate_scuba": "alpine_scuba_calculation",
+                        "gear_checklist": "alpine_scuba_gear",
+                    }
+                    event_name = action_to_event.get(
+                        alpine_scuba_intent.action, "alpine_scuba_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'alpine_scuba_info': a_payload, event_name: a_payload})}\n\n"
+                    if event_name != "alpine_scuba_info":
+                        yield f"data: {json.dumps({'event': 'alpine_scuba_info', 'alpine_scuba_info': a_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2148,6 +2187,11 @@ async def create_response_stream(request: ChatRequest):
                         snowmobiling_intent, request.question
                     )
                     mock_chunks = [str(formatted_snowmobiling.get("answer", ""))]
+                elif alpine_scuba_intent:
+                    formatted_alpine_scuba = format_alpine_scuba_response(
+                        alpine_scuba_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_alpine_scuba.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5321,3 +5365,56 @@ async def calculate_snowmobiling_endpoint(
 )
 async def get_snowmobiling_gear_endpoint() -> list[SnowmobileGearRequirement]:
     return get_snowmobile_gear()
+
+
+@app.get(
+    "/api/alpine-scuba/sites",
+    response_model=list[AlpineScubaSiteModel],
+    tags=["Wilderness High-Altitude Scuba & Alpine Lake Ice Diving Assistant Tooling"],
+    summary="List alpine scuba and ice diving lake sites with optional filtering",
+)
+async def get_alpine_scuba_sites_endpoint(
+    overhead_condition: Optional[str] = None,
+    water_type: Optional[str] = None,
+) -> list[AlpineScubaSiteModel]:
+    return get_alpine_scuba_sites(overhead_condition=overhead_condition, water_type=water_type)
+
+
+@app.get(
+    "/api/alpine-scuba/sites/{site_id}",
+    response_model=AlpineScubaSiteModel,
+    tags=["Wilderness High-Altitude Scuba & Alpine Lake Ice Diving Assistant Tooling"],
+    summary="Get details for a high-altitude scuba or ice diving site",
+)
+async def get_alpine_scuba_site_detail_endpoint(
+    site_id: str,
+) -> AlpineScubaSiteModel:
+    site = get_alpine_scuba_site_by_id(site_id)
+    if not site:
+        raise HTTPException(status_code=404, detail=f"Alpine scuba site '{site_id}' not found")
+    return site
+
+
+@app.post(
+    "/api/alpine-scuba/calculate",
+    response_model=ScubaCalculationResponse,
+    tags=["Wilderness High-Altitude Scuba & Alpine Lake Ice Diving Assistant Tooling"],
+    summary="Calculate Bühlmann Equivalent Sea Level Depth (ESLD), adjusted NDL, and regulator freeze risk",
+)
+async def calculate_alpine_scuba_endpoint(
+    req: ScubaCalculationRequest,
+) -> ScubaCalculationResponse:
+    try:
+        return calculate_scuba_decompression(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/alpine-scuba/gear",
+    response_model=list[AlpineScubaGearRequirement],
+    tags=["Wilderness High-Altitude Scuba & Alpine Lake Ice Diving Assistant Tooling"],
+    summary="List mandatory cold-water and overhead ice diving safety gear checklist items",
+)
+async def get_alpine_scuba_gear_endpoint() -> list[AlpineScubaGearRequirement]:
+    return get_alpine_scuba_gear()
