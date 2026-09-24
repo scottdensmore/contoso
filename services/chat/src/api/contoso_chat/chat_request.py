@@ -207,6 +207,11 @@ from .rewards import (
     format_rewards_response,
     get_customer_loyalty,
 )
+from .river_rafting import (
+    build_river_rafting_prompt,
+    detect_river_rafting_intent,
+    format_river_rafting_response,
+)
 from .river_sup import (
     build_river_sup_prompt,
     detect_river_sup_intent,
@@ -603,6 +608,7 @@ async def generate_llm_response(
     big_wall_prompt: str = "",
     snowmobiling_prompt: str = "",
     alpine_scuba_prompt: str = "",
+    river_rafting_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -777,6 +783,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{snowmobiling_prompt}"
         if alpine_scuba_prompt:
             local_system = f"{local_system}\n\n{alpine_scuba_prompt}"
+        if river_rafting_prompt:
+            local_system = f"{local_system}\n\n{river_rafting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -938,6 +946,8 @@ async def generate_llm_response(
             prompt_parts.append(snowmobiling_prompt)
         if alpine_scuba_prompt:
             prompt_parts.append(alpine_scuba_prompt)
+        if river_rafting_prompt:
+            prompt_parts.append(river_rafting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1486,6 +1496,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         alpine_scuba_prompt = build_alpine_scuba_prompt(alpine_scuba_intent)
         formatted_alpine_scuba = format_alpine_scuba_response(alpine_scuba_intent, question)
         alpine_scuba_info_payload = formatted_alpine_scuba.get("alpine_scuba_info")
+    river_rafting_intent = detect_river_rafting_intent(question)
+    river_rafting_prompt = ""
+    river_rafting_info_payload = None
+    if river_rafting_intent:
+        river_rafting_prompt = build_river_rafting_prompt(river_rafting_intent)
+        formatted_river_rafting = format_river_rafting_response(river_rafting_intent, question)
+        river_rafting_info_payload = formatted_river_rafting.get("river_rafting_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1774,6 +1791,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["snowmobiling_prompt"] = snowmobiling_prompt
     if alpine_scuba_prompt:
         llm_kwargs["alpine_scuba_prompt"] = alpine_scuba_prompt
+    if river_rafting_prompt:
+        llm_kwargs["river_rafting_prompt"] = river_rafting_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1941,6 +1960,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["snowmobiling_info"] = snowmobiling_info_payload
     if alpine_scuba_intent and alpine_scuba_info_payload:
         response_payload["alpine_scuba_info"] = alpine_scuba_info_payload
+    if river_rafting_intent and river_rafting_info_payload:
+        response_payload["river_rafting_info"] = river_rafting_info_payload
 
     return response_payload
 
@@ -2020,6 +2041,7 @@ def generate_llm_response_stream(
     big_wall_prompt: str = "",
     snowmobiling_prompt: str = "",
     alpine_scuba_prompt: str = "",
+    river_rafting_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2174,6 +2196,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{snowmobiling_prompt}"
         if alpine_scuba_prompt:
             local_system = f"{local_system}\n\n{alpine_scuba_prompt}"
+        if river_rafting_prompt:
+            local_system = f"{local_system}\n\n{river_rafting_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2326,6 +2350,8 @@ def generate_llm_response_stream(
             prompt_parts.append(snowmobiling_prompt)
         if alpine_scuba_prompt:
             prompt_parts.append(alpine_scuba_prompt)
+        if river_rafting_prompt:
+            prompt_parts.append(river_rafting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2738,6 +2764,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         alpine_scuba_prompt = build_alpine_scuba_prompt(alpine_scuba_intent)
         formatted_alpine_scuba = format_alpine_scuba_response(alpine_scuba_intent, question)
         alpine_scuba_info_payload = formatted_alpine_scuba.get("alpine_scuba_info")
+    river_rafting_intent = detect_river_rafting_intent(question)
+    river_rafting_prompt = ""
+    river_rafting_info_payload = None
+    if river_rafting_intent:
+        river_rafting_prompt = build_river_rafting_prompt(river_rafting_intent)
+        formatted_river_rafting = format_river_rafting_response(river_rafting_intent, question)
+        river_rafting_info_payload = formatted_river_rafting.get("river_rafting_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3139,6 +3172,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'alpine_scuba_info': alpine_scuba_info_payload, event_name: alpine_scuba_info_payload})}\n\n"
         if event_name != "alpine_scuba_info":
             yield f"data: {json.dumps({'event': 'alpine_scuba_info', 'alpine_scuba_info': alpine_scuba_info_payload})}\n\n"
+    if river_rafting_intent and river_rafting_info_payload:
+        action_to_event = {
+            "expeditions_list": "river_rafting_expeditions",
+            "expedition_detail": "river_rafting_expedition_detail",
+            "calculate_raft": "river_rafting_calculation",
+            "gear_checklist": "river_rafting_gear",
+        }
+        event_name = action_to_event.get(river_rafting_intent.action, "river_rafting_info")
+        yield f"data: {json.dumps({'event': event_name, 'river_rafting_info': river_rafting_info_payload, event_name: river_rafting_info_payload})}\n\n"
+        if event_name != "river_rafting_info":
+            yield f"data: {json.dumps({'event': 'river_rafting_info', 'river_rafting_info': river_rafting_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3281,6 +3325,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["snowmobiling_prompt"] = snowmobiling_prompt
     if alpine_scuba_prompt:
         stream_kwargs["alpine_scuba_prompt"] = alpine_scuba_prompt
+    if river_rafting_prompt:
+        stream_kwargs["river_rafting_prompt"] = river_rafting_prompt
 
     for chunk in generate_llm_response_stream(
         question,
