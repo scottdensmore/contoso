@@ -276,6 +276,11 @@ from .trade_in import (
     detect_trade_in_intent,
     format_trade_in_response,
 )
+from .trail_packing import (
+    build_trail_packing_prompt,
+    detect_trail_packing_intent,
+    format_trail_packing_response,
+)
 from .trail_running import (
     build_trail_running_prompt,
     detect_trail_running_intent,
@@ -615,6 +620,7 @@ async def generate_llm_response(
     alpine_scuba_prompt: str = "",
     river_rafting_prompt: str = "",
     steep_skiing_prompt: str = "",
+    trail_packing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -793,6 +799,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{river_rafting_prompt}"
         if steep_skiing_prompt:
             local_system = f"{local_system}\n\n{steep_skiing_prompt}"
+        if trail_packing_prompt:
+            local_system = f"{local_system}\n\n{trail_packing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -958,6 +966,8 @@ async def generate_llm_response(
             prompt_parts.append(river_rafting_prompt)
         if steep_skiing_prompt:
             prompt_parts.append(steep_skiing_prompt)
+        if trail_packing_prompt:
+            prompt_parts.append(trail_packing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1520,6 +1530,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
+    trail_packing_intent = detect_trail_packing_intent(question)
+    trail_packing_prompt = ""
+    trail_packing_info_payload = None
+    if trail_packing_intent:
+        trail_packing_prompt = build_trail_packing_prompt(trail_packing_intent)
+        formatted_trail_packing = format_trail_packing_response(trail_packing_intent, question)
+        trail_packing_info_payload = formatted_trail_packing.get("trail_packing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1812,6 +1829,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["river_rafting_prompt"] = river_rafting_prompt
     if steep_skiing_prompt:
         llm_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
+    if trail_packing_prompt:
+        llm_kwargs["trail_packing_prompt"] = trail_packing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1983,6 +2002,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["river_rafting_info"] = river_rafting_info_payload
     if steep_skiing_intent and steep_skiing_info_payload:
         response_payload["steep_skiing_info"] = steep_skiing_info_payload
+    if trail_packing_intent and trail_packing_info_payload:
+        response_payload["trail_packing_info"] = trail_packing_info_payload
 
     return response_payload
 
@@ -2800,6 +2821,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
+    trail_packing_intent = detect_trail_packing_intent(question)
+    trail_packing_prompt = ""
+    trail_packing_info_payload = None
+    if trail_packing_intent:
+        trail_packing_prompt = build_trail_packing_prompt(trail_packing_intent)
+        formatted_trail_packing = format_trail_packing_response(trail_packing_intent, question)
+        trail_packing_info_payload = formatted_trail_packing.get("trail_packing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3223,6 +3251,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': steep_skiing_info_payload, event_name: steep_skiing_info_payload})}\n\n"
         if event_name != "steep_skiing_info":
             yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': steep_skiing_info_payload})}\n\n"
+    if trail_packing_intent and trail_packing_info_payload:
+        action_to_event = {
+            "routes_list": "trail_packing_routes",
+            "route_detail": "trail_packing_route_detail",
+            "calculate_packing": "trail_packing_calculation",
+            "calculate": "trail_packing_calculation",
+            "gear_checklist": "trail_packing_gear",
+            "tack_checklist": "trail_packing_gear",
+        }
+        event_name = action_to_event.get(trail_packing_intent.action, "trail_packing_info")
+        yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': trail_packing_info_payload, event_name: trail_packing_info_payload})}\n\n"
+        if event_name != "trail_packing_info":
+            yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': trail_packing_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3369,6 +3410,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["river_rafting_prompt"] = river_rafting_prompt
     if steep_skiing_prompt:
         stream_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
+    if trail_packing_prompt:
+        stream_kwargs["trail_packing_prompt"] = trail_packing_prompt
 
     for chunk in generate_llm_response_stream(
         question,
