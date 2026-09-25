@@ -302,6 +302,11 @@ from .trails import (
     format_trail_response,
     generate_outfitting_plan,
 )
+from .tree_climbing import (
+    build_tree_climbing_prompt,
+    detect_tree_climbing_intent,
+    format_tree_climbing_response,
+)
 from .trip_planner import (
     build_trip_planner_prompt,
     detect_trip_planner_intent,
@@ -639,6 +644,7 @@ async def generate_llm_response(
     primitive_trapping_prompt: str = "",
     mountain_weather_prompt: str = "",
     wild_ice_prompt: str = "",
+    tree_climbing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -825,6 +831,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{mountain_weather_prompt}"
         if wild_ice_prompt:
             local_system = f"{local_system}\n\n{wild_ice_prompt}"
+        if tree_climbing_prompt:
+            local_system = f"{local_system}\n\n{tree_climbing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1000,6 +1008,8 @@ async def generate_llm_response(
             prompt_parts.append(mountain_weather_prompt)
         if wild_ice_prompt:
             prompt_parts.append(wild_ice_prompt)
+        if tree_climbing_prompt:
+            prompt_parts.append(tree_climbing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1595,6 +1605,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             wild_ice_intent, question
         )
         wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
+    tree_climbing_intent = detect_tree_climbing_intent(question)
+    tree_climbing_prompt = ""
+    tree_climbing_info_payload = None
+    if tree_climbing_intent:
+        tree_climbing_prompt = build_tree_climbing_prompt(tree_climbing_intent)
+        formatted_tree_climbing = format_tree_climbing_response(
+            tree_climbing_intent, question
+        )
+        tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1895,6 +1914,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
     if wild_ice_prompt:
         llm_kwargs["wild_ice_prompt"] = wild_ice_prompt
+    if tree_climbing_prompt:
+        llm_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2074,6 +2095,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["mountain_weather_info"] = mountain_weather_info_payload
     if wild_ice_intent and wild_ice_info_payload:
         response_payload["wild_ice_info"] = wild_ice_info_payload
+    if tree_climbing_intent and tree_climbing_info_payload:
+        response_payload["tree_climbing_info"] = tree_climbing_info_payload
 
     return response_payload
 
@@ -2159,6 +2182,7 @@ def generate_llm_response_stream(
     primitive_trapping_prompt: str = "",
     mountain_weather_prompt: str = "",
     wild_ice_prompt: str = "",
+    tree_climbing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2473,6 +2497,8 @@ def generate_llm_response_stream(
             prompt_parts.append(river_rafting_prompt)
         if wild_ice_prompt:
             prompt_parts.append(wild_ice_prompt)
+        if tree_climbing_prompt:
+            prompt_parts.append(tree_climbing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2932,6 +2958,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             wild_ice_intent, question
         )
         wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
+
+    tree_climbing_intent = detect_tree_climbing_intent(question)
+    tree_climbing_prompt = ""
+    tree_climbing_info_payload = None
+    if tree_climbing_intent:
+        tree_climbing_prompt = build_tree_climbing_prompt(tree_climbing_intent)
+        formatted_tree_climbing = format_tree_climbing_response(
+            tree_climbing_intent, question
+        )
+        tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3428,6 +3464,35 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {wi_fallback}\n\n"
+    if tree_climbing_intent and tree_climbing_info_payload:
+        action_to_event = {
+            "groves_list": "canopy_groves",
+            "groves": "canopy_groves",
+            "grove_detail": "canopy_grove_detail",
+            "calculate_tree_climbing": "tree_climbing_calculation",
+            "calculate": "tree_climbing_calculation",
+            "gear_checklist": "tree_climbing_gear",
+            "gear": "tree_climbing_gear",
+        }
+        event_name = action_to_event.get(
+            tree_climbing_intent.action, "tree_climbing_info"
+        )
+        tc_sse = json.dumps(
+            {
+                "event": event_name,
+                "tree_climbing_info": tree_climbing_info_payload,
+                event_name: tree_climbing_info_payload,
+            }
+        )
+        yield f"data: {tc_sse}\n\n"
+        if event_name != "tree_climbing_info":
+            tc_fallback = json.dumps(
+                {
+                    "event": "tree_climbing_info",
+                    "tree_climbing_info": tree_climbing_info_payload,
+                }
+            )
+            yield f"data: {tc_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3582,6 +3647,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
     if wild_ice_prompt:
         stream_kwargs["wild_ice_prompt"] = wild_ice_prompt
+    if tree_climbing_prompt:
+        stream_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

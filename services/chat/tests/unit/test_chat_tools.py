@@ -3,6 +3,7 @@ from contoso_chat.chat_tools import (
     primitive_trapping_tool,
     resolve_tool,
     trail_packing_tool,
+    tree_climbing_tool,
     wild_ice_tool,
 )
 from contoso_chat.primitive_trapping import (
@@ -14,6 +15,11 @@ from contoso_chat.trail_packing import (
     TrailPackingIntent,
     TrailPackingRequest,
     TrailPackingResponse,
+)
+from contoso_chat.tree_climbing import (
+    TreeClimbingIntent,
+    TreeClimbingRequest,
+    TreeClimbingResponse,
 )
 from contoso_chat.wild_ice import (
     WildIceIntent,
@@ -50,9 +56,7 @@ def test_resolve_tool_with_trail_packing_intent():
 
 
 def test_create_response_with_trail_packing_intent():
-    resp = create_response(
-        "Tell me about the Bob Marshall wilderness pack string expedition"
-    )
+    resp = create_response("Tell me about the Bob Marshall wilderness pack string expedition")
     assert resp is not None
     assert "trail_packing_info" in resp
     assert resp["trail_packing_info"]["route_id"] == "bob-marshall-wilderness"
@@ -60,9 +64,7 @@ def test_create_response_with_trail_packing_intent():
 
 
 def test_primitive_trapping_tool_calculation():
-    req = TrappingCalculationRequest(
-        mechanism_id="figure-4-deadfall", deadfall_weight_lbs=18.0
-    )
+    req = TrappingCalculationRequest(mechanism_id="figure-4-deadfall", deadfall_weight_lbs=18.0)
     res = primitive_trapping_tool(req)
     assert isinstance(res, TrappingCalculationResponse)
     assert res.mechanism_id == "figure-4-deadfall"
@@ -70,9 +72,7 @@ def test_primitive_trapping_tool_calculation():
 
 
 def test_primitive_trapping_tool_dict_args():
-    res = primitive_trapping_tool(
-        action="mechanisms_list", category="deadfall"
-    )
+    res = primitive_trapping_tool(action="mechanisms_list", category="deadfall")
     assert isinstance(res, list)
     assert len(res) == 3
 
@@ -85,18 +85,14 @@ def test_primitive_trapping_tool_gear():
 
 def test_resolve_tool_with_primitive_trapping_intent():
     intent = TrappingIntent(action="mechanisms_list", category="snare")
-    result = resolve_tool(
-        intent, question="Which primitive cordage snares are documented?"
-    )
+    result = resolve_tool(intent, question="Which primitive cordage snares are documented?")
     assert result is not None
     assert "primitive_trapping_info" in result
     assert result["primitive_trapping_info"]["action"] == "mechanisms_list"
 
 
 def test_create_response_with_primitive_trapping_intent():
-    resp = create_response(
-        "Tell me about the Paiute deadfall hair trigger toggle mechanism"
-    )
+    resp = create_response("Tell me about the Paiute deadfall hair trigger toggle mechanism")
     assert resp is not None
     assert "primitive_trapping_info" in resp
     assert resp["primitive_trapping_info"]["mechanism_id"] == "paiute-deadfall"
@@ -132,10 +128,44 @@ def test_resolve_tool_with_wild_ice_intent():
 
 
 def test_create_response_with_wild_ice_intent():
-    resp = create_response(
-        "Tell me about wild ice tour skating on Lake Mälaren archipelago"
-    )
+    resp = create_response("Tell me about wild ice tour skating on Lake Mälaren archipelago")
     assert resp is not None
     assert "wild_ice_info" in resp
     assert resp["wild_ice_info"]["venue_id"] == "lake-malaren-archipelago"
     assert "Lake Mälaren" in resp["answer"]
+
+
+def test_tree_climbing_tool_calculation():
+    req = TreeClimbingRequest(grove_id="redwood-canopy-prairie-creek")
+    res = tree_climbing_tool(req)
+    assert isinstance(res, TreeClimbingResponse)
+    assert res.grove_id == "redwood-canopy-prairie-creek"
+    assert res.peak_fork_load_lbs == 456
+
+
+def test_tree_climbing_tool_dict_args():
+    res = tree_climbing_tool(action="groves_list", climbing_system="SRT")
+    assert isinstance(res, list)
+    assert len(res) == 4
+
+
+def test_tree_climbing_tool_gear():
+    res = tree_climbing_tool(action="gear_checklist")
+    assert isinstance(res, list)
+    assert len(res) == 6
+
+
+def test_resolve_tool_with_tree_climbing_intent():
+    intent = TreeClimbingIntent(action="groves_list")
+    result = resolve_tool(intent, question="Which canopy groves are available for tree climbing?")
+    assert result is not None
+    assert "tree_climbing_info" in result
+    assert result["tree_climbing_info"]["action"] == "groves_list"
+
+
+def test_create_response_with_tree_climbing_intent():
+    resp = create_response("Tell me about Prairie Creek redwood canopy climbing expedition")
+    assert resp is not None
+    assert "tree_climbing_info" in resp
+    assert resp["tree_climbing_info"]["grove_id"] == "redwood-canopy-prairie-creek"
+    assert "Prairie Creek" in resp["answer"]
