@@ -332,6 +332,11 @@ from .whitewater import (
     detect_whitewater_intent,
     format_whitewater_response,
 )
+from .wild_ice import (
+    build_wild_ice_prompt,
+    detect_wild_ice_intent,
+    format_wild_ice_response,
+)
 from .wilderness_shelters import (
     build_shelter_prompt,
     extract_shelter_intent,
@@ -633,6 +638,7 @@ async def generate_llm_response(
     trail_packing_prompt: str = "",
     primitive_trapping_prompt: str = "",
     mountain_weather_prompt: str = "",
+    wild_ice_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -817,6 +823,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{trail_packing_prompt}"
         if mountain_weather_prompt:
             local_system = f"{local_system}\n\n{mountain_weather_prompt}"
+        if wild_ice_prompt:
+            local_system = f"{local_system}\n\n{wild_ice_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -990,6 +998,8 @@ async def generate_llm_response(
             prompt_parts.append(primitive_trapping_prompt)
         if mountain_weather_prompt:
             prompt_parts.append(mountain_weather_prompt)
+        if wild_ice_prompt:
+            prompt_parts.append(wild_ice_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1575,6 +1585,16 @@ async def get_response(customer_id, question, chat_history: Any = None):
         trail_packing_prompt = build_trail_packing_prompt(trail_packing_intent)
         formatted_trail_packing = format_trail_packing_response(trail_packing_intent, question)
         trail_packing_info_payload = formatted_trail_packing.get("trail_packing_info")
+
+    wild_ice_intent = detect_wild_ice_intent(question)
+    wild_ice_prompt = ""
+    wild_ice_info_payload = None
+    if wild_ice_intent:
+        wild_ice_prompt = build_wild_ice_prompt(wild_ice_intent)
+        formatted_wild_ice = format_wild_ice_response(
+            wild_ice_intent, question
+        )
+        wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1873,6 +1893,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
     if mountain_weather_prompt:
         llm_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
+    if wild_ice_prompt:
+        llm_kwargs["wild_ice_prompt"] = wild_ice_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2050,6 +2072,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["primitive_trapping_info"] = primitive_trapping_info_payload
     if mountain_weather_intent and mountain_weather_info_payload:
         response_payload["mountain_weather_info"] = mountain_weather_info_payload
+    if wild_ice_intent and wild_ice_info_payload:
+        response_payload["wild_ice_info"] = wild_ice_info_payload
 
     return response_payload
 
@@ -2134,6 +2158,7 @@ def generate_llm_response_stream(
     trail_packing_prompt: str = "",
     primitive_trapping_prompt: str = "",
     mountain_weather_prompt: str = "",
+    wild_ice_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2290,6 +2315,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{alpine_scuba_prompt}"
         if river_rafting_prompt:
             local_system = f"{local_system}\n\n{river_rafting_prompt}"
+        if wild_ice_prompt:
+            local_system = f"{local_system}\n\n{wild_ice_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2444,6 +2471,8 @@ def generate_llm_response_stream(
             prompt_parts.append(alpine_scuba_prompt)
         if river_rafting_prompt:
             prompt_parts.append(river_rafting_prompt)
+        if wild_ice_prompt:
+            prompt_parts.append(wild_ice_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2893,6 +2922,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         trail_packing_prompt = build_trail_packing_prompt(trail_packing_intent)
         formatted_trail_packing = format_trail_packing_response(trail_packing_intent, question)
         trail_packing_info_payload = formatted_trail_packing.get("trail_packing_info")
+
+    wild_ice_intent = detect_wild_ice_intent(question)
+    wild_ice_prompt = ""
+    wild_ice_info_payload = None
+    if wild_ice_intent:
+        wild_ice_prompt = build_wild_ice_prompt(wild_ice_intent)
+        formatted_wild_ice = format_wild_ice_response(
+            wild_ice_intent, question
+        )
+        wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3360,6 +3399,35 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'mountain_weather_info': mountain_weather_info_payload, event_name: mountain_weather_info_payload})}\n\n"
         if event_name != "mountain_weather_info":
             yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mountain_weather_info_payload})}\n\n"
+    if wild_ice_intent and wild_ice_info_payload:
+        action_to_event = {
+            "venues_list": "wild_ice_venues",
+            "venues": "wild_ice_venues",
+            "venue_detail": "wild_ice_venue_detail",
+            "calculate_wild_ice": "wild_ice_calculation",
+            "calculate": "wild_ice_calculation",
+            "gear_checklist": "wild_ice_gear",
+            "gear": "wild_ice_gear",
+        }
+        event_name = action_to_event.get(
+            wild_ice_intent.action, "wild_ice_info"
+        )
+        wi_sse = json.dumps(
+            {
+                "event": event_name,
+                "wild_ice_info": wild_ice_info_payload,
+                event_name: wild_ice_info_payload,
+            }
+        )
+        yield f"data: {wi_sse}\n\n"
+        if event_name != "wild_ice_info":
+            wi_fallback = json.dumps(
+                {
+                    "event": "wild_ice_info",
+                    "wild_ice_info": wild_ice_info_payload,
+                }
+            )
+            yield f"data: {wi_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3512,6 +3580,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
     if mountain_weather_prompt:
         stream_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
+    if wild_ice_prompt:
+        stream_kwargs["wild_ice_prompt"] = wild_ice_prompt
 
     for chunk in generate_llm_response_stream(
         question,

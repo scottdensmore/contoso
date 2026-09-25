@@ -738,6 +738,18 @@ from contoso_chat.whitewater import (
     get_whitewater_runs,
     get_whitewater_safety_protocols,
 )
+from contoso_chat.wild_ice import (
+    WildIceGearItemModel,
+    WildIceRequest,
+    WildIceResponse,
+    WildIceVenueModel,
+    calculate_wild_ice,
+    detect_wild_ice_intent,
+    format_wild_ice_response,
+    get_wild_ice_gear,
+    get_wild_ice_venue,
+    get_wild_ice_venues,
+)
 from contoso_chat.wilderness_shelters import (
     ShelterGearRequirement,
     ShelterThermodynamicsRequest,
@@ -1135,6 +1147,7 @@ async def create_response(request: ChatRequest):
             primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
+            wild_ice_intent = detect_wild_ice_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1583,6 +1596,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_mountain_weather.get(
                     "answer", mock_payload["answer"]
                 )
+            if wild_ice_intent:
+                formatted_wild_ice = format_wild_ice_response(
+                    wild_ice_intent, request.question
+                )
+                mock_payload["wild_ice_info"] = formatted_wild_ice.get(
+                    "wild_ice_info"
+                )
+                mock_payload["answer"] = formatted_wild_ice.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1762,6 +1785,7 @@ async def create_response_stream(request: ChatRequest):
                 primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
+                wild_ice_intent = detect_wild_ice_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2243,6 +2267,39 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'mountain_weather_info': mw_payload, event_name: mw_payload})}\n\n"
                     if event_name != "mountain_weather_info":
                         yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mw_payload})}\n\n"
+                if wild_ice_intent:
+                    formatted_wild_ice = format_wild_ice_response(
+                        wild_ice_intent, request.question
+                    )
+                    wi_payload = formatted_wild_ice.get("wild_ice_info")
+                    action_to_event = {
+                        "venues_list": "wild_ice_venues",
+                        "venues": "wild_ice_venues",
+                        "venue_detail": "wild_ice_venue_detail",
+                        "calculate_wild_ice": "wild_ice_calculation",
+                        "calculate": "wild_ice_calculation",
+                        "gear_checklist": "wild_ice_gear",
+                        "gear": "wild_ice_gear",
+                    }
+                    event_name = action_to_event.get(
+                        wild_ice_intent.action, "wild_ice_info"
+                    )
+                    wi_sse = json.dumps(
+                        {
+                            "event": event_name,
+                            "wild_ice_info": wi_payload,
+                            event_name: wi_payload,
+                        }
+                    )
+                    yield f"data: {wi_sse}\n\n"
+                    if event_name != "wild_ice_info":
+                        wi_fallback = json.dumps(
+                            {
+                                "event": "wild_ice_info",
+                                "wild_ice_info": wi_payload,
+                            }
+                        )
+                        yield f"data: {wi_fallback}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2421,6 +2478,11 @@ async def create_response_stream(request: ChatRequest):
                         mountain_weather_intent, request.question
                     )
                     mock_chunks = [str(formatted_mountain_weather.get("answer", ""))]
+                elif wild_ice_intent:
+                    formatted_wild_ice = format_wild_ice_response(
+                        wild_ice_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_wild_ice.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5984,3 +6046,88 @@ async def calculate_mountain_weather_endpoint(
 )
 async def get_mountain_weather_gear_endpoint() -> list[WeatherGearItemModel]:
     return get_weather_gear()
+
+
+@app.get(
+    "/wild-ice/venues",
+    response_model=list[WildIceVenueModel],
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="List wild ice touring circuits with optional ice_type filtering",
+)
+@app.get(
+    "/api/wild-ice/venues",
+    response_model=list[WildIceVenueModel],
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="List wild ice touring circuits with optional ice_type filtering",
+)
+async def get_wild_ice_venues_endpoint(
+    ice_type: Optional[str] = None,
+) -> list[WildIceVenueModel]:
+    return get_wild_ice_venues(ice_type=ice_type)
+
+
+@app.get(
+    "/wild-ice/venues/{venue_id}",
+    response_model=WildIceVenueModel,
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="Get details for an iconic wild ice touring venue",
+)
+@app.get(
+    "/api/wild-ice/venues/{venue_id}",
+    response_model=WildIceVenueModel,
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="Get details for an iconic wild ice touring venue",
+)
+async def get_wild_ice_venue_detail_endpoint(
+    venue_id: str,
+) -> WildIceVenueModel:
+    venue = get_wild_ice_venue(venue_id)
+    if not venue:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Wild ice venue '{venue_id}' not found",
+        )
+    return venue
+
+
+@app.post(
+    "/wild-ice/calculate",
+    response_model=WildIceResponse,
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary=(
+        "Calculate ice bearing capacity (Gold's formula), acoustic resonance,"
+        " and safety status"
+    ),
+)
+@app.post(
+    "/api/wild-ice/calculate",
+    response_model=WildIceResponse,
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary=(
+        "Calculate ice bearing capacity (Gold's formula), acoustic resonance,"
+        " and safety status"
+    ),
+)
+async def calculate_wild_ice_endpoint(
+    req: WildIceRequest,
+) -> WildIceResponse:
+    try:
+        return calculate_wild_ice(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/wild-ice/gear",
+    response_model=list[WildIceGearItemModel],
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="List mandatory backcountry Nordic speedskating safety kit items",
+)
+@app.get(
+    "/api/wild-ice/gear",
+    response_model=list[WildIceGearItemModel],
+    tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
+    summary="List mandatory backcountry Nordic speedskating safety kit items",
+)
+async def get_wild_ice_gear_endpoint() -> list[WildIceGearItemModel]:
+    return get_wild_ice_gear()
