@@ -262,6 +262,11 @@ from .stargazing import (
     detect_stargazing_intent,
     format_stargazing_response,
 )
+from .steep_skiing import (
+    build_steep_skiing_prompt,
+    detect_steep_skiing_intent,
+    format_steep_skiing_response,
+)
 from .stores import (
     build_store_prompt,
     detect_store_intent,
@@ -609,6 +614,7 @@ async def generate_llm_response(
     snowmobiling_prompt: str = "",
     alpine_scuba_prompt: str = "",
     river_rafting_prompt: str = "",
+    steep_skiing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -785,6 +791,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{alpine_scuba_prompt}"
         if river_rafting_prompt:
             local_system = f"{local_system}\n\n{river_rafting_prompt}"
+        if steep_skiing_prompt:
+            local_system = f"{local_system}\n\n{steep_skiing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -948,6 +956,8 @@ async def generate_llm_response(
             prompt_parts.append(alpine_scuba_prompt)
         if river_rafting_prompt:
             prompt_parts.append(river_rafting_prompt)
+        if steep_skiing_prompt:
+            prompt_parts.append(steep_skiing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1503,6 +1513,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         river_rafting_prompt = build_river_rafting_prompt(river_rafting_intent)
         formatted_river_rafting = format_river_rafting_response(river_rafting_intent, question)
         river_rafting_info_payload = formatted_river_rafting.get("river_rafting_info")
+    steep_skiing_intent = detect_steep_skiing_intent(question)
+    steep_skiing_prompt = ""
+    steep_skiing_info_payload = None
+    if steep_skiing_intent:
+        steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
+        formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
+        steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1793,6 +1810,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["alpine_scuba_prompt"] = alpine_scuba_prompt
     if river_rafting_prompt:
         llm_kwargs["river_rafting_prompt"] = river_rafting_prompt
+    if steep_skiing_prompt:
+        llm_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -1962,6 +1981,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["alpine_scuba_info"] = alpine_scuba_info_payload
     if river_rafting_intent and river_rafting_info_payload:
         response_payload["river_rafting_info"] = river_rafting_info_payload
+    if steep_skiing_intent and steep_skiing_info_payload:
+        response_payload["steep_skiing_info"] = steep_skiing_info_payload
 
     return response_payload
 
@@ -2042,6 +2063,7 @@ def generate_llm_response_stream(
     snowmobiling_prompt: str = "",
     alpine_scuba_prompt: str = "",
     river_rafting_prompt: str = "",
+    steep_skiing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
@@ -2771,6 +2793,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         river_rafting_prompt = build_river_rafting_prompt(river_rafting_intent)
         formatted_river_rafting = format_river_rafting_response(river_rafting_intent, question)
         river_rafting_info_payload = formatted_river_rafting.get("river_rafting_info")
+    steep_skiing_intent = detect_steep_skiing_intent(question)
+    steep_skiing_prompt = ""
+    steep_skiing_info_payload = None
+    if steep_skiing_intent:
+        steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
+        formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
+        steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3183,6 +3212,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'river_rafting_info': river_rafting_info_payload, event_name: river_rafting_info_payload})}\n\n"
         if event_name != "river_rafting_info":
             yield f"data: {json.dumps({'event': 'river_rafting_info', 'river_rafting_info': river_rafting_info_payload})}\n\n"
+    if steep_skiing_intent and steep_skiing_info_payload:
+        action_to_event = {
+            "couloirs_list": "steep_skiing_couloirs",
+            "couloir_detail": "steep_skiing_couloir_detail",
+            "calculate_couloir": "steep_skiing_calculation",
+            "gear_checklist": "steep_skiing_gear",
+        }
+        event_name = action_to_event.get(steep_skiing_intent.action, "steep_skiing_info")
+        yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': steep_skiing_info_payload, event_name: steep_skiing_info_payload})}\n\n"
+        if event_name != "steep_skiing_info":
+            yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': steep_skiing_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3327,6 +3367,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["alpine_scuba_prompt"] = alpine_scuba_prompt
     if river_rafting_prompt:
         stream_kwargs["river_rafting_prompt"] = river_rafting_prompt
+    if steep_skiing_prompt:
+        stream_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

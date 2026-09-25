@@ -585,6 +585,18 @@ from contoso_chat.stargazing import (
     get_stargazing_site_by_id,
     get_stargazing_sites,
 )
+from contoso_chat.steep_skiing import (
+    CouloirCalculationRequest,
+    CouloirCalculationResponse,
+    CouloirDescentModel,
+    SteepSkiingGearRequirement,
+    calculate_couloir_dynamics,
+    detect_steep_skiing_intent,
+    format_steep_skiing_response,
+    get_couloir_descent_by_id,
+    get_couloir_descents,
+    get_steep_skiing_gear,
+)
 from contoso_chat.stores import (
     detect_store_intent,
     get_all_stores,
@@ -1083,6 +1095,7 @@ async def create_response(request: ChatRequest):
             snowmobiling_intent = detect_snowmobiling_intent(request.question)
             alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
             river_rafting_intent = detect_river_rafting_intent(request.question)
+            steep_skiing_intent = detect_steep_skiing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1499,6 +1512,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_river_rafting.get(
                     "answer", mock_payload["answer"]
                 )
+            if steep_skiing_intent:
+                formatted_steep_skiing = format_steep_skiing_response(
+                    steep_skiing_intent, request.question
+                )
+                mock_payload["steep_skiing_info"] = formatted_steep_skiing.get("steep_skiing_info")
+                mock_payload["answer"] = formatted_steep_skiing.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1674,6 +1695,7 @@ async def create_response_stream(request: ChatRequest):
                 snowmobiling_intent = detect_snowmobiling_intent(request.question)
                 alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
                 river_rafting_intent = detect_river_rafting_intent(request.question)
+                steep_skiing_intent = detect_steep_skiing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2080,6 +2102,23 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'river_rafting_info': r_payload, event_name: r_payload})}\n\n"
                     if event_name != "river_rafting_info":
                         yield f"data: {json.dumps({'event': 'river_rafting_info', 'river_rafting_info': r_payload})}\n\n"
+                if steep_skiing_intent:
+                    formatted_steep_skiing = format_steep_skiing_response(
+                        steep_skiing_intent, request.question
+                    )
+                    s_payload = formatted_steep_skiing.get("steep_skiing_info")
+                    action_to_event = {
+                        "couloirs_list": "steep_skiing_couloirs",
+                        "couloir_detail": "steep_skiing_couloir_detail",
+                        "calculate_couloir": "steep_skiing_calculation",
+                        "gear_checklist": "steep_skiing_gear",
+                    }
+                    event_name = action_to_event.get(
+                        steep_skiing_intent.action, "steep_skiing_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': s_payload, event_name: s_payload})}\n\n"
+                    if event_name != "steep_skiing_info":
+                        yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': s_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2238,6 +2277,11 @@ async def create_response_stream(request: ChatRequest):
                         river_rafting_intent, request.question
                     )
                     mock_chunks = [str(formatted_river_rafting.get("answer", ""))]
+                elif steep_skiing_intent:
+                    formatted_steep_skiing = format_steep_skiing_response(
+                        steep_skiing_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_steep_skiing.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5519,3 +5563,55 @@ async def calculate_river_rafting_endpoint(
 )
 async def get_river_rafting_gear_endpoint() -> list[RaftingGearRequirement]:
     return get_river_rafting_gear()
+
+
+@app.get(
+    "/api/steep-skiing/couloirs",
+    response_model=list[CouloirDescentModel],
+    tags=["Alpine Ski Mountaineering & Steep Couloir Assistant Tooling"],
+    summary="List steep couloir descents with optional grade filtering",
+)
+async def get_steep_skiing_couloirs_endpoint(
+    grade: Optional[str] = None,
+) -> list[CouloirDescentModel]:
+    return get_couloir_descents(grade=grade)
+
+
+@app.get(
+    "/api/steep-skiing/couloirs/{couloir_id}",
+    response_model=CouloirDescentModel,
+    tags=["Alpine Ski Mountaineering & Steep Couloir Assistant Tooling"],
+    summary="Get details for an iconic couloir descent",
+)
+async def get_steep_skiing_couloir_detail_endpoint(
+    couloir_id: str,
+) -> CouloirDescentModel:
+    couloir = get_couloir_descent_by_id(couloir_id)
+    if not couloir:
+        raise HTTPException(status_code=404, detail=f"Couloir '{couloir_id}' not found")
+    return couloir
+
+
+@app.post(
+    "/api/steep-skiing/calculate",
+    response_model=CouloirCalculationResponse,
+    tags=["Alpine Ski Mountaineering & Steep Couloir Assistant Tooling"],
+    summary="Calculate couloir slope kinematics, sluff velocity, hop-turn edge loading, and descent style",
+)
+async def calculate_steep_skiing_endpoint(
+    req: CouloirCalculationRequest,
+) -> CouloirCalculationResponse:
+    try:
+        return calculate_couloir_dynamics(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/api/steep-skiing/gear",
+    response_model=list[SteepSkiingGearRequirement],
+    tags=["Alpine Ski Mountaineering & Steep Couloir Assistant Tooling"],
+    summary="List mandatory steep skiing and alpine ski mountaineering gear items",
+)
+async def get_steep_skiing_gear_endpoint() -> list[SteepSkiingGearRequirement]:
+    return get_steep_skiing_gear()
