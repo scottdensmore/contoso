@@ -171,6 +171,11 @@ from .policies import (
     build_policy_prompt,
     detect_policy_intent,
 )
+from .primitive_trapping import (
+    build_primitive_trapping_prompt,
+    detect_primitive_trapping_intent,
+    format_primitive_trapping_response,
+)
 from .promotions import (
     build_promo_prompt,
     detect_promo_intent,
@@ -621,9 +626,10 @@ async def generate_llm_response(
     river_rafting_prompt: str = "",
     steep_skiing_prompt: str = "",
     trail_packing_prompt: str = "",
+    primitive_trapping_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
-    system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
+    system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
     Your goal is to help {user_name} find the best equipment from our catalog.
 
     Guidelines:
@@ -968,6 +974,8 @@ async def generate_llm_response(
             prompt_parts.append(steep_skiing_prompt)
         if trail_packing_prompt:
             prompt_parts.append(trail_packing_prompt)
+        if primitive_trapping_prompt:
+            prompt_parts.append(primitive_trapping_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1530,6 +1538,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
+    primitive_trapping_intent = detect_primitive_trapping_intent(question)
+    primitive_trapping_prompt = ""
+    primitive_trapping_info_payload = None
+    if primitive_trapping_intent:
+        primitive_trapping_prompt = build_primitive_trapping_prompt(primitive_trapping_intent)
+        formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
+        primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
+
     trail_packing_intent = detect_trail_packing_intent(question)
     trail_packing_prompt = ""
     trail_packing_info_payload = None
@@ -1831,6 +1847,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
     if trail_packing_prompt:
         llm_kwargs["trail_packing_prompt"] = trail_packing_prompt
+    if primitive_trapping_prompt:
+        llm_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2004,6 +2022,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["steep_skiing_info"] = steep_skiing_info_payload
     if trail_packing_intent and trail_packing_info_payload:
         response_payload["trail_packing_info"] = trail_packing_info_payload
+    if primitive_trapping_intent and primitive_trapping_info_payload:
+        response_payload["primitive_trapping_info"] = primitive_trapping_info_payload
 
     return response_payload
 
@@ -2085,9 +2105,11 @@ def generate_llm_response_stream(
     alpine_scuba_prompt: str = "",
     river_rafting_prompt: str = "",
     steep_skiing_prompt: str = "",
+    trail_packing_prompt: str = "",
+    primitive_trapping_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
-    system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor. 
+    system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
     Your goal is to help {user_name} find the best equipment from our catalog.
 
     Guidelines:
@@ -2821,6 +2843,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         steep_skiing_prompt = build_steep_skiing_prompt(steep_skiing_intent)
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
+    primitive_trapping_intent = detect_primitive_trapping_intent(question)
+    primitive_trapping_prompt = ""
+    primitive_trapping_info_payload = None
+    if primitive_trapping_intent:
+        primitive_trapping_prompt = build_primitive_trapping_prompt(primitive_trapping_intent)
+        formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
+        primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
+
     trail_packing_intent = detect_trail_packing_intent(question)
     trail_packing_prompt = ""
     trail_packing_info_payload = None
@@ -3264,6 +3294,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': trail_packing_info_payload, event_name: trail_packing_info_payload})}\n\n"
         if event_name != "trail_packing_info":
             yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': trail_packing_info_payload})}\n\n"
+    if primitive_trapping_intent and primitive_trapping_info_payload:
+        action_to_event = {
+            "mechanisms_list": "primitive_trapping_mechanisms",
+            "mechanism_detail": "primitive_trapping_mechanism_detail",
+            "calculate_trapping": "primitive_trapping_calculation",
+            "calculate": "primitive_trapping_calculation",
+            "gear_checklist": "primitive_trapping_gear",
+            "safety_gear": "primitive_trapping_gear",
+        }
+        event_name = action_to_event.get(
+            primitive_trapping_intent.action, "primitive_trapping_info"
+        )
+        yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': primitive_trapping_info_payload, event_name: primitive_trapping_info_payload})}\n\n"
+        if event_name != "primitive_trapping_info":
+            yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': primitive_trapping_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3412,6 +3457,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["steep_skiing_prompt"] = steep_skiing_prompt
     if trail_packing_prompt:
         stream_kwargs["trail_packing_prompt"] = trail_packing_prompt
+    if primitive_trapping_prompt:
+        stream_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
 
     for chunk in generate_llm_response_stream(
         question,
