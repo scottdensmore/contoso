@@ -137,6 +137,11 @@ from .leave_no_trace import (
     detect_lnt_intent,
     format_lnt_response,
 )
+from .mountain_weather import (
+    build_mountain_weather_prompt,
+    detect_mountain_weather_intent,
+    format_mountain_weather_response,
+)
 from .mountaineering import (
     build_mountaineering_prompt,
     detect_mountaineering_intent,
@@ -627,6 +632,7 @@ async def generate_llm_response(
     steep_skiing_prompt: str = "",
     trail_packing_prompt: str = "",
     primitive_trapping_prompt: str = "",
+    mountain_weather_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -803,10 +809,14 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{alpine_scuba_prompt}"
         if river_rafting_prompt:
             local_system = f"{local_system}\n\n{river_rafting_prompt}"
+        if mountain_weather_prompt:
+            local_system = f"{local_system}\n\n{mountain_weather_prompt}"
         if steep_skiing_prompt:
             local_system = f"{local_system}\n\n{steep_skiing_prompt}"
         if trail_packing_prompt:
             local_system = f"{local_system}\n\n{trail_packing_prompt}"
+        if mountain_weather_prompt:
+            local_system = f"{local_system}\n\n{mountain_weather_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -970,12 +980,16 @@ async def generate_llm_response(
             prompt_parts.append(alpine_scuba_prompt)
         if river_rafting_prompt:
             prompt_parts.append(river_rafting_prompt)
+        if mountain_weather_prompt:
+            prompt_parts.append(mountain_weather_prompt)
         if steep_skiing_prompt:
             prompt_parts.append(steep_skiing_prompt)
         if trail_packing_prompt:
             prompt_parts.append(trail_packing_prompt)
         if primitive_trapping_prompt:
             prompt_parts.append(primitive_trapping_prompt)
+        if mountain_weather_prompt:
+            prompt_parts.append(mountain_weather_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1546,6 +1560,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
         primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
 
+    mountain_weather_intent = detect_mountain_weather_intent(question)
+    mountain_weather_prompt = ""
+    mountain_weather_info_payload = None
+    if mountain_weather_intent:
+        mountain_weather_prompt = build_mountain_weather_prompt(mountain_weather_intent)
+        formatted_mountain_weather = format_mountain_weather_response(mountain_weather_intent, question)
+        mountain_weather_info_payload = formatted_mountain_weather.get("mountain_weather_info")
+
     trail_packing_intent = detect_trail_packing_intent(question)
     trail_packing_prompt = ""
     trail_packing_info_payload = None
@@ -1849,6 +1871,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["trail_packing_prompt"] = trail_packing_prompt
     if primitive_trapping_prompt:
         llm_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
+    if mountain_weather_prompt:
+        llm_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2024,6 +2048,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["trail_packing_info"] = trail_packing_info_payload
     if primitive_trapping_intent and primitive_trapping_info_payload:
         response_payload["primitive_trapping_info"] = primitive_trapping_info_payload
+    if mountain_weather_intent and mountain_weather_info_payload:
+        response_payload["mountain_weather_info"] = mountain_weather_info_payload
 
     return response_payload
 
@@ -2107,6 +2133,7 @@ def generate_llm_response_stream(
     steep_skiing_prompt: str = "",
     trail_packing_prompt: str = "",
     primitive_trapping_prompt: str = "",
+    mountain_weather_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2851,6 +2878,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
         primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
 
+    mountain_weather_intent = detect_mountain_weather_intent(question)
+    mountain_weather_prompt = ""
+    mountain_weather_info_payload = None
+    if mountain_weather_intent:
+        mountain_weather_prompt = build_mountain_weather_prompt(mountain_weather_intent)
+        formatted_mountain_weather = format_mountain_weather_response(mountain_weather_intent, question)
+        mountain_weather_info_payload = formatted_mountain_weather.get("mountain_weather_info")
+
     trail_packing_intent = detect_trail_packing_intent(question)
     trail_packing_prompt = ""
     trail_packing_info_payload = None
@@ -3309,6 +3344,22 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': primitive_trapping_info_payload, event_name: primitive_trapping_info_payload})}\n\n"
         if event_name != "primitive_trapping_info":
             yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': primitive_trapping_info_payload})}\n\n"
+    if mountain_weather_intent and mountain_weather_info_payload:
+        action_to_event = {
+            "sectors_list": "mountain_weather_sectors",
+            "sectors": "mountain_weather_sectors",
+            "sector_detail": "mountain_weather_sector_detail",
+            "calculate_weather": "mountain_weather_calculation",
+            "calculate": "mountain_weather_calculation",
+            "gear_checklist": "mountain_weather_gear",
+            "gear": "mountain_weather_gear",
+        }
+        event_name = action_to_event.get(
+            mountain_weather_intent.action, "mountain_weather_info"
+        )
+        yield f"data: {json.dumps({'event': event_name, 'mountain_weather_info': mountain_weather_info_payload, event_name: mountain_weather_info_payload})}\n\n"
+        if event_name != "mountain_weather_info":
+            yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mountain_weather_info_payload})}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3459,6 +3510,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["trail_packing_prompt"] = trail_packing_prompt
     if primitive_trapping_prompt:
         stream_kwargs["primitive_trapping_prompt"] = primitive_trapping_prompt
+    if mountain_weather_prompt:
+        stream_kwargs["mountain_weather_prompt"] = mountain_weather_prompt
 
     for chunk in generate_llm_response_stream(
         question,
