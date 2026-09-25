@@ -670,6 +670,18 @@ from contoso_chat.trails import (
     get_trails,
 )
 from contoso_chat.transcript_export import export_transcript
+from contoso_chat.tree_climbing import (
+    CanopyGroveModel,
+    TreeClimbingRequest,
+    TreeClimbingResponse,
+    TreeGearItemModel,
+    calculate_tree_climbing,
+    detect_tree_climbing_intent,
+    format_tree_climbing_response,
+    get_canopy_grove,
+    get_canopy_groves,
+    get_tree_gear,
+)
 from contoso_chat.trip_planner import (
     TripPlanParametersModel,
     TripPlanResultModel,
@@ -1148,6 +1160,7 @@ async def create_response(request: ChatRequest):
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
             wild_ice_intent = detect_wild_ice_intent(request.question)
+            tree_climbing_intent = detect_tree_climbing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1606,6 +1619,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_wild_ice.get(
                     "answer", mock_payload["answer"]
                 )
+            if tree_climbing_intent:
+                formatted_tree_climbing = format_tree_climbing_response(
+                    tree_climbing_intent, request.question
+                )
+                mock_payload["tree_climbing_info"] = formatted_tree_climbing.get(
+                    "tree_climbing_info"
+                )
+                mock_payload["answer"] = formatted_tree_climbing.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1704,8 +1727,8 @@ async def create_response_stream(request: ChatRequest):
                                     captured_citations = event_data.get("citations")
                                 if event_data.get("event") == "order_tracking":
                                     captured_order_tracking = event_data.get("order_tracking")
-                        except (json.JSONDecodeError, TypeError):
-                            pass
+                        except (json.JSONDecodeError, TypeError) as exc:
+                            logger.debug("Ignoring non-JSON SSE chunk: %s", exc)
                         yield chunk
                     else:
                         accumulated_chunks.append(chunk)
@@ -1786,6 +1809,7 @@ async def create_response_stream(request: ChatRequest):
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
                 wild_ice_intent = detect_wild_ice_intent(request.question)
+                tree_climbing_intent = detect_tree_climbing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2300,6 +2324,39 @@ async def create_response_stream(request: ChatRequest):
                             }
                         )
                         yield f"data: {wi_fallback}\n\n"
+                if tree_climbing_intent:
+                    formatted_tree_climbing = format_tree_climbing_response(
+                        tree_climbing_intent, request.question
+                    )
+                    tc_payload = formatted_tree_climbing.get("tree_climbing_info")
+                    action_to_event = {
+                        "groves_list": "canopy_groves",
+                        "groves": "canopy_groves",
+                        "grove_detail": "canopy_grove_detail",
+                        "calculate_tree_climbing": "tree_climbing_calculation",
+                        "calculate": "tree_climbing_calculation",
+                        "gear_checklist": "tree_climbing_gear",
+                        "gear": "tree_climbing_gear",
+                    }
+                    event_name = action_to_event.get(
+                        tree_climbing_intent.action, "tree_climbing_info"
+                    )
+                    tc_sse = json.dumps(
+                        {
+                            "event": event_name,
+                            "tree_climbing_info": tc_payload,
+                            event_name: tc_payload,
+                        }
+                    )
+                    yield f"data: {tc_sse}\n\n"
+                    if event_name != "tree_climbing_info":
+                        tc_fallback = json.dumps(
+                            {
+                                "event": "tree_climbing_info",
+                                "tree_climbing_info": tc_payload,
+                            }
+                        )
+                        yield f"data: {tc_fallback}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2483,6 +2540,12 @@ async def create_response_stream(request: ChatRequest):
                         wild_ice_intent, request.question
                     )
                     mock_chunks = [str(formatted_wild_ice.get("answer", ""))]
+                elif tree_climbing_intent:
+                    formatted_tree_climbing = format_tree_climbing_response(
+                        tree_climbing_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_tree_climbing.get("answer", ""))]
+
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -6131,3 +6194,86 @@ async def calculate_wild_ice_endpoint(
 )
 async def get_wild_ice_gear_endpoint() -> list[WildIceGearItemModel]:
     return get_wild_ice_gear()
+
+
+@app.get(
+    "/tree-climbing/groves",
+    response_model=list[CanopyGroveModel],
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="List expedition canopy groves with optional climbing_system filtering",
+)
+@app.get(
+    "/api/tree-climbing/groves",
+    response_model=list[CanopyGroveModel],
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="List expedition canopy groves with optional climbing_system filtering",
+)
+async def get_canopy_groves_endpoint(
+    climbing_system: Optional[str] = None,
+) -> list[CanopyGroveModel]:
+    return get_canopy_groves(climbing_system=climbing_system)
+
+
+@app.get(
+    "/tree-climbing/groves/{grove_id}",
+    response_model=CanopyGroveModel,
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="Get details for an iconic canopy expedition grove",
+)
+@app.get(
+    "/api/tree-climbing/groves/{grove_id}",
+    response_model=CanopyGroveModel,
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="Get details for an iconic canopy expedition grove",
+)
+async def get_canopy_grove_detail_endpoint(
+    grove_id: str,
+) -> CanopyGroveModel:
+    grove = get_canopy_grove(grove_id)
+    if not grove:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Canopy grove '{grove_id}' not found",
+        )
+    return grove
+
+
+@app.post(
+    "/tree-climbing/calculate",
+    response_model=TreeClimbingResponse,
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary=(
+        "Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"
+    ),
+)
+@app.post(
+    "/api/tree-climbing/calculate",
+    response_model=TreeClimbingResponse,
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary=(
+        "Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"
+    ),
+)
+async def calculate_tree_climbing_endpoint(
+    req: TreeClimbingRequest,
+) -> TreeClimbingResponse:
+    try:
+        return calculate_tree_climbing(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/tree-climbing/gear",
+    response_model=list[TreeGearItemModel],
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="List mandatory backcountry tree climbing and canopy safety kit items",
+)
+@app.get(
+    "/api/tree-climbing/gear",
+    response_model=list[TreeGearItemModel],
+    tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
+    summary="List mandatory backcountry tree climbing and canopy safety kit items",
+)
+async def get_tree_gear_endpoint() -> list[TreeGearItemModel]:
+    return get_tree_gear()

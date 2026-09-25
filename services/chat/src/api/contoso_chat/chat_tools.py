@@ -30,6 +30,16 @@ from .trail_packing import (
     get_pack_routes,
     get_tack_checklist,
 )
+from .tree_climbing import (
+    TreeClimbingIntent,
+    TreeClimbingRequest,
+    calculate_tree_climbing,
+    detect_tree_climbing_intent,
+    format_tree_climbing_response,
+    get_canopy_grove,
+    get_canopy_groves,
+    get_tree_gear,
+)
 from .wild_ice import (
     WildIceIntent,
     WildIceRequest,
@@ -263,11 +273,72 @@ def wild_ice_tool(
     return get_wild_ice_venues(ice_type=ice_type)
 
 
+def _resolve_tc_args(
+    intent: Optional[TreeClimbingIntent],
+    action: Optional[str],
+    grove_id: Optional[str],
+    climbing_system: Optional[str],
+) -> tuple[str, Optional[str], Optional[str]]:
+    act = action or (intent.action if intent else "groves_list")
+    if "calc" in act:
+        act = "calculate_tree_climbing"
+    elif "gear" in act:
+        act = "gear_checklist"
+    gid = grove_id or (intent.grove_id if intent else None)
+    cs = climbing_system or (intent.climbing_system if intent else None)
+    return act, gid, cs
+
+
+def _build_tree_climbing_req(
+    grv_id: Optional[str],
+    cs: Optional[str],
+    kw: dict[str, Any],
+) -> TreeClimbingRequest:
+    return TreeClimbingRequest(
+        grove_id=grv_id if grv_id else "redwood-canopy-prairie-creek",
+        climbing_system=cs if cs else kw.get("climbing_system", "SRT"),
+        anchor_style=kw.get("anchor_style", "basal_anchor"),
+        climber_weight_lbs=kw.get("climber_weight_lbs", 190.0),
+        branch_diameter_cm=kw.get("branch_diameter_cm", 22.0),
+    )
+
+
+def tree_climbing_tool(
+    request: Optional[TreeClimbingRequest] = None,
+    action: Optional[str] = None,
+    grove_id: Optional[str] = None,
+    climbing_system: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for backcountry tree climbing and arboreal canopy research."""
+    if isinstance(request, TreeClimbingRequest):
+        return calculate_tree_climbing(request)
+
+    intent: Optional[TreeClimbingIntent] = kwargs.get("intent")
+    action, grove_id, climbing_system = _resolve_tc_args(
+        intent, action, grove_id, climbing_system
+    )
+
+    if (
+        action == "calculate_tree_climbing"
+        or "climber_weight_lbs" in kwargs
+        or "branch_diameter_cm" in kwargs
+    ):
+        req = _build_tree_climbing_req(grove_id, climbing_system, kwargs)
+        return calculate_tree_climbing(req)
+    if action == "gear_checklist":
+        return get_tree_gear()
+    if action == "grove_detail" and grove_id:
+        return get_canopy_grove(grove_id)
+    return get_canopy_groves(climbing_system=climbing_system)
+
+
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "mountain_weather_tool": mountain_weather_tool,
     "primitive_trapping_tool": primitive_trapping_tool,
     "trail_packing_tool": trail_packing_tool,
     "wild_ice_tool": wild_ice_tool,
+    "tree_climbing_tool": tree_climbing_tool,
 }
 
 
@@ -281,6 +352,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_trail_packing_response(intent, query=question)
     if isinstance(intent, WildIceIntent):
         return format_wild_ice_response(intent, query=question)
+    if isinstance(intent, TreeClimbingIntent):
+        return format_tree_climbing_response(intent, query=question)
     return None
 
 
@@ -323,6 +396,11 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
     if wi_intent:
         fmt = resolve_tool(wi_intent, question=question)
         return str(fmt), "wild_ice_info", fmt.get("wild_ice_info")
+
+    tc_intent = detect_tree_climbing_intent(question)
+    if tc_intent:
+        fmt = resolve_tool(tc_intent, question=question)
+        return str(fmt), "tree_climbing_info", fmt.get("tree_climbing_info")
 
     return None
 
