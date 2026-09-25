@@ -387,6 +387,18 @@ from contoso_chat.policies import (
     get_policy_by_id,
     get_store_policies,
 )
+from contoso_chat.primitive_trapping import (
+    TrappingCalculationRequest,
+    TrappingCalculationResponse,
+    TrappingMechanismModel,
+    TrappingSafetyItemModel,
+    calculate_primitive_trapping,
+    detect_primitive_trapping_intent,
+    format_primitive_trapping_response,
+    get_trapping_mechanism,
+    get_trapping_mechanisms,
+    get_trapping_safety_gear,
+)
 from contoso_chat.promotions import (
     detect_promo_intent,
     get_active_promotions,
@@ -1108,6 +1120,7 @@ async def create_response(request: ChatRequest):
             alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
             river_rafting_intent = detect_river_rafting_intent(request.question)
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
+            primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
@@ -1533,6 +1546,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_steep_skiing.get(
                     "answer", mock_payload["answer"]
                 )
+            if primitive_trapping_intent:
+                formatted_primitive_trapping = format_primitive_trapping_response(
+                    primitive_trapping_intent, request.question
+                )
+                mock_payload["primitive_trapping_info"] = formatted_primitive_trapping.get("primitive_trapping_info")
+                mock_payload["answer"] = formatted_primitive_trapping.get(
+                    "answer", mock_payload["answer"]
+                )
             if trail_packing_intent:
                 formatted_trail_packing = format_trail_packing_response(
                     trail_packing_intent, request.question
@@ -1717,6 +1738,7 @@ async def create_response_stream(request: ChatRequest):
                 alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
                 river_rafting_intent = detect_river_rafting_intent(request.question)
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
+                primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
@@ -2141,6 +2163,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': s_payload, event_name: s_payload})}\n\n"
                     if event_name != "steep_skiing_info":
                         yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': s_payload})}\n\n"
+                if primitive_trapping_intent:
+                    formatted_primitive_trapping = format_primitive_trapping_response(
+                        primitive_trapping_intent, request.question
+                    )
+                    trap_payload = formatted_primitive_trapping.get("primitive_trapping_info")
+                    action_to_event = {
+                        "mechanisms_list": "primitive_trapping_mechanisms",
+                        "mechanism_detail": "primitive_trapping_mechanism_detail",
+                        "calculate_trapping": "primitive_trapping_calculation",
+                        "calculate": "primitive_trapping_calculation",
+                        "gear_checklist": "primitive_trapping_gear",
+                        "safety_gear": "primitive_trapping_gear",
+                    }
+                    event_name = action_to_event.get(
+                        primitive_trapping_intent.action, "primitive_trapping_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': trap_payload, event_name: trap_payload})}\n\n"
+                    if event_name != "primitive_trapping_info":
+                        yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': trap_payload})}\n\n"
                 if trail_packing_intent:
                     formatted_trail_packing = format_trail_packing_response(
                         trail_packing_intent, request.question
@@ -2323,6 +2364,11 @@ async def create_response_stream(request: ChatRequest):
                         steep_skiing_intent, request.question
                     )
                     mock_chunks = [str(formatted_steep_skiing.get("answer", ""))]
+                elif primitive_trapping_intent:
+                    formatted_primitive_trapping = format_primitive_trapping_response(
+                        primitive_trapping_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_primitive_trapping.get("answer", ""))]
                 elif trail_packing_intent:
                     formatted_trail_packing = format_trail_packing_response(
                         trail_packing_intent, request.question
@@ -5737,3 +5783,81 @@ async def calculate_trail_packing_endpoint(
 )
 async def get_trail_packing_gear_endpoint() -> list[TackChecklistItemModel]:
     return get_tack_checklist()
+
+
+@app.get(
+    "/primitive-trapping/mechanisms",
+    response_model=list[TrappingMechanismModel],
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="List primitive trapping mechanisms with optional category filtering",
+)
+@app.get(
+    "/api/primitive-trapping/mechanisms",
+    response_model=list[TrappingMechanismModel],
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="List primitive trapping mechanisms with optional category filtering",
+)
+async def get_primitive_trapping_mechanisms_endpoint(
+    category: Optional[str] = None,
+) -> list[TrappingMechanismModel]:
+    return get_trapping_mechanisms(category=category)
+
+
+@app.get(
+    "/primitive-trapping/mechanisms/{mechanism_id}",
+    response_model=TrappingMechanismModel,
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="Get details for a primitive trapping mechanism",
+)
+@app.get(
+    "/api/primitive-trapping/mechanisms/{mechanism_id}",
+    response_model=TrappingMechanismModel,
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="Get details for a primitive trapping mechanism",
+)
+async def get_primitive_trapping_mechanism_detail_endpoint(
+    mechanism_id: str,
+) -> TrappingMechanismModel:
+    mech = get_trapping_mechanism(mechanism_id)
+    if not mech:
+        raise HTTPException(
+            status_code=404, detail=f"Primitive trapping mechanism '{mechanism_id}' not found"
+        )
+    return mech
+
+
+@app.post(
+    "/primitive-trapping/calculate",
+    response_model=TrappingCalculationResponse,
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="Calculate deadfall weight-to-quarry ratio, lethality, sensitivity, and trip force",
+)
+@app.post(
+    "/api/primitive-trapping/calculate",
+    response_model=TrappingCalculationResponse,
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="Calculate deadfall weight-to-quarry ratio, lethality, sensitivity, and trip force",
+)
+async def calculate_primitive_trapping_endpoint(
+    req: TrappingCalculationRequest,
+) -> TrappingCalculationResponse:
+    try:
+        return calculate_primitive_trapping(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/primitive-trapping/gear",
+    response_model=list[TrappingSafetyItemModel],
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="List mandatory wilderness trapping and practice safety kit items",
+)
+@app.get(
+    "/api/primitive-trapping/gear",
+    response_model=list[TrappingSafetyItemModel],
+    tags=["Wilderness Bushcraft Primitive Trapping & Deadfall Tooling"],
+    summary="List mandatory wilderness trapping and practice safety kit items",
+)
+async def get_primitive_trapping_gear_endpoint() -> list[TrappingSafetyItemModel]:
+    return get_trapping_safety_gear()
