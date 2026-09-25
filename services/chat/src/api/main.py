@@ -612,6 +612,18 @@ from contoso_chat.trade_in import (
     format_trade_in_response,
     get_eligible_brands,
 )
+from contoso_chat.trail_packing import (
+    PackRouteModel,
+    TackChecklistItemModel,
+    TrailPackingRequest,
+    TrailPackingResponse,
+    calculate_trail_packing,
+    detect_trail_packing_intent,
+    format_trail_packing_response,
+    get_pack_route,
+    get_pack_routes,
+    get_tack_checklist,
+)
 from contoso_chat.trail_running import (
     MandatoryGearRequirement,
     PacingCalculationRequest,
@@ -1096,6 +1108,7 @@ async def create_response(request: ChatRequest):
             alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
             river_rafting_intent = detect_river_rafting_intent(request.question)
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
+            trail_packing_intent = detect_trail_packing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1520,6 +1533,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_steep_skiing.get(
                     "answer", mock_payload["answer"]
                 )
+            if trail_packing_intent:
+                formatted_trail_packing = format_trail_packing_response(
+                    trail_packing_intent, request.question
+                )
+                mock_payload["trail_packing_info"] = formatted_trail_packing.get("trail_packing_info")
+                mock_payload["answer"] = formatted_trail_packing.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1696,6 +1717,7 @@ async def create_response_stream(request: ChatRequest):
                 alpine_scuba_intent = detect_alpine_scuba_intent(request.question)
                 river_rafting_intent = detect_river_rafting_intent(request.question)
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
+                trail_packing_intent = detect_trail_packing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2119,6 +2141,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': s_payload, event_name: s_payload})}\n\n"
                     if event_name != "steep_skiing_info":
                         yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': s_payload})}\n\n"
+                if trail_packing_intent:
+                    formatted_trail_packing = format_trail_packing_response(
+                        trail_packing_intent, request.question
+                    )
+                    tp_payload = formatted_trail_packing.get("trail_packing_info")
+                    action_to_event = {
+                        "routes_list": "trail_packing_routes",
+                        "route_detail": "trail_packing_route_detail",
+                        "calculate_packing": "trail_packing_calculation",
+                        "calculate": "trail_packing_calculation",
+                        "gear_checklist": "trail_packing_gear",
+                        "tack_checklist": "trail_packing_gear",
+                    }
+                    event_name = action_to_event.get(
+                        trail_packing_intent.action, "trail_packing_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': tp_payload, event_name: tp_payload})}\n\n"
+                    if event_name != "trail_packing_info":
+                        yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': tp_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2282,6 +2323,11 @@ async def create_response_stream(request: ChatRequest):
                         steep_skiing_intent, request.question
                     )
                     mock_chunks = [str(formatted_steep_skiing.get("answer", ""))]
+                elif trail_packing_intent:
+                    formatted_trail_packing = format_trail_packing_response(
+                        trail_packing_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_trail_packing.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5615,3 +5661,79 @@ async def calculate_steep_skiing_endpoint(
 )
 async def get_steep_skiing_gear_endpoint() -> list[SteepSkiingGearRequirement]:
     return get_steep_skiing_gear()
+
+
+@app.get(
+    "/trail-packing/routes",
+    response_model=list[PackRouteModel],
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="List wilderness equestrian pack routes with optional saddle type filtering",
+)
+@app.get(
+    "/api/trail-packing/routes",
+    response_model=list[PackRouteModel],
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="List wilderness equestrian pack routes with optional saddle type filtering",
+)
+async def get_trail_packing_routes_endpoint(
+    saddle_type: Optional[str] = None,
+) -> list[PackRouteModel]:
+    return get_pack_routes(saddle_type=saddle_type)
+
+
+@app.get(
+    "/trail-packing/routes/{route_id}",
+    response_model=PackRouteModel,
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="Get details for an iconic wilderness equestrian pack route",
+)
+@app.get(
+    "/api/trail-packing/routes/{route_id}",
+    response_model=PackRouteModel,
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="Get details for an iconic wilderness equestrian pack route",
+)
+async def get_trail_packing_route_detail_endpoint(
+    route_id: str,
+) -> PackRouteModel:
+    route = get_pack_route(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Pack route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/trail-packing/calculate",
+    response_model=TrailPackingResponse,
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="Calculate pannier payload weight balancing, capacity status, and hitch adjustments",
+)
+@app.post(
+    "/api/trail-packing/calculate",
+    response_model=TrailPackingResponse,
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="Calculate pannier payload weight balancing, capacity status, and hitch adjustments",
+)
+async def calculate_trail_packing_endpoint(
+    req: TrailPackingRequest,
+) -> TrailPackingResponse:
+    try:
+        return calculate_trail_packing(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/trail-packing/gear",
+    response_model=list[TackChecklistItemModel],
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="List mandatory tack and highline picket Leave No Trace gear checklist items",
+)
+@app.get(
+    "/api/trail-packing/gear",
+    response_model=list[TackChecklistItemModel],
+    tags=["Wilderness Equestrian Trail Packing & Horse Packing Expeditions Tooling"],
+    summary="List mandatory tack and highline picket Leave No Trace gear checklist items",
+)
+async def get_trail_packing_gear_endpoint() -> list[TackChecklistItemModel]:
+    return get_tack_checklist()
