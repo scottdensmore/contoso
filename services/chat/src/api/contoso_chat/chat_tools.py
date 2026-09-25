@@ -1,5 +1,15 @@
 from typing import Any, Callable, Optional
 
+from .mountain_weather import (
+    MountainWeatherIntent,
+    MountainWeatherRequest,
+    calculate_mountain_weather,
+    detect_mountain_weather_intent,
+    format_mountain_weather_response,
+    get_weather_gear,
+    get_weather_sector,
+    get_weather_sectors,
+)
 from .primitive_trapping import (
     TrappingCalculationRequest,
     TrappingIntent,
@@ -20,6 +30,60 @@ from .trail_packing import (
     get_pack_routes,
     get_tack_checklist,
 )
+
+
+def mountain_weather_tool(
+    request: Optional[MountainWeatherRequest] = None,
+    action: Optional[str] = None,
+    sector_id: Optional[str] = None,
+    synoptic_level: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for high-altitude mountain weather routing and synoptic jet stream forecasting."""
+    if isinstance(request, MountainWeatherRequest):
+        return calculate_mountain_weather(request)
+
+    intent: Optional[MountainWeatherIntent] = kwargs.get("intent")
+    if intent is not None:
+        action = intent.action
+        sector_id = intent.sector_id or sector_id
+        synoptic_level = intent.synoptic_level or synoptic_level
+
+    baseline_wind_mph = kwargs.get("baseline_wind_mph", 20.0)
+    barometric_drop_hpa = kwargs.get("barometric_drop_hpa", 1.2)
+    jet_stream_offset_km = kwargs.get("jet_stream_offset_km", 150)
+    air_temp_f = kwargs.get("air_temp_f", 10.0)
+
+    if action in ("calculate_weather", "calculate"):
+        req = MountainWeatherRequest(
+            sector_id=sector_id or "denali-south-buttress",
+            baseline_wind_mph=baseline_wind_mph,
+            barometric_drop_hpa=barometric_drop_hpa,
+            jet_stream_offset_km=jet_stream_offset_km,
+            air_temp_f=air_temp_f,
+        )
+        return calculate_mountain_weather(req)
+
+    if action in ("gear_checklist", "gear"):
+        return get_weather_gear()
+
+    if action == "sector_detail" and sector_id:
+        return get_weather_sector(sector_id)
+
+    if action in ("sectors_list", "sectors") or synoptic_level:
+        return get_weather_sectors(synoptic_level=synoptic_level)
+
+    if "baseline_wind_mph" in kwargs or "barometric_drop_hpa" in kwargs:
+        req = MountainWeatherRequest(
+            sector_id=sector_id or "denali-south-buttress",
+            baseline_wind_mph=baseline_wind_mph,
+            barometric_drop_hpa=barometric_drop_hpa,
+            jet_stream_offset_km=jet_stream_offset_km,
+            air_temp_f=air_temp_f,
+        )
+        return calculate_mountain_weather(req)
+
+    return get_weather_sectors(synoptic_level=synoptic_level)
 
 
 def trail_packing_tool(
@@ -135,6 +199,7 @@ def primitive_trapping_tool(
 
 
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
+    "mountain_weather_tool": mountain_weather_tool,
     "primitive_trapping_tool": primitive_trapping_tool,
     "trail_packing_tool": trail_packing_tool,
 }
@@ -142,6 +207,8 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
 
 def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
     """Resolve and dispatch appropriate chat tool given an intent or question."""
+    if isinstance(intent, MountainWeatherIntent):
+        return format_mountain_weather_response(intent, query=question)
     if isinstance(intent, TrappingIntent):
         return format_primitive_trapping_response(intent, query=question)
     if isinstance(intent, TrailPackingIntent):
@@ -159,6 +226,16 @@ def create_response(request_or_question: Any, **kwargs: Any) -> dict[str, Any]:
         question = str(request_or_question)
         customer_id = kwargs.get("customer_id", "guest")
         chat_history = kwargs.get("chat_history", None)
+
+    mw_intent = detect_mountain_weather_intent(question)
+    if mw_intent:
+        formatted = resolve_tool(mw_intent, question=question)
+        return {
+            "answer": str(formatted),
+            "mountain_weather_info": formatted.get("mountain_weather_info"),
+            "customer_id": customer_id,
+            "chat_history": chat_history,
+        }
 
     trap_intent = detect_primitive_trapping_intent(question)
     if trap_intent:

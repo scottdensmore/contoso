@@ -323,6 +323,18 @@ from contoso_chat.leave_no_trace import (
     get_lnt_principles,
     get_wilderness_zones,
 )
+from contoso_chat.mountain_weather import (
+    MountainWeatherRequest,
+    MountainWeatherResponse,
+    WeatherGearItemModel,
+    WeatherSectorModel,
+    calculate_mountain_weather,
+    detect_mountain_weather_intent,
+    format_mountain_weather_response,
+    get_weather_gear,
+    get_weather_sector,
+    get_weather_sectors,
+)
 from contoso_chat.mountaineering import (
     GlacierGearRequirement,
     GlacierRouteModel,
@@ -1122,6 +1134,7 @@ async def create_response(request: ChatRequest):
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
             primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
+            mountain_weather_intent = detect_mountain_weather_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1562,6 +1575,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_trail_packing.get(
                     "answer", mock_payload["answer"]
                 )
+            if mountain_weather_intent:
+                formatted_mountain_weather = format_mountain_weather_response(
+                    mountain_weather_intent, request.question
+                )
+                mock_payload["mountain_weather_info"] = formatted_mountain_weather.get("mountain_weather_info")
+                mock_payload["answer"] = formatted_mountain_weather.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1740,6 +1761,7 @@ async def create_response_stream(request: ChatRequest):
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
                 primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
+                mountain_weather_intent = detect_mountain_weather_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2201,6 +2223,26 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': tp_payload, event_name: tp_payload})}\n\n"
                     if event_name != "trail_packing_info":
                         yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': tp_payload})}\n\n"
+                if mountain_weather_intent:
+                    formatted_mountain_weather = format_mountain_weather_response(
+                        mountain_weather_intent, request.question
+                    )
+                    mw_payload = formatted_mountain_weather.get("mountain_weather_info")
+                    action_to_event = {
+                        "sectors_list": "mountain_weather_sectors",
+                        "sectors": "mountain_weather_sectors",
+                        "sector_detail": "mountain_weather_sector_detail",
+                        "calculate_weather": "mountain_weather_calculation",
+                        "calculate": "mountain_weather_calculation",
+                        "gear_checklist": "mountain_weather_gear",
+                        "gear": "mountain_weather_gear",
+                    }
+                    event_name = action_to_event.get(
+                        mountain_weather_intent.action, "mountain_weather_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'mountain_weather_info': mw_payload, event_name: mw_payload})}\n\n"
+                    if event_name != "mountain_weather_info":
+                        yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mw_payload})}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2374,6 +2416,11 @@ async def create_response_stream(request: ChatRequest):
                         trail_packing_intent, request.question
                     )
                     mock_chunks = [str(formatted_trail_packing.get("answer", ""))]
+                elif mountain_weather_intent:
+                    formatted_mountain_weather = format_mountain_weather_response(
+                        mountain_weather_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_mountain_weather.get("answer", ""))]
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
                     mock_chunks = [str(formatted_mountaineering.get("answer", ""))]
@@ -5861,3 +5908,79 @@ async def calculate_primitive_trapping_endpoint(
 )
 async def get_primitive_trapping_gear_endpoint() -> list[TrappingSafetyItemModel]:
     return get_trapping_safety_gear()
+
+
+@app.get(
+    "/mountain-weather/sectors",
+    response_model=list[WeatherSectorModel],
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="List high-altitude mountain weather sectors with optional synoptic level filtering",
+)
+@app.get(
+    "/api/mountain-weather/sectors",
+    response_model=list[WeatherSectorModel],
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="List high-altitude mountain weather sectors with optional synoptic level filtering",
+)
+async def get_mountain_weather_sectors_endpoint(
+    synoptic_level: Optional[str] = None,
+) -> list[WeatherSectorModel]:
+    return get_weather_sectors(synoptic_level=synoptic_level)
+
+
+@app.get(
+    "/mountain-weather/sectors/{sector_id}",
+    response_model=WeatherSectorModel,
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="Get details for an iconic high-altitude mountain weather sector",
+)
+@app.get(
+    "/api/mountain-weather/sectors/{sector_id}",
+    response_model=WeatherSectorModel,
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="Get details for an iconic high-altitude mountain weather sector",
+)
+async def get_mountain_weather_sector_detail_endpoint(
+    sector_id: str,
+) -> WeatherSectorModel:
+    sector = get_weather_sector(sector_id)
+    if not sector:
+        raise HTTPException(status_code=404, detail=f"Mountain weather sector '{sector_id}' not found")
+    return sector
+
+
+@app.post(
+    "/mountain-weather/calculate",
+    response_model=MountainWeatherResponse,
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="Calculate summit venturi winds, wind chill, barometric trends, and summit window advisories",
+)
+@app.post(
+    "/api/mountain-weather/calculate",
+    response_model=MountainWeatherResponse,
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="Calculate summit venturi winds, wind chill, barometric trends, and summit window advisories",
+)
+async def calculate_mountain_weather_endpoint(
+    req: MountainWeatherRequest,
+) -> MountainWeatherResponse:
+    try:
+        return calculate_mountain_weather(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/mountain-weather/gear",
+    response_model=list[WeatherGearItemModel],
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="List mandatory high-altitude mountain weather and synoptic forecasting gear checklist items",
+)
+@app.get(
+    "/api/mountain-weather/gear",
+    response_model=list[WeatherGearItemModel],
+    tags=["High-Altitude Mountain Weather Routing & Synoptic Jet Stream Tooling"],
+    summary="List mandatory high-altitude mountain weather and synoptic forecasting gear checklist items",
+)
+async def get_mountain_weather_gear_endpoint() -> list[WeatherGearItemModel]:
+    return get_weather_gear()
