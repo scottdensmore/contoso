@@ -10,6 +10,16 @@ from .beachcombing import (
     get_beachcombing_site,
     get_beachcombing_sites,
 )
+from .fire_lookout import (
+    LookoutIntent,
+    LookoutRequest,
+    calculate_fire_lookout,
+    detect_fire_lookout_intent,
+    format_fire_lookout_response,
+    get_fire_lookout_gear,
+    get_fire_lookout_tower,
+    get_fire_lookout_towers,
+)
 from .gold_prospecting import (
     PlacerRequest,
     ProspectingIntent,
@@ -521,6 +531,35 @@ def gold_prospecting_tool(
 
 
 
+def fire_lookout_tool(
+    request: Optional[LookoutRequest] = None,
+    action: Optional[str] = None,
+    tower_id: Optional[str] = None,
+    tower_structure: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for backcountry fire lookout tower spotting and triangulation."""
+    if isinstance(request, LookoutRequest):
+        return calculate_fire_lookout(request)
+    intent = kwargs.get("intent")
+    if action in ("calculate_lookout", "calculate") or "azimuth_degrees" in kwargs:
+        req = LookoutRequest(
+            tower_id=tower_id or (intent.tower_id if intent else None) or "winchester-mountain-lookout",
+            azimuth_degrees=float(kwargs.get("azimuth_degrees", 45.0)),
+            vertical_angle_degrees=float(kwargs.get("vertical_angle_degrees", -1.5)),
+            estimated_distance_km=float(kwargs.get("estimated_distance_km", 15.0)),
+            smoke_behavior=str(kwargs.get("smoke_behavior", "dense_vertical_convection")),
+            wind_speed_mph=float(kwargs.get("wind_speed_mph", 12.0)),
+        )
+        return calculate_fire_lookout(req)
+    if action in ("gear_checklist", "gear"):
+        return get_fire_lookout_gear()
+    target_tower_id = tower_id or (intent.tower_id if intent else None)
+    if action == "tower_detail" and target_tower_id:
+        return get_fire_lookout_tower(target_tower_id)
+    return get_fire_lookout_towers(tower_structure=tower_structure or (intent.tower_structure if intent else None))
+
+
 def beachcombing_tool(
     request: Optional[BeachcombingRequest] = None,
     action: Optional[str] = None,
@@ -557,6 +596,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "snowshoe_mountaineering_tool": snowshoe_mountaineering_tool,
     "gold_prospecting_tool": gold_prospecting_tool,
     "beachcombing_tool": beachcombing_tool,
+    "fire_lookout_tool": fire_lookout_tool,
 }
 
 
@@ -580,6 +620,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_gold_prospecting_response(intent, query=question)
     if isinstance(intent, BeachcombingIntent):
         return format_beachcombing_response(intent, query=question)
+    if isinstance(intent, LookoutIntent):
+        return format_fire_lookout_response(intent, query=question)
     return None
 
 
@@ -647,6 +689,10 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
     if bc_intent:
         fmt = resolve_tool(bc_intent, question=question)
         return str(fmt), "beachcombing_info", fmt.get("beachcombing_info")
+    flo_intent = detect_fire_lookout_intent(question)
+    if flo_intent:
+        fmt = resolve_tool(flo_intent, question=question)
+        return str(fmt), "fire_lookout_info", fmt.get("fire_lookout_info")
 
     return None
 
