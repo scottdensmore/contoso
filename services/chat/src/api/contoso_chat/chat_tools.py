@@ -1,5 +1,15 @@
 from typing import Any, Callable, Optional
 
+from .beachcombing import (
+    BeachcombingIntent,
+    BeachcombingRequest,
+    calculate_beachcombing,
+    detect_beachcombing_intent,
+    format_beachcombing_response,
+    get_beachcombing_gear,
+    get_beachcombing_site,
+    get_beachcombing_sites,
+)
 from .gold_prospecting import (
     PlacerRequest,
     ProspectingIntent,
@@ -509,6 +519,34 @@ def gold_prospecting_tool(
     return get_prospecting_sites(deposit_type=deposit_type or (intent.deposit_type if intent else None))
 
 
+
+
+def beachcombing_tool(
+    request: Optional[BeachcombingRequest] = None,
+    action: Optional[str] = None,
+    site_id: Optional[str] = None,
+    shoreline_type: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for wilderness sea glass and coastal beachcombing foraging."""
+    if isinstance(request, BeachcombingRequest):
+        return calculate_beachcombing(request)
+    intent = kwargs.get("intent")
+    if action in ("calculate_beachcombing", "calculate") or "search_hours" in kwargs:
+        req = BeachcombingRequest(
+            site_id=site_id or (intent.site_id if intent else None) or "glass-beach-fort-bragg",
+            search_hours=float(kwargs.get("search_hours", 3.0)),
+            tidal_drop_m=float(kwargs.get("tidal_drop_m", 2.5)),
+            storm_surge_days_ago=int(kwargs.get("storm_surge_days_ago", 3)),
+            tumble_energy=str(kwargs.get("tumble_energy", "extreme_ocean_surf")),
+        )
+        return calculate_beachcombing(req)
+    if action in ("gear_checklist", "gear"):
+        return get_beachcombing_gear()
+    target_site_id = site_id or (intent.site_id if intent else None)
+    if action == "site_detail" and target_site_id:
+        return get_beachcombing_site(target_site_id)
+    return get_beachcombing_sites(shoreline_type=shoreline_type or (intent.shoreline_type if intent else None))
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_burro_tool": pack_burro_tool,
     "mountain_weather_tool": mountain_weather_tool,
@@ -518,6 +556,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "tree_climbing_tool": tree_climbing_tool,
     "snowshoe_mountaineering_tool": snowshoe_mountaineering_tool,
     "gold_prospecting_tool": gold_prospecting_tool,
+    "beachcombing_tool": beachcombing_tool,
 }
 
 
@@ -539,6 +578,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_snowshoe_response(intent, query=question)
     if isinstance(intent, ProspectingIntent):
         return format_gold_prospecting_response(intent, query=question)
+    if isinstance(intent, BeachcombingIntent):
+        return format_beachcombing_response(intent, query=question)
     return None
 
 
@@ -601,6 +642,11 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
     if tc_intent:
         fmt = resolve_tool(tc_intent, question=question)
         return str(fmt), "tree_climbing_info", fmt.get("tree_climbing_info")
+
+    bc_intent = detect_beachcombing_intent(question)
+    if bc_intent:
+        fmt = resolve_tool(bc_intent, question=question)
+        return str(fmt), "beachcombing_info", fmt.get("beachcombing_info")
 
     return None
 

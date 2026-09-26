@@ -1,4 +1,10 @@
+from contoso_chat.beachcombing import (
+    BeachcombingIntent,
+    BeachcombingRequest,
+    BeachcombingResponse,
+)
 from contoso_chat.chat_tools import (
+    beachcombing_tool,
     create_response,
     primitive_trapping_tool,
     resolve_tool,
@@ -169,3 +175,38 @@ def test_create_response_with_tree_climbing_intent():
     assert "tree_climbing_info" in resp
     assert resp["tree_climbing_info"]["grove_id"] == "redwood-canopy-prairie-creek"
     assert "Prairie Creek" in resp["answer"]
+
+
+def test_beachcombing_tool_calculation():
+    req = BeachcombingRequest(site_id="glass-beach-fort-bragg")
+    res = beachcombing_tool(req)
+    assert isinstance(res, BeachcombingResponse)
+    assert res.site_id == "glass-beach-fort-bragg"
+
+
+def test_beachcombing_tool_dict_args():
+    res = beachcombing_tool(action="sites_list", shoreline_type="gravel_pebble_cove")
+    assert isinstance(res, list)
+    assert len(res) == 2
+
+
+def test_beachcombing_tool_gear():
+    res = beachcombing_tool(action="gear_checklist")
+    assert isinstance(res, list)
+    assert len(res) == 6
+
+
+def test_resolve_tool_with_beachcombing_intent():
+    intent = BeachcombingIntent(action="sites_list", shoreline_type="barrier_island_sandspit")
+    result = resolve_tool(intent, question="Which barrier island sites are good for sea glass?")
+    assert result is not None
+    assert "beachcombing_info" in result
+    assert result["beachcombing_info"]["action"] == "sites_list"
+
+
+def test_create_response_with_beachcombing_intent():
+    resp = create_response("Tell me about Glass Beach Fort Bragg sea glass foraging")
+    assert resp is not None
+    assert "beachcombing_info" in resp
+    assert resp["beachcombing_info"]["site_id"] == "glass-beach-fort-bragg"
+    assert "Glass Beach" in resp["answer"]
