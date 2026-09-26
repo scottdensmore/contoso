@@ -112,6 +112,11 @@ from .glacier_navigation import (
     detect_glacier_intent,
     format_glacier_response,
 )
+from .gold_prospecting import (
+    build_gold_prospecting_prompt,
+    detect_gold_prospecting_intent,
+    format_gold_prospecting_response,
+)
 from .highline import (
     build_highline_prompt,
     extract_highline_intent,
@@ -657,6 +662,7 @@ async def generate_llm_response(
     tree_climbing_prompt: str = "",
     pack_burro_prompt: str = "",
     snowshoe_mountaineering_prompt: str = "",
+    gold_prospecting_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -1026,6 +1032,8 @@ async def generate_llm_response(
             prompt_parts.append(pack_burro_prompt)
         if snowshoe_mountaineering_prompt:
             prompt_parts.append(snowshoe_mountaineering_prompt)
+        if gold_prospecting_prompt:
+            prompt_parts.append(gold_prospecting_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1589,6 +1597,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
     primitive_trapping_intent = detect_primitive_trapping_intent(question)
+    gold_prospecting_intent = detect_gold_prospecting_intent(question)
+    gold_prospecting_prompt = ""
+    gold_prospecting_info_payload = None
+    if gold_prospecting_intent:
+        gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
+        formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
+        gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -1953,6 +1968,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["pack_burro_prompt"] = pack_burro_prompt
     if snowshoe_prompt:
         llm_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
+    if gold_prospecting_prompt:
+        llm_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2138,6 +2155,10 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["tree_climbing_info"] = tree_climbing_info_payload
     if pack_burro_intent and pack_burro_info_payload:
         response_payload["pack_burro_info"] = pack_burro_info_payload
+    if gold_prospecting_intent and gold_prospecting_info_payload:
+        response_payload["gold_prospecting_info"] = gold_prospecting_info_payload
+    if gold_prospecting_intent and gold_prospecting_info_payload:
+        response_payload["gold_prospecting_info"] = gold_prospecting_info_payload
 
     return response_payload
 
@@ -2973,6 +2994,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_steep_skiing = format_steep_skiing_response(steep_skiing_intent, question)
         steep_skiing_info_payload = formatted_steep_skiing.get("steep_skiing_info")
     primitive_trapping_intent = detect_primitive_trapping_intent(question)
+    gold_prospecting_intent = detect_gold_prospecting_intent(question)
+    gold_prospecting_prompt = ""
+    gold_prospecting_info_payload = None
+    if gold_prospecting_intent:
+        gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
+        formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
+        gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3598,6 +3626,34 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {pb_fallback}\n\n"
+    if gold_prospecting_intent and gold_prospecting_info_payload:
+        action_to_event = {
+            "sites_list": "gold_prospecting_sites",
+            "site_detail": "gold_prospecting_site_detail",
+            "calculate_placer": "gold_prospecting_calculation",
+            "calculate": "gold_prospecting_calculation",
+            "gear_checklist": "gold_prospecting_gear",
+            "gear": "gold_prospecting_gear",
+        }
+        event_name = action_to_event.get(
+            gold_prospecting_intent.action, "gold_prospecting_info"
+        )
+        gold_sse = json.dumps(
+            {
+                "event": event_name,
+                "gold_prospecting_info": gold_prospecting_info_payload,
+                event_name: gold_prospecting_info_payload,
+            }
+        )
+        yield f"data: {gold_sse}\n\n"
+        if event_name != "gold_prospecting_info":
+            gold_fallback = json.dumps(
+                {
+                    "event": "gold_prospecting_info",
+                    "gold_prospecting_info": gold_prospecting_info_payload,
+                }
+            )
+            yield f"data: {gold_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3758,6 +3814,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["pack_burro_prompt"] = pack_burro_prompt
     if snowshoe_prompt:
         stream_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
+    if gold_prospecting_prompt:
+        stream_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
 
     for chunk in generate_llm_response_stream(
         question,

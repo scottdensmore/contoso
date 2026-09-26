@@ -260,6 +260,18 @@ from contoso_chat.glacier_navigation import (
 from contoso_chat.glacier_navigation import (
     get_glacier_gear as get_glacier_navigation_gear,
 )
+from contoso_chat.gold_prospecting import (
+    PlacerRequest,
+    PlacerResponse,
+    ProspectingGearItemModel,
+    ProspectingSiteModel,
+    calculate_placer_recovery,
+    detect_gold_prospecting_intent,
+    format_gold_prospecting_response,
+    get_prospecting_gear,
+    get_prospecting_site,
+    get_prospecting_sites,
+)
 from contoso_chat.highline import (
     HighlineGearRequirement,
     HighlineSpanModel,
@@ -1181,6 +1193,7 @@ async def create_response(request: ChatRequest):
             river_rafting_intent = detect_river_rafting_intent(request.question)
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
             primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
+            gold_prospecting_intent = detect_gold_prospecting_intent(request.question)
             snowshoe_intent = detect_snowshoe_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
@@ -1619,6 +1632,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_primitive_trapping.get(
                     "answer", mock_payload["answer"]
                 )
+            if gold_prospecting_intent:
+                formatted_prospecting = format_gold_prospecting_response(
+                    gold_prospecting_intent, request.question
+                )
+                mock_payload["gold_prospecting_info"] = formatted_prospecting.get("gold_prospecting_info")
+                mock_payload["answer"] = formatted_prospecting.get(
+                    "answer", mock_payload["answer"]
+                )
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(
                     snowshoe_intent, request.question
@@ -1852,6 +1873,7 @@ async def create_response_stream(request: ChatRequest):
                 river_rafting_intent = detect_river_rafting_intent(request.question)
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
                 primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
+                gold_prospecting_intent = detect_gold_prospecting_intent(request.question)
                 snowshoe_intent = detect_snowshoe_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
@@ -2300,6 +2322,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': trap_payload, event_name: trap_payload})}\n\n"
                     if event_name != "primitive_trapping_info":
                         yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': trap_payload})}\n\n"
+                if gold_prospecting_intent:
+                    formatted_prospecting = format_gold_prospecting_response(
+                        gold_prospecting_intent, request.question
+                    )
+                    gold_payload = formatted_prospecting.get("gold_prospecting_info")
+                    action_to_event = {
+                        "sites_list": "gold_prospecting_sites",
+                        "site_detail": "gold_prospecting_site_detail",
+                        "calculate_placer": "gold_prospecting_calculation",
+                        "calculate": "gold_prospecting_calculation",
+                        "gear_checklist": "gold_prospecting_gear",
+                        "gear": "gold_prospecting_gear",
+                    }
+                    event_name = action_to_event.get(
+                        gold_prospecting_intent.action, "gold_prospecting_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'gold_prospecting_info': gold_payload, event_name: gold_payload})}\n\n"
+                    if event_name != "gold_prospecting_info":
+                        yield f"data: {json.dumps({'event': 'gold_prospecting_info', 'gold_prospecting_info': gold_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -2624,6 +2665,11 @@ async def create_response_stream(request: ChatRequest):
                         primitive_trapping_intent, request.question
                     )
                     mock_chunks = [str(formatted_primitive_trapping.get("answer", ""))]
+                elif gold_prospecting_intent:
+                    formatted_prospecting = format_gold_prospecting_response(
+                        gold_prospecting_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_prospecting.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -6541,3 +6587,81 @@ async def calculate_snowshoe_endpoint(
 )
 async def get_snowshoe_gear_endpoint() -> list[SnowshoeGearItemModel]:
     return get_snowshoe_gear()
+
+
+@app.get(
+    "/gold-prospecting/sites",
+    response_model=list[ProspectingSiteModel],
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="List placer mineral prospecting sites with optional deposit type filtering",
+)
+@app.get(
+    "/api/gold-prospecting/sites",
+    response_model=list[ProspectingSiteModel],
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="List placer mineral prospecting sites with optional deposit type filtering",
+)
+async def get_gold_prospecting_sites_endpoint(
+    deposit_type: Optional[str] = None,
+) -> list[ProspectingSiteModel]:
+    return get_prospecting_sites(deposit_type=deposit_type)
+
+
+@app.get(
+    "/gold-prospecting/sites/{site_id}",
+    response_model=ProspectingSiteModel,
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="Get details for a placer mineral prospecting site",
+)
+@app.get(
+    "/api/gold-prospecting/sites/{site_id}",
+    response_model=ProspectingSiteModel,
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="Get details for a placer mineral prospecting site",
+)
+async def get_gold_prospecting_site_detail_endpoint(
+    site_id: str,
+) -> ProspectingSiteModel:
+    site = get_prospecting_site(site_id)
+    if not site:
+        raise HTTPException(
+            status_code=404, detail=f"Prospecting site '{site_id}' not found"
+        )
+    return site
+
+
+@app.post(
+    "/gold-prospecting/calculate",
+    response_model=PlacerResponse,
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="Calculate placer recovery concentrate, sluice status, efficiency, and separation ratio",
+)
+@app.post(
+    "/api/gold-prospecting/calculate",
+    response_model=PlacerResponse,
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="Calculate placer recovery concentrate, sluice status, efficiency, and separation ratio",
+)
+async def calculate_gold_prospecting_endpoint(
+    req: PlacerRequest,
+) -> PlacerResponse:
+    try:
+        return calculate_placer_recovery(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/gold-prospecting/gear",
+    response_model=list[ProspectingGearItemModel],
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="List mandatory wilderness gold prospecting gear items",
+)
+@app.get(
+    "/api/gold-prospecting/gear",
+    response_model=list[ProspectingGearItemModel],
+    tags=["Wilderness Gold Panning & Placer Mineral Prospecting Tooling"],
+    summary="List mandatory wilderness gold prospecting gear items",
+)
+async def get_gold_prospecting_gear_endpoint() -> list[ProspectingGearItemModel]:
+    return get_prospecting_gear()
