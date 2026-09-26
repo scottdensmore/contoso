@@ -50,6 +50,12 @@ from .pack_burro import (
     get_pack_burro_course,
     get_pack_burro_courses,
 )
+from .pack_goat import (
+    PackGoatIntent,
+    detect_pack_goat_intent,
+    format_pack_goat_response,
+    pack_goat_tool,
+)
 from .primitive_trapping import (
     TrappingCalculationRequest,
     TrappingIntent,
@@ -143,9 +149,7 @@ def mountain_weather_tool(
         return calculate_mountain_weather(request)
 
     intent: Optional[MountainWeatherIntent] = kwargs.get("intent")
-    action, sector_id, synoptic_level = _resolve_mw_args(
-        intent, action, sector_id, synoptic_level
-    )
+    action, sector_id, synoptic_level = _resolve_mw_args(intent, action, sector_id, synoptic_level)
 
     if action == "calculate_weather" or "baseline_wind_mph" in kwargs:
         req = _build_weather_req(sector_id, kwargs)
@@ -199,9 +203,7 @@ def trail_packing_tool(
         return calculate_trail_packing(request)
 
     intent: Optional[TrailPackingIntent] = kwargs.get("intent")
-    action, route_id, saddle_type = _resolve_tp_args(
-        intent, action, route_id, saddle_type
-    )
+    action, route_id, saddle_type = _resolve_tp_args(intent, action, route_id, saddle_type)
 
     if action == "calculate_packing" or "left_pannier_lbs" in kwargs:
         return calculate_trail_packing(_build_packing_req(route_id, kwargs))
@@ -253,9 +255,7 @@ def primitive_trapping_tool(
         return calculate_primitive_trapping(request)
 
     intent: Optional[TrappingIntent] = kwargs.get("intent")
-    action, mechanism_id, category = _resolve_pt_args(
-        intent, action, mechanism_id, category
-    )
+    action, mechanism_id, category = _resolve_pt_args(intent, action, mechanism_id, category)
 
     if action == "calculate_trapping" or "deadfall_weight_lbs" in kwargs:
         req = _build_trapping_req(mechanism_id, kwargs)
@@ -309,9 +309,7 @@ def wild_ice_tool(
         return calculate_wild_ice(request)
 
     intent: Optional[WildIceIntent] = kwargs.get("intent")
-    action, venue_id, ice_type = _resolve_wi_args(
-        intent, action, venue_id, ice_type
-    )
+    action, venue_id, ice_type = _resolve_wi_args(intent, action, venue_id, ice_type)
 
     if action == "calculate_ice" or "thickness_cm" in kwargs:
         req = _build_wild_ice_req(venue_id, ice_type, kwargs)
@@ -365,9 +363,7 @@ def tree_climbing_tool(
         return calculate_tree_climbing(request)
 
     intent: Optional[TreeClimbingIntent] = kwargs.get("intent")
-    action, grove_id, climbing_system = _resolve_tc_args(
-        intent, action, grove_id, climbing_system
-    )
+    action, grove_id, climbing_system = _resolve_tc_args(intent, action, grove_id, climbing_system)
 
     if (
         action == "calculate_tree_climbing"
@@ -425,9 +421,7 @@ def pack_burro_tool(
         return calculate_pack_burro(request)
 
     intent: Optional[PackBurroIntent] = kwargs.get("intent")
-    action, course_id, burro_type = _resolve_pb_args(
-        intent, action, course_id, burro_type
-    )
+    action, course_id, burro_type = _resolve_pb_args(intent, action, course_id, burro_type)
 
     if (
         action == "calculate_packing"
@@ -484,15 +478,9 @@ def snowshoe_mountaineering_tool(
         return calculate_snowshoe_ascent(request)
 
     intent: Optional[SnowshoeIntent] = kwargs.get("intent")
-    action, route_id, technical_grade = _resolve_sm_args(
-        intent, action, route_id, technical_grade
-    )
+    action, route_id, technical_grade = _resolve_sm_args(intent, action, route_id, technical_grade)
 
-    if (
-        action == "calculate_snowshoe"
-        or "payload_lbs" in kwargs
-        or "slope_angle_deg" in kwargs
-    ):
+    if action == "calculate_snowshoe" or "payload_lbs" in kwargs or "slope_angle_deg" in kwargs:
         req = _build_snowshoe_req(route_id, kwargs)
         return calculate_snowshoe_ascent(req)
     if action == "gear_checklist":
@@ -526,9 +514,9 @@ def gold_prospecting_tool(
     target_site_id = site_id or (intent.site_id if intent else None)
     if action == "site_detail" and target_site_id:
         return get_prospecting_site(target_site_id)
-    return get_prospecting_sites(deposit_type=deposit_type or (intent.deposit_type if intent else None))
-
-
+    return get_prospecting_sites(
+        deposit_type=deposit_type or (intent.deposit_type if intent else None)
+    )
 
 
 def fire_lookout_tool(
@@ -544,7 +532,9 @@ def fire_lookout_tool(
     intent = kwargs.get("intent")
     if action in ("calculate_lookout", "calculate") or "azimuth_degrees" in kwargs:
         req = LookoutRequest(
-            tower_id=tower_id or (intent.tower_id if intent else None) or "winchester-mountain-lookout",
+            tower_id=tower_id
+            or (intent.tower_id if intent else None)
+            or "winchester-mountain-lookout",
             azimuth_degrees=float(kwargs.get("azimuth_degrees", 45.0)),
             vertical_angle_degrees=float(kwargs.get("vertical_angle_degrees", -1.5)),
             estimated_distance_km=float(kwargs.get("estimated_distance_km", 15.0)),
@@ -557,7 +547,9 @@ def fire_lookout_tool(
     target_tower_id = tower_id or (intent.tower_id if intent else None)
     if action == "tower_detail" and target_tower_id:
         return get_fire_lookout_tower(target_tower_id)
-    return get_fire_lookout_towers(tower_structure=tower_structure or (intent.tower_structure if intent else None))
+    return get_fire_lookout_towers(
+        tower_structure=tower_structure or (intent.tower_structure if intent else None)
+    )
 
 
 def beachcombing_tool(
@@ -585,7 +577,11 @@ def beachcombing_tool(
     target_site_id = site_id or (intent.site_id if intent else None)
     if action == "site_detail" and target_site_id:
         return get_beachcombing_site(target_site_id)
-    return get_beachcombing_sites(shoreline_type=shoreline_type or (intent.shoreline_type if intent else None))
+    return get_beachcombing_sites(
+        shoreline_type=shoreline_type or (intent.shoreline_type if intent else None)
+    )
+
+
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_burro_tool": pack_burro_tool,
     "mountain_weather_tool": mountain_weather_tool,
@@ -597,6 +593,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "gold_prospecting_tool": gold_prospecting_tool,
     "beachcombing_tool": beachcombing_tool,
     "fire_lookout_tool": fire_lookout_tool,
+    "pack_goat_tool": pack_goat_tool,
 }
 
 
@@ -622,6 +619,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_beachcombing_response(intent, query=question)
     if isinstance(intent, LookoutIntent):
         return format_fire_lookout_response(intent, query=question)
+    if isinstance(intent, PackGoatIntent):
+        return format_pack_goat_response(intent, req=question)
     return None
 
 
@@ -641,6 +640,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    pg_intent = detect_pack_goat_intent(question)
+    if pg_intent:
+        fmt = resolve_tool(pg_intent, question=question)
+        return str(fmt), "pack_goat_info", fmt.get("pack_goat_info")
+
     sm_intent = detect_snowshoe_intent(question)
     if sm_intent:
         fmt = resolve_tool(sm_intent, question=question)
@@ -659,16 +663,12 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
     mw_intent = detect_mountain_weather_intent(question)
     if mw_intent:
         fmt = resolve_tool(mw_intent, question=question)
-        return str(fmt), "mountain_weather_info", fmt.get(
-            "mountain_weather_info"
-        )
+        return str(fmt), "mountain_weather_info", fmt.get("mountain_weather_info")
 
     trap_intent = detect_primitive_trapping_intent(question)
     if trap_intent:
         fmt = resolve_tool(trap_intent, question=question)
-        return str(fmt), "primitive_trapping_info", fmt.get(
-            "primitive_trapping_info"
-        )
+        return str(fmt), "primitive_trapping_info", fmt.get("primitive_trapping_info")
 
     tp_intent = detect_trail_packing_intent(question)
     if tp_intent:
@@ -699,9 +699,7 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
 
 def create_response(request_or_question: Any, **kwargs: Any) -> dict[str, Any]:
     """Create a response invoking registered chat tooling when appropriate."""
-    question, customer_id, chat_history = _extract_request_context(
-        request_or_question, **kwargs
-    )
+    question, customer_id, chat_history = _extract_request_context(request_or_question, **kwargs)
     result = _dispatch_tool(question)
     if result:
         ans, key, info = result

@@ -420,6 +420,10 @@ from contoso_chat.pack_burro import (
     get_pack_burro_course,
     get_pack_burro_courses,
 )
+from contoso_chat.pack_goat import (
+    detect_pack_goat_intent,
+    format_pack_goat_response,
+)
 from contoso_chat.packrafting import (
     PackraftGearRequirement,
     PackraftPlanRequest,
@@ -541,6 +545,7 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routes import (
     RouteExportRequest,
     RouteExportResponse,
@@ -930,6 +935,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Contoso Chat", version="1.0.0")
+app.include_router(pack_goat_router)
 
 
 # Middleware for request logging
@@ -1044,6 +1050,8 @@ async def check_database_connection() -> tuple[bool, str | None]:
         return False, str(exc)
 
 
+@app.get("/api/status")
+@app.get("/status")
 @app.get("/api/chat/status")
 async def get_chat_status() -> dict[str, Any]:
     logger.info("Chat status diagnostics endpoint accessed")
@@ -1226,6 +1234,7 @@ async def create_response(request: ChatRequest):
             pack_burro_intent = detect_pack_burro_intent(request.question)
             beachcombing_intent = detect_beachcombing_intent(request.question)
             fire_lookout_intent = detect_fire_lookout_intent(request.question)
+            pack_goat_intent = detect_pack_goat_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1654,7 +1663,9 @@ async def create_response(request: ChatRequest):
                 formatted_primitive_trapping = format_primitive_trapping_response(
                     primitive_trapping_intent, request.question
                 )
-                mock_payload["primitive_trapping_info"] = formatted_primitive_trapping.get("primitive_trapping_info")
+                mock_payload["primitive_trapping_info"] = formatted_primitive_trapping.get(
+                    "primitive_trapping_info"
+                )
                 mock_payload["answer"] = formatted_primitive_trapping.get(
                     "answer", mock_payload["answer"]
                 )
@@ -1662,10 +1673,10 @@ async def create_response(request: ChatRequest):
                 formatted_prospecting = format_gold_prospecting_response(
                     gold_prospecting_intent, request.question
                 )
-                mock_payload["gold_prospecting_info"] = formatted_prospecting.get("gold_prospecting_info")
-                mock_payload["answer"] = formatted_prospecting.get(
-                    "answer", mock_payload["answer"]
+                mock_payload["gold_prospecting_info"] = formatted_prospecting.get(
+                    "gold_prospecting_info"
                 )
+                mock_payload["answer"] = formatted_prospecting.get("answer", mock_payload["answer"])
             if beachcombing_intent:
                 formatted_beachcombing = format_beachcombing_response(
                     beachcombing_intent, request.question
@@ -1679,24 +1690,24 @@ async def create_response(request: ChatRequest):
                     fire_lookout_intent, request.question
                 )
                 mock_payload["fire_lookout_info"] = formatted_lookout.get("fire_lookout_info")
-                mock_payload["answer"] = formatted_lookout.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_lookout.get("answer", mock_payload["answer"])
+            if pack_goat_intent:
+                formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
+                mock_payload["pack_goat_info"] = formatted_goat.get("pack_goat_info")
+                mock_payload["answer"] = formatted_goat.get("answer", mock_payload["answer"])
             if snowshoe_intent:
-                formatted_snowshoe = format_snowshoe_response(
-                    snowshoe_intent, request.question
-                )
+                formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                 mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
                     "snowshoe_mountaineering_info"
                 )
-                mock_payload["answer"] = formatted_snowshoe.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_snowshoe.get("answer", mock_payload["answer"])
             if trail_packing_intent:
                 formatted_trail_packing = format_trail_packing_response(
                     trail_packing_intent, request.question
                 )
-                mock_payload["trail_packing_info"] = formatted_trail_packing.get("trail_packing_info")
+                mock_payload["trail_packing_info"] = formatted_trail_packing.get(
+                    "trail_packing_info"
+                )
                 mock_payload["answer"] = formatted_trail_packing.get(
                     "answer", mock_payload["answer"]
                 )
@@ -1704,20 +1715,16 @@ async def create_response(request: ChatRequest):
                 formatted_mountain_weather = format_mountain_weather_response(
                     mountain_weather_intent, request.question
                 )
-                mock_payload["mountain_weather_info"] = formatted_mountain_weather.get("mountain_weather_info")
+                mock_payload["mountain_weather_info"] = formatted_mountain_weather.get(
+                    "mountain_weather_info"
+                )
                 mock_payload["answer"] = formatted_mountain_weather.get(
                     "answer", mock_payload["answer"]
                 )
             if wild_ice_intent:
-                formatted_wild_ice = format_wild_ice_response(
-                    wild_ice_intent, request.question
-                )
-                mock_payload["wild_ice_info"] = formatted_wild_ice.get(
-                    "wild_ice_info"
-                )
-                mock_payload["answer"] = formatted_wild_ice.get(
-                    "answer", mock_payload["answer"]
-                )
+                formatted_wild_ice = format_wild_ice_response(wild_ice_intent, request.question)
+                mock_payload["wild_ice_info"] = formatted_wild_ice.get("wild_ice_info")
+                mock_payload["answer"] = formatted_wild_ice.get("answer", mock_payload["answer"])
             if tree_climbing_intent:
                 formatted_tree_climbing = format_tree_climbing_response(
                     tree_climbing_intent, request.question
@@ -1732,12 +1739,8 @@ async def create_response(request: ChatRequest):
                 formatted_pack_burro = format_pack_burro_response(
                     pack_burro_intent, request.question
                 )
-                mock_payload["pack_burro_info"] = formatted_pack_burro.get(
-                    "pack_burro_info"
-                )
-                mock_payload["answer"] = formatted_pack_burro.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["pack_burro_info"] = formatted_pack_burro.get("pack_burro_info")
+                mock_payload["answer"] = formatted_pack_burro.get("answer", mock_payload["answer"])
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1924,6 +1927,7 @@ async def create_response_stream(request: ChatRequest):
                 pack_burro_intent = detect_pack_burro_intent(request.question)
                 beachcombing_intent = detect_beachcombing_intent(request.question)
                 fire_lookout_intent = detect_fire_lookout_intent(request.question)
+                pack_goat_intent = detect_pack_goat_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2423,10 +2427,23 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'fire_lookout_info': lookout_payload, event_name: lookout_payload})}\n\n"
                     if event_name != "fire_lookout_info":
                         yield f"data: {json.dumps({'event': 'fire_lookout_info', 'fire_lookout_info': lookout_payload})}\n\n"
+                if pack_goat_intent:
+                    formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
+                    goat_payload = formatted_goat.get("pack_goat_info")
+                    action_to_event = {
+                        "routes_list": "pack_goat_lookup",
+                        "route_detail": "pack_goat_lookup",
+                        "calculate_packing": "pack_goat_calculated",
+                        "calculate": "pack_goat_calculated",
+                        "gear_checklist": "pack_goat_lookup",
+                        "gear": "pack_goat_lookup",
+                    }
+                    event_name = action_to_event.get(pack_goat_intent.action, "pack_goat_lookup")
+                    yield f"data: {json.dumps({'event': event_name, 'pack_goat_info': goat_payload, event_name: goat_payload})}\n\n"
+                    if event_name != "pack_goat_info":
+                        yield f"data: {json.dumps({'event': 'pack_goat_info', 'pack_goat_info': goat_payload})}\n\n"
                 if snowshoe_intent:
-                    formatted_snowshoe = format_snowshoe_response(
-                        snowshoe_intent, request.question
-                    )
+                    formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
                     action_to_event = {
                         "routes_list": "snowshoe_mountaineering_routes",
@@ -2482,9 +2499,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "mountain_weather_info":
                         yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mw_payload})}\n\n"
                 if wild_ice_intent:
-                    formatted_wild_ice = format_wild_ice_response(
-                        wild_ice_intent, request.question
-                    )
+                    formatted_wild_ice = format_wild_ice_response(wild_ice_intent, request.question)
                     wi_payload = formatted_wild_ice.get("wild_ice_info")
                     action_to_event = {
                         "venues_list": "wild_ice_venues",
@@ -2495,9 +2510,7 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "wild_ice_gear",
                         "gear": "wild_ice_gear",
                     }
-                    event_name = action_to_event.get(
-                        wild_ice_intent.action, "wild_ice_info"
-                    )
+                    event_name = action_to_event.get(wild_ice_intent.action, "wild_ice_info")
                     wi_sse = json.dumps(
                         {
                             "event": event_name,
@@ -2560,9 +2573,7 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "pack_burro_gear",
                         "gear": "pack_burro_gear",
                     }
-                    event_name = action_to_event.get(
-                        pack_burro_intent.action, "pack_burro_info"
-                    )
+                    event_name = action_to_event.get(pack_burro_intent.action, "pack_burro_info")
                     pb_sse = json.dumps(
                         {
                             "event": event_name,
@@ -2762,10 +2773,11 @@ async def create_response_stream(request: ChatRequest):
                         fire_lookout_intent, request.question
                     )
                     mock_chunks = [str(formatted_lookout.get("answer", ""))]
+                elif pack_goat_intent:
+                    formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
+                    mock_chunks = [str(formatted_goat.get("answer", ""))]
                 elif snowshoe_intent:
-                    formatted_snowshoe = format_snowshoe_response(
-                        snowshoe_intent, request.question
-                    )
+                    formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     mock_chunks = [str(formatted_snowshoe.get("answer", ""))]
                 elif trail_packing_intent:
                     formatted_trail_packing = format_trail_packing_response(
@@ -2778,9 +2790,7 @@ async def create_response_stream(request: ChatRequest):
                     )
                     mock_chunks = [str(formatted_mountain_weather.get("answer", ""))]
                 elif wild_ice_intent:
-                    formatted_wild_ice = format_wild_ice_response(
-                        wild_ice_intent, request.question
-                    )
+                    formatted_wild_ice = format_wild_ice_response(wild_ice_intent, request.question)
                     mock_chunks = [str(formatted_wild_ice.get("answer", ""))]
                 elif tree_climbing_intent:
                     formatted_tree_climbing = format_tree_climbing_response(
@@ -6317,7 +6327,9 @@ async def get_mountain_weather_sector_detail_endpoint(
 ) -> WeatherSectorModel:
     sector = get_weather_sector(sector_id)
     if not sector:
-        raise HTTPException(status_code=404, detail=f"Mountain weather sector '{sector_id}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Mountain weather sector '{sector_id}' not found"
+        )
     return sector
 
 
@@ -6405,8 +6417,7 @@ async def get_wild_ice_venue_detail_endpoint(
     response_model=WildIceResponse,
     tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
     summary=(
-        "Calculate ice bearing capacity (Gold's formula), acoustic resonance,"
-        " and safety status"
+        "Calculate ice bearing capacity (Gold's formula), acoustic resonance, and safety status"
     ),
 )
 @app.post(
@@ -6414,8 +6425,7 @@ async def get_wild_ice_venue_detail_endpoint(
     response_model=WildIceResponse,
     tags=["Backcountry Nordic Speedskating & Wild Ice Tooling"],
     summary=(
-        "Calculate ice bearing capacity (Gold's formula), acoustic resonance,"
-        " and safety status"
+        "Calculate ice bearing capacity (Gold's formula), acoustic resonance, and safety status"
     ),
 )
 async def calculate_wild_ice_endpoint(
@@ -6489,17 +6499,13 @@ async def get_canopy_grove_detail_endpoint(
     "/tree-climbing/calculate",
     response_model=TreeClimbingResponse,
     tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
-    summary=(
-        "Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"
-    ),
+    summary=("Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"),
 )
 @app.post(
     "/api/tree-climbing/calculate",
     response_model=TreeClimbingResponse,
     tags=["Backcountry Tree Climbing & Arboreal Canopy Tooling"],
-    summary=(
-        "Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"
-    ),
+    summary=("Calculate tree climbing peak fork loads, limb safety ratios, and arborist advisory"),
 )
 async def calculate_tree_climbing_endpoint(
     req: TreeClimbingRequest,
@@ -6716,9 +6722,7 @@ async def get_gold_prospecting_site_detail_endpoint(
 ) -> ProspectingSiteModel:
     site = get_prospecting_site(site_id)
     if not site:
-        raise HTTPException(
-            status_code=404, detail=f"Prospecting site '{site_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Prospecting site '{site_id}' not found")
     return site
 
 
@@ -6794,9 +6798,7 @@ async def get_beachcombing_site_detail_endpoint(
 ) -> BeachcombingSiteModel:
     site = get_beachcombing_site(site_id)
     if not site:
-        raise HTTPException(
-            status_code=404, detail=f"Beachcombing site '{site_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Beachcombing site '{site_id}' not found")
     return site
 
 
@@ -6872,9 +6874,7 @@ async def get_fire_lookout_tower_detail_endpoint(
 ) -> FireLookoutTowerModel:
     tower = get_fire_lookout_tower(tower_id)
     if not tower:
-        raise HTTPException(
-            status_code=404, detail=f"Fire lookout tower '{tower_id}' not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Fire lookout tower '{tower_id}' not found")
     return tower
 
 
