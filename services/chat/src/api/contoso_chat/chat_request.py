@@ -92,6 +92,11 @@ from .field_reports import (
     detect_field_reports_intent,
     format_field_reports_response,
 )
+from .fire_lookout import (
+    build_fire_lookout_prompt,
+    detect_fire_lookout_intent,
+    format_fire_lookout_response,
+)
 from .fire_safety import (
     build_fire_safety_prompt,
     detect_fire_safety_intent,
@@ -669,6 +674,7 @@ async def generate_llm_response(
     snowshoe_mountaineering_prompt: str = "",
     gold_prospecting_prompt: str = "",
     beachcombing_prompt: str = "",
+    fire_lookout_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -859,6 +865,10 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{tree_climbing_prompt}"
         if beachcombing_prompt:
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
+        if fire_lookout_prompt:
+            local_system = f"{local_system}\n\n{fire_lookout_prompt}"
+        if fire_lookout_prompt:
+            local_system = f"{local_system}\n\n{fire_lookout_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1044,6 +1054,10 @@ async def generate_llm_response(
             prompt_parts.append(gold_prospecting_prompt)
         if beachcombing_prompt:
             prompt_parts.append(beachcombing_prompt)
+        if fire_lookout_prompt:
+            prompt_parts.append(fire_lookout_prompt)
+        if fire_lookout_prompt:
+            prompt_parts.append(fire_lookout_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1621,6 +1635,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         beachcombing_prompt = build_beachcombing_prompt(beachcombing_intent)
         formatted_beachcombing = format_beachcombing_response(beachcombing_intent, question)
         beachcombing_info_payload = formatted_beachcombing.get("beachcombing_info")
+    fire_lookout_intent = detect_fire_lookout_intent(question)
+    fire_lookout_prompt = ""
+    fire_lookout_info_payload = None
+    if fire_lookout_intent:
+        fire_lookout_prompt = build_fire_lookout_prompt(fire_lookout_intent)
+        formatted_fire_lookout = format_fire_lookout_response(fire_lookout_intent, question)
+        fire_lookout_info_payload = formatted_fire_lookout.get("fire_lookout_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -1989,6 +2010,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
     if beachcombing_prompt:
         llm_kwargs["beachcombing_prompt"] = beachcombing_prompt
+    if fire_lookout_prompt:
+        llm_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2178,6 +2201,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["gold_prospecting_info"] = gold_prospecting_info_payload
     if beachcombing_intent and beachcombing_info_payload:
         response_payload["beachcombing_info"] = beachcombing_info_payload
+    if fire_lookout_intent and fire_lookout_info_payload:
+        response_payload["fire_lookout_info"] = fire_lookout_info_payload
 
     return response_payload
 
@@ -2267,6 +2292,7 @@ def generate_llm_response_stream(
     pack_burro_prompt: str = "",
     snowshoe_mountaineering_prompt: str = "",
     beachcombing_prompt: str = "",
+    fire_lookout_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -3032,6 +3058,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         beachcombing_prompt = build_beachcombing_prompt(beachcombing_intent)
         formatted_beachcombing = format_beachcombing_response(beachcombing_intent, question)
         beachcombing_info_payload = formatted_beachcombing.get("beachcombing_info")
+    fire_lookout_intent = detect_fire_lookout_intent(question)
+    fire_lookout_prompt = ""
+    fire_lookout_info_payload = None
+    if fire_lookout_intent:
+        fire_lookout_prompt = build_fire_lookout_prompt(fire_lookout_intent)
+        formatted_fire_lookout = format_fire_lookout_response(fire_lookout_intent, question)
+        fire_lookout_info_payload = formatted_fire_lookout.get("fire_lookout_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3713,6 +3746,34 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {beach_fallback}\n\n"
+    if fire_lookout_intent and fire_lookout_info_payload:
+        action_to_event = {
+            "towers_list": "fire_lookout_towers",
+            "tower_detail": "fire_lookout_tower_detail",
+            "calculate_lookout": "fire_lookout_calculation",
+            "calculate": "fire_lookout_calculation",
+            "gear_checklist": "fire_lookout_gear",
+            "gear": "fire_lookout_gear",
+        }
+        event_name = action_to_event.get(
+            fire_lookout_intent.action, "fire_lookout_info"
+        )
+        fire_sse = json.dumps(
+            {
+                "event": event_name,
+                "fire_lookout_info": fire_lookout_info_payload,
+                event_name: fire_lookout_info_payload,
+            }
+        )
+        yield f"data: {fire_sse}\n\n"
+        if event_name != "fire_lookout_info":
+            fire_fallback = json.dumps(
+                {
+                    "event": "fire_lookout_info",
+                    "fire_lookout_info": fire_lookout_info_payload,
+                }
+            )
+            yield f"data: {fire_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3877,6 +3938,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
     if beachcombing_prompt:
         stream_kwargs["beachcombing_prompt"] = beachcombing_prompt
+    if fire_lookout_prompt:
+        stream_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
 
     for chunk in generate_llm_response_stream(
         question,

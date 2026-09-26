@@ -205,6 +205,18 @@ from contoso_chat.field_reports import (
     get_field_reports,
     get_hazard_alerts,
 )
+from contoso_chat.fire_lookout import (
+    FireLookoutTowerModel,
+    LookoutGearItemModel,
+    LookoutRequest,
+    LookoutResponse,
+    calculate_fire_lookout,
+    detect_fire_lookout_intent,
+    format_fire_lookout_response,
+    get_fire_lookout_gear,
+    get_fire_lookout_tower,
+    get_fire_lookout_towers,
+)
 from contoso_chat.fire_safety import (
     FireReportRequest,
     FireReportResponse,
@@ -1213,6 +1225,7 @@ async def create_response(request: ChatRequest):
             tree_climbing_intent = detect_tree_climbing_intent(request.question)
             pack_burro_intent = detect_pack_burro_intent(request.question)
             beachcombing_intent = detect_beachcombing_intent(request.question)
+            fire_lookout_intent = detect_fire_lookout_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1661,6 +1674,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_beachcombing.get(
                     "answer", mock_payload["answer"]
                 )
+            if fire_lookout_intent:
+                formatted_lookout = format_fire_lookout_response(
+                    fire_lookout_intent, request.question
+                )
+                mock_payload["fire_lookout_info"] = formatted_lookout.get("fire_lookout_info")
+                mock_payload["answer"] = formatted_lookout.get(
+                    "answer", mock_payload["answer"]
+                )
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(
                     snowshoe_intent, request.question
@@ -1902,6 +1923,7 @@ async def create_response_stream(request: ChatRequest):
                 tree_climbing_intent = detect_tree_climbing_intent(request.question)
                 pack_burro_intent = detect_pack_burro_intent(request.question)
                 beachcombing_intent = detect_beachcombing_intent(request.question)
+                fire_lookout_intent = detect_fire_lookout_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2382,6 +2404,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'beachcombing_info': beach_payload, event_name: beach_payload})}\n\n"
                     if event_name != "beachcombing_info":
                         yield f"data: {json.dumps({'event': 'beachcombing_info', 'beachcombing_info': beach_payload})}\n\n"
+                if fire_lookout_intent:
+                    formatted_lookout = format_fire_lookout_response(
+                        fire_lookout_intent, request.question
+                    )
+                    lookout_payload = formatted_lookout.get("fire_lookout_info")
+                    action_to_event = {
+                        "towers_list": "fire_lookout_towers",
+                        "tower_detail": "fire_lookout_tower_detail",
+                        "calculate_lookout": "fire_lookout_calculation",
+                        "calculate": "fire_lookout_calculation",
+                        "gear_checklist": "fire_lookout_gear",
+                        "gear": "fire_lookout_gear",
+                    }
+                    event_name = action_to_event.get(
+                        fire_lookout_intent.action, "fire_lookout_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'fire_lookout_info': lookout_payload, event_name: lookout_payload})}\n\n"
+                    if event_name != "fire_lookout_info":
+                        yield f"data: {json.dumps({'event': 'fire_lookout_info', 'fire_lookout_info': lookout_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -2716,6 +2757,11 @@ async def create_response_stream(request: ChatRequest):
                         beachcombing_intent, request.question
                     )
                     mock_chunks = [str(formatted_beachcombing.get("answer", ""))]
+                elif fire_lookout_intent:
+                    formatted_lookout = format_fire_lookout_response(
+                        fire_lookout_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_lookout.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -6789,3 +6835,81 @@ async def calculate_beachcombing_endpoint(
 )
 async def get_beachcombing_gear_endpoint() -> list[BeachcombingGearItemModel]:
     return get_beachcombing_gear()
+
+
+@app.get(
+    "/fire-lookout/towers",
+    response_model=list[FireLookoutTowerModel],
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="List fire lookout towers with optional tower structure filtering",
+)
+@app.get(
+    "/api/fire-lookout/towers",
+    response_model=list[FireLookoutTowerModel],
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="List fire lookout towers with optional tower structure filtering",
+)
+async def get_fire_lookout_towers_endpoint(
+    tower_structure: Optional[str] = None,
+) -> list[FireLookoutTowerModel]:
+    return get_fire_lookout_towers(tower_structure=tower_structure)
+
+
+@app.get(
+    "/fire-lookout/towers/{tower_id}",
+    response_model=FireLookoutTowerModel,
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="Get details for a fire lookout tower",
+)
+@app.get(
+    "/api/fire-lookout/towers/{tower_id}",
+    response_model=FireLookoutTowerModel,
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="Get details for a fire lookout tower",
+)
+async def get_fire_lookout_tower_detail_endpoint(
+    tower_id: str,
+) -> FireLookoutTowerModel:
+    tower = get_fire_lookout_tower(tower_id)
+    if not tower:
+        raise HTTPException(
+            status_code=404, detail=f"Fire lookout tower '{tower_id}' not found"
+        )
+    return tower
+
+
+@app.post(
+    "/fire-lookout/calculate",
+    response_model=LookoutResponse,
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="Calculate bearing triangulation, convection index, plume alert level, and safety advisories",
+)
+@app.post(
+    "/api/fire-lookout/calculate",
+    response_model=LookoutResponse,
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="Calculate bearing triangulation, convection index, plume alert level, and safety advisories",
+)
+async def calculate_fire_lookout_endpoint(
+    req: LookoutRequest,
+) -> LookoutResponse:
+    try:
+        return calculate_fire_lookout(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/fire-lookout/gear",
+    response_model=list[LookoutGearItemModel],
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="List mandatory fire lookout spotting and triangulation gear items",
+)
+@app.get(
+    "/api/fire-lookout/gear",
+    response_model=list[LookoutGearItemModel],
+    tags=["Backcountry Fire Lookout Tower Tooling"],
+    summary="List mandatory fire lookout spotting and triangulation gear items",
+)
+async def get_fire_lookout_gear_endpoint() -> list[LookoutGearItemModel]:
+    return get_fire_lookout_gear()
