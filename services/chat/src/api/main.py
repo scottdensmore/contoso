@@ -125,6 +125,10 @@ from contoso_chat.carrier_tracking import (
     detect_carrier_tracking_intent,
     lookup_carrier_tracking,
 )
+from contoso_chat.cave_diving import (
+    detect_cave_diving_intent,
+    format_cave_diving_response,
+)
 from contoso_chat.caving import (
     CavingGearRequirement,
     CavingRouteModel,
@@ -545,6 +549,7 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routes import (
@@ -942,6 +947,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Contoso Chat", version="1.0.0")
 app.include_router(pack_goat_router)
 app.include_router(sandboarding_router)
+app.include_router(cave_diving_router)
 
 
 # Middleware for request logging
@@ -1242,6 +1248,7 @@ async def create_response(request: ChatRequest):
             fire_lookout_intent = detect_fire_lookout_intent(request.question)
             pack_goat_intent = detect_pack_goat_intent(request.question)
             sandboarding_intent = detect_sandboarding_intent(request.question)
+            cave_diving_intent = detect_cave_diving_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1706,6 +1713,10 @@ async def create_response(request: ChatRequest):
                 formatted_sand = format_sandboarding_response(sandboarding_intent, request.question)
                 mock_payload["sandboarding_info"] = formatted_sand.get("sandboarding_info")
                 mock_payload["answer"] = formatted_sand.get("answer", mock_payload["answer"])
+            if cave_diving_intent:
+                formatted_cave = format_cave_diving_response(cave_diving_intent)
+                mock_payload["cave_diving_info"] = formatted_cave.get("cave_diving_info")
+                mock_payload["answer"] = formatted_cave.get("answer", mock_payload["answer"])
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                 mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
@@ -1940,6 +1951,7 @@ async def create_response_stream(request: ChatRequest):
                 fire_lookout_intent = detect_fire_lookout_intent(request.question)
                 pack_goat_intent = detect_pack_goat_intent(request.question)
                 sandboarding_intent = detect_sandboarding_intent(request.question)
+                cave_diving_intent = detect_cave_diving_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2473,6 +2485,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'sandboarding_info': sand_payload, event_name: sand_payload})}\n\n"
                     if event_name != "sandboarding_info":
                         yield f"data: {json.dumps({'event': 'sandboarding_info', 'sandboarding_info': sand_payload})}\n\n"
+                if cave_diving_intent:
+                    formatted_cave = format_cave_diving_response(cave_diving_intent)
+                    cave_payload = formatted_cave.get("cave_diving_info")
+                    action_to_event = {
+                        "sites_list": "cave_diving_lookup",
+                        "site_detail": "cave_diving_lookup",
+                        "calculate_gas": "cave_diving_calculated",
+                        "calculate": "cave_diving_calculated",
+                        "gear_checklist": "cave_diving_lookup",
+                        "gear": "cave_diving_lookup",
+                    }
+                    event_name = action_to_event.get(cave_diving_intent.action, "cave_diving_lookup")
+                    yield f"data: {json.dumps({'event': event_name, 'cave_diving_info': cave_payload, event_name: cave_payload})}\n\n"
+                    if event_name != "cave_diving_info":
+                        yield f"data: {json.dumps({'event': 'cave_diving_info', 'cave_diving_info': cave_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
@@ -2812,6 +2839,9 @@ async def create_response_stream(request: ChatRequest):
                         sandboarding_intent, request.question
                     )
                     mock_chunks = [str(formatted_sand.get("answer", ""))]
+                elif cave_diving_intent:
+                    formatted_cave = format_cave_diving_response(cave_diving_intent)
+                    mock_chunks = [str(formatted_cave.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     mock_chunks = [str(formatted_snowshoe.get("answer", ""))]

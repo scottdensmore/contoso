@@ -3,6 +3,10 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.cave_diving import (
+    detect_cave_diving_intent,
+    format_cave_diving_response,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -11,6 +15,32 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+
+
+async def generate_cave_diving_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events cave_diving_lookup and cave_diving_calculated when cave diving intent is handled."""
+    intent = detect_cave_diving_intent(question)
+    if not intent:
+        return
+
+    formatted = format_cave_diving_response(intent)
+    cave_payload = formatted.get("cave_diving_info")
+
+    event_name = (
+        "cave_diving_calculated"
+        if intent.action in ("calculate_gas", "calculate")
+        else "cave_diving_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'cave_diving_info': cave_payload, event_name: cave_payload})}\n\n"
+    if event_name != "cave_diving_info":
+        yield f"data: {json.dumps({'event': 'cave_diving_info', 'cave_diving_info': cave_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
 
 
 async def generate_pack_goat_stream_events(question: str) -> AsyncGenerator[str, None]:
