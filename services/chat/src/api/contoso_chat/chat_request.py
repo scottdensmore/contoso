@@ -262,6 +262,11 @@ from .safety import (
     detect_safety_intent,
     format_safety_response,
 )
+from .sandboarding import (
+    build_sandboarding_prompt,
+    detect_sandboarding_intent,
+    format_sandboarding_response,
+)
 from .sea_kayaking import (
     build_sea_kayaking_prompt,
     detect_sea_kayaking_intent,
@@ -681,6 +686,7 @@ async def generate_llm_response(
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
+    sandboarding_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -873,12 +879,16 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
         if pack_goat_prompt:
             local_system = f"{local_system}\n\n{pack_goat_prompt}"
+        if sandboarding_prompt:
+            local_system = f"{local_system}\n\n{sandboarding_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if pack_goat_prompt:
             local_system = f"{local_system}\n\n{pack_goat_prompt}"
+        if sandboarding_prompt:
+            local_system = f"{local_system}\n\n{sandboarding_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1070,6 +1080,8 @@ async def generate_llm_response(
             prompt_parts.append(fire_lookout_prompt)
         if pack_goat_prompt:
             prompt_parts.append(pack_goat_prompt)
+        if sandboarding_prompt:
+            prompt_parts.append(sandboarding_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1663,6 +1675,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
         formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
         pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
+    sandboarding_intent = detect_sandboarding_intent(question)
+    sandboarding_prompt = ""
+    sandboarding_info_payload = None
+    if sandboarding_intent:
+        sandboarding_prompt = build_sandboarding_prompt(sandboarding_intent)
+        formatted_sandboarding = format_sandboarding_response(sandboarding_intent, question)
+        sandboarding_info_payload = formatted_sandboarding.get("sandboarding_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -2035,6 +2054,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
     if pack_goat_prompt:
         llm_kwargs["pack_goat_prompt"] = pack_goat_prompt
+    if sandboarding_prompt:
+        llm_kwargs["sandboarding_prompt"] = sandboarding_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2228,6 +2249,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["fire_lookout_info"] = fire_lookout_info_payload
     if pack_goat_intent and pack_goat_info_payload:
         response_payload["pack_goat_info"] = pack_goat_info_payload
+    if sandboarding_intent and sandboarding_info_payload:
+        response_payload["sandboarding_info"] = sandboarding_info_payload
 
     return response_payload
 
@@ -2319,6 +2342,7 @@ def generate_llm_response_stream(
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
+    sandboarding_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2645,6 +2669,8 @@ def generate_llm_response_stream(
             prompt_parts.append(beachcombing_prompt)
         if pack_goat_prompt:
             prompt_parts.append(pack_goat_prompt)
+        if sandboarding_prompt:
+            prompt_parts.append(sandboarding_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3102,6 +3128,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
         formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
         pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
+    sandboarding_intent = detect_sandboarding_intent(question)
+    sandboarding_prompt = ""
+    sandboarding_info_payload = None
+    if sandboarding_intent:
+        sandboarding_prompt = build_sandboarding_prompt(sandboarding_intent)
+        formatted_sandboarding = format_sandboarding_response(sandboarding_intent, question)
+        sandboarding_info_payload = formatted_sandboarding.get("sandboarding_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3823,6 +3856,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {goat_fallback}\n\n"
+    if sandboarding_intent and sandboarding_info_payload:
+        action_to_event = {
+            "dunes_list": "sandboarding_lookup",
+            "dune_detail": "sandboarding_lookup",
+            "calculate_glide": "sandboarding_calculated",
+            "calculate": "sandboarding_calculated",
+            "gear_checklist": "sandboarding_lookup",
+            "gear": "sandboarding_lookup",
+        }
+        event_name = action_to_event.get(sandboarding_intent.action, "sandboarding_lookup")
+        sand_sse = json.dumps(
+            {
+                "event": event_name,
+                "sandboarding_info": sandboarding_info_payload,
+                event_name: sandboarding_info_payload,
+            }
+        )
+        yield f"data: {sand_sse}\n\n"
+        if event_name != "sandboarding_info":
+            sand_fallback = json.dumps(
+                {
+                    "event": "sandboarding_info",
+                    "sandboarding_info": sandboarding_info_payload,
+                }
+            )
+            yield f"data: {sand_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3991,6 +4050,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
     if pack_goat_prompt:
         stream_kwargs["pack_goat_prompt"] = pack_goat_prompt
+    if sandboarding_prompt:
+        stream_kwargs["sandboarding_prompt"] = sandboarding_prompt
 
     for chunk in generate_llm_response_stream(
         question,

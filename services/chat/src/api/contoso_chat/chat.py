@@ -6,6 +6,10 @@ from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
 )
+from contoso_chat.sandboarding import (
+    detect_sandboarding_intent,
+    format_sandboarding_response,
+)
 
 
 def handle_pack_goat_intent(question: str) -> Optional[dict[str, Any]]:
@@ -16,5 +20,17 @@ def handle_pack_goat_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_pack_goat_response(intent, question)
     return {
         "pack_goat_info": formatted.get("pack_goat_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_sandboarding_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format sandboarding intent in the cascade."""
+    intent = detect_sandboarding_intent(question)
+    if not intent:
+        return None
+    formatted = format_sandboarding_response(intent, question)
+    return {
+        "sandboarding_info": formatted.get("sandboarding_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
