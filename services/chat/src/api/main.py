@@ -609,6 +609,18 @@ from contoso_chat.snowmobiling import (
     get_snowmobile_zone_by_id,
     get_snowmobile_zones,
 )
+from contoso_chat.snowshoe_mountaineering import (
+    SnowshoeGearItemModel,
+    SnowshoeRequest,
+    SnowshoeResponse,
+    SnowshoeRouteModel,
+    calculate_snowshoe_ascent,
+    detect_snowshoe_intent,
+    format_snowshoe_response,
+    get_snowshoe_gear,
+    get_snowshoe_route,
+    get_snowshoe_routes,
+)
 from contoso_chat.stargazing import (
     MeteorShowerModel,
     ObservingSiteModel,
@@ -1169,6 +1181,7 @@ async def create_response(request: ChatRequest):
             river_rafting_intent = detect_river_rafting_intent(request.question)
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
             primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
+            snowshoe_intent = detect_snowshoe_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
             wild_ice_intent = detect_wild_ice_intent(request.question)
@@ -1606,6 +1619,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_primitive_trapping.get(
                     "answer", mock_payload["answer"]
                 )
+            if snowshoe_intent:
+                formatted_snowshoe = format_snowshoe_response(
+                    snowshoe_intent, request.question
+                )
+                mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
+                    "snowshoe_mountaineering_info"
+                )
+                mock_payload["answer"] = formatted_snowshoe.get(
+                    "answer", mock_payload["answer"]
+                )
             if trail_packing_intent:
                 formatted_trail_packing = format_trail_packing_response(
                     trail_packing_intent, request.question
@@ -1829,6 +1852,7 @@ async def create_response_stream(request: ChatRequest):
                 river_rafting_intent = detect_river_rafting_intent(request.question)
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
                 primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
+                snowshoe_intent = detect_snowshoe_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
                 wild_ice_intent = detect_wild_ice_intent(request.question)
@@ -2276,6 +2300,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': trap_payload, event_name: trap_payload})}\n\n"
                     if event_name != "primitive_trapping_info":
                         yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': trap_payload})}\n\n"
+                if snowshoe_intent:
+                    formatted_snowshoe = format_snowshoe_response(
+                        snowshoe_intent, request.question
+                    )
+                    sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
+                    action_to_event = {
+                        "routes_list": "snowshoe_mountaineering_routes",
+                        "route_detail": "snowshoe_mountaineering_route_detail",
+                        "calculate_snowshoe": "snowshoe_mountaineering_calculation",
+                        "calculate": "snowshoe_mountaineering_calculation",
+                        "gear_checklist": "snowshoe_mountaineering_gear",
+                        "gear": "snowshoe_mountaineering_gear",
+                    }
+                    event_name = action_to_event.get(
+                        snowshoe_intent.action, "snowshoe_mountaineering_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'snowshoe_mountaineering_info': sm_payload, event_name: sm_payload})}\n\n"
+                    if event_name != "snowshoe_mountaineering_info":
+                        yield f"data: {json.dumps({'event': 'snowshoe_mountaineering_info', 'snowshoe_mountaineering_info': sm_payload})}\n\n"
                 if trail_packing_intent:
                     formatted_trail_packing = format_trail_packing_response(
                         trail_packing_intent, request.question
@@ -2581,6 +2624,11 @@ async def create_response_stream(request: ChatRequest):
                         primitive_trapping_intent, request.question
                     )
                     mock_chunks = [str(formatted_primitive_trapping.get("answer", ""))]
+                elif snowshoe_intent:
+                    formatted_snowshoe = format_snowshoe_response(
+                        snowshoe_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_snowshoe.get("answer", ""))]
                 elif trail_packing_intent:
                     formatted_trail_packing = format_trail_packing_response(
                         trail_packing_intent, request.question
@@ -6417,3 +6465,79 @@ async def calculate_pack_burro_endpoint(
 )
 async def get_pack_burro_gear_endpoint() -> list[BurroGearItemModel]:
     return get_burro_gear()
+
+
+@app.get(
+    "/snowshoe-mountaineering/routes",
+    response_model=list[SnowshoeRouteModel],
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="List iconic alpine snowshoe routes with optional technical grade filtering",
+)
+@app.get(
+    "/api/snowshoe-mountaineering/routes",
+    response_model=list[SnowshoeRouteModel],
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="List iconic alpine snowshoe routes with optional technical grade filtering",
+)
+async def get_snowshoe_routes_endpoint(
+    technical_grade: Optional[str] = None,
+) -> list[SnowshoeRouteModel]:
+    return get_snowshoe_routes(technical_grade=technical_grade)
+
+
+@app.get(
+    "/snowshoe-mountaineering/routes/{route_id}",
+    response_model=SnowshoeRouteModel,
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="Get details for an iconic alpine snowshoe mountaineering route",
+)
+@app.get(
+    "/api/snowshoe-mountaineering/routes/{route_id}",
+    response_model=SnowshoeRouteModel,
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="Get details for an iconic alpine snowshoe mountaineering route",
+)
+async def get_snowshoe_route_detail_endpoint(
+    route_id: str,
+) -> SnowshoeRouteModel:
+    route = get_snowshoe_route(route_id)
+    if not route:
+        raise HTTPException(status_code=404, detail=f"Snowshoe route '{route_id}' not found")
+    return route
+
+
+@app.post(
+    "/snowshoe-mountaineering/calculate",
+    response_model=SnowshoeResponse,
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="Calculate flotation tail extensions, Televator calf fatigue reduction, and high-angle slope transition advisories",
+)
+@app.post(
+    "/api/snowshoe-mountaineering/calculate",
+    response_model=SnowshoeResponse,
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="Calculate flotation tail extensions, Televator calf fatigue reduction, and high-angle slope transition advisories",
+)
+async def calculate_snowshoe_endpoint(
+    req: SnowshoeRequest,
+) -> SnowshoeResponse:
+    try:
+        return calculate_snowshoe_ascent(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/snowshoe-mountaineering/gear",
+    response_model=list[SnowshoeGearItemModel],
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="List mandatory alpine snowshoe mountaineering and technical winter ascent gear items",
+)
+@app.get(
+    "/api/snowshoe-mountaineering/gear",
+    response_model=list[SnowshoeGearItemModel],
+    tags=["Alpine Snowshoe Mountaineering & Technical Winter Ascent Tooling"],
+    summary="List mandatory alpine snowshoe mountaineering and technical winter ascent gear items",
+)
+async def get_snowshoe_gear_endpoint() -> list[SnowshoeGearItemModel]:
+    return get_snowshoe_gear()

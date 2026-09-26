@@ -30,6 +30,16 @@ from .primitive_trapping import (
     get_trapping_mechanisms,
     get_trapping_safety_gear,
 )
+from .snowshoe_mountaineering import (
+    SnowshoeIntent,
+    SnowshoeRequest,
+    calculate_snowshoe_ascent,
+    detect_snowshoe_intent,
+    format_snowshoe_response,
+    get_snowshoe_gear,
+    get_snowshoe_route,
+    get_snowshoe_routes,
+)
 from .trail_packing import (
     TrailPackingIntent,
     TrailPackingRequest,
@@ -403,6 +413,65 @@ def pack_burro_tool(
     return get_pack_burro_courses(burro_type=burro_type)
 
 
+def _resolve_sm_args(
+    intent: Optional[SnowshoeIntent],
+    action: Optional[str],
+    route_id: Optional[str],
+    technical_grade: Optional[str],
+) -> tuple[str, Optional[str], Optional[str]]:
+    act = action or (intent.action if intent else "routes_list")
+    if "calc" in act:
+        act = "calculate_snowshoe"
+    elif "gear" in act:
+        act = "gear_checklist"
+    rid = route_id or (intent.route_id if intent else None)
+    tg = technical_grade or (intent.technical_grade if intent else None)
+    return act, rid, tg
+
+
+def _build_snowshoe_req(
+    route_id: Optional[str],
+    kw: dict[str, Any],
+) -> SnowshoeRequest:
+    return SnowshoeRequest(
+        route_id=route_id if route_id else "mount-washington-tuckerman-ridge",
+        snowpack=kw.get("snowpack", "windslab_crust"),
+        slope_angle_deg=float(kw.get("slope_angle_deg", 26.0)),
+        payload_lbs=float(kw.get("payload_lbs", 200.0)),
+        heel_lifter_engaged=bool(kw.get("heel_lifter_engaged", True)),
+    )
+
+
+def snowshoe_mountaineering_tool(
+    request: Optional[SnowshoeRequest] = None,
+    action: Optional[str] = None,
+    route_id: Optional[str] = None,
+    technical_grade: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for alpine snowshoe mountaineering and technical winter ascents."""
+    if isinstance(request, SnowshoeRequest):
+        return calculate_snowshoe_ascent(request)
+
+    intent: Optional[SnowshoeIntent] = kwargs.get("intent")
+    action, route_id, technical_grade = _resolve_sm_args(
+        intent, action, route_id, technical_grade
+    )
+
+    if (
+        action == "calculate_snowshoe"
+        or "payload_lbs" in kwargs
+        or "slope_angle_deg" in kwargs
+    ):
+        req = _build_snowshoe_req(route_id, kwargs)
+        return calculate_snowshoe_ascent(req)
+    if action == "gear_checklist":
+        return get_snowshoe_gear()
+    if action == "route_detail" and route_id:
+        return get_snowshoe_route(route_id)
+    return get_snowshoe_routes(technical_grade=technical_grade)
+
+
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_burro_tool": pack_burro_tool,
     "mountain_weather_tool": mountain_weather_tool,
@@ -410,6 +479,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "trail_packing_tool": trail_packing_tool,
     "wild_ice_tool": wild_ice_tool,
     "tree_climbing_tool": tree_climbing_tool,
+    "snowshoe_mountaineering_tool": snowshoe_mountaineering_tool,
 }
 
 
@@ -427,6 +497,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_tree_climbing_response(intent, query=question)
     if isinstance(intent, PackBurroIntent):
         return format_pack_burro_response(intent, query=question)
+    if isinstance(intent, SnowshoeIntent):
+        return format_snowshoe_response(intent, query=question)
     return None
 
 
@@ -446,6 +518,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    sm_intent = detect_snowshoe_intent(question)
+    if sm_intent:
+        fmt = resolve_tool(sm_intent, question=question)
+        return str(fmt), "snowshoe_mountaineering_info", fmt.get("snowshoe_mountaineering_info")
+
     pb_intent = detect_pack_burro_intent(question)
     if pb_intent:
         fmt = resolve_tool(pb_intent, question=question)
