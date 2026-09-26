@@ -372,6 +372,18 @@ from contoso_chat.orienteering import (
     get_orienteering_courses,
     get_orienteering_gear,
 )
+from contoso_chat.pack_burro import (
+    BurroGearItemModel,
+    PackBurroCourseModel,
+    PackBurroRequest,
+    PackBurroResponse,
+    calculate_pack_burro,
+    detect_pack_burro_intent,
+    format_pack_burro_response,
+    get_burro_gear,
+    get_pack_burro_course,
+    get_pack_burro_courses,
+)
 from contoso_chat.packrafting import (
     PackraftGearRequirement,
     PackraftPlanRequest,
@@ -1161,6 +1173,7 @@ async def create_response(request: ChatRequest):
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
             wild_ice_intent = detect_wild_ice_intent(request.question)
             tree_climbing_intent = detect_tree_climbing_intent(request.question)
+            pack_burro_intent = detect_pack_burro_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1629,6 +1642,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_tree_climbing.get(
                     "answer", mock_payload["answer"]
                 )
+            if pack_burro_intent:
+                formatted_pack_burro = format_pack_burro_response(
+                    pack_burro_intent, request.question
+                )
+                mock_payload["pack_burro_info"] = formatted_pack_burro.get(
+                    "pack_burro_info"
+                )
+                mock_payload["answer"] = formatted_pack_burro.get(
+                    "answer", mock_payload["answer"]
+                )
 
             if request.session_id:
                 mock_payload["session_id"] = request.session_id
@@ -1810,6 +1833,7 @@ async def create_response_stream(request: ChatRequest):
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
                 wild_ice_intent = detect_wild_ice_intent(request.question)
                 tree_climbing_intent = detect_tree_climbing_intent(request.question)
+                pack_burro_intent = detect_pack_burro_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2357,6 +2381,38 @@ async def create_response_stream(request: ChatRequest):
                             }
                         )
                         yield f"data: {tc_fallback}\n\n"
+                if pack_burro_intent:
+                    formatted_pack_burro = format_pack_burro_response(
+                        pack_burro_intent, request.question
+                    )
+                    pb_payload = formatted_pack_burro.get("pack_burro_info")
+                    action_to_event = {
+                        "courses_list": "pack_burro_courses",
+                        "course_detail": "pack_burro_course_detail",
+                        "calculate_packing": "pack_burro_calculation",
+                        "calculate": "pack_burro_calculation",
+                        "gear_checklist": "pack_burro_gear",
+                        "gear": "pack_burro_gear",
+                    }
+                    event_name = action_to_event.get(
+                        pack_burro_intent.action, "pack_burro_info"
+                    )
+                    pb_sse = json.dumps(
+                        {
+                            "event": event_name,
+                            "pack_burro_info": pb_payload,
+                            event_name: pb_payload,
+                        }
+                    )
+                    yield f"data: {pb_sse}\n\n"
+                    if event_name != "pack_burro_info":
+                        pb_fallback = json.dumps(
+                            {
+                                "event": "pack_burro_info",
+                                "pack_burro_info": pb_payload,
+                            }
+                        )
+                        yield f"data: {pb_fallback}\n\n"
                 if carrier_intent.get("is_carrier_intent"):
                     if captured_carrier_tracking:
                         mock_chunks = [
@@ -2545,6 +2601,11 @@ async def create_response_stream(request: ChatRequest):
                         tree_climbing_intent, request.question
                     )
                     mock_chunks = [str(formatted_tree_climbing.get("answer", ""))]
+                elif pack_burro_intent:
+                    formatted_pack_burro = format_pack_burro_response(
+                        pack_burro_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_pack_burro.get("answer", ""))]
 
                 elif mountaineering_intent and not adventure_intent:
                     formatted_mountaineering = format_mountaineering_response(mountaineering_intent)
@@ -6277,3 +6338,82 @@ async def calculate_tree_climbing_endpoint(
 )
 async def get_tree_gear_endpoint() -> list[TreeGearItemModel]:
     return get_tree_gear()
+
+
+@app.get(
+    "/pack-burro/courses",
+    response_model=list[PackBurroCourseModel],
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="List Colorado pack-burro racing courses with optional burro type filtering",
+)
+@app.get(
+    "/api/pack-burro/courses",
+    response_model=list[PackBurroCourseModel],
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="List Colorado pack-burro racing courses with optional burro type filtering",
+)
+async def get_pack_burro_courses_endpoint(
+    burro_type: Optional[str] = None,
+) -> list[PackBurroCourseModel]:
+    return get_pack_burro_courses(burro_type=burro_type)
+
+
+@app.get(
+    "/pack-burro/courses/{course_id}",
+    response_model=PackBurroCourseModel,
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="Get details for an iconic Colorado pack-burro race course",
+)
+@app.get(
+    "/api/pack-burro/courses/{course_id}",
+    response_model=PackBurroCourseModel,
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="Get details for an iconic Colorado pack-burro race course",
+)
+async def get_pack_burro_course_detail_endpoint(
+    course_id: str,
+) -> PackBurroCourseModel:
+    course = get_pack_burro_course(course_id)
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Pack burro course '{course_id}' not found",
+        )
+    return course
+
+
+@app.post(
+    "/pack-burro/calculate",
+    response_model=PackBurroResponse,
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="Calculate pack burro regulation weight compliance, downhill scree braking force, and summit oxygen deficit",
+)
+@app.post(
+    "/api/pack-burro/calculate",
+    response_model=PackBurroResponse,
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="Calculate pack burro regulation weight compliance, downhill scree braking force, and summit oxygen deficit",
+)
+async def calculate_pack_burro_endpoint(
+    req: PackBurroRequest,
+) -> PackBurroResponse:
+    try:
+        return calculate_pack_burro(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/pack-burro/gear",
+    response_model=list[BurroGearItemModel],
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="List mandatory pack-burro racing 33-lb mining kit, sawbuck saddle, and veterinary check items",
+)
+@app.get(
+    "/api/pack-burro/gear",
+    response_model=list[BurroGearItemModel],
+    tags=["Wilderness Pack-Burro Racing & Ass Packing Tooling"],
+    summary="List mandatory pack-burro racing 33-lb mining kit, sawbuck saddle, and veterinary check items",
+)
+async def get_pack_burro_gear_endpoint() -> list[BurroGearItemModel]:
+    return get_burro_gear()

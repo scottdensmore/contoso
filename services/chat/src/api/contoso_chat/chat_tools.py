@@ -10,6 +10,16 @@ from .mountain_weather import (
     get_weather_sector,
     get_weather_sectors,
 )
+from .pack_burro import (
+    PackBurroIntent,
+    PackBurroRequest,
+    calculate_pack_burro,
+    detect_pack_burro_intent,
+    format_pack_burro_response,
+    get_burro_gear,
+    get_pack_burro_course,
+    get_pack_burro_courses,
+)
 from .primitive_trapping import (
     TrappingCalculationRequest,
     TrappingIntent,
@@ -333,7 +343,68 @@ def tree_climbing_tool(
     return get_canopy_groves(climbing_system=climbing_system)
 
 
+def _resolve_pb_args(
+    intent: Optional[PackBurroIntent],
+    action: Optional[str],
+    course_id: Optional[str],
+    burro_type: Optional[str],
+) -> tuple[str, Optional[str], Optional[str]]:
+    act = action or (intent.action if intent else "courses_list")
+    if "calc" in act:
+        act = "calculate_packing"
+    elif "gear" in act:
+        act = "gear_checklist"
+    cid = course_id or (intent.course_id if intent else None)
+    bt = burro_type or (intent.burro_type if intent else None)
+    return act, cid, bt
+
+
+def _build_pack_burro_req(
+    course_id: Optional[str],
+    burro_type: Optional[str],
+    kw: dict[str, Any],
+) -> PackBurroRequest:
+    return PackBurroRequest(
+        course_id=course_id if course_id else "leadville-boom-days-mosquito-pass",
+        burro_type=burro_type if burro_type else kw.get("burro_type", "standard_burro"),
+        pack_weight_lbs=kw.get("pack_weight_lbs", 35.0),
+        slope_gradient_percent=kw.get("slope_gradient_percent", 18.0),
+        runner_pace_min_per_mile=kw.get("runner_pace_min_per_mile", 10.0),
+    )
+
+
+def pack_burro_tool(
+    request: Optional[PackBurroRequest] = None,
+    action: Optional[str] = None,
+    course_id: Optional[str] = None,
+    burro_type: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for wilderness pack-burro racing and high-altitude ass packing."""
+    if isinstance(request, PackBurroRequest):
+        return calculate_pack_burro(request)
+
+    intent: Optional[PackBurroIntent] = kwargs.get("intent")
+    action, course_id, burro_type = _resolve_pb_args(
+        intent, action, course_id, burro_type
+    )
+
+    if (
+        action == "calculate_packing"
+        or "pack_weight_lbs" in kwargs
+        or "slope_gradient_percent" in kwargs
+    ):
+        req = _build_pack_burro_req(course_id, burro_type, kwargs)
+        return calculate_pack_burro(req)
+    if action == "gear_checklist":
+        return get_burro_gear()
+    if action == "course_detail" and course_id:
+        return get_pack_burro_course(course_id)
+    return get_pack_burro_courses(burro_type=burro_type)
+
+
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
+    "pack_burro_tool": pack_burro_tool,
     "mountain_weather_tool": mountain_weather_tool,
     "primitive_trapping_tool": primitive_trapping_tool,
     "trail_packing_tool": trail_packing_tool,
@@ -354,6 +425,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_wild_ice_response(intent, query=question)
     if isinstance(intent, TreeClimbingIntent):
         return format_tree_climbing_response(intent, query=question)
+    if isinstance(intent, PackBurroIntent):
+        return format_pack_burro_response(intent, query=question)
     return None
 
 
@@ -373,6 +446,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    pb_intent = detect_pack_burro_intent(question)
+    if pb_intent:
+        fmt = resolve_tool(pb_intent, question=question)
+        return str(fmt), "pack_burro_info", fmt.get("pack_burro_info")
+
     mw_intent = detect_mountain_weather_intent(question)
     if mw_intent:
         fmt = resolve_tool(mw_intent, question=question)

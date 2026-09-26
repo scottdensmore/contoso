@@ -162,6 +162,11 @@ from .orienteering import (
     extract_orienteering_intent,
     format_orienteering_response,
 )
+from .pack_burro import (
+    build_pack_burro_prompt,
+    detect_pack_burro_intent,
+    format_pack_burro_response,
+)
 from .packrafting import (
     build_packrafting_prompt,
     detect_packrafting_intent,
@@ -645,6 +650,7 @@ async def generate_llm_response(
     mountain_weather_prompt: str = "",
     wild_ice_prompt: str = "",
     tree_climbing_prompt: str = "",
+    pack_burro_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -1010,6 +1016,8 @@ async def generate_llm_response(
             prompt_parts.append(wild_ice_prompt)
         if tree_climbing_prompt:
             prompt_parts.append(tree_climbing_prompt)
+        if pack_burro_prompt:
+            prompt_parts.append(pack_burro_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1614,6 +1622,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             tree_climbing_intent, question
         )
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
+    pack_burro_intent = detect_pack_burro_intent(question)
+    pack_burro_prompt = ""
+    pack_burro_info_payload = None
+    if pack_burro_intent:
+        pack_burro_prompt = build_pack_burro_prompt(pack_burro_intent)
+        formatted_pack_burro = format_pack_burro_response(
+            pack_burro_intent, question
+        )
+        pack_burro_info_payload = formatted_pack_burro.get("pack_burro_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -1916,6 +1933,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["wild_ice_prompt"] = wild_ice_prompt
     if tree_climbing_prompt:
         llm_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
+    if pack_burro_prompt:
+        llm_kwargs["pack_burro_prompt"] = pack_burro_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2097,6 +2116,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["wild_ice_info"] = wild_ice_info_payload
     if tree_climbing_intent and tree_climbing_info_payload:
         response_payload["tree_climbing_info"] = tree_climbing_info_payload
+    if pack_burro_intent and pack_burro_info_payload:
+        response_payload["pack_burro_info"] = pack_burro_info_payload
 
     return response_payload
 
@@ -2183,6 +2204,7 @@ def generate_llm_response_stream(
     mountain_weather_prompt: str = "",
     wild_ice_prompt: str = "",
     tree_climbing_prompt: str = "",
+    pack_burro_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2499,6 +2521,8 @@ def generate_llm_response_stream(
             prompt_parts.append(wild_ice_prompt)
         if tree_climbing_prompt:
             prompt_parts.append(tree_climbing_prompt)
+        if pack_burro_prompt:
+            prompt_parts.append(pack_burro_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2968,6 +2992,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             tree_climbing_intent, question
         )
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
+    pack_burro_intent = detect_pack_burro_intent(question)
+    pack_burro_prompt = ""
+    pack_burro_info_payload = None
+    if pack_burro_intent:
+        pack_burro_prompt = build_pack_burro_prompt(pack_burro_intent)
+        formatted_pack_burro = format_pack_burro_response(
+            pack_burro_intent, question
+        )
+        pack_burro_info_payload = formatted_pack_burro.get("pack_burro_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
     mountaineering_info_payload = None
@@ -3493,6 +3526,34 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {tc_fallback}\n\n"
+    if pack_burro_intent and pack_burro_info_payload:
+        action_to_event = {
+            "courses_list": "pack_burro_courses",
+            "course_detail": "pack_burro_course_detail",
+            "calculate_packing": "pack_burro_calculation",
+            "calculate": "pack_burro_calculation",
+            "gear_checklist": "pack_burro_gear",
+            "gear": "pack_burro_gear",
+        }
+        event_name = action_to_event.get(
+            pack_burro_intent.action, "pack_burro_info"
+        )
+        pb_sse = json.dumps(
+            {
+                "event": event_name,
+                "pack_burro_info": pack_burro_info_payload,
+                event_name: pack_burro_info_payload,
+            }
+        )
+        yield f"data: {pb_sse}\n\n"
+        if event_name != "pack_burro_info":
+            pb_fallback = json.dumps(
+                {
+                    "event": "pack_burro_info",
+                    "pack_burro_info": pack_burro_info_payload,
+                }
+            )
+            yield f"data: {pb_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3649,6 +3710,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["wild_ice_prompt"] = wild_ice_prompt
     if tree_climbing_prompt:
         stream_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
+    if pack_burro_prompt:
+        stream_kwargs["pack_burro_prompt"] = pack_burro_prompt
 
     for chunk in generate_llm_response_stream(
         question,
