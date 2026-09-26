@@ -1,5 +1,15 @@
 from typing import Any, Callable, Optional
 
+from .gold_prospecting import (
+    PlacerRequest,
+    ProspectingIntent,
+    calculate_placer_recovery,
+    detect_gold_prospecting_intent,
+    format_gold_prospecting_response,
+    get_prospecting_gear,
+    get_prospecting_site,
+    get_prospecting_sites,
+)
 from .mountain_weather import (
     MountainWeatherIntent,
     MountainWeatherRequest,
@@ -472,6 +482,33 @@ def snowshoe_mountaineering_tool(
     return get_snowshoe_routes(technical_grade=technical_grade)
 
 
+def gold_prospecting_tool(
+    request: Optional[PlacerRequest] = None,
+    action: Optional[str] = None,
+    site_id: Optional[str] = None,
+    deposit_type: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """Tool for wilderness gold panning and placer mineral prospecting."""
+    if isinstance(request, PlacerRequest):
+        return calculate_placer_recovery(request)
+    intent = kwargs.get("intent")
+    if action in ("calculate_placer", "calculate") or "gravel_volume_buckets" in kwargs:
+        req = PlacerRequest(
+            site_id=site_id or (intent.site_id if intent else None) or "american-river-south-fork",
+            gravel_volume_buckets=float(kwargs.get("gravel_volume_buckets", 5.0)),
+            sluice_slope_deg=float(kwargs.get("sluice_slope_deg", 7.0)),
+            stream_flow_velocity_fps=float(kwargs.get("stream_flow_velocity_fps", 3.5)),
+        )
+        return calculate_placer_recovery(req)
+    if action in ("gear_checklist", "gear"):
+        return get_prospecting_gear()
+    target_site_id = site_id or (intent.site_id if intent else None)
+    if action == "site_detail" and target_site_id:
+        return get_prospecting_site(target_site_id)
+    return get_prospecting_sites(deposit_type=deposit_type or (intent.deposit_type if intent else None))
+
+
 TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_burro_tool": pack_burro_tool,
     "mountain_weather_tool": mountain_weather_tool,
@@ -480,6 +517,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "wild_ice_tool": wild_ice_tool,
     "tree_climbing_tool": tree_climbing_tool,
     "snowshoe_mountaineering_tool": snowshoe_mountaineering_tool,
+    "gold_prospecting_tool": gold_prospecting_tool,
 }
 
 
@@ -499,6 +537,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_pack_burro_response(intent, query=question)
     if isinstance(intent, SnowshoeIntent):
         return format_snowshoe_response(intent, query=question)
+    if isinstance(intent, ProspectingIntent):
+        return format_gold_prospecting_response(intent, query=question)
     return None
 
 
@@ -522,6 +562,11 @@ def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
     if sm_intent:
         fmt = resolve_tool(sm_intent, question=question)
         return str(fmt), "snowshoe_mountaineering_info", fmt.get("snowshoe_mountaineering_info")
+
+    gold_intent = detect_gold_prospecting_intent(question)
+    if gold_intent:
+        fmt = resolve_tool(gold_intent, question=question)
+        return str(fmt), "gold_prospecting_info", fmt.get("gold_prospecting_info")
 
     pb_intent = detect_pack_burro_intent(question)
     if pb_intent:
