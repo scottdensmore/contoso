@@ -272,6 +272,11 @@ from .snowmobiling import (
     detect_snowmobiling_intent,
     format_snowmobiling_response,
 )
+from .snowshoe_mountaineering import (
+    build_snowshoe_prompt,
+    detect_snowshoe_intent,
+    format_snowshoe_response,
+)
 from .stargazing import (
     build_stargazing_prompt,
     detect_stargazing_intent,
@@ -651,6 +656,7 @@ async def generate_llm_response(
     wild_ice_prompt: str = "",
     tree_climbing_prompt: str = "",
     pack_burro_prompt: str = "",
+    snowshoe_mountaineering_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -1018,6 +1024,8 @@ async def generate_llm_response(
             prompt_parts.append(tree_climbing_prompt)
         if pack_burro_prompt:
             prompt_parts.append(pack_burro_prompt)
+        if snowshoe_mountaineering_prompt:
+            prompt_parts.append(snowshoe_mountaineering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1622,6 +1630,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
             tree_climbing_intent, question
         )
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
+    snowshoe_intent = detect_snowshoe_intent(question)
+    snowshoe_prompt = ""
+    snowshoe_info_payload = None
+    if snowshoe_intent:
+        snowshoe_prompt = build_snowshoe_prompt(snowshoe_intent)
+        formatted_snowshoe = format_snowshoe_response(snowshoe_intent, question)
+        snowshoe_info_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
+
     pack_burro_intent = detect_pack_burro_intent(question)
     pack_burro_prompt = ""
     pack_burro_info_payload = None
@@ -1935,6 +1951,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
     if pack_burro_prompt:
         llm_kwargs["pack_burro_prompt"] = pack_burro_prompt
+    if snowshoe_prompt:
+        llm_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2108,6 +2126,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["steep_skiing_info"] = steep_skiing_info_payload
     if trail_packing_intent and trail_packing_info_payload:
         response_payload["trail_packing_info"] = trail_packing_info_payload
+    if snowshoe_intent and snowshoe_info_payload:
+        response_payload["snowshoe_mountaineering_info"] = snowshoe_info_payload
     if primitive_trapping_intent and primitive_trapping_info_payload:
         response_payload["primitive_trapping_info"] = primitive_trapping_info_payload
     if mountain_weather_intent and mountain_weather_info_payload:
@@ -2205,6 +2225,7 @@ def generate_llm_response_stream(
     wild_ice_prompt: str = "",
     tree_climbing_prompt: str = "",
     pack_burro_prompt: str = "",
+    snowshoe_mountaineering_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2523,6 +2544,8 @@ def generate_llm_response_stream(
             prompt_parts.append(tree_climbing_prompt)
         if pack_burro_prompt:
             prompt_parts.append(pack_burro_prompt)
+        if snowshoe_mountaineering_prompt:
+            prompt_parts.append(snowshoe_mountaineering_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2992,6 +3015,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             tree_climbing_intent, question
         )
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
+    snowshoe_intent = detect_snowshoe_intent(question)
+    snowshoe_prompt = ""
+    snowshoe_info_payload = None
+    if snowshoe_intent:
+        snowshoe_prompt = build_snowshoe_prompt(snowshoe_intent)
+        formatted_snowshoe = format_snowshoe_response(snowshoe_intent, question)
+        snowshoe_info_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
+
     pack_burro_intent = detect_pack_burro_intent(question)
     pack_burro_prompt = ""
     pack_burro_info_payload = None
@@ -3424,6 +3455,19 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'steep_skiing_info': steep_skiing_info_payload, event_name: steep_skiing_info_payload})}\n\n"
         if event_name != "steep_skiing_info":
             yield f"data: {json.dumps({'event': 'steep_skiing_info', 'steep_skiing_info': steep_skiing_info_payload})}\n\n"
+    if snowshoe_intent and snowshoe_info_payload:
+        action_to_event = {
+            "routes_list": "snowshoe_mountaineering_routes",
+            "route_detail": "snowshoe_mountaineering_route_detail",
+            "calculate_snowshoe": "snowshoe_mountaineering_calculation",
+            "calculate": "snowshoe_mountaineering_calculation",
+            "gear_checklist": "snowshoe_mountaineering_gear",
+            "gear": "snowshoe_mountaineering_gear",
+        }
+        event_name = action_to_event.get(snowshoe_intent.action, "snowshoe_mountaineering_info")
+        yield f"data: {json.dumps({'event': event_name, 'snowshoe_mountaineering_info': snowshoe_info_payload, event_name: snowshoe_info_payload})}\n\n"
+        if event_name != "snowshoe_mountaineering_info":
+            yield f"data: {json.dumps({'event': 'snowshoe_mountaineering_info', 'snowshoe_mountaineering_info': snowshoe_info_payload})}\n\n"
     if trail_packing_intent and trail_packing_info_payload:
         action_to_event = {
             "routes_list": "trail_packing_routes",
@@ -3712,6 +3756,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["tree_climbing_prompt"] = tree_climbing_prompt
     if pack_burro_prompt:
         stream_kwargs["pack_burro_prompt"] = pack_burro_prompt
+    if snowshoe_prompt:
+        stream_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
 
     for chunk in generate_llm_response_stream(
         question,
