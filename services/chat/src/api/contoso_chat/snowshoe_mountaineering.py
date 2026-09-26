@@ -243,6 +243,21 @@ def detect_snowshoe_intent(message: str) -> Optional[SnowshoeIntent]:
     if not message or not message.strip():
         return None
     q = message.lower().strip()
+
+    # Disambiguation: exclude rental inquiries and primitive trapping / quarry
+    exclusions = [
+        "snowshoe hare",
+        "rental",
+        "rentals",
+        "renting",
+        "deadfall",
+        "snare",
+        "primitive trap",
+        "primitive trapping",
+    ]
+    if any(ex in q for ex in exclusions):
+        return None
+
     snowshoe_keywords = [
         r"\bsnowshoe(?:s|ing|er|ers)?\b",
         r"\btelevator(?:s)?\b",
@@ -313,17 +328,17 @@ def format_snowshoe_response(
             f"Calf Strain Reduction: {calc.calf_strain_reduction_percent}%. "
             f"Advisory: {calc.advisory}"
         )
-        info = {"action": "calculate_snowshoe", "route_id": calc.route_id, "calculation": calc.model_dump()}
-        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+        calc_info: dict[str, Any] = {"action": "calculate_snowshoe", "route_id": calc.route_id, "calculation": calc.model_dump()}
+        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": calc_info, "answer": answer})
 
     if isinstance(data, dict):
         if "snowshoe_mountaineering_info" in data and "answer" in data:
             return FormattedSnowshoeResponse(data["answer"], data)
         if "action" in data and "route_id" in data and ("slope_angle_deg" in data or "payload_lbs" in data or "calculation" in data):
             if "calculation" in data:
-                info = data
+                raw_info: dict[str, Any] = data
                 answer = f"Alpine Snowshoe Ascent Analysis completed for {data.get('route_id')}."
-                return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+                return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": raw_info, "answer": answer})
             req = SnowshoeRequest(
                 route_id=data.get("route_id", "mount-washington-tuckerman-ridge"),
                 snowpack=data.get("snowpack", "windslab_crust"),
@@ -349,15 +364,15 @@ def format_snowshoe_response(
             f"Calf Strain Reduction: {calc.calf_strain_reduction_percent}%. "
             f"Advisory: {calc.advisory}"
         )
-        info = {"action": "calculate_snowshoe", "route_id": calc.route_id, "calculation": calc.model_dump()}
-        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+        calc_info = {"action": "calculate_snowshoe", "route_id": calc.route_id, "calculation": calc.model_dump()}
+        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": calc_info, "answer": answer})
 
     if intent.action in ("gear_checklist", "gear"):
         gear = get_snowshoe_gear()
         items_str = "; ".join(f"{item.name} ({item.purpose})" for item in gear)
         answer = f"Mandatory Alpine Snowshoe Mountaineering Gear Checklist ({len(gear)} items): {items_str}. Technical winter gear is essential for steep ascents and icy traverses."
-        info = {"action": "gear_checklist", "gear": [item.model_dump() for item in gear], "mandatory_count": sum(1 for item in gear if item.mandatory)}
-        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+        gear_info: dict[str, Any] = {"action": "gear_checklist", "gear": [item.model_dump() for item in gear], "mandatory_count": sum(1 for item in gear if item.mandatory)}
+        return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": gear_info, "answer": answer})
 
     if intent.action == "route_detail" and intent.route_id:
         route = get_snowshoe_route(intent.route_id)
@@ -369,14 +384,14 @@ def format_snowshoe_response(
                 f"Technical Grade: {route.technical_grade} | Max Slope: {route.max_slope_deg}°. "
                 f"{route.description} Highlights: {highlights_str}."
             )
-            info = {"action": "route_detail", "route_id": route.route_id, "route": route.model_dump()}
-            return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+            detail_info: dict[str, Any] = {"action": "route_detail", "route_id": route.route_id, "route": route.model_dump()}
+            return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": detail_info, "answer": answer})
 
     routes = get_snowshoe_routes(technical_grade=intent.technical_grade)
     summary_str = "; ".join(f"{r.title} ({r.mountain_range}, {r.technical_grade}, {r.summit_elevation_m}m, max {r.max_slope_deg}°)" for r in routes)
     answer = f"Contoso Alpine Snowshoe Mountaineering Routes ({len(routes)} iconic routes): {summary_str}. Ask about specific route logistics, slope angle traction calculations, or mandatory winter mountaineering gear."
-    info = {"action": "routes_list", "technical_grade": intent.technical_grade, "routes": [r.model_dump() for r in routes]}
-    return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": info, "answer": answer})
+    list_info: dict[str, Any] = {"action": "routes_list", "technical_grade": intent.technical_grade, "routes": [r.model_dump() for r in routes]}
+    return FormattedSnowshoeResponse(answer, {"snowshoe_mountaineering_info": list_info, "answer": answer})
 
 
 def build_snowshoe_prompt(intent: Optional[SnowshoeIntent] = None) -> str:

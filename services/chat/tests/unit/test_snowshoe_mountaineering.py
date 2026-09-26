@@ -350,6 +350,10 @@ def test_detect_snowshoe_intent_disambiguation():
     # Avalanche generic without snowshoe terms
     assert detect_snowshoe_intent("Check avalanche safety danger rating bulletin for backcountry zone") is None
 
+    # Disambiguation: rentals and primitive trapping
+    assert detect_snowshoe_intent("Can I check winter snowshoe rental availability in Portland?") is None
+    assert detect_snowshoe_intent("How do I calculate the deadfall stone weight ratio for a snowshoe hare using a figure-4 deadfall?") is None
+
     # Unrelated queries
     assert detect_snowshoe_intent("Where is my order #12345? Track shipping status.") is None
     assert detect_snowshoe_intent("") is None
