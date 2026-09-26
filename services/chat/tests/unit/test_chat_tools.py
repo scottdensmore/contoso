@@ -6,11 +6,17 @@ from contoso_chat.beachcombing import (
 from contoso_chat.chat_tools import (
     beachcombing_tool,
     create_response,
+    pack_goat_tool,
     primitive_trapping_tool,
     resolve_tool,
     trail_packing_tool,
     tree_climbing_tool,
     wild_ice_tool,
+)
+from contoso_chat.pack_goat import (
+    PackGoatIntent,
+    PackGoatRequest,
+    PackGoatResponse,
 )
 from contoso_chat.primitive_trapping import (
     TrappingCalculationRequest,
@@ -210,3 +216,40 @@ def test_create_response_with_beachcombing_intent():
     assert "beachcombing_info" in resp
     assert resp["beachcombing_info"]["site_id"] == "glass-beach-fort-bragg"
     assert "Glass Beach" in resp["answer"]
+
+
+def test_pack_goat_tool_calculation():
+    req = PackGoatRequest(route_id="wind-river-titcomb-basin")
+    res = pack_goat_tool(req)
+    assert isinstance(res, PackGoatResponse)
+    assert res.route_id == "wind-river-titcomb-basin"
+
+
+def test_pack_goat_tool_dict_args():
+    res = pack_goat_tool(action="routes_list", saddle_rigging="flexible_tree_harness")
+    assert isinstance(res, list)
+    assert len(res) == 2
+
+
+def test_pack_goat_tool_gear():
+    res = pack_goat_tool(action="gear_checklist")
+    assert isinstance(res, list)
+    assert len(res) == 6
+
+
+def test_resolve_tool_with_pack_goat_intent():
+    intent = PackGoatIntent(action="routes_list", saddle_rigging="crossbuck_sawbuck")
+    result = resolve_tool(
+        intent, question="Which routes use crossbuck sawbuck rigging for pack goats?"
+    )
+    assert result is not None
+    assert "pack_goat_info" in result
+    assert result["pack_goat_info"]["action"] == "routes_list"
+
+
+def test_create_response_with_pack_goat_intent():
+    resp = create_response("Tell me about the Wind River Titcomb Basin pack goat trek")
+    assert resp is not None
+    assert "pack_goat_info" in resp
+    assert resp["pack_goat_info"]["route_id"] == "wind-river-titcomb-basin"
+    assert "Titcomb" in resp["answer"]

@@ -100,7 +100,11 @@ PACK_ROUTES: dict[str, PackRouteModel] = {
         max_string_mules=6,
         typical_days=7,
         description="A rugged northern Rockies pack expedition along the iconic Chinese Wall limestone cliff, crossing Continental Divide river fords and wilderness passes with decker rigging.",
-        route_highlights=["Chinese Wall limestone escarpment", "Highline tree saver overnight picketing", "Continental Divide river fords"],
+        route_highlights=[
+            "Chinese Wall limestone escarpment",
+            "Highline tree saver overnight picketing",
+            "Continental Divide river fords",
+        ],
     ),
     "pasayten-wilderness": PackRouteModel(
         route_id="pasayten-wilderness",
@@ -113,7 +117,11 @@ PACK_ROUTES: dict[str, PackRouteModel] = {
         max_string_mules=5,
         typical_days=6,
         description="High-country North Cascades sawbuck trail pack route along subalpine larch basins and border trails requiring careful grazing rotation and timberline diamond hitches.",
-        route_highlights=["Subalpine larch corridor traverses", "Diamond hitch timberline lashing", "Designated wilderness meadow rotation"],
+        route_highlights=[
+            "Subalpine larch corridor traverses",
+            "Diamond hitch timberline lashing",
+            "Designated wilderness meadow rotation",
+        ],
     ),
     "wind-river-range": PackRouteModel(
         route_id="wind-river-range",
@@ -126,7 +134,11 @@ PACK_ROUTES: dict[str, PackRouteModel] = {
         max_string_mules=4,
         typical_days=8,
         description="Strenuous high-altitude pack journey traversing granite boulder passes and alpine cirques above 10,000 feet with Decker pack saddles and bear-resistant panniers.",
-        route_highlights=["Granite talus pass switchbacks", "Pannier balance calibration over 10,000ft", "Bear-resistant hard-sided mantmy panniers"],
+        route_highlights=[
+            "Granite talus pass switchbacks",
+            "Pannier balance calibration over 10,000ft",
+            "Bear-resistant hard-sided mantmy panniers",
+        ],
     ),
     "pecos-wilderness": PackRouteModel(
         route_id="pecos-wilderness",
@@ -139,7 +151,11 @@ PACK_ROUTES: dict[str, PackRouteModel] = {
         max_string_mules=4,
         typical_days=5,
         description="Southwestern high mesa trail pack loop winding through aspen forests and Truchas peaks with sawbuck rigging, box hitches, and strict grazing containment.",
-        route_highlights=["High mesa aspen grove trails", "Box hitch duffel packing", "Leave No Trace horse grazing containment"],
+        route_highlights=[
+            "High mesa aspen grove trails",
+            "Box hitch duffel packing",
+            "Leave No Trace horse grazing containment",
+        ],
     ),
     "frank-church-river-of-no-return": PackRouteModel(
         route_id="frank-church-river-of-no-return",
@@ -152,7 +168,11 @@ PACK_ROUTES: dict[str, PackRouteModel] = {
         max_string_mules=6,
         typical_days=9,
         description="Deep wilderness canyon expedition following steep Salmon River breaks, negotiating narrow switchbacks with lead-line tensioning and sandbar picket camps.",
-        route_highlights=["Steep canyon switchback pack strings", "Mule string lead line tensioning", "River bar night picket camp"],
+        route_highlights=[
+            "Steep canyon switchback pack strings",
+            "Mule string lead line tensioning",
+            "River bar night picket camp",
+        ],
     ),
 }
 
@@ -229,7 +249,9 @@ def calculate_trail_packing(request: TrailPackingRequest) -> TrailPackingRespons
     limits = STOCK_ANIMAL_LIMITS.get(animal_key, STOCK_ANIMAL_LIMITS["mule"])
     max_payload = limits["max_payload_lbs"]
 
-    total_payload = round(request.left_pannier_lbs + request.right_pannier_lbs + request.top_pack_lbs, 2)
+    total_payload = round(
+        request.left_pannier_lbs + request.right_pannier_lbs + request.top_pack_lbs, 2
+    )
     diff = round(abs(request.left_pannier_lbs - request.right_pannier_lbs), 2)
     max_side = max(request.left_pannier_lbs, request.right_pannier_lbs)
     min_side = min(request.left_pannier_lbs, request.right_pannier_lbs)
@@ -251,8 +273,16 @@ def calculate_trail_packing(request: TrailPackingRequest) -> TrailPackingRespons
 
     hitch_label = request.hitch_type.replace("_", " ")
     if balance_status == "unbalanced_risk_galls":
-        heavy = "left (near-side)" if request.left_pannier_lbs > request.right_pannier_lbs else "right (off-side)"
-        light = "right (off-side)" if request.left_pannier_lbs > request.right_pannier_lbs else "left (near-side)"
+        heavy = (
+            "left (near-side)"
+            if request.left_pannier_lbs > request.right_pannier_lbs
+            else "right (off-side)"
+        )
+        light = (
+            "right (off-side)"
+            if request.left_pannier_lbs > request.right_pannier_lbs
+            else "left (near-side)"
+        )
         hitch_adj = f"Shift {diff:.1f} lbs from {heavy} to {light} pannier before securing {hitch_label}; unlevel loads cause sweeny and cinch galls."
     elif payload_capacity_status == "overloaded_injury_risk":
         overload = total_payload - max_payload
@@ -284,26 +314,76 @@ def detect_trail_packing_intent(message: str) -> Optional[TrailPackingIntent]:
     q = message.lower()
 
     # Disambiguation guards
-    trail_running_pats = [r"\btrail\s+run(?:ning)?\b", r"\bultramarathon(?:s)?\b", r"\bultra\s+run(?:ning)?\b", r"\bfastpack(?:ing)?\b", r"\brunning\s+shoes?\b", r"\brunning\s+pace\b", r"\b50k\b", r"\b100k\b", r"\b100\s+miler\b"]
+    trail_running_pats = [
+        r"\btrail\s+run(?:ning)?\b",
+        r"\bultramarathon(?:s)?\b",
+        r"\bultra\s+run(?:ning)?\b",
+        r"\bfastpack(?:ing)?\b",
+        r"\brunning\s+shoes?\b",
+        r"\brunning\s+pace\b",
+        r"\b50k\b",
+        r"\b100k\b",
+        r"\b100\s+miler\b",
+    ]
     if any(re.search(pat, q) for pat in trail_running_pats):
         return None
 
-    bikepacking_pats = [r"\bbikepack(?:ing)?\b", r"\bgravel\s+bike\b", r"\bmountain\s+bike\b", r"\btire\s+pressure\b", r"\bframe\s+bag\b", r"\bseat\s+pack\b", r"\bhandlebar\s+roll\b"]
+    bikepacking_pats = [
+        r"\bbikepack(?:ing)?\b",
+        r"\bgravel\s+bike\b",
+        r"\bmountain\s+bike\b",
+        r"\btire\s+pressure\b",
+        r"\bframe\s+bag\b",
+        r"\bseat\s+pack\b",
+        r"\bhandlebar\s+roll\b",
+    ]
     if any(re.search(pat, q) for pat in bikepacking_pats):
         return None
 
-    wildlife_pats = [r"\banimal\s+track(?:ing)?\b", r"\bwildlife\s+track(?:s|ing)?\b", r"\bbear\s+tracks?\b", r"\blion\s+tracks?\b", r"\bfootprint\b", r"\bspoor\b", r"\btrack\s+gait\b", r"\btrack\s+identification\b"]
+    wildlife_pats = [
+        r"\banimal\s+track(?:ing)?\b",
+        r"\bwildlife\s+track(?:s|ing)?\b",
+        r"\bbear\s+tracks?\b",
+        r"\blion\s+tracks?\b",
+        r"\bfootprint\b",
+        r"\bspoor\b",
+        r"\btrack\s+gait\b",
+        r"\btrack\s+identification\b",
+    ]
     if any(re.search(pat, q) for pat in wildlife_pats):
         return None
 
-    hiking_pats = [r"\bday\s+hike\b", r"\bhiking\s+boots?\b", r"\beasy\s+hiking\b", r"\bhiking\s+trails?\b"]
+    goat_pats = [r"\bgoat(?:s)?\b", r"\bwether(?:s)?\b"]
+    if any(re.search(pat, q) for pat in goat_pats):
+        return None
+
+    hiking_pats = [
+        r"\bday\s+hike\b",
+        r"\bhiking\s+boots?\b",
+        r"\beasy\s+hiking\b",
+        r"\bhiking\s+trails?\b",
+    ]
     has_hiking_without_equestrian = any(re.search(pat, q) for pat in hiking_pats)
 
     pack_keywords = [
-        r"\bhorse\s+pack(?:ing)?\b", r"\btrail\s+pack(?:ing)?\b", r"\bpack\s+horse(?:s)?\b", r"\bpack\s+mule(?:s)?\b",
-        r"\bmule\s+train\b", r"\bmule\s+string\b", r"\bpack\s+string\b", r"\bpack\s+stock\b", r"\bequestrian\b",
-        r"\bpack\s+saddle(?:s)?\b", r"\bsawbuck\b", r"\bdecker\b", r"\bpannier(?:s)?\b", r"\bdiamond\s+hitch\b",
-        r"\bbox\s+hitch\b", r"\bhighline\s+picket\b", r"\bhighline\s+tree\s+saver\b", r"\btack\s+checklist\b",
+        r"\bhorse\s+pack(?:ing)?\b",
+        r"\btrail\s+pack(?:ing)?\b",
+        r"\bpack\s+horse(?:s)?\b",
+        r"\bpack\s+mule(?:s)?\b",
+        r"\bmule\s+train\b",
+        r"\bmule\s+string\b",
+        r"\bpack\s+string\b",
+        r"\bpack\s+stock\b",
+        r"\bequestrian\b",
+        r"\bpack\s+saddle(?:s)?\b",
+        r"\bsawbuck\b",
+        r"\bdecker\b",
+        r"\bpannier(?:s)?\b",
+        r"\bdiamond\s+hitch\b",
+        r"\bbox\s+hitch\b",
+        r"\bhighline\s+picket\b",
+        r"\bhighline\s+tree\s+saver\b",
+        r"\btack\s+checklist\b",
     ]
     has_pack_keyword = any(re.search(pat, q) for pat in pack_keywords)
 
@@ -316,22 +396,61 @@ def detect_trail_packing_intent(message: str) -> Optional[TrailPackingIntent]:
         matched_route_id = "wind-river-range"
     elif "pecos" in q or "pecos-wilderness" in q or "truchas" in q:
         matched_route_id = "pecos-wilderness"
-    elif "frank church" in q or "frank-church-river-of-no-return" in q or "salmon river breaks" in q:
+    elif (
+        "frank church" in q or "frank-church-river-of-no-return" in q or "salmon river breaks" in q
+    ):
         matched_route_id = "frank-church-river-of-no-return"
 
-    if (has_hiking_without_equestrian and not has_pack_keyword and not matched_route_id) or (not has_pack_keyword and not matched_route_id):
+    if (has_hiking_without_equestrian and not has_pack_keyword and not matched_route_id) or (
+        not has_pack_keyword and not matched_route_id
+    ):
         return None
 
-    saddle_type: Optional[str] = "decker" if "decker" in q else ("sawbuck" if "sawbuck" in q else None)
+    saddle_type: Optional[str] = (
+        "decker" if "decker" in q else ("sawbuck" if "sawbuck" in q else None)
+    )
 
-    if any(k in q for k in ["balance", "balancing", "calculate", "payload", "weight difference", "lbs", "overload"]):
+    if any(
+        k in q
+        for k in [
+            "balance",
+            "balancing",
+            "calculate",
+            "payload",
+            "weight difference",
+            "lbs",
+            "overload",
+        ]
+    ):
         action = "calculate_packing"
-    elif any(k in q for k in ["tack", "checklist", "gear", "tree saver", "lead rope", "blanket", "hoof boot", "picket"]):
+    elif any(
+        k in q
+        for k in [
+            "tack",
+            "checklist",
+            "gear",
+            "tree saver",
+            "lead rope",
+            "blanket",
+            "hoof boot",
+            "picket",
+        ]
+    ):
         action = "gear_checklist"
-    elif matched_route_id and any(k in q for k in ["tell me", "detail", "about", "describe", "elevation", "days", "highlights"]):
+    elif matched_route_id and any(
+        k in q
+        for k in ["tell me", "detail", "about", "describe", "elevation", "days", "highlights"]
+    ):
         action = "route_detail"
     else:
-        action = "route_detail" if (matched_route_id and not any(k in q for k in ["routes", "trips", "expeditions", "catalog", "list"])) else "routes_list"
+        action = (
+            "route_detail"
+            if (
+                matched_route_id
+                and not any(k in q for k in ["routes", "trips", "expeditions", "catalog", "list"])
+            )
+            else "routes_list"
+        )
 
     return TrailPackingIntent(action=action, route_id=matched_route_id, saddle_type=saddle_type)
 
@@ -345,15 +464,34 @@ def format_trail_packing_response(data: Any, query: str = "") -> FormattedTrailP
             f"Pannier weight difference: {calc.weight_difference_lbs:.1f} lbs (Balance status: {calc.balance_status}, Ratio: {calc.balance_ratio:.2f}). "
             f"Hitch adjustment: {calc.recommended_hitch_adjustment} Highline picket spacing: minimum {calc.highline_spacing_m:.1f}m between animals."
         )
-        return FormattedTrailPackingResponse(answer, {"trail_packing_info": {"action": "calculate_packing", "route_id": calc.route_id, "calculation": calc.model_dump()}, "answer": answer})
+        return FormattedTrailPackingResponse(
+            answer,
+            {
+                "trail_packing_info": {
+                    "action": "calculate_packing",
+                    "route_id": calc.route_id,
+                    "calculation": calc.model_dump(),
+                },
+                "answer": answer,
+            },
+        )
 
     if isinstance(data, dict):
         if "trail_packing_info" in data and "answer" in data:
             return FormattedTrailPackingResponse(data["answer"], data)
         if "action" in data and "route_id" in data and "total_payload_lbs" in data:
             answer = f"Trail packing calculation completed for {data.get('route_id')}."
-            return FormattedTrailPackingResponse(answer, {"trail_packing_info": data, "answer": answer})
-        intent = TrailPackingIntent(**data) if "action" in data else (detect_trail_packing_intent(query or str(data)) or TrailPackingIntent(action="routes_list"))
+            return FormattedTrailPackingResponse(
+                answer, {"trail_packing_info": data, "answer": answer}
+            )
+        intent = (
+            TrailPackingIntent(**data)
+            if "action" in data
+            else (
+                detect_trail_packing_intent(query or str(data))
+                or TrailPackingIntent(action="routes_list")
+            )
+        )
     elif isinstance(data, TrailPackingIntent):
         intent = data
     else:
@@ -368,13 +506,33 @@ def format_trail_packing_response(data: Any, query: str = "") -> FormattedTrailP
             f"Pannier weight difference: {calc.weight_difference_lbs:.1f} lbs (Balance status: {calc.balance_status}, Ratio: {calc.balance_ratio:.2f}). "
             f"Hitch adjustment: {calc.recommended_hitch_adjustment} Highline picket spacing: minimum {calc.highline_spacing_m:.1f}m between animals."
         )
-        return FormattedTrailPackingResponse(answer, {"trail_packing_info": {"action": "calculate_packing", "route_id": calc.route_id, "calculation": calc.model_dump()}, "answer": answer})
+        return FormattedTrailPackingResponse(
+            answer,
+            {
+                "trail_packing_info": {
+                    "action": "calculate_packing",
+                    "route_id": calc.route_id,
+                    "calculation": calc.model_dump(),
+                },
+                "answer": answer,
+            },
+        )
 
     if intent.action in ("gear_checklist", "tack_checklist"):
         checklist = get_tack_checklist()
         items_str = "; ".join(f"{item.name} ({item.purpose})" for item in checklist)
         answer = f"Mandatory Tack & Highline Leave No Trace Checklist ({len(checklist)} items): {items_str}. Proper tree-saver straps and certified bear-resistant panniers are strictly required."
-        return FormattedTrailPackingResponse(answer, {"trail_packing_info": {"action": "gear_checklist", "gear": [item.model_dump() for item in checklist], "mandatory_count": len(checklist)}, "answer": answer})
+        return FormattedTrailPackingResponse(
+            answer,
+            {
+                "trail_packing_info": {
+                    "action": "gear_checklist",
+                    "gear": [item.model_dump() for item in checklist],
+                    "mandatory_count": len(checklist),
+                },
+                "answer": answer,
+            },
+        )
 
     if intent.action == "route_detail" and intent.route_id:
         route = get_pack_route(intent.route_id)
@@ -386,12 +544,35 @@ def format_trail_packing_response(data: Any, query: str = "") -> FormattedTrailP
                 f"Typical duration: {route.typical_days} days (max {route.max_string_mules} mules in string). "
                 f"{route.description} Highlights: {highlights_str}."
             )
-            return FormattedTrailPackingResponse(answer, {"trail_packing_info": {"action": "route_detail", "route_id": route.route_id, "route": route.model_dump()}, "answer": answer})
+            return FormattedTrailPackingResponse(
+                answer,
+                {
+                    "trail_packing_info": {
+                        "action": "route_detail",
+                        "route_id": route.route_id,
+                        "route": route.model_dump(),
+                    },
+                    "answer": answer,
+                },
+            )
 
     routes = get_pack_routes(saddle_type=intent.saddle_type)
-    summary_str = "; ".join(f"{r.title} ({r.saddle_type.title()} saddle, {r.elevation_m}m, {r.typical_days} days)" for r in routes)
+    summary_str = "; ".join(
+        f"{r.title} ({r.saddle_type.title()} saddle, {r.elevation_m}m, {r.typical_days} days)"
+        for r in routes
+    )
     answer = f"Contoso Wilderness Equestrian Pack Routes ({len(routes)} expeditions): {summary_str}. Ask about route details, pannier payload balancing calculations, or mandatory tack checklists."
-    return FormattedTrailPackingResponse(answer, {"trail_packing_info": {"action": "routes_list", "saddle_type": intent.saddle_type, "routes": [r.model_dump() for r in routes]}, "answer": answer})
+    return FormattedTrailPackingResponse(
+        answer,
+        {
+            "trail_packing_info": {
+                "action": "routes_list",
+                "saddle_type": intent.saddle_type,
+                "routes": [r.model_dump() for r in routes],
+            },
+            "answer": answer,
+        },
+    )
 
 
 def build_trail_packing_prompt(intent: Optional[TrailPackingIntent] = None) -> str:
@@ -406,5 +587,7 @@ def build_trail_packing_prompt(intent: Optional[TrailPackingIntent] = None) -> s
     if intent and intent.action == "route_detail" and intent.route_id:
         r = get_pack_route(intent.route_id)
         if r:
-            lines.append(f"- Focused Route: {r.title} ({r.national_forest}, {r.elevation_m}m, {r.saddle_type} saddle)")
+            lines.append(
+                f"- Focused Route: {r.title} ({r.national_forest}, {r.elevation_m}m, {r.saddle_type} saddle)"
+            )
     return "\n".join(lines)

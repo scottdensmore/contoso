@@ -182,6 +182,11 @@ from .pack_burro import (
     detect_pack_burro_intent,
     format_pack_burro_response,
 )
+from .pack_goat import (
+    build_pack_goat_prompt,
+    detect_pack_goat_intent,
+    format_pack_goat_response,
+)
 from .packrafting import (
     build_packrafting_prompt,
     detect_packrafting_intent,
@@ -675,6 +680,7 @@ async def generate_llm_response(
     gold_prospecting_prompt: str = "",
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
+    pack_goat_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -865,10 +871,14 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{tree_climbing_prompt}"
         if beachcombing_prompt:
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
+        if pack_goat_prompt:
+            local_system = f"{local_system}\n\n{pack_goat_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
+        if pack_goat_prompt:
+            local_system = f"{local_system}\n\n{pack_goat_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1058,6 +1068,8 @@ async def generate_llm_response(
             prompt_parts.append(fire_lookout_prompt)
         if fire_lookout_prompt:
             prompt_parts.append(fire_lookout_prompt)
+        if pack_goat_prompt:
+            prompt_parts.append(pack_goat_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1626,7 +1638,9 @@ async def get_response(customer_id, question, chat_history: Any = None):
     gold_prospecting_info_payload = None
     if gold_prospecting_intent:
         gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
-        formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
+        formatted_gold_prospecting = format_gold_prospecting_response(
+            gold_prospecting_intent, question
+        )
         gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
     beachcombing_intent = detect_beachcombing_intent(question)
     beachcombing_prompt = ""
@@ -1642,19 +1656,32 @@ async def get_response(customer_id, question, chat_history: Any = None):
         fire_lookout_prompt = build_fire_lookout_prompt(fire_lookout_intent)
         formatted_fire_lookout = format_fire_lookout_response(fire_lookout_intent, question)
         fire_lookout_info_payload = formatted_fire_lookout.get("fire_lookout_info")
+    pack_goat_intent = detect_pack_goat_intent(question)
+    pack_goat_prompt = ""
+    pack_goat_info_payload = None
+    if pack_goat_intent:
+        pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
+        formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
+        pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
         primitive_trapping_prompt = build_primitive_trapping_prompt(primitive_trapping_intent)
-        formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
-        primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
+        formatted_primitive_trapping = format_primitive_trapping_response(
+            primitive_trapping_intent, question
+        )
+        primitive_trapping_info_payload = formatted_primitive_trapping.get(
+            "primitive_trapping_info"
+        )
 
     mountain_weather_intent = detect_mountain_weather_intent(question)
     mountain_weather_prompt = ""
     mountain_weather_info_payload = None
     if mountain_weather_intent:
         mountain_weather_prompt = build_mountain_weather_prompt(mountain_weather_intent)
-        formatted_mountain_weather = format_mountain_weather_response(mountain_weather_intent, question)
+        formatted_mountain_weather = format_mountain_weather_response(
+            mountain_weather_intent, question
+        )
         mountain_weather_info_payload = formatted_mountain_weather.get("mountain_weather_info")
 
     trail_packing_intent = detect_trail_packing_intent(question)
@@ -1670,18 +1697,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
     wild_ice_info_payload = None
     if wild_ice_intent:
         wild_ice_prompt = build_wild_ice_prompt(wild_ice_intent)
-        formatted_wild_ice = format_wild_ice_response(
-            wild_ice_intent, question
-        )
+        formatted_wild_ice = format_wild_ice_response(wild_ice_intent, question)
         wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
     tree_climbing_intent = detect_tree_climbing_intent(question)
     tree_climbing_prompt = ""
     tree_climbing_info_payload = None
     if tree_climbing_intent:
         tree_climbing_prompt = build_tree_climbing_prompt(tree_climbing_intent)
-        formatted_tree_climbing = format_tree_climbing_response(
-            tree_climbing_intent, question
-        )
+        formatted_tree_climbing = format_tree_climbing_response(tree_climbing_intent, question)
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
     snowshoe_intent = detect_snowshoe_intent(question)
     snowshoe_prompt = ""
@@ -1696,9 +1719,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
     pack_burro_info_payload = None
     if pack_burro_intent:
         pack_burro_prompt = build_pack_burro_prompt(pack_burro_intent)
-        formatted_pack_burro = format_pack_burro_response(
-            pack_burro_intent, question
-        )
+        formatted_pack_burro = format_pack_burro_response(pack_burro_intent, question)
         pack_burro_info_payload = formatted_pack_burro.get("pack_burro_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
@@ -2012,6 +2033,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["beachcombing_prompt"] = beachcombing_prompt
     if fire_lookout_prompt:
         llm_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
+    if pack_goat_prompt:
+        llm_kwargs["pack_goat_prompt"] = pack_goat_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2203,6 +2226,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["beachcombing_info"] = beachcombing_info_payload
     if fire_lookout_intent and fire_lookout_info_payload:
         response_payload["fire_lookout_info"] = fire_lookout_info_payload
+    if pack_goat_intent and pack_goat_info_payload:
+        response_payload["pack_goat_info"] = pack_goat_info_payload
 
     return response_payload
 
@@ -2293,6 +2318,7 @@ def generate_llm_response_stream(
     snowshoe_mountaineering_prompt: str = "",
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
+    pack_goat_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2617,6 +2643,8 @@ def generate_llm_response_stream(
             prompt_parts.append(snowshoe_mountaineering_prompt)
         if beachcombing_prompt:
             prompt_parts.append(beachcombing_prompt)
+        if pack_goat_prompt:
+            prompt_parts.append(pack_goat_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3049,7 +3077,9 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     gold_prospecting_info_payload = None
     if gold_prospecting_intent:
         gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
-        formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
+        formatted_gold_prospecting = format_gold_prospecting_response(
+            gold_prospecting_intent, question
+        )
         gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
     beachcombing_intent = detect_beachcombing_intent(question)
     beachcombing_prompt = ""
@@ -3065,19 +3095,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         fire_lookout_prompt = build_fire_lookout_prompt(fire_lookout_intent)
         formatted_fire_lookout = format_fire_lookout_response(fire_lookout_intent, question)
         fire_lookout_info_payload = formatted_fire_lookout.get("fire_lookout_info")
+    pack_goat_intent = detect_pack_goat_intent(question)
+    pack_goat_prompt = ""
+    pack_goat_info_payload = None
+    if pack_goat_intent:
+        pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
+        formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
+        pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
         primitive_trapping_prompt = build_primitive_trapping_prompt(primitive_trapping_intent)
-        formatted_primitive_trapping = format_primitive_trapping_response(primitive_trapping_intent, question)
-        primitive_trapping_info_payload = formatted_primitive_trapping.get("primitive_trapping_info")
+        formatted_primitive_trapping = format_primitive_trapping_response(
+            primitive_trapping_intent, question
+        )
+        primitive_trapping_info_payload = formatted_primitive_trapping.get(
+            "primitive_trapping_info"
+        )
 
     mountain_weather_intent = detect_mountain_weather_intent(question)
     mountain_weather_prompt = ""
     mountain_weather_info_payload = None
     if mountain_weather_intent:
         mountain_weather_prompt = build_mountain_weather_prompt(mountain_weather_intent)
-        formatted_mountain_weather = format_mountain_weather_response(mountain_weather_intent, question)
+        formatted_mountain_weather = format_mountain_weather_response(
+            mountain_weather_intent, question
+        )
         mountain_weather_info_payload = formatted_mountain_weather.get("mountain_weather_info")
 
     trail_packing_intent = detect_trail_packing_intent(question)
@@ -3093,9 +3136,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     wild_ice_info_payload = None
     if wild_ice_intent:
         wild_ice_prompt = build_wild_ice_prompt(wild_ice_intent)
-        formatted_wild_ice = format_wild_ice_response(
-            wild_ice_intent, question
-        )
+        formatted_wild_ice = format_wild_ice_response(wild_ice_intent, question)
         wild_ice_info_payload = formatted_wild_ice.get("wild_ice_info")
 
     tree_climbing_intent = detect_tree_climbing_intent(question)
@@ -3103,9 +3144,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     tree_climbing_info_payload = None
     if tree_climbing_intent:
         tree_climbing_prompt = build_tree_climbing_prompt(tree_climbing_intent)
-        formatted_tree_climbing = format_tree_climbing_response(
-            tree_climbing_intent, question
-        )
+        formatted_tree_climbing = format_tree_climbing_response(tree_climbing_intent, question)
         tree_climbing_info_payload = formatted_tree_climbing.get("tree_climbing_info")
     snowshoe_intent = detect_snowshoe_intent(question)
     snowshoe_prompt = ""
@@ -3120,9 +3159,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     pack_burro_info_payload = None
     if pack_burro_intent:
         pack_burro_prompt = build_pack_burro_prompt(pack_burro_intent)
-        formatted_pack_burro = format_pack_burro_response(
-            pack_burro_intent, question
-        )
+        formatted_pack_burro = format_pack_burro_response(pack_burro_intent, question)
         pack_burro_info_payload = formatted_pack_burro.get("pack_burro_info")
     mountaineering_intent = detect_mountaineering_intent(question)
     mountaineering_prompt = ""
@@ -3598,9 +3635,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "mountain_weather_gear",
             "gear": "mountain_weather_gear",
         }
-        event_name = action_to_event.get(
-            mountain_weather_intent.action, "mountain_weather_info"
-        )
+        event_name = action_to_event.get(mountain_weather_intent.action, "mountain_weather_info")
         yield f"data: {json.dumps({'event': event_name, 'mountain_weather_info': mountain_weather_info_payload, event_name: mountain_weather_info_payload})}\n\n"
         if event_name != "mountain_weather_info":
             yield f"data: {json.dumps({'event': 'mountain_weather_info', 'mountain_weather_info': mountain_weather_info_payload})}\n\n"
@@ -3614,9 +3649,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "wild_ice_gear",
             "gear": "wild_ice_gear",
         }
-        event_name = action_to_event.get(
-            wild_ice_intent.action, "wild_ice_info"
-        )
+        event_name = action_to_event.get(wild_ice_intent.action, "wild_ice_info")
         wi_sse = json.dumps(
             {
                 "event": event_name,
@@ -3643,9 +3676,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "tree_climbing_gear",
             "gear": "tree_climbing_gear",
         }
-        event_name = action_to_event.get(
-            tree_climbing_intent.action, "tree_climbing_info"
-        )
+        event_name = action_to_event.get(tree_climbing_intent.action, "tree_climbing_info")
         tc_sse = json.dumps(
             {
                 "event": event_name,
@@ -3671,9 +3702,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "pack_burro_gear",
             "gear": "pack_burro_gear",
         }
-        event_name = action_to_event.get(
-            pack_burro_intent.action, "pack_burro_info"
-        )
+        event_name = action_to_event.get(pack_burro_intent.action, "pack_burro_info")
         pb_sse = json.dumps(
             {
                 "event": event_name,
@@ -3699,9 +3728,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "gold_prospecting_gear",
             "gear": "gold_prospecting_gear",
         }
-        event_name = action_to_event.get(
-            gold_prospecting_intent.action, "gold_prospecting_info"
-        )
+        event_name = action_to_event.get(gold_prospecting_intent.action, "gold_prospecting_info")
         gold_sse = json.dumps(
             {
                 "event": event_name,
@@ -3727,9 +3754,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "beachcombing_gear",
             "gear": "beachcombing_gear",
         }
-        event_name = action_to_event.get(
-            beachcombing_intent.action, "beachcombing_info"
-        )
+        event_name = action_to_event.get(beachcombing_intent.action, "beachcombing_info")
         beach_sse = json.dumps(
             {
                 "event": event_name,
@@ -3755,9 +3780,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "fire_lookout_gear",
             "gear": "fire_lookout_gear",
         }
-        event_name = action_to_event.get(
-            fire_lookout_intent.action, "fire_lookout_info"
-        )
+        event_name = action_to_event.get(fire_lookout_intent.action, "fire_lookout_info")
         fire_sse = json.dumps(
             {
                 "event": event_name,
@@ -3774,6 +3797,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {fire_fallback}\n\n"
+    if pack_goat_intent and pack_goat_info_payload:
+        action_to_event = {
+            "routes_list": "pack_goat_lookup",
+            "route_detail": "pack_goat_lookup",
+            "calculate_packing": "pack_goat_calculated",
+            "calculate": "pack_goat_calculated",
+            "gear_checklist": "pack_goat_lookup",
+            "gear": "pack_goat_lookup",
+        }
+        event_name = action_to_event.get(pack_goat_intent.action, "pack_goat_lookup")
+        goat_sse = json.dumps(
+            {
+                "event": event_name,
+                "pack_goat_info": pack_goat_info_payload,
+                event_name: pack_goat_info_payload,
+            }
+        )
+        yield f"data: {goat_sse}\n\n"
+        if event_name != "pack_goat_info":
+            goat_fallback = json.dumps(
+                {
+                    "event": "pack_goat_info",
+                    "pack_goat_info": pack_goat_info_payload,
+                }
+            )
+            yield f"data: {goat_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3940,6 +3989,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["beachcombing_prompt"] = beachcombing_prompt
     if fire_lookout_prompt:
         stream_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
+    if pack_goat_prompt:
+        stream_kwargs["pack_goat_prompt"] = pack_goat_prompt
 
     for chunk in generate_llm_response_stream(
         question,
