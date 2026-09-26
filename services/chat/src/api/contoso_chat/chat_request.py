@@ -23,6 +23,11 @@ from .avalanche import (
     detect_avalanche_intent,
     format_avalanche_response,
 )
+from .beachcombing import (
+    build_beachcombing_prompt,
+    detect_beachcombing_intent,
+    format_beachcombing_response,
+)
 from .big_wall import (
     build_big_wall_prompt,
     detect_big_wall_intent,
@@ -663,6 +668,7 @@ async def generate_llm_response(
     pack_burro_prompt: str = "",
     snowshoe_mountaineering_prompt: str = "",
     gold_prospecting_prompt: str = "",
+    beachcombing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -851,6 +857,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{wild_ice_prompt}"
         if tree_climbing_prompt:
             local_system = f"{local_system}\n\n{tree_climbing_prompt}"
+        if beachcombing_prompt:
+            local_system = f"{local_system}\n\n{beachcombing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1034,6 +1042,8 @@ async def generate_llm_response(
             prompt_parts.append(snowshoe_mountaineering_prompt)
         if gold_prospecting_prompt:
             prompt_parts.append(gold_prospecting_prompt)
+        if beachcombing_prompt:
+            prompt_parts.append(beachcombing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1604,6 +1614,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
         formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
         gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
+    beachcombing_intent = detect_beachcombing_intent(question)
+    beachcombing_prompt = ""
+    beachcombing_info_payload = None
+    if beachcombing_intent:
+        beachcombing_prompt = build_beachcombing_prompt(beachcombing_intent)
+        formatted_beachcombing = format_beachcombing_response(beachcombing_intent, question)
+        beachcombing_info_payload = formatted_beachcombing.get("beachcombing_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -1970,6 +1987,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
     if gold_prospecting_prompt:
         llm_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
+    if beachcombing_prompt:
+        llm_kwargs["beachcombing_prompt"] = beachcombing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2157,8 +2176,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["pack_burro_info"] = pack_burro_info_payload
     if gold_prospecting_intent and gold_prospecting_info_payload:
         response_payload["gold_prospecting_info"] = gold_prospecting_info_payload
-    if gold_prospecting_intent and gold_prospecting_info_payload:
-        response_payload["gold_prospecting_info"] = gold_prospecting_info_payload
+    if beachcombing_intent and beachcombing_info_payload:
+        response_payload["beachcombing_info"] = beachcombing_info_payload
 
     return response_payload
 
@@ -2247,6 +2266,7 @@ def generate_llm_response_stream(
     tree_climbing_prompt: str = "",
     pack_burro_prompt: str = "",
     snowshoe_mountaineering_prompt: str = "",
+    beachcombing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2405,6 +2425,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{river_rafting_prompt}"
         if wild_ice_prompt:
             local_system = f"{local_system}\n\n{wild_ice_prompt}"
+        if beachcombing_prompt:
+            local_system = f"{local_system}\n\n{beachcombing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2567,6 +2589,8 @@ def generate_llm_response_stream(
             prompt_parts.append(pack_burro_prompt)
         if snowshoe_mountaineering_prompt:
             prompt_parts.append(snowshoe_mountaineering_prompt)
+        if beachcombing_prompt:
+            prompt_parts.append(beachcombing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3001,6 +3025,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         gold_prospecting_prompt = build_gold_prospecting_prompt(gold_prospecting_intent)
         formatted_gold_prospecting = format_gold_prospecting_response(gold_prospecting_intent, question)
         gold_prospecting_info_payload = formatted_gold_prospecting.get("gold_prospecting_info")
+    beachcombing_intent = detect_beachcombing_intent(question)
+    beachcombing_prompt = ""
+    beachcombing_info_payload = None
+    if beachcombing_intent:
+        beachcombing_prompt = build_beachcombing_prompt(beachcombing_intent)
+        formatted_beachcombing = format_beachcombing_response(beachcombing_intent, question)
+        beachcombing_info_payload = formatted_beachcombing.get("beachcombing_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3654,6 +3685,34 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {gold_fallback}\n\n"
+    if beachcombing_intent and beachcombing_info_payload:
+        action_to_event = {
+            "sites_list": "beachcombing_sites",
+            "site_detail": "beachcombing_site_detail",
+            "calculate_beachcombing": "beachcombing_calculation",
+            "calculate": "beachcombing_calculation",
+            "gear_checklist": "beachcombing_gear",
+            "gear": "beachcombing_gear",
+        }
+        event_name = action_to_event.get(
+            beachcombing_intent.action, "beachcombing_info"
+        )
+        beach_sse = json.dumps(
+            {
+                "event": event_name,
+                "beachcombing_info": beachcombing_info_payload,
+                event_name: beachcombing_info_payload,
+            }
+        )
+        yield f"data: {beach_sse}\n\n"
+        if event_name != "beachcombing_info":
+            beach_fallback = json.dumps(
+                {
+                    "event": "beachcombing_info",
+                    "beachcombing_info": beachcombing_info_payload,
+                }
+            )
+            yield f"data: {beach_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -3816,6 +3875,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["snowshoe_mountaineering_prompt"] = snowshoe_prompt
     if gold_prospecting_prompt:
         stream_kwargs["gold_prospecting_prompt"] = gold_prospecting_prompt
+    if beachcombing_prompt:
+        stream_kwargs["beachcombing_prompt"] = beachcombing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

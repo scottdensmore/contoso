@@ -48,6 +48,18 @@ from contoso_chat.avalanche import (
     get_avalanche_zones,
     get_companion_rescue_protocol,
 )
+from contoso_chat.beachcombing import (
+    BeachcombingGearItemModel,
+    BeachcombingRequest,
+    BeachcombingResponse,
+    BeachcombingSiteModel,
+    calculate_beachcombing,
+    detect_beachcombing_intent,
+    format_beachcombing_response,
+    get_beachcombing_gear,
+    get_beachcombing_site,
+    get_beachcombing_sites,
+)
 from contoso_chat.big_wall import (
     BigWallGearRequirement,
     BigWallRouteModel,
@@ -1200,6 +1212,7 @@ async def create_response(request: ChatRequest):
             wild_ice_intent = detect_wild_ice_intent(request.question)
             tree_climbing_intent = detect_tree_climbing_intent(request.question)
             pack_burro_intent = detect_pack_burro_intent(request.question)
+            beachcombing_intent = detect_beachcombing_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1640,6 +1653,14 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_prospecting.get(
                     "answer", mock_payload["answer"]
                 )
+            if beachcombing_intent:
+                formatted_beachcombing = format_beachcombing_response(
+                    beachcombing_intent, request.question
+                )
+                mock_payload["beachcombing_info"] = formatted_beachcombing.get("beachcombing_info")
+                mock_payload["answer"] = formatted_beachcombing.get(
+                    "answer", mock_payload["answer"]
+                )
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(
                     snowshoe_intent, request.question
@@ -1880,6 +1901,7 @@ async def create_response_stream(request: ChatRequest):
                 wild_ice_intent = detect_wild_ice_intent(request.question)
                 tree_climbing_intent = detect_tree_climbing_intent(request.question)
                 pack_burro_intent = detect_pack_burro_intent(request.question)
+                beachcombing_intent = detect_beachcombing_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2341,6 +2363,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'gold_prospecting_info': gold_payload, event_name: gold_payload})}\n\n"
                     if event_name != "gold_prospecting_info":
                         yield f"data: {json.dumps({'event': 'gold_prospecting_info', 'gold_prospecting_info': gold_payload})}\n\n"
+                if beachcombing_intent:
+                    formatted_beachcombing = format_beachcombing_response(
+                        beachcombing_intent, request.question
+                    )
+                    beach_payload = formatted_beachcombing.get("beachcombing_info")
+                    action_to_event = {
+                        "sites_list": "beachcombing_sites",
+                        "site_detail": "beachcombing_site_detail",
+                        "calculate_beachcombing": "beachcombing_calculation",
+                        "calculate": "beachcombing_calculation",
+                        "gear_checklist": "beachcombing_gear",
+                        "gear": "beachcombing_gear",
+                    }
+                    event_name = action_to_event.get(
+                        beachcombing_intent.action, "beachcombing_info"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'beachcombing_info': beach_payload, event_name: beach_payload})}\n\n"
+                    if event_name != "beachcombing_info":
+                        yield f"data: {json.dumps({'event': 'beachcombing_info', 'beachcombing_info': beach_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -2670,6 +2711,11 @@ async def create_response_stream(request: ChatRequest):
                         gold_prospecting_intent, request.question
                     )
                     mock_chunks = [str(formatted_prospecting.get("answer", ""))]
+                elif beachcombing_intent:
+                    formatted_beachcombing = format_beachcombing_response(
+                        beachcombing_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_beachcombing.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(
                         snowshoe_intent, request.question
@@ -6665,3 +6711,81 @@ async def calculate_gold_prospecting_endpoint(
 )
 async def get_gold_prospecting_gear_endpoint() -> list[ProspectingGearItemModel]:
     return get_prospecting_gear()
+
+
+@app.get(
+    "/beachcombing/sites",
+    response_model=list[BeachcombingSiteModel],
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="List coastal beachcombing sites with optional shoreline type filtering",
+)
+@app.get(
+    "/api/beachcombing/sites",
+    response_model=list[BeachcombingSiteModel],
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="List coastal beachcombing sites with optional shoreline type filtering",
+)
+async def get_beachcombing_sites_endpoint(
+    shoreline_type: Optional[str] = None,
+) -> list[BeachcombingSiteModel]:
+    return get_beachcombing_sites(shoreline_type=shoreline_type)
+
+
+@app.get(
+    "/beachcombing/sites/{site_id}",
+    response_model=BeachcombingSiteModel,
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="Get details for a coastal beachcombing site",
+)
+@app.get(
+    "/api/beachcombing/sites/{site_id}",
+    response_model=BeachcombingSiteModel,
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="Get details for a coastal beachcombing site",
+)
+async def get_beachcombing_site_detail_endpoint(
+    site_id: str,
+) -> BeachcombingSiteModel:
+    site = get_beachcombing_site(site_id)
+    if not site:
+        raise HTTPException(
+            status_code=404, detail=f"Beachcombing site '{site_id}' not found"
+        )
+    return site
+
+
+@app.post(
+    "/beachcombing/calculate",
+    response_model=BeachcombingResponse,
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="Calculate expected sea glass yield, patina frosting grade, and foraging status",
+)
+@app.post(
+    "/api/beachcombing/calculate",
+    response_model=BeachcombingResponse,
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="Calculate expected sea glass yield, patina frosting grade, and foraging status",
+)
+async def calculate_beachcombing_endpoint(
+    req: BeachcombingRequest,
+) -> BeachcombingResponse:
+    try:
+        return calculate_beachcombing(req)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get(
+    "/beachcombing/gear",
+    response_model=list[BeachcombingGearItemModel],
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="List mandatory wilderness sea glass and coastal beachcombing gear items",
+)
+@app.get(
+    "/api/beachcombing/gear",
+    response_model=list[BeachcombingGearItemModel],
+    tags=["Wilderness Sea Glass & Coastal Beachcombing Tooling"],
+    summary="List mandatory wilderness sea glass and coastal beachcombing gear items",
+)
+async def get_beachcombing_gear_endpoint() -> list[BeachcombingGearItemModel]:
+    return get_beachcombing_gear()
