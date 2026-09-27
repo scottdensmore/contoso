@@ -432,6 +432,10 @@ from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
 )
+from contoso_chat.pack_llama import (
+    detect_pack_llama_intent,
+    format_pack_llama_response,
+)
 from contoso_chat.packrafting import (
     PackraftGearRequirement,
     PackraftPlanRequest,
@@ -556,6 +560,7 @@ from contoso_chat.river_sup import (
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
+from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routes import (
@@ -956,6 +961,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Contoso Chat", version="1.0.0")
 app.include_router(pack_goat_router)
+app.include_router(pack_llama_router)
 app.include_router(sandboarding_router)
 app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
@@ -1259,6 +1265,7 @@ async def create_response(request: ChatRequest):
             beachcombing_intent = detect_beachcombing_intent(request.question)
             fire_lookout_intent = detect_fire_lookout_intent(request.question)
             pack_goat_intent = detect_pack_goat_intent(request.question)
+            pack_llama_intent = detect_pack_llama_intent(request.question)
             sandboarding_intent = detect_sandboarding_intent(request.question)
             cave_diving_intent = detect_cave_diving_intent(request.question)
             telemark_intent = detect_telemark_intent(request.question)
@@ -1723,6 +1730,10 @@ async def create_response(request: ChatRequest):
                 formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
                 mock_payload["pack_goat_info"] = formatted_goat.get("pack_goat_info")
                 mock_payload["answer"] = formatted_goat.get("answer", mock_payload["answer"])
+            if pack_llama_intent:
+                formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                mock_payload["pack_llama_info"] = formatted_llama.get("pack_llama_info")
+                mock_payload["answer"] = formatted_llama.get("answer", mock_payload["answer"])
             if sandboarding_intent:
                 formatted_sand = format_sandboarding_response(sandboarding_intent, request.question)
                 mock_payload["sandboarding_info"] = formatted_sand.get("sandboarding_info")
@@ -1976,6 +1987,7 @@ async def create_response_stream(request: ChatRequest):
                 beachcombing_intent = detect_beachcombing_intent(request.question)
                 fire_lookout_intent = detect_fire_lookout_intent(request.question)
                 pack_goat_intent = detect_pack_goat_intent(request.question)
+                pack_llama_intent = detect_pack_llama_intent(request.question)
                 sandboarding_intent = detect_sandboarding_intent(request.question)
                 cave_diving_intent = detect_cave_diving_intent(request.question)
                 telemark_intent = detect_telemark_intent(request.question)
@@ -2494,6 +2506,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'pack_goat_info': goat_payload, event_name: goat_payload})}\n\n"
                     if event_name != "pack_goat_info":
                         yield f"data: {json.dumps({'event': 'pack_goat_info', 'pack_goat_info': goat_payload})}\n\n"
+                if pack_llama_intent:
+                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    llama_payload = formatted_llama.get("pack_llama_info")
+                    action_to_event = {
+                        "routes_list": "pack_llama_lookup",
+                        "route_detail": "pack_llama_lookup",
+                        "calculate_packing": "pack_llama_calculated",
+                        "calculate": "pack_llama_calculated",
+                        "gear_checklist": "pack_llama_lookup",
+                        "gear": "pack_llama_lookup",
+                    }
+                    event_name = action_to_event.get(pack_llama_intent.action, "pack_llama_lookup")
+                    yield f"data: {json.dumps({'event': event_name, 'pack_llama_info': llama_payload, event_name: llama_payload})}\n\n"
+                    if event_name != "pack_llama_info":
+                        yield f"data: {json.dumps({'event': 'pack_llama_info', 'pack_llama_info': llama_payload})}\n\n"
                 if sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question
@@ -2896,6 +2923,9 @@ async def create_response_stream(request: ChatRequest):
                 elif pack_goat_intent:
                     formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
                     mock_chunks = [str(formatted_goat.get("answer", ""))]
+                elif pack_llama_intent:
+                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    mock_chunks = [str(formatted_llama.get("answer", ""))]
                 elif sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question
