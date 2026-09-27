@@ -15,6 +15,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.telemark_skiing import (
+    detect_telemark_intent,
+    format_telemark_response,
+)
 
 
 async def generate_cave_diving_stream_events(question: str) -> AsyncGenerator[str, None]:
@@ -87,6 +91,32 @@ async def generate_sandboarding_stream_events(question: str) -> AsyncGenerator[s
     yield f"data: {json.dumps({'event': event_name, 'sandboarding_info': sand_payload, event_name: sand_payload})}\n\n"
     if event_name != "sandboarding_info":
         yield f"data: {json.dumps({'event': 'sandboarding_info', 'sandboarding_info': sand_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_telemark_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events telemark_lookup and telemark_calculated when telemark skiing intent is handled."""
+    intent = detect_telemark_intent(question)
+    if not intent:
+        return
+
+    formatted = format_telemark_response(intent)
+    tele_payload = formatted.get("telemark_skiing_info")
+
+    event_name = (
+        "telemark_calculated"
+        if intent.action in ("calculate_activity", "calculate")
+        else "telemark_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'telemark_skiing_info': tele_payload, event_name: tele_payload})}\n\n"
+    if event_name != "telemark_skiing_info":
+        yield f"data: {json.dumps({'event': 'telemark_skiing_info', 'telemark_skiing_info': tele_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

@@ -14,6 +14,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.telemark_skiing import (
+    detect_telemark_intent,
+    format_telemark_response,
+)
 
 
 def handle_cave_diving_intent(question: str) -> Optional[dict[str, Any]]:
@@ -48,5 +52,17 @@ def handle_sandboarding_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_sandboarding_response(intent, question)
     return {
         "sandboarding_info": formatted.get("sandboarding_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_telemark_skiing_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format telemark skiing intent in the cascade."""
+    intent = detect_telemark_intent(question)
+    if not intent:
+        return None
+    formatted = format_telemark_response(intent)
+    return {
+        "telemark_skiing_info": formatted.get("telemark_skiing_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

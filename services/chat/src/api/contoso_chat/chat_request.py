@@ -321,6 +321,11 @@ from .stores import (
     build_store_prompt,
     detect_store_intent,
 )
+from .telemark_skiing import (
+    build_telemark_prompt,
+    detect_telemark_intent,
+    format_telemark_response,
+)
 from .trade_in import (
     build_trade_in_prompt,
     detect_trade_in_intent,
@@ -693,6 +698,7 @@ async def generate_llm_response(
     pack_goat_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
+    telemark_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -889,6 +895,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{sandboarding_prompt}"
         if cave_diving_prompt:
             local_system = f"{local_system}\n\n{cave_diving_prompt}"
+        if telemark_prompt:
+            local_system = f"{local_system}\n\n{telemark_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if fire_lookout_prompt:
@@ -899,6 +907,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{sandboarding_prompt}"
         if cave_diving_prompt:
             local_system = f"{local_system}\n\n{cave_diving_prompt}"
+        if telemark_prompt:
+            local_system = f"{local_system}\n\n{telemark_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1094,6 +1104,8 @@ async def generate_llm_response(
             prompt_parts.append(sandboarding_prompt)
         if cave_diving_prompt:
             prompt_parts.append(cave_diving_prompt)
+        if telemark_prompt:
+            prompt_parts.append(telemark_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1701,6 +1713,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         cave_diving_prompt = build_cave_diving_prompt(cave_diving_intent)
         formatted_cave_diving = format_cave_diving_response(cave_diving_intent)
         cave_diving_info_payload = formatted_cave_diving.get("cave_diving_info")
+    telemark_intent = detect_telemark_intent(question)
+    telemark_prompt = ""
+    telemark_info_payload = None
+    if telemark_intent:
+        telemark_prompt = build_telemark_prompt(telemark_intent)
+        formatted_telemark = format_telemark_response(telemark_intent)
+        telemark_info_payload = formatted_telemark.get("telemark_skiing_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -2077,6 +2096,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:
         llm_kwargs["cave_diving_prompt"] = cave_diving_prompt
+    if telemark_prompt:
+        llm_kwargs["telemark_prompt"] = telemark_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2274,6 +2295,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["sandboarding_info"] = sandboarding_info_payload
     if cave_diving_intent and cave_diving_info_payload:
         response_payload["cave_diving_info"] = cave_diving_info_payload
+    if telemark_intent and telemark_info_payload:
+        response_payload["telemark_skiing_info"] = telemark_info_payload
 
     return response_payload
 
@@ -2367,6 +2390,7 @@ def generate_llm_response_stream(
     pack_goat_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
+    telemark_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -3168,6 +3192,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         cave_diving_prompt = build_cave_diving_prompt(cave_diving_intent)
         formatted_cave_diving = format_cave_diving_response(cave_diving_intent)
         cave_diving_info_payload = formatted_cave_diving.get("cave_diving_info")
+    telemark_intent = detect_telemark_intent(question)
+    telemark_prompt = ""
+    telemark_info_payload = None
+    if telemark_intent:
+        telemark_prompt = build_telemark_prompt(telemark_intent)
+        formatted_telemark = format_telemark_response(telemark_intent)
+        telemark_info_payload = formatted_telemark.get("telemark_skiing_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3941,6 +3972,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {cave_fallback}\n\n"
+    if telemark_intent and telemark_info_payload:
+        action_to_event = {
+            "zones_list": "telemark_lookup",
+            "zone_detail": "telemark_lookup",
+            "calculate_activity": "telemark_calculated",
+            "calculate": "telemark_calculated",
+            "gear_checklist": "telemark_lookup",
+            "gear": "telemark_lookup",
+        }
+        event_name = action_to_event.get(telemark_intent.action, "telemark_lookup")
+        tele_sse = json.dumps(
+            {
+                "event": event_name,
+                "telemark_skiing_info": telemark_info_payload,
+                event_name: telemark_info_payload,
+            }
+        )
+        yield f"data: {tele_sse}\n\n"
+        if event_name != "telemark_skiing_info":
+            tele_fallback = json.dumps(
+                {
+                    "event": "telemark_skiing_info",
+                    "telemark_skiing_info": telemark_info_payload,
+                }
+            )
+            yield f"data: {tele_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -4113,6 +4170,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:
         stream_kwargs["cave_diving_prompt"] = cave_diving_prompt
+    if telemark_prompt:
+        stream_kwargs["telemark_prompt"] = telemark_prompt
 
     for chunk in generate_llm_response_stream(
         question,
