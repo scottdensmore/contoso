@@ -88,6 +88,11 @@ from .dogsledding import (
     extract_dogsled_intent,
     format_dogsled_response,
 )
+from .falconry import (
+    build_falconry_prompt,
+    detect_falconry_intent,
+    format_falconry_response,
+)
 from .faq import (
     build_faq_prompt,
     detect_faq_intent,
@@ -699,6 +704,7 @@ async def generate_llm_response(
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
+    falconry_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -897,6 +903,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{cave_diving_prompt}"
         if telemark_prompt:
             local_system = f"{local_system}\n\n{telemark_prompt}"
+        if falconry_prompt:
+            local_system = f"{local_system}\n\n{falconry_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if fire_lookout_prompt:
@@ -1106,6 +1114,8 @@ async def generate_llm_response(
             prompt_parts.append(cave_diving_prompt)
         if telemark_prompt:
             prompt_parts.append(telemark_prompt)
+        if falconry_prompt:
+            prompt_parts.append(falconry_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1720,6 +1730,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         telemark_prompt = build_telemark_prompt(telemark_intent)
         formatted_telemark = format_telemark_response(telemark_intent)
         telemark_info_payload = formatted_telemark.get("telemark_skiing_info")
+    falconry_intent = detect_falconry_intent(question)
+    falconry_prompt = ""
+    falconry_info_payload = None
+    if falconry_intent:
+        falconry_prompt = build_falconry_prompt(falconry_intent)
+        formatted_falconry = format_falconry_response(falconry_intent, question)
+        falconry_info_payload = formatted_falconry.get("falconry_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -2098,6 +2115,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["cave_diving_prompt"] = cave_diving_prompt
     if telemark_prompt:
         llm_kwargs["telemark_prompt"] = telemark_prompt
+    if falconry_prompt:
+        llm_kwargs["falconry_prompt"] = falconry_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2297,6 +2316,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["cave_diving_info"] = cave_diving_info_payload
     if telemark_intent and telemark_info_payload:
         response_payload["telemark_skiing_info"] = telemark_info_payload
+    if falconry_intent and falconry_info_payload:
+        response_payload["falconry_info"] = falconry_info_payload
 
     return response_payload
 
@@ -2391,6 +2412,7 @@ def generate_llm_response_stream(
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
+    falconry_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2721,6 +2743,8 @@ def generate_llm_response_stream(
             prompt_parts.append(sandboarding_prompt)
         if cave_diving_prompt:
             prompt_parts.append(cave_diving_prompt)
+        if falconry_prompt:
+            prompt_parts.append(falconry_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3199,6 +3223,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         telemark_prompt = build_telemark_prompt(telemark_intent)
         formatted_telemark = format_telemark_response(telemark_intent)
         telemark_info_payload = formatted_telemark.get("telemark_skiing_info")
+    falconry_intent = detect_falconry_intent(question)
+    falconry_prompt = ""
+    falconry_info_payload = None
+    if falconry_intent:
+        falconry_prompt = build_falconry_prompt(falconry_intent)
+        formatted_falconry = format_falconry_response(falconry_intent, question)
+        falconry_info_payload = formatted_falconry.get("falconry_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -3998,6 +4029,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {tele_fallback}\n\n"
+    if falconry_intent and falconry_info_payload:
+        action_to_event = {
+            "grounds_list": "falconry_lookup",
+            "ground_detail": "falconry_lookup",
+            "calculate_conditioning": "falconry_calculated",
+            "calculate": "falconry_calculated",
+            "gear_checklist": "falconry_lookup",
+            "gear": "falconry_lookup",
+        }
+        event_name = action_to_event.get(falconry_intent.action, "falconry_lookup")
+        falconry_sse = json.dumps(
+            {
+                "event": event_name,
+                "falconry_info": falconry_info_payload,
+                event_name: falconry_info_payload,
+            }
+        )
+        yield f"data: {falconry_sse}\n\n"
+        if event_name != "falconry_info":
+            falconry_fallback = json.dumps(
+                {
+                    "event": "falconry_info",
+                    "falconry_info": falconry_info_payload,
+                }
+            )
+            yield f"data: {falconry_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -4172,6 +4229,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["cave_diving_prompt"] = cave_diving_prompt
     if telemark_prompt:
         stream_kwargs["telemark_prompt"] = telemark_prompt
+    if falconry_prompt:
+        stream_kwargs["falconry_prompt"] = falconry_prompt
 
     for chunk in generate_llm_response_stream(
         question,
