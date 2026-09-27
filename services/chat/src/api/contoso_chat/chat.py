@@ -6,6 +6,10 @@ from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from contoso_chat.falconry import (
+    detect_falconry_intent,
+    format_falconry_response,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -66,3 +70,15 @@ def handle_telemark_skiing_intent(question: str) -> Optional[dict[str, Any]]:
         "telemark_skiing_info": formatted.get("telemark_skiing_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format falconry intent in the cascade."""
+    intent = detect_falconry_intent(question)
+    if not intent:
+        return None
+    formatted = format_falconry_response(intent, question)
+    return {
+        "falconry_info": formatted.get("falconry_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+

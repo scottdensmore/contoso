@@ -188,6 +188,10 @@ from contoso_chat.dogsledding import (
     get_dogsled_route_by_id,
     get_dogsled_routes,
 )
+from contoso_chat.falconry import (
+    detect_falconry_intent,
+    format_falconry_response,
+)
 from contoso_chat.faq import (
     FaqItem,
     detect_faq_intent,
@@ -550,6 +554,7 @@ from contoso_chat.river_sup import (
     get_river_sup_runs,
 )
 from contoso_chat.routers.cave_diving import router as cave_diving_router
+from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
@@ -954,6 +959,7 @@ app.include_router(pack_goat_router)
 app.include_router(sandboarding_router)
 app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
+app.include_router(falconry_router)
 
 
 # Middleware for request logging
@@ -1256,6 +1262,7 @@ async def create_response(request: ChatRequest):
             sandboarding_intent = detect_sandboarding_intent(request.question)
             cave_diving_intent = detect_cave_diving_intent(request.question)
             telemark_intent = detect_telemark_intent(request.question)
+            falconry_intent = detect_falconry_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1728,6 +1735,14 @@ async def create_response(request: ChatRequest):
                 formatted_telemark = format_telemark_response(telemark_intent)
                 mock_payload["telemark_skiing_info"] = formatted_telemark.get("telemark_skiing_info")
                 mock_payload["answer"] = formatted_telemark.get("answer", mock_payload["answer"])
+            if falconry_intent:
+                formatted_falconry = format_falconry_response(
+                    falconry_intent, request.question
+                )
+                mock_payload["falconry_info"] = formatted_falconry.get("falconry_info")
+                mock_payload["answer"] = formatted_falconry.get(
+                    "answer", mock_payload["answer"]
+                )
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                 mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
@@ -1964,6 +1979,7 @@ async def create_response_stream(request: ChatRequest):
                 sandboarding_intent = detect_sandboarding_intent(request.question)
                 cave_diving_intent = detect_cave_diving_intent(request.question)
                 telemark_intent = detect_telemark_intent(request.question)
+                falconry_intent = detect_falconry_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2527,6 +2543,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'telemark_skiing_info': tele_payload, event_name: tele_payload})}\n\n"
                     if event_name != "telemark_skiing_info":
                         yield f"data: {json.dumps({'event': 'telemark_skiing_info', 'telemark_skiing_info': tele_payload})}\n\n"
+                if falconry_intent:
+                    formatted_falconry = format_falconry_response(
+                        falconry_intent, request.question
+                    )
+                    falconry_payload = formatted_falconry.get("falconry_info")
+                    action_to_event = {
+                        "grounds_list": "falconry_lookup",
+                        "ground_detail": "falconry_lookup",
+                        "calculate_conditioning": "falconry_calculated",
+                        "calculate": "falconry_calculated",
+                        "gear_checklist": "falconry_lookup",
+                        "gear": "falconry_lookup",
+                    }
+                    event_name = action_to_event.get(
+                        falconry_intent.action, "falconry_lookup"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'falconry_info': falconry_payload, event_name: falconry_payload})}\n\n"
+                    if event_name != "falconry_info":
+                        yield f"data: {json.dumps({'event': 'falconry_info', 'falconry_info': falconry_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
@@ -2872,6 +2907,11 @@ async def create_response_stream(request: ChatRequest):
                 elif telemark_intent:
                     formatted_telemark = format_telemark_response(telemark_intent)
                     mock_chunks = [str(formatted_telemark.get("answer", ""))]
+                elif falconry_intent:
+                    formatted_falconry = format_falconry_response(
+                        falconry_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_falconry.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     mock_chunks = [str(formatted_snowshoe.get("answer", ""))]

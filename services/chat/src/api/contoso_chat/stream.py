@@ -7,6 +7,10 @@ from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from contoso_chat.falconry import (
+    detect_falconry_intent,
+    format_falconry_response,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -123,3 +127,29 @@ async def generate_telemark_stream_events(question: str) -> AsyncGenerator[str, 
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
+
+async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events falconry_lookup and falconry_calculated when falconry intent is handled."""
+    intent = detect_falconry_intent(question)
+    if not intent:
+        return
+
+    formatted = format_falconry_response(intent, question)
+    falconry_payload = formatted.get("falconry_info")
+
+    event_name = (
+        "falconry_calculated"
+        if intent.action in ("calculate_conditioning", "calculate")
+        else "falconry_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'falconry_info': falconry_payload, event_name: falconry_payload})}\n\n"
+    if event_name != "falconry_info":
+        yield f"data: {json.dumps({'event': 'falconry_info', 'falconry_info': falconry_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
