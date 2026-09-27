@@ -552,6 +552,7 @@ from contoso_chat.river_sup import (
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
+from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routes import (
     RouteExportRequest,
     RouteExportResponse,
@@ -701,6 +702,10 @@ from contoso_chat.stores import (
     get_all_stores,
     get_store_by_id,
     search_stores,
+)
+from contoso_chat.telemark_skiing import (
+    detect_telemark_intent,
+    format_telemark_response,
 )
 from contoso_chat.trade_in import (
     EligibleBrandModel,
@@ -948,6 +953,7 @@ app = FastAPI(title="Contoso Chat", version="1.0.0")
 app.include_router(pack_goat_router)
 app.include_router(sandboarding_router)
 app.include_router(cave_diving_router)
+app.include_router(telemark_skiing_router)
 
 
 # Middleware for request logging
@@ -1249,6 +1255,7 @@ async def create_response(request: ChatRequest):
             pack_goat_intent = detect_pack_goat_intent(request.question)
             sandboarding_intent = detect_sandboarding_intent(request.question)
             cave_diving_intent = detect_cave_diving_intent(request.question)
+            telemark_intent = detect_telemark_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1717,6 +1724,10 @@ async def create_response(request: ChatRequest):
                 formatted_cave = format_cave_diving_response(cave_diving_intent)
                 mock_payload["cave_diving_info"] = formatted_cave.get("cave_diving_info")
                 mock_payload["answer"] = formatted_cave.get("answer", mock_payload["answer"])
+            if telemark_intent:
+                formatted_telemark = format_telemark_response(telemark_intent)
+                mock_payload["telemark_skiing_info"] = formatted_telemark.get("telemark_skiing_info")
+                mock_payload["answer"] = formatted_telemark.get("answer", mock_payload["answer"])
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                 mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
@@ -1952,6 +1963,7 @@ async def create_response_stream(request: ChatRequest):
                 pack_goat_intent = detect_pack_goat_intent(request.question)
                 sandboarding_intent = detect_sandboarding_intent(request.question)
                 cave_diving_intent = detect_cave_diving_intent(request.question)
+                telemark_intent = detect_telemark_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2500,6 +2512,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'cave_diving_info': cave_payload, event_name: cave_payload})}\n\n"
                     if event_name != "cave_diving_info":
                         yield f"data: {json.dumps({'event': 'cave_diving_info', 'cave_diving_info': cave_payload})}\n\n"
+                if telemark_intent:
+                    formatted_telemark = format_telemark_response(telemark_intent)
+                    tele_payload = formatted_telemark.get("telemark_skiing_info")
+                    action_to_event = {
+                        "zones_list": "telemark_lookup",
+                        "zone_detail": "telemark_lookup",
+                        "calculate_activity": "telemark_calculated",
+                        "calculate": "telemark_calculated",
+                        "gear_checklist": "telemark_lookup",
+                        "gear": "telemark_lookup",
+                    }
+                    event_name = action_to_event.get(telemark_intent.action, "telemark_lookup")
+                    yield f"data: {json.dumps({'event': event_name, 'telemark_skiing_info': tele_payload, event_name: tele_payload})}\n\n"
+                    if event_name != "telemark_skiing_info":
+                        yield f"data: {json.dumps({'event': 'telemark_skiing_info', 'telemark_skiing_info': tele_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
@@ -2842,6 +2869,9 @@ async def create_response_stream(request: ChatRequest):
                 elif cave_diving_intent:
                     formatted_cave = format_cave_diving_response(cave_diving_intent)
                     mock_chunks = [str(formatted_cave.get("answer", ""))]
+                elif telemark_intent:
+                    formatted_telemark = format_telemark_response(telemark_intent)
+                    mock_chunks = [str(formatted_telemark.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     mock_chunks = [str(formatted_snowshoe.get("answer", ""))]
