@@ -56,6 +56,12 @@ from .pack_goat import (
     format_pack_goat_response,
     pack_goat_tool,
 )
+from .pack_llama import (
+    PackLlamaIntent,
+    detect_pack_llama_intent,
+    format_pack_llama_response,
+    pack_llama_tool,
+)
 from .primitive_trapping import (
     TrappingCalculationRequest,
     TrappingIntent,
@@ -594,6 +600,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "beachcombing_tool": beachcombing_tool,
     "fire_lookout_tool": fire_lookout_tool,
     "pack_goat_tool": pack_goat_tool,
+    "pack_llama_tool": pack_llama_tool,
 }
 
 
@@ -621,6 +628,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_fire_lookout_response(intent, query=question)
     if isinstance(intent, PackGoatIntent):
         return format_pack_goat_response(intent, req=question)
+    if isinstance(intent, PackLlamaIntent):
+        return format_pack_llama_response(intent, req=question)
     return None
 
 
@@ -640,6 +649,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    pl_intent = detect_pack_llama_intent(question)
+    if pl_intent:
+        fmt = resolve_tool(pl_intent, question=question)
+        return str(fmt), "pack_llama_info", fmt.get("pack_llama_info")
+
     pg_intent = detect_pack_goat_intent(question)
     if pg_intent:
         fmt = resolve_tool(pg_intent, question=question)

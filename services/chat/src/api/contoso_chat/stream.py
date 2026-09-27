@@ -15,6 +15,10 @@ from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
 )
+from contoso_chat.pack_llama import (
+    detect_pack_llama_intent,
+    format_pack_llama_response,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -77,6 +81,32 @@ async def generate_pack_goat_stream_events(question: str) -> AsyncGenerator[str,
     yield "data: [DONE]\n\n"
 
 
+async def generate_pack_llama_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events pack_llama_lookup and pack_llama_calculated when pack llama intent is handled."""
+    intent = detect_pack_llama_intent(question)
+    if not intent:
+        return
+
+    formatted = format_pack_llama_response(intent, question)
+    llama_payload = formatted.get("pack_llama_info")
+
+    event_name = (
+        "pack_llama_calculated"
+        if intent.action in ("calculate_packing", "calculate")
+        else "pack_llama_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'pack_llama_info': llama_payload, event_name: llama_payload})}\n\n"
+    if event_name != "pack_llama_info":
+        yield f"data: {json.dumps({'event': 'pack_llama_info', 'pack_llama_info': llama_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
 async def generate_sandboarding_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events sandboarding_lookup and sandboarding_calculated when sandboarding intent is handled."""
     intent = detect_sandboarding_intent(question)
@@ -128,6 +158,7 @@ async def generate_telemark_stream_events(question: str) -> AsyncGenerator[str, 
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events falconry_lookup and falconry_calculated when falconry intent is handled."""
     intent = detect_falconry_intent(question)
@@ -152,4 +183,3 @@ async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, 
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
-

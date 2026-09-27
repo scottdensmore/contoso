@@ -197,6 +197,11 @@ from .pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
 )
+from .pack_llama import (
+    build_pack_llama_prompt,
+    detect_pack_llama_intent,
+    format_pack_llama_response,
+)
 from .packrafting import (
     build_packrafting_prompt,
     detect_packrafting_intent,
@@ -701,6 +706,7 @@ async def generate_llm_response(
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
+    pack_llama_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
@@ -897,6 +903,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
         if pack_goat_prompt:
             local_system = f"{local_system}\n\n{pack_goat_prompt}"
+        if pack_llama_prompt:
+            local_system = f"{local_system}\n\n{pack_llama_prompt}"
         if sandboarding_prompt:
             local_system = f"{local_system}\n\n{sandboarding_prompt}"
         if cave_diving_prompt:
@@ -1108,6 +1116,8 @@ async def generate_llm_response(
             prompt_parts.append(fire_lookout_prompt)
         if pack_goat_prompt:
             prompt_parts.append(pack_goat_prompt)
+        if pack_llama_prompt:
+            prompt_parts.append(pack_llama_prompt)
         if sandboarding_prompt:
             prompt_parts.append(sandboarding_prompt)
         if cave_diving_prompt:
@@ -1709,6 +1719,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
         formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
         pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
+    pack_llama_intent = detect_pack_llama_intent(question)
+    pack_llama_prompt = ""
+    pack_llama_info_payload = None
+    if pack_llama_intent:
+        pack_llama_prompt = build_pack_llama_prompt(pack_llama_intent)
+        formatted_pack_llama = format_pack_llama_response(pack_llama_intent, question)
+        pack_llama_info_payload = formatted_pack_llama.get("pack_llama_info")
     sandboarding_intent = detect_sandboarding_intent(question)
     sandboarding_prompt = ""
     sandboarding_info_payload = None
@@ -2109,6 +2126,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
     if pack_goat_prompt:
         llm_kwargs["pack_goat_prompt"] = pack_goat_prompt
+    if pack_llama_prompt:
+        llm_kwargs["pack_llama_prompt"] = pack_llama_prompt
     if sandboarding_prompt:
         llm_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:
@@ -2310,6 +2329,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["fire_lookout_info"] = fire_lookout_info_payload
     if pack_goat_intent and pack_goat_info_payload:
         response_payload["pack_goat_info"] = pack_goat_info_payload
+    if pack_llama_intent and pack_llama_info_payload:
+        response_payload["pack_llama_info"] = pack_llama_info_payload
     if sandboarding_intent and sandboarding_info_payload:
         response_payload["sandboarding_info"] = sandboarding_info_payload
     if cave_diving_intent and cave_diving_info_payload:
@@ -2409,6 +2430,7 @@ def generate_llm_response_stream(
     beachcombing_prompt: str = "",
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
+    pack_llama_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
@@ -2739,6 +2761,8 @@ def generate_llm_response_stream(
             prompt_parts.append(beachcombing_prompt)
         if pack_goat_prompt:
             prompt_parts.append(pack_goat_prompt)
+        if pack_llama_prompt:
+            prompt_parts.append(pack_llama_prompt)
         if sandboarding_prompt:
             prompt_parts.append(sandboarding_prompt)
         if cave_diving_prompt:
@@ -3202,6 +3226,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         pack_goat_prompt = build_pack_goat_prompt(pack_goat_intent)
         formatted_pack_goat = format_pack_goat_response(pack_goat_intent, question)
         pack_goat_info_payload = formatted_pack_goat.get("pack_goat_info")
+    pack_llama_intent = detect_pack_llama_intent(question)
+    pack_llama_prompt = ""
+    pack_llama_info_payload = None
+    if pack_llama_intent:
+        pack_llama_prompt = build_pack_llama_prompt(pack_llama_intent)
+        formatted_pack_llama = format_pack_llama_response(pack_llama_intent, question)
+        pack_llama_info_payload = formatted_pack_llama.get("pack_llama_info")
     sandboarding_intent = detect_sandboarding_intent(question)
     sandboarding_prompt = ""
     sandboarding_info_payload = None
@@ -3951,6 +3982,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {goat_fallback}\n\n"
+    if pack_llama_intent and pack_llama_info_payload:
+        action_to_event = {
+            "routes_list": "pack_llama_lookup",
+            "route_detail": "pack_llama_lookup",
+            "calculate_packing": "pack_llama_calculated",
+            "calculate": "pack_llama_calculated",
+            "gear_checklist": "pack_llama_lookup",
+            "gear": "pack_llama_lookup",
+        }
+        event_name = action_to_event.get(pack_llama_intent.action, "pack_llama_lookup")
+        llama_sse = json.dumps(
+            {
+                "event": event_name,
+                "pack_llama_info": pack_llama_info_payload,
+                event_name: pack_llama_info_payload,
+            }
+        )
+        yield f"data: {llama_sse}\n\n"
+        if event_name != "pack_llama_info":
+            llama_fallback = json.dumps(
+                {
+                    "event": "pack_llama_info",
+                    "pack_llama_info": pack_llama_info_payload,
+                }
+            )
+            yield f"data: {llama_fallback}\n\n"
     if sandboarding_intent and sandboarding_info_payload:
         action_to_event = {
             "dunes_list": "sandboarding_lookup",
@@ -4223,6 +4280,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["fire_lookout_prompt"] = fire_lookout_prompt
     if pack_goat_prompt:
         stream_kwargs["pack_goat_prompt"] = pack_goat_prompt
+    if pack_llama_prompt:
+        stream_kwargs["pack_llama_prompt"] = pack_llama_prompt
     if sandboarding_prompt:
         stream_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:

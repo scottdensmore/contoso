@@ -14,6 +14,10 @@ from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
 )
+from contoso_chat.pack_llama import (
+    detect_pack_llama_intent,
+    format_pack_llama_response,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -48,6 +52,18 @@ def handle_pack_goat_intent(question: str) -> Optional[dict[str, Any]]:
     }
 
 
+def handle_pack_llama_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format pack llama intent in the cascade."""
+    intent = detect_pack_llama_intent(question)
+    if not intent:
+        return None
+    formatted = format_pack_llama_response(intent)
+    return {
+        "pack_llama_info": formatted.get("pack_llama_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
 def handle_sandboarding_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format sandboarding intent in the cascade."""
     intent = detect_sandboarding_intent(question)
@@ -71,6 +87,7 @@ def handle_telemark_skiing_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
 def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format falconry intent in the cascade."""
     intent = detect_falconry_intent(question)
@@ -81,4 +98,3 @@ def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
         "falconry_info": formatted.get("falconry_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
-
