@@ -367,6 +367,11 @@ from .trip_planner import (
     detect_trip_planner_intent,
     format_trip_planner_response,
 )
+from .turtle_patrol import (
+    build_turtle_patrol_prompt,
+    detect_turtle_patrol_intent,
+    format_turtle_patrol_response,
+)
 from .via_ferrata import (
     build_via_ferrata_prompt,
     detect_via_ferrata_intent,
@@ -717,6 +722,7 @@ async def generate_llm_response(
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
     falconry_prompt: str = "",
+    turtle_patrol_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -907,6 +913,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{tree_climbing_prompt}"
         if beachcombing_prompt:
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
+        if turtle_patrol_prompt:
+            local_system = f"{local_system}\n\n{turtle_patrol_prompt}"
         if pack_goat_prompt:
             local_system = f"{local_system}\n\n{pack_goat_prompt}"
         if pack_llama_prompt:
@@ -921,6 +929,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{telemark_prompt}"
         if falconry_prompt:
             local_system = f"{local_system}\n\n{falconry_prompt}"
+        if turtle_patrol_prompt:
+            local_system = f"{local_system}\n\n{turtle_patrol_prompt}"
         if fire_lookout_prompt:
             local_system = f"{local_system}\n\n{fire_lookout_prompt}"
         if fire_lookout_prompt:
@@ -1136,6 +1146,8 @@ async def generate_llm_response(
             prompt_parts.append(telemark_prompt)
         if falconry_prompt:
             prompt_parts.append(falconry_prompt)
+        if turtle_patrol_prompt:
+            prompt_parts.append(turtle_patrol_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1771,6 +1783,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         falconry_prompt = build_falconry_prompt(falconry_intent)
         formatted_falconry = format_falconry_response(falconry_intent, question)
         falconry_info_payload = formatted_falconry.get("falconry_info")
+    turtle_patrol_intent = detect_turtle_patrol_intent(question)
+    turtle_patrol_prompt = ""
+    turtle_patrol_info_payload = None
+    if turtle_patrol_intent:
+        turtle_patrol_prompt = build_turtle_patrol_prompt(turtle_patrol_intent)
+        formatted_turtle = format_turtle_patrol_response(turtle_patrol_intent, question)
+        turtle_patrol_info_payload = formatted_turtle.get("turtle_patrol_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -2155,6 +2174,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["telemark_prompt"] = telemark_prompt
     if falconry_prompt:
         llm_kwargs["falconry_prompt"] = falconry_prompt
+    if turtle_patrol_prompt:
+        llm_kwargs["turtle_patrol_prompt"] = turtle_patrol_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2360,6 +2381,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["telemark_skiing_info"] = telemark_info_payload
     if falconry_intent and falconry_info_payload:
         response_payload["falconry_info"] = falconry_info_payload
+    if turtle_patrol_intent and turtle_patrol_info_payload:
+        response_payload["turtle_patrol_info"] = turtle_patrol_info_payload
 
     return response_payload
 
@@ -2457,6 +2480,7 @@ def generate_llm_response_stream(
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
     falconry_prompt: str = "",
+    turtle_patrol_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2791,6 +2815,8 @@ def generate_llm_response_stream(
             prompt_parts.append(cave_diving_prompt)
         if falconry_prompt:
             prompt_parts.append(falconry_prompt)
+        if turtle_patrol_prompt:
+            prompt_parts.append(turtle_patrol_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3290,6 +3316,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         falconry_prompt = build_falconry_prompt(falconry_intent)
         formatted_falconry = format_falconry_response(falconry_intent, question)
         falconry_info_payload = formatted_falconry.get("falconry_info")
+    turtle_patrol_intent = detect_turtle_patrol_intent(question)
+    turtle_patrol_prompt = ""
+    turtle_patrol_info_payload = None
+    if turtle_patrol_intent:
+        turtle_patrol_prompt = build_turtle_patrol_prompt(turtle_patrol_intent)
+        formatted_turtle = format_turtle_patrol_response(turtle_patrol_intent, question)
+        turtle_patrol_info_payload = formatted_turtle.get("turtle_patrol_info")
     primitive_trapping_prompt = ""
     primitive_trapping_info_payload = None
     if primitive_trapping_intent:
@@ -4167,6 +4200,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {falconry_fallback}\n\n"
+    if turtle_patrol_intent and turtle_patrol_info_payload:
+        action_to_event = {
+            "sectors_list": "turtle_patrol_lookup",
+            "sector_detail": "turtle_patrol_lookup",
+            "calculate_dynamics": "turtle_patrol_calculated",
+            "calculate": "turtle_patrol_calculated",
+            "gear_checklist": "turtle_patrol_lookup",
+            "gear": "turtle_patrol_lookup",
+        }
+        event_name = action_to_event.get(turtle_patrol_intent.action, "turtle_patrol_lookup")
+        tp_sse = json.dumps(
+            {
+                "event": event_name,
+                "turtle_patrol_info": turtle_patrol_info_payload,
+                event_name: turtle_patrol_info_payload,
+            }
+        )
+        yield f"data: {tp_sse}\n\n"
+        if event_name != "turtle_patrol_info":
+            tp_fallback = json.dumps(
+                {
+                    "event": "turtle_patrol_info",
+                    "turtle_patrol_info": turtle_patrol_info_payload,
+                }
+            )
+            yield f"data: {tp_fallback}\n\n"
     stream_kwargs: dict[str, Any] = {
         "chat_history": chat_history,
         "customer_profile": profile,
@@ -4347,6 +4406,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["telemark_prompt"] = telemark_prompt
     if falconry_prompt:
         stream_kwargs["falconry_prompt"] = falconry_prompt
+    if turtle_patrol_prompt:
+        stream_kwargs["turtle_patrol_prompt"] = turtle_patrol_prompt
 
     for chunk in generate_llm_response_stream(
         question,

@@ -563,6 +563,7 @@ from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
+from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.zipline import router as zipline_router
 from contoso_chat.routes import (
     RouteExportRequest,
@@ -781,6 +782,10 @@ from contoso_chat.trip_planner import (
     generate_wilderness_trip_plan,
     get_trip_templates,
 )
+from contoso_chat.turtle_patrol import (
+    detect_turtle_patrol_intent,
+    format_turtle_patrol_response,
+)
 from contoso_chat.via_ferrata import (
     RiggingPlanRequest,
     RiggingPlanResponse,
@@ -972,6 +977,7 @@ app.include_router(sandboarding_router)
 app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
 app.include_router(falconry_router)
+app.include_router(turtle_patrol_router)
 
 
 # Middleware for request logging
@@ -1279,6 +1285,7 @@ async def create_response(request: ChatRequest):
             cave_diving_intent = detect_cave_diving_intent(request.question)
             telemark_intent = detect_telemark_intent(request.question)
             falconry_intent = detect_falconry_intent(request.question)
+            turtle_patrol_intent = detect_turtle_patrol_intent(request.question)
             mock_payload = {
                 "answer": f"Mock response: You asked about '{request.question}'. This is a test response from Contoso Chat running on Google Cloud Platform!",
                 "customer_id": request.customer_id,
@@ -1747,6 +1754,12 @@ async def create_response(request: ChatRequest):
                 formatted_zip = format_zipline_response(zipline_intent, request.question)
                 mock_payload["zipline_info"] = formatted_zip.get("zipline_info")
                 mock_payload["answer"] = formatted_zip.get("answer", mock_payload["answer"])
+            if turtle_patrol_intent:
+                formatted_turtle = format_turtle_patrol_response(
+                    turtle_patrol_intent, request.question
+                )
+                mock_payload["turtle_patrol_info"] = formatted_turtle.get("turtle_patrol_info")
+                mock_payload["answer"] = formatted_turtle.get("answer", mock_payload["answer"])
             if sandboarding_intent:
                 formatted_sand = format_sandboarding_response(sandboarding_intent, request.question)
                 mock_payload["sandboarding_info"] = formatted_sand.get("sandboarding_info")
@@ -2006,6 +2019,7 @@ async def create_response_stream(request: ChatRequest):
                 cave_diving_intent = detect_cave_diving_intent(request.question)
                 telemark_intent = detect_telemark_intent(request.question)
                 falconry_intent = detect_falconry_intent(request.question)
+                turtle_patrol_intent = detect_turtle_patrol_intent(request.question)
                 captured_citations = MOCK_CITATIONS
                 yield f"data: {json.dumps({'event': 'citations', 'citations': MOCK_CITATIONS})}\n\n"
                 yield f"data: {json.dumps({'event': 'handoff', 'handoff': handoff})}\n\n"
@@ -2550,6 +2564,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'zipline_info': zip_payload, event_name: zip_payload})}\n\n"
                     if event_name != "zipline_info":
                         yield f"data: {json.dumps({'event': 'zipline_info', 'zipline_info': zip_payload})}\n\n"
+                if turtle_patrol_intent:
+                    formatted_turtle = format_turtle_patrol_response(
+                        turtle_patrol_intent, request.question
+                    )
+                    turtle_payload = formatted_turtle.get("turtle_patrol_info")
+                    action_to_event = {
+                        "sectors_list": "turtle_patrol_lookup",
+                        "sector_detail": "turtle_patrol_lookup",
+                        "calculate_dynamics": "turtle_patrol_calculated",
+                        "calculate": "turtle_patrol_calculated",
+                        "gear_checklist": "turtle_patrol_lookup",
+                        "gear": "turtle_patrol_lookup",
+                    }
+                    event_name = action_to_event.get(
+                        turtle_patrol_intent.action, "turtle_patrol_lookup"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'turtle_patrol_info': turtle_payload, event_name: turtle_payload})}\n\n"
+                    if event_name != "turtle_patrol_info":
+                        yield f"data: {json.dumps({'event': 'turtle_patrol_info', 'turtle_patrol_info': turtle_payload})}\n\n"
                 if sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question
@@ -2958,6 +2991,11 @@ async def create_response_stream(request: ChatRequest):
                 elif zipline_intent:
                     formatted_zip = format_zipline_response(zipline_intent, request.question)
                     mock_chunks = [str(formatted_zip.get("answer", ""))]
+                elif turtle_patrol_intent:
+                    formatted_turtle = format_turtle_patrol_response(
+                        turtle_patrol_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_turtle.get("answer", ""))]
                 elif sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question
