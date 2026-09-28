@@ -26,6 +26,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.zipline import (
+    detect_zipline_intent,
+    format_zipline_response,
+)
 
 
 def handle_cave_diving_intent(question: str) -> Optional[dict[str, Any]]:
@@ -60,6 +64,18 @@ def handle_pack_llama_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_pack_llama_response(intent)
     return {
         "pack_llama_info": formatted.get("pack_llama_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_zipline_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format zipline intent in the cascade."""
+    intent = detect_zipline_intent(question)
+    if not intent:
+        return None
+    formatted = format_zipline_response(intent, question)
+    return {
+        "zipline_info": formatted.get("zipline_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
 

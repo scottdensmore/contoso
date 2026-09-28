@@ -27,6 +27,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.zipline import (
+    detect_zipline_intent,
+    format_zipline_response,
+)
 
 
 async def generate_cave_diving_stream_events(question: str) -> AsyncGenerator[str, None]:
@@ -99,6 +103,32 @@ async def generate_pack_llama_stream_events(question: str) -> AsyncGenerator[str
     yield f"data: {json.dumps({'event': event_name, 'pack_llama_info': llama_payload, event_name: llama_payload})}\n\n"
     if event_name != "pack_llama_info":
         yield f"data: {json.dumps({'event': 'pack_llama_info', 'pack_llama_info': llama_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_zipline_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events zipline_lookup and zipline_calculated when zipline intent is handled."""
+    intent = detect_zipline_intent(question)
+    if not intent:
+        return
+
+    formatted = format_zipline_response(intent, question)
+    zip_payload = formatted.get("zipline_info")
+
+    event_name = (
+        "zipline_calculated"
+        if intent.action in ("calculate_dynamics", "calculate")
+        else "zipline_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'zipline_info': zip_payload, event_name: zip_payload})}\n\n"
+    if event_name != "zipline_info":
+        yield f"data: {json.dumps({'event': 'zipline_info', 'zipline_info': zip_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")
