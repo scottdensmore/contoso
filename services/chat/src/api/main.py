@@ -579,6 +579,7 @@ from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
+from contoso_chat.routers.weather_station import router as weather_station_router
 from contoso_chat.routers.zipline import router as zipline_router
 from contoso_chat.routes import (
     RouteExportRequest,
@@ -850,6 +851,10 @@ from contoso_chat.weather import (
     get_mountain_zone_by_id,
     get_mountain_zones,
 )
+from contoso_chat.weather_station import (
+    detect_weather_station_intent,
+    format_weather_station_response,
+)
 from contoso_chat.whitewater import (
     RiverRunModel,
     RiverSafetyRequest,
@@ -996,6 +1001,7 @@ app.include_router(turtle_patrol_router)
 app.include_router(canyon_bouldering_router)
 app.include_router(mudflat_trekking_router)
 app.include_router(night_via_ferrata_router)
+app.include_router(weather_station_router)
 
 
 # Middleware for request logging
@@ -1248,6 +1254,7 @@ async def create_response(request: ChatRequest):
             first_aid_intent = detect_first_aid_intent(request.question)
             lnt_intent = detect_lnt_intent(request.question)
             avalanche_intent = detect_avalanche_intent(request.question)
+            weather_station_intent = detect_weather_station_intent(request.question)
             weather_intent = detect_weather_intent(request.question)
             ski_tour_intent = detect_ski_tour_intent(request.question)
             whitewater_intent = detect_whitewater_intent(request.question)
@@ -1841,6 +1848,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_trail_packing.get(
                     "answer", mock_payload["answer"]
                 )
+            if weather_station_intent:
+                formatted_weather_station = format_weather_station_response(
+                    weather_station_intent, request.question
+                )
+                mock_payload["weather_station_info"] = formatted_weather_station.get(
+                    "weather_station_info"
+                )
+                mock_payload["answer"] = formatted_weather_station.get(
+                    "answer", mock_payload["answer"]
+                )
             if mountain_weather_intent:
                 formatted_mountain_weather = format_mountain_weather_response(
                     mountain_weather_intent, request.question
@@ -2009,6 +2026,7 @@ async def create_response_stream(request: ChatRequest):
                 first_aid_intent = detect_first_aid_intent(request.question)
                 lnt_intent = detect_lnt_intent(request.question)
                 avalanche_intent = detect_avalanche_intent(request.question)
+                weather_station_intent = detect_weather_station_intent(request.question)
                 weather_intent = detect_weather_intent(request.question)
                 ski_tour_intent = detect_ski_tour_intent(request.question)
                 whitewater_intent = detect_whitewater_intent(request.question)
@@ -2792,6 +2810,25 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': tp_payload, event_name: tp_payload})}\n\n"
                     if event_name != "trail_packing_info":
                         yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': tp_payload})}\n\n"
+                if weather_station_intent:
+                    formatted_weather_station = format_weather_station_response(
+                        weather_station_intent, request.question
+                    )
+                    ws_payload = formatted_weather_station.get("weather_station_info")
+                    action_to_event = {
+                        "stations_list": "weather_station_lookup",
+                        "station_detail": "weather_station_lookup",
+                        "calculate_dynamics": "weather_station_calculated",
+                        "calculate": "weather_station_calculated",
+                        "gear_checklist": "weather_station_lookup",
+                        "gear": "weather_station_lookup",
+                    }
+                    event_name = action_to_event.get(
+                        weather_station_intent.action, "weather_station_lookup"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'weather_station_info': ws_payload, event_name: ws_payload})}\n\n"
+                    if event_name != "weather_station_info":
+                        yield f"data: {json.dumps({'event': 'weather_station_info', 'weather_station_info': ws_payload})}\n\n"
                 if mountain_weather_intent:
                     formatted_mountain_weather = format_mountain_weather_response(
                         mountain_weather_intent, request.question
@@ -3135,6 +3172,11 @@ async def create_response_stream(request: ChatRequest):
                         trail_packing_intent, request.question
                     )
                     mock_chunks = [str(formatted_trail_packing.get("answer", ""))]
+                elif weather_station_intent:
+                    formatted_weather_station = format_weather_station_response(
+                        weather_station_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_weather_station.get("answer", ""))]
                 elif mountain_weather_intent:
                     formatted_mountain_weather = format_mountain_weather_response(
                         mountain_weather_intent, request.question

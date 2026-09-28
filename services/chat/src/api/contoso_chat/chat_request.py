@@ -407,6 +407,11 @@ from .weather import (
     detect_weather_intent,
     format_weather_response,
 )
+from .weather_station import (
+    build_weather_station_prompt,
+    detect_weather_station_intent,
+    format_weather_station_response,
+)
 from .whitewater import (
     build_whitewater_prompt,
     detect_whitewater_intent,
@@ -741,6 +746,7 @@ async def generate_llm_response(
     telemark_prompt: str = "",
     falconry_prompt: str = "",
     turtle_patrol_prompt: str = "",
+    weather_station_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -967,6 +973,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{cave_diving_prompt}"
         if telemark_prompt:
             local_system = f"{local_system}\n\n{telemark_prompt}"
+        if weather_station_prompt:
+            local_system = f"{local_system}\n\n{weather_station_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1178,6 +1186,8 @@ async def generate_llm_response(
             prompt_parts.append(falconry_prompt)
         if turtle_patrol_prompt:
             prompt_parts.append(turtle_patrol_prompt)
+        if weather_station_prompt:
+            prompt_parts.append(weather_station_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1577,6 +1587,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         avalanche_prompt = build_avalanche_prompt(avalanche_intent)
         formatted_avy = format_avalanche_response(avalanche_intent)
         avalanche_info_payload = formatted_avy.get("avalanche_info")
+
+    weather_station_intent = detect_weather_station_intent(question)
+    weather_station_prompt = ""
+    weather_station_info_payload = None
+    if weather_station_intent:
+        weather_station_prompt = build_weather_station_prompt(weather_station_intent)
+        formatted_weather_station = format_weather_station_response(
+            weather_station_intent, question
+        )
+        weather_station_info_payload = formatted_weather_station.get(
+            "weather_station_info"
+        )
 
     weather_intent = detect_weather_intent(question)
     weather_prompt = ""
@@ -2260,6 +2282,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["falconry_prompt"] = falconry_prompt
     if turtle_patrol_prompt:
         llm_kwargs["turtle_patrol_prompt"] = turtle_patrol_prompt
+    if weather_station_prompt:
+        llm_kwargs["weather_station_prompt"] = weather_station_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2445,6 +2469,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["snowshoe_mountaineering_info"] = snowshoe_info_payload
     if primitive_trapping_intent and primitive_trapping_info_payload:
         response_payload["primitive_trapping_info"] = primitive_trapping_info_payload
+    if weather_station_intent and weather_station_info_payload:
+        response_payload["weather_station_info"] = weather_station_info_payload
     if mountain_weather_intent and mountain_weather_info_payload:
         response_payload["mountain_weather_info"] = mountain_weather_info_payload
     if wild_ice_intent and wild_ice_info_payload:
@@ -2576,6 +2602,7 @@ def generate_llm_response_stream(
     telemark_prompt: str = "",
     falconry_prompt: str = "",
     turtle_patrol_prompt: str = "",
+    weather_station_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2742,6 +2769,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{wild_ice_prompt}"
         if beachcombing_prompt:
             local_system = f"{local_system}\n\n{beachcombing_prompt}"
+        if weather_station_prompt:
+            local_system = f"{local_system}\n\n{weather_station_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2924,6 +2953,8 @@ def generate_llm_response_stream(
             prompt_parts.append(falconry_prompt)
         if turtle_patrol_prompt:
             prompt_parts.append(turtle_patrol_prompt)
+        if weather_station_prompt:
+            prompt_parts.append(weather_station_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3187,6 +3218,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         avalanche_prompt = build_avalanche_prompt(avalanche_intent)
         formatted_avy = format_avalanche_response(avalanche_intent)
         avalanche_info_payload = formatted_avy.get("avalanche_info")
+
+    weather_station_intent = detect_weather_station_intent(question)
+    weather_station_prompt = ""
+    weather_station_info_payload = None
+    if weather_station_intent:
+        weather_station_prompt = build_weather_station_prompt(weather_station_intent)
+        formatted_weather_station = format_weather_station_response(
+            weather_station_intent, question
+        )
+        weather_station_info_payload = formatted_weather_station.get(
+            "weather_station_info"
+        )
 
     weather_intent = detect_weather_intent(question)
     weather_prompt = ""
@@ -4034,6 +4077,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'primitive_trapping_info': primitive_trapping_info_payload, event_name: primitive_trapping_info_payload})}\n\n"
         if event_name != "primitive_trapping_info":
             yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': primitive_trapping_info_payload})}\n\n"
+    if weather_station_intent and weather_station_info_payload:
+        action_to_event = {
+            "stations_list": "weather_station_lookup",
+            "station_detail": "weather_station_lookup",
+            "calculate_dynamics": "weather_station_calculated",
+            "calculate": "weather_station_calculated",
+            "gear_checklist": "weather_station_lookup",
+            "gear": "weather_station_lookup",
+        }
+        event_name = action_to_event.get(
+            weather_station_intent.action, "weather_station_lookup"
+        )
+        yield f"data: {json.dumps({'event': event_name, 'weather_station_info': weather_station_info_payload, event_name: weather_station_info_payload})}\n\n"
+        if event_name != "weather_station_info":
+            yield f"data: {json.dumps({'event': 'weather_station_info', 'weather_station_info': weather_station_info_payload})}\n\n"
     if mountain_weather_intent and mountain_weather_info_payload:
         action_to_event = {
             "sectors_list": "mountain_weather_sectors",
@@ -4602,6 +4660,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["falconry_prompt"] = falconry_prompt
     if turtle_patrol_prompt:
         stream_kwargs["turtle_patrol_prompt"] = turtle_patrol_prompt
+    if weather_station_prompt:
+        stream_kwargs["weather_station_prompt"] = weather_station_prompt
 
     for chunk in generate_llm_response_stream(
         question,
