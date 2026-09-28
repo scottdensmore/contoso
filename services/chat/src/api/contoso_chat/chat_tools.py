@@ -46,6 +46,12 @@ from .mountain_weather import (
     get_weather_sector,
     get_weather_sectors,
 )
+from .mudflat_trekking import (
+    MudflatIntent,
+    detect_mudflat_intent,
+    format_mudflat_response,
+    mudflat_trekking_tool,
+)
 from .night_via_ferrata import (
     NightViaFerrataIntent,
     detect_night_via_ferrata_intent,
@@ -628,6 +634,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "zipline_tool": zipline_tool,
     "turtle_patrol_tool": turtle_patrol_tool,
     "canyon_bouldering_tool": canyon_bouldering_tool,
+    "mudflat_trekking_tool": mudflat_trekking_tool,
     "night_via_ferrata_tool": night_via_ferrata_tool,
 }
 
@@ -664,6 +671,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_turtle_patrol_response(intent, query=question)
     if isinstance(intent, BoulderingIntent):
         return format_canyon_bouldering_response(intent, query=question)
+    if isinstance(intent, MudflatIntent):
+        return format_mudflat_response(intent, query=question)
     if isinstance(intent, NightViaFerrataIntent):
         return format_night_via_ferrata_response(intent, query=question)
     return None
@@ -685,6 +694,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    mf_intent = detect_mudflat_intent(question)
+    if mf_intent:
+        fmt = resolve_tool(mf_intent, question=question)
+        return str(fmt), "mudflat_trekking_info", fmt.get("mudflat_trekking_info")
+
     cb_intent = detect_canyon_bouldering_intent(question)
     if cb_intent:
         fmt = resolve_tool(cb_intent, question=question)

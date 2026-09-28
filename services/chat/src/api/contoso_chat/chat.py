@@ -14,6 +14,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.mudflat_trekking import (
+    detect_mudflat_intent,
+    format_mudflat_response,
+)
 from contoso_chat.night_via_ferrata import (
     detect_night_via_ferrata_intent,
     format_night_via_ferrata_response,
@@ -159,3 +163,14 @@ def handle_canyon_bouldering_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
+def handle_mudflat_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format wilderness tidal flat mud-trekking intent in the cascade."""
+    intent = detect_mudflat_intent(question)
+    if not intent:
+        return None
+    formatted = format_mudflat_response(intent, question)
+    return {
+        "mudflat_trekking_info": formatted.get("mudflat_trekking_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
