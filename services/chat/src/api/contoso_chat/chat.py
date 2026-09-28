@@ -2,6 +2,10 @@
 
 from typing import Any, Optional
 
+from contoso_chat.canyon_bouldering import (
+    detect_canyon_bouldering_intent,
+    format_canyon_bouldering_response,
+)
 from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
@@ -142,6 +146,16 @@ def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_night_via_ferrata_response(intent, question)
     return {
         "night_via_ferrata_info": formatted.get("night_via_ferrata_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+def handle_canyon_bouldering_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format wilderness canyon bouldering intent in the cascade."""
+    intent = detect_canyon_bouldering_intent(question)
+    if not intent:
+        return None
+    formatted = format_canyon_bouldering_response(intent, question)
+    return {
+        "canyon_bouldering_info": formatted.get("canyon_bouldering_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
 

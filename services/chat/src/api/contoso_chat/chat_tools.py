@@ -10,6 +10,12 @@ from .beachcombing import (
     get_beachcombing_site,
     get_beachcombing_sites,
 )
+from .canyon_bouldering import (
+    BoulderingIntent,
+    canyon_bouldering_tool,
+    detect_canyon_bouldering_intent,
+    format_canyon_bouldering_response,
+)
 from .fire_lookout import (
     LookoutIntent,
     LookoutRequest,
@@ -621,6 +627,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_llama_tool": pack_llama_tool,
     "zipline_tool": zipline_tool,
     "turtle_patrol_tool": turtle_patrol_tool,
+    "canyon_bouldering_tool": canyon_bouldering_tool,
     "night_via_ferrata_tool": night_via_ferrata_tool,
 }
 
@@ -655,6 +662,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_zipline_response(intent, query=question)
     if isinstance(intent, TurtlePatrolIntent):
         return format_turtle_patrol_response(intent, query=question)
+    if isinstance(intent, BoulderingIntent):
+        return format_canyon_bouldering_response(intent, query=question)
     if isinstance(intent, NightViaFerrataIntent):
         return format_night_via_ferrata_response(intent, query=question)
     return None
@@ -676,6 +685,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    cb_intent = detect_canyon_bouldering_intent(question)
+    if cb_intent:
+        fmt = resolve_tool(cb_intent, question=question)
+        return str(fmt), "canyon_bouldering_info", fmt.get("canyon_bouldering_info")
+
     nvf_intent = detect_night_via_ferrata_intent(question)
     if nvf_intent:
         fmt = resolve_tool(nvf_intent, question=question)

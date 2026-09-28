@@ -452,6 +452,29 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
     if any(re.search(rf"\b{re.escape(w)}\b", q) for w in exclude_words):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against canyon bouldering in canyon_bouldering.py!
+    canyon_bouldering_exclusions = [
+        "canyon bouldering",
+        "highball",
+        "crash pad",
+        "crashpad",
+        "pad stacking",
+        "blubber pad",
+        "pebble wrestling",
+        "buttermilks",
+        "peabody",
+        "joe's valley",
+        "joes valley",
+        "straight canyon",
+        "kraft boulders",
+        "red rock kraft",
+        "rocktown",
+        "pigeon mountain",
+        "hueco tanks",
+    ]
+    if any(cb_ex in q for cb_ex in canyon_bouldering_exclusions):
+        return None
+
     climbing_patterns = [
         r"\bclimb",
         r"\bcrags?\b",

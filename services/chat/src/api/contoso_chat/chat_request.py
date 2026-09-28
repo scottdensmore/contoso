@@ -48,6 +48,11 @@ from .canoe_expedition import (
     extract_canoe_intent,
     format_canoe_response,
 )
+from .canyon_bouldering import (
+    build_canyon_bouldering_prompt,
+    detect_canyon_bouldering_intent,
+    format_canyon_bouldering_response,
+)
 from .canyoneering import (
     build_canyoneering_prompt,
     detect_canyoneering_intent,
@@ -689,6 +694,7 @@ async def generate_llm_response(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    canyon_bouldering_prompt: str = "",
     night_via_ferrata_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
@@ -863,6 +869,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
         if nordic_skiing_prompt:
             local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
+        if canyon_bouldering_prompt:
+            local_system = f"{local_system}\n\n{canyon_bouldering_prompt}"
         if night_via_ferrata_prompt:
             local_system = f"{local_system}\n\n{night_via_ferrata_prompt}"
         if via_ferrata_prompt:
@@ -1072,6 +1080,8 @@ async def generate_llm_response(
             prompt_parts.append(acclimatization_prompt)
         if nordic_skiing_prompt:
             prompt_parts.append(nordic_skiing_prompt)
+        if canyon_bouldering_prompt:
+            prompt_parts.append(canyon_bouldering_prompt)
         if night_via_ferrata_prompt:
             prompt_parts.append(night_via_ferrata_prompt)
         if via_ferrata_prompt:
@@ -1581,6 +1591,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         whitewater_prompt = build_whitewater_prompt(whitewater_intent)
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
+    canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
+    canyon_bouldering_prompt = ""
+    canyon_bouldering_info_payload = None
+    if canyon_bouldering_intent:
+        canyon_bouldering_prompt = build_canyon_bouldering_prompt(canyon_bouldering_intent)
+        formatted_canyon_bouldering = format_canyon_bouldering_response(
+            canyon_bouldering_intent, question
+        )
+        canyon_bouldering_info_payload = formatted_canyon_bouldering.get(
+            "canyon_bouldering_info"
+        )
 
     climbing_intent = detect_climbing_intent(question)
     climbing_prompt = ""
@@ -2092,6 +2114,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["ski_tour_prompt"] = ski_tour_prompt
     if whitewater_prompt:
         llm_kwargs["whitewater_prompt"] = whitewater_prompt
+    if canyon_bouldering_prompt:
+        llm_kwargs["canyon_bouldering_prompt"] = canyon_bouldering_prompt
     if climbing_prompt:
         llm_kwargs["climbing_prompt"] = climbing_prompt
     if foraging_prompt:
@@ -2301,6 +2325,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["ski_tour_info"] = ski_tour_info_payload
     if whitewater_intent and whitewater_info_payload:
         response_payload["whitewater_info"] = whitewater_info_payload
+    if canyon_bouldering_intent and canyon_bouldering_info_payload:
+        response_payload["canyon_bouldering_info"] = canyon_bouldering_info_payload
     if climbing_intent and climbing_info_payload:
         response_payload["climbing_info"] = climbing_info_payload
     if foraging_intent and foraging_info_payload:
@@ -2469,6 +2495,7 @@ def generate_llm_response_stream(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    canyon_bouldering_prompt: str = "",
     night_via_ferrata_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
@@ -2626,6 +2653,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
         if nordic_skiing_prompt:
             local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
+        if canyon_bouldering_prompt:
+            local_system = f"{local_system}\n\n{canyon_bouldering_prompt}"
         if night_via_ferrata_prompt:
             local_system = f"{local_system}\n\n{night_via_ferrata_prompt}"
         if via_ferrata_prompt:
@@ -2786,6 +2815,8 @@ def generate_llm_response_stream(
             prompt_parts.append(acclimatization_prompt)
         if nordic_skiing_prompt:
             prompt_parts.append(nordic_skiing_prompt)
+        if canyon_bouldering_prompt:
+            prompt_parts.append(canyon_bouldering_prompt)
         if night_via_ferrata_prompt:
             prompt_parts.append(night_via_ferrata_prompt)
         if via_ferrata_prompt:
@@ -3135,6 +3166,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         whitewater_prompt = build_whitewater_prompt(whitewater_intent)
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
+    canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
+    canyon_bouldering_prompt = ""
+    canyon_bouldering_info_payload = None
+    if canyon_bouldering_intent:
+        canyon_bouldering_prompt = build_canyon_bouldering_prompt(canyon_bouldering_intent)
+        formatted_canyon_bouldering = format_canyon_bouldering_response(
+            canyon_bouldering_intent, question
+        )
+        canyon_bouldering_info_payload = formatted_canyon_bouldering.get(
+            "canyon_bouldering_info"
+        )
 
     climbing_intent = detect_climbing_intent(question)
     climbing_prompt = ""
@@ -3638,6 +3681,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'ski_tour_info', 'ski_tour_info': ski_tour_info_payload})}\n\n"
     if whitewater_intent and whitewater_info_payload:
         yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': whitewater_info_payload})}\n\n"
+    if canyon_bouldering_intent and canyon_bouldering_info_payload:
+        action_to_event = {
+            "sectors_list": "canyon_bouldering_lookup",
+            "sector_detail": "canyon_bouldering_lookup",
+            "calculate_dynamics": "canyon_bouldering_calculated",
+            "calculate": "canyon_bouldering_calculated",
+            "gear_checklist": "canyon_bouldering_lookup",
+            "gear": "canyon_bouldering_lookup",
+        }
+        event_name = action_to_event.get(
+            canyon_bouldering_intent.action, "canyon_bouldering_lookup"
+        )
+        yield f"data: {json.dumps({'event': event_name, 'canyon_bouldering_info': canyon_bouldering_info_payload, event_name: canyon_bouldering_info_payload})}\n\n"
+        if event_name != "canyon_bouldering_info":
+            yield f"data: {json.dumps({'event': 'canyon_bouldering_info', 'canyon_bouldering_info': canyon_bouldering_info_payload})}\n\n"
     if climbing_intent and climbing_info_payload:
         yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
@@ -4360,6 +4418,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["ski_tour_prompt"] = ski_tour_prompt
     if whitewater_prompt:
         stream_kwargs["whitewater_prompt"] = whitewater_prompt
+    if canyon_bouldering_prompt:
+        stream_kwargs["canyon_bouldering_prompt"] = canyon_bouldering_prompt
     if climbing_prompt:
         stream_kwargs["climbing_prompt"] = climbing_prompt
     if foraging_prompt:
