@@ -172,6 +172,11 @@ from .mountaineering import (
     detect_mountaineering_intent,
     format_mountaineering_response,
 )
+from .night_via_ferrata import (
+    build_night_via_ferrata_prompt,
+    detect_night_via_ferrata_intent,
+    format_night_via_ferrata_response,
+)
 from .nordic_skiing import (
     build_nordic_skiing_prompt,
     detect_nordic_skiing_intent,
@@ -684,6 +689,7 @@ async def generate_llm_response(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    night_via_ferrata_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
@@ -857,6 +863,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
         if nordic_skiing_prompt:
             local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
+        if night_via_ferrata_prompt:
+            local_system = f"{local_system}\n\n{night_via_ferrata_prompt}"
         if via_ferrata_prompt:
             local_system = f"{local_system}\n\n{via_ferrata_prompt}"
         if ice_climbing_prompt:
@@ -1064,6 +1072,8 @@ async def generate_llm_response(
             prompt_parts.append(acclimatization_prompt)
         if nordic_skiing_prompt:
             prompt_parts.append(nordic_skiing_prompt)
+        if night_via_ferrata_prompt:
+            prompt_parts.append(night_via_ferrata_prompt)
         if via_ferrata_prompt:
             prompt_parts.append(via_ferrata_prompt)
         if ice_climbing_prompt:
@@ -1888,6 +1898,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
         nordic_skiing_info_payload = formatted_nordic.get("nordic_skiing_info")
 
+    night_via_ferrata_intent = detect_night_via_ferrata_intent(question)
+    night_via_ferrata_prompt = ""
+    night_via_ferrata_info_payload = None
+    if night_via_ferrata_intent:
+        night_via_ferrata_prompt = build_night_via_ferrata_prompt(night_via_ferrata_intent)
+        formatted_night_via_ferrata = format_night_via_ferrata_response(
+            night_via_ferrata_intent, question
+        )
+        night_via_ferrata_info_payload = formatted_night_via_ferrata.get(
+            "night_via_ferrata_info"
+        )
+
     via_ferrata_intent = detect_via_ferrata_intent(question)
     via_ferrata_prompt = ""
     via_ferrata_info_payload = None
@@ -2098,6 +2120,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["acclimatization_prompt"] = acclimatization_prompt
     if nordic_skiing_prompt:
         llm_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
+    if night_via_ferrata_prompt:
+        llm_kwargs["night_via_ferrata_prompt"] = night_via_ferrata_prompt
     if via_ferrata_prompt:
         llm_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
     if ice_climbing_prompt:
@@ -2305,6 +2329,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["acclimatization_info"] = acclimatization_info_payload
     if nordic_skiing_intent and nordic_skiing_info_payload:
         response_payload["nordic_skiing_info"] = nordic_skiing_info_payload
+    if night_via_ferrata_intent and night_via_ferrata_info_payload:
+        response_payload["night_via_ferrata_info"] = night_via_ferrata_info_payload
     if via_ferrata_intent and via_ferrata_info_payload:
         response_payload["via_ferrata_info"] = via_ferrata_info_payload
     if ice_climbing_intent and ice_climbing_info_payload:
@@ -2443,6 +2469,7 @@ def generate_llm_response_stream(
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
+    night_via_ferrata_prompt: str = "",
     via_ferrata_prompt: str = "",
     ice_climbing_prompt: str = "",
     bushcraft_prompt: str = "",
@@ -2599,6 +2626,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{acclimatization_prompt}"
         if nordic_skiing_prompt:
             local_system = f"{local_system}\n\n{nordic_skiing_prompt}"
+        if night_via_ferrata_prompt:
+            local_system = f"{local_system}\n\n{night_via_ferrata_prompt}"
         if via_ferrata_prompt:
             local_system = f"{local_system}\n\n{via_ferrata_prompt}"
         if ice_climbing_prompt:
@@ -2757,6 +2786,8 @@ def generate_llm_response_stream(
             prompt_parts.append(acclimatization_prompt)
         if nordic_skiing_prompt:
             prompt_parts.append(nordic_skiing_prompt)
+        if night_via_ferrata_prompt:
+            prompt_parts.append(night_via_ferrata_prompt)
         if via_ferrata_prompt:
             prompt_parts.append(via_ferrata_prompt)
         if ice_climbing_prompt:
@@ -3430,6 +3461,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_packrafting = format_packrafting_response(packrafting_intent)
         packrafting_info_payload = formatted_packrafting.get("packrafting_info")
 
+    night_via_ferrata_intent = detect_night_via_ferrata_intent(question)
+    night_via_ferrata_prompt = ""
+    night_via_ferrata_info_payload = None
+    if night_via_ferrata_intent:
+        night_via_ferrata_prompt = build_night_via_ferrata_prompt(night_via_ferrata_intent)
+        formatted_night_via_ferrata = format_night_via_ferrata_response(
+            night_via_ferrata_intent, question
+        )
+        night_via_ferrata_info_payload = formatted_night_via_ferrata.get(
+            "night_via_ferrata_info"
+        )
+
     via_ferrata_intent = detect_via_ferrata_intent(question)
     via_ferrata_prompt = ""
     via_ferrata_info_payload = None
@@ -3623,6 +3666,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'acclimatization_info', 'acclimatization_info': acclimatization_info_payload})}\n\n"
     if nordic_skiing_intent and nordic_skiing_info_payload:
         yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': nordic_skiing_info_payload})}\n\n"
+    if night_via_ferrata_intent and night_via_ferrata_info_payload:
+        action_to_event = {
+            "routes_list": "night_via_ferrata_lookup",
+            "route_detail": "night_via_ferrata_lookup",
+            "calculate_dynamics": "night_via_ferrata_calculated",
+            "calculate": "night_via_ferrata_calculated",
+            "gear_checklist": "night_via_ferrata_lookup",
+            "gear": "night_via_ferrata_lookup",
+        }
+        event_name = action_to_event.get(
+            night_via_ferrata_intent.action, "night_via_ferrata_lookup"
+        )
+        yield f"data: {json.dumps({'event': event_name, 'night_via_ferrata_info': night_via_ferrata_info_payload, event_name: night_via_ferrata_info_payload})}\n\n"
+        if event_name != "night_via_ferrata_info":
+            yield f"data: {json.dumps({'event': 'night_via_ferrata_info', 'night_via_ferrata_info': night_via_ferrata_info_payload})}\n\n"
     if via_ferrata_intent and via_ferrata_info_payload:
         yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': via_ferrata_info_payload})}\n\n"
     if ice_climbing_intent and ice_climbing_info_payload:
@@ -4330,6 +4388,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["acclimatization_prompt"] = acclimatization_prompt
     if nordic_skiing_prompt:
         stream_kwargs["nordic_skiing_prompt"] = nordic_skiing_prompt
+    if night_via_ferrata_prompt:
+        stream_kwargs["night_via_ferrata_prompt"] = night_via_ferrata_prompt
     if via_ferrata_prompt:
         stream_kwargs["via_ferrata_prompt"] = via_ferrata_prompt
     if ice_climbing_prompt:

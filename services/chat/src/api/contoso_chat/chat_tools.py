@@ -40,6 +40,12 @@ from .mountain_weather import (
     get_weather_sector,
     get_weather_sectors,
 )
+from .night_via_ferrata import (
+    NightViaFerrataIntent,
+    detect_night_via_ferrata_intent,
+    format_night_via_ferrata_response,
+    night_via_ferrata_tool,
+)
 from .pack_burro import (
     PackBurroIntent,
     PackBurroRequest,
@@ -615,6 +621,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_llama_tool": pack_llama_tool,
     "zipline_tool": zipline_tool,
     "turtle_patrol_tool": turtle_patrol_tool,
+    "night_via_ferrata_tool": night_via_ferrata_tool,
 }
 
 
@@ -648,6 +655,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_zipline_response(intent, query=question)
     if isinstance(intent, TurtlePatrolIntent):
         return format_turtle_patrol_response(intent, query=question)
+    if isinstance(intent, NightViaFerrataIntent):
+        return format_night_via_ferrata_response(intent, query=question)
     return None
 
 
@@ -667,6 +676,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    nvf_intent = detect_night_via_ferrata_intent(question)
+    if nvf_intent:
+        fmt = resolve_tool(nvf_intent, question=question)
+        return str(fmt), "night_via_ferrata_info", fmt.get("night_via_ferrata_info")
+
     turtle_intent = detect_turtle_patrol_intent(question)
     if turtle_intent:
         fmt = resolve_tool(turtle_intent, question=question)

@@ -11,6 +11,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.night_via_ferrata import (
+    detect_night_via_ferrata_intent,
+    format_night_via_ferrata_response,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -236,6 +240,31 @@ async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[
     yield f"data: {json.dumps({'event': event_name, 'turtle_patrol_info': turtle_payload, event_name: turtle_payload})}\n\n"
     if event_name != "turtle_patrol_info":
         yield f"data: {json.dumps({'event': 'turtle_patrol_info', 'turtle_patrol_info': turtle_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
+async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events night_via_ferrata_lookup and night_via_ferrata_calculated when night via ferrata intent is handled."""
+    intent = detect_night_via_ferrata_intent(question)
+    if not intent:
+        return
+
+    formatted = format_night_via_ferrata_response(intent, question)
+    nvf_payload = formatted.get("night_via_ferrata_info")
+
+    event_name = (
+        "night_via_ferrata_calculated"
+        if intent.action in ("calculate_dynamics", "calculate")
+        else "night_via_ferrata_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'night_via_ferrata_info': nvf_payload, event_name: nvf_payload})}\n\n"
+    if event_name != "night_via_ferrata_info":
+        yield f"data: {json.dumps({'event': 'night_via_ferrata_info', 'night_via_ferrata_info': nvf_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

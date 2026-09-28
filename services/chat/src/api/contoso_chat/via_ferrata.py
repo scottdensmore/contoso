@@ -384,6 +384,17 @@ def detect_via_ferrata_intent(message: str) -> Optional[ViaFerrataIntent]:
     if any(gx in q for gx in glacier_mountaineering_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against night via ferrata in night_via_ferrata.py!
+    night_via_ferrata_exclusions = [
+        "night",
+        "moonlight",
+        "night via ferrata",
+        "nocturnal",
+        "night suspension",
+    ]
+    if any(nx in q for nx in night_via_ferrata_exclusions):
+        return None
+
     # Via ferrata domain keywords
     vf_keywords = [
         "via ferrata",

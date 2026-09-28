@@ -391,6 +391,10 @@ from contoso_chat.mountaineering import (
     get_glacier_route_by_id,
     get_glacier_routes,
 )
+from contoso_chat.night_via_ferrata import (
+    detect_night_via_ferrata_intent,
+    format_night_via_ferrata_response,
+)
 from contoso_chat.nordic_skiing import (
     NordicGearRequirement,
     NordicTrailModel,
@@ -559,6 +563,7 @@ from contoso_chat.river_sup import (
 )
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.falconry import router as falconry_router
+from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
@@ -978,6 +983,7 @@ app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
 app.include_router(falconry_router)
 app.include_router(turtle_patrol_router)
+app.include_router(night_via_ferrata_router)
 
 
 # Middleware for request logging
@@ -1247,6 +1253,7 @@ async def create_response(request: ChatRequest):
             canyoneering_intent = detect_canyoneering_intent(request.question)
             acclimatization_intent = detect_acclimatization_intent(request.question)
             nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
+            night_via_ferrata_intent = detect_night_via_ferrata_intent(request.question)
             via_ferrata_intent = detect_via_ferrata_intent(request.question)
             ice_climbing_intent = detect_ice_climbing_intent(request.question)
             bushcraft_intent = detect_bushcraft_intent(request.question)
@@ -1600,6 +1607,14 @@ async def create_response(request: ChatRequest):
                 formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
                 mock_payload["nordic_skiing_info"] = formatted_nordic.get("nordic_skiing_info")
                 mock_payload["answer"] = formatted_nordic.get("answer", mock_payload["answer"])
+            if night_via_ferrata_intent:
+                formatted_nvf = format_night_via_ferrata_response(
+                    night_via_ferrata_intent, request.question
+                )
+                mock_payload["night_via_ferrata_info"] = formatted_nvf.get(
+                    "night_via_ferrata_info"
+                )
+                mock_payload["answer"] = formatted_nvf.get("answer", mock_payload["answer"])
             if via_ferrata_intent:
                 formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
                 mock_payload["via_ferrata_info"] = formatted_via_ferrata.get("via_ferrata_info")
@@ -1981,6 +1996,7 @@ async def create_response_stream(request: ChatRequest):
                 canyoneering_intent = detect_canyoneering_intent(request.question)
                 acclimatization_intent = detect_acclimatization_intent(request.question)
                 nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
+                night_via_ferrata_intent = detect_night_via_ferrata_intent(request.question)
                 via_ferrata_intent = detect_via_ferrata_intent(request.question)
                 ice_climbing_intent = detect_ice_climbing_intent(request.question)
                 bushcraft_intent = detect_bushcraft_intent(request.question)
@@ -2196,6 +2212,25 @@ async def create_response_stream(request: ChatRequest):
                 if nordic_skiing_intent:
                     formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
                     yield f"data: {json.dumps({'event': 'nordic_skiing_info', 'nordic_skiing_info': formatted_nordic.get('nordic_skiing_info')})}\n\n"
+                if night_via_ferrata_intent:
+                    formatted_nvf = format_night_via_ferrata_response(
+                        night_via_ferrata_intent, request.question
+                    )
+                    nvf_payload = formatted_nvf.get("night_via_ferrata_info")
+                    action_to_event = {
+                        "routes_list": "night_via_ferrata_lookup",
+                        "route_detail": "night_via_ferrata_lookup",
+                        "calculate_dynamics": "night_via_ferrata_calculated",
+                        "calculate": "night_via_ferrata_calculated",
+                        "gear_checklist": "night_via_ferrata_lookup",
+                        "gear": "night_via_ferrata_lookup",
+                    }
+                    event_name = action_to_event.get(
+                        night_via_ferrata_intent.action, "night_via_ferrata_lookup"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'night_via_ferrata_info': nvf_payload, event_name: nvf_payload})}\n\n"
+                    if event_name != "night_via_ferrata_info":
+                        yield f"data: {json.dumps({'event': 'night_via_ferrata_info', 'night_via_ferrata_info': nvf_payload})}\n\n"
                 if via_ferrata_intent:
                     formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
                     yield f"data: {json.dumps({'event': 'via_ferrata_info', 'via_ferrata_info': formatted_via_ferrata.get('via_ferrata_info')})}\n\n"
@@ -3059,6 +3094,11 @@ async def create_response_stream(request: ChatRequest):
                 elif nordic_skiing_intent:
                     formatted_nordic = format_nordic_skiing_response(nordic_skiing_intent)
                     mock_chunks = [str(formatted_nordic.get("answer", ""))]
+                elif night_via_ferrata_intent:
+                    formatted_nvf = format_night_via_ferrata_response(
+                        night_via_ferrata_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_nvf.get("answer", ""))]
                 elif via_ferrata_intent:
                     formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
                     mock_chunks = [str(formatted_via_ferrata.get("answer", ""))]
