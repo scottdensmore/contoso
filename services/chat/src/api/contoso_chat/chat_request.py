@@ -412,6 +412,11 @@ from .wildlife import (
     detect_wildlife_intent,
     format_wildlife_response,
 )
+from .zipline import (
+    build_zipline_prompt,
+    detect_zipline_intent,
+    format_zipline_response,
+)
 
 
 def extract_product_citations(product_context: list) -> list[dict]:
@@ -707,6 +712,7 @@ async def generate_llm_response(
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
     pack_llama_prompt: str = "",
+    zipline_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
@@ -905,6 +911,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{pack_goat_prompt}"
         if pack_llama_prompt:
             local_system = f"{local_system}\n\n{pack_llama_prompt}"
+        if zipline_prompt:
+            local_system = f"{local_system}\n\n{zipline_prompt}"
         if sandboarding_prompt:
             local_system = f"{local_system}\n\n{sandboarding_prompt}"
         if cave_diving_prompt:
@@ -1118,6 +1126,8 @@ async def generate_llm_response(
             prompt_parts.append(pack_goat_prompt)
         if pack_llama_prompt:
             prompt_parts.append(pack_llama_prompt)
+        if zipline_prompt:
+            prompt_parts.append(zipline_prompt)
         if sandboarding_prompt:
             prompt_parts.append(sandboarding_prompt)
         if cave_diving_prompt:
@@ -1726,6 +1736,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
         pack_llama_prompt = build_pack_llama_prompt(pack_llama_intent)
         formatted_pack_llama = format_pack_llama_response(pack_llama_intent, question)
         pack_llama_info_payload = formatted_pack_llama.get("pack_llama_info")
+    zipline_intent = detect_zipline_intent(question)
+    zipline_prompt = ""
+    zipline_info_payload = None
+    if zipline_intent:
+        zipline_prompt = build_zipline_prompt(zipline_intent)
+        formatted_zipline = format_zipline_response(zipline_intent, question)
+        zipline_info_payload = formatted_zipline.get("zipline_info")
     sandboarding_intent = detect_sandboarding_intent(question)
     sandboarding_prompt = ""
     sandboarding_info_payload = None
@@ -2128,6 +2145,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["pack_goat_prompt"] = pack_goat_prompt
     if pack_llama_prompt:
         llm_kwargs["pack_llama_prompt"] = pack_llama_prompt
+    if zipline_prompt:
+        llm_kwargs["zipline_prompt"] = zipline_prompt
     if sandboarding_prompt:
         llm_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:
@@ -2331,6 +2350,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["pack_goat_info"] = pack_goat_info_payload
     if pack_llama_intent and pack_llama_info_payload:
         response_payload["pack_llama_info"] = pack_llama_info_payload
+    if zipline_intent and zipline_info_payload:
+        response_payload["zipline_info"] = zipline_info_payload
     if sandboarding_intent and sandboarding_info_payload:
         response_payload["sandboarding_info"] = sandboarding_info_payload
     if cave_diving_intent and cave_diving_info_payload:
@@ -2431,6 +2452,7 @@ def generate_llm_response_stream(
     fire_lookout_prompt: str = "",
     pack_goat_prompt: str = "",
     pack_llama_prompt: str = "",
+    zipline_prompt: str = "",
     sandboarding_prompt: str = "",
     cave_diving_prompt: str = "",
     telemark_prompt: str = "",
@@ -3233,6 +3255,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         pack_llama_prompt = build_pack_llama_prompt(pack_llama_intent)
         formatted_pack_llama = format_pack_llama_response(pack_llama_intent, question)
         pack_llama_info_payload = formatted_pack_llama.get("pack_llama_info")
+    zipline_intent = detect_zipline_intent(question)
+    zipline_prompt = ""
+    zipline_info_payload = None
+    if zipline_intent:
+        zipline_prompt = build_zipline_prompt(zipline_intent)
+        formatted_zipline = format_zipline_response(zipline_intent, question)
+        zipline_info_payload = formatted_zipline.get("zipline_info")
     sandboarding_intent = detect_sandboarding_intent(question)
     sandboarding_prompt = ""
     sandboarding_info_payload = None
@@ -4008,6 +4037,32 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
                 }
             )
             yield f"data: {llama_fallback}\n\n"
+    if zipline_intent and zipline_info_payload:
+        action_to_event = {
+            "courses_list": "zipline_lookup",
+            "course_detail": "zipline_lookup",
+            "calculate_dynamics": "zipline_calculated",
+            "calculate": "zipline_calculated",
+            "gear_checklist": "zipline_lookup",
+            "gear": "zipline_lookup",
+        }
+        event_name = action_to_event.get(zipline_intent.action, "zipline_lookup")
+        zip_sse = json.dumps(
+            {
+                "event": event_name,
+                "zipline_info": zipline_info_payload,
+                event_name: zipline_info_payload,
+            }
+        )
+        yield f"data: {zip_sse}\n\n"
+        if event_name != "zipline_info":
+            zip_fallback = json.dumps(
+                {
+                    "event": "zipline_info",
+                    "zipline_info": zipline_info_payload,
+                }
+            )
+            yield f"data: {zip_fallback}\n\n"
     if sandboarding_intent and sandboarding_info_payload:
         action_to_event = {
             "dunes_list": "sandboarding_lookup",
@@ -4282,6 +4337,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["pack_goat_prompt"] = pack_goat_prompt
     if pack_llama_prompt:
         stream_kwargs["pack_llama_prompt"] = pack_llama_prompt
+    if zipline_prompt:
+        stream_kwargs["zipline_prompt"] = zipline_prompt
     if sandboarding_prompt:
         stream_kwargs["sandboarding_prompt"] = sandboarding_prompt
     if cave_diving_prompt:

@@ -563,6 +563,7 @@ from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
+from contoso_chat.routers.zipline import router as zipline_router
 from contoso_chat.routes import (
     RouteExportRequest,
     RouteExportResponse,
@@ -888,6 +889,10 @@ from contoso_chat.wildlife import (
     get_wildlife_species,
     get_wildlife_species_by_id,
 )
+from contoso_chat.zipline import (
+    detect_zipline_intent,
+    format_zipline_response,
+)
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -962,6 +967,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Contoso Chat", version="1.0.0")
 app.include_router(pack_goat_router)
 app.include_router(pack_llama_router)
+app.include_router(zipline_router)
 app.include_router(sandboarding_router)
 app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
@@ -1066,6 +1072,8 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/healthz")
+@app.get("/ready")
 async def health():
     logger.info("Health check endpoint accessed")
     return {"status": "healthy", "real_chat": REAL_CHAT_AVAILABLE}
@@ -1266,6 +1274,7 @@ async def create_response(request: ChatRequest):
             fire_lookout_intent = detect_fire_lookout_intent(request.question)
             pack_goat_intent = detect_pack_goat_intent(request.question)
             pack_llama_intent = detect_pack_llama_intent(request.question)
+            zipline_intent = detect_zipline_intent(request.question)
             sandboarding_intent = detect_sandboarding_intent(request.question)
             cave_diving_intent = detect_cave_diving_intent(request.question)
             telemark_intent = detect_telemark_intent(request.question)
@@ -1734,6 +1743,10 @@ async def create_response(request: ChatRequest):
                 formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
                 mock_payload["pack_llama_info"] = formatted_llama.get("pack_llama_info")
                 mock_payload["answer"] = formatted_llama.get("answer", mock_payload["answer"])
+            if zipline_intent:
+                formatted_zip = format_zipline_response(zipline_intent, request.question)
+                mock_payload["zipline_info"] = formatted_zip.get("zipline_info")
+                mock_payload["answer"] = formatted_zip.get("answer", mock_payload["answer"])
             if sandboarding_intent:
                 formatted_sand = format_sandboarding_response(sandboarding_intent, request.question)
                 mock_payload["sandboarding_info"] = formatted_sand.get("sandboarding_info")
@@ -1988,6 +2001,7 @@ async def create_response_stream(request: ChatRequest):
                 fire_lookout_intent = detect_fire_lookout_intent(request.question)
                 pack_goat_intent = detect_pack_goat_intent(request.question)
                 pack_llama_intent = detect_pack_llama_intent(request.question)
+                zipline_intent = detect_zipline_intent(request.question)
                 sandboarding_intent = detect_sandboarding_intent(request.question)
                 cave_diving_intent = detect_cave_diving_intent(request.question)
                 telemark_intent = detect_telemark_intent(request.question)
@@ -2521,6 +2535,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'pack_llama_info': llama_payload, event_name: llama_payload})}\n\n"
                     if event_name != "pack_llama_info":
                         yield f"data: {json.dumps({'event': 'pack_llama_info', 'pack_llama_info': llama_payload})}\n\n"
+                if zipline_intent:
+                    formatted_zip = format_zipline_response(zipline_intent, request.question)
+                    zip_payload = formatted_zip.get("zipline_info")
+                    action_to_event = {
+                        "courses_list": "zipline_lookup",
+                        "course_detail": "zipline_lookup",
+                        "calculate_dynamics": "zipline_calculated",
+                        "calculate": "zipline_calculated",
+                        "gear_checklist": "zipline_lookup",
+                        "gear": "zipline_lookup",
+                    }
+                    event_name = action_to_event.get(zipline_intent.action, "zipline_lookup")
+                    yield f"data: {json.dumps({'event': event_name, 'zipline_info': zip_payload, event_name: zip_payload})}\n\n"
+                    if event_name != "zipline_info":
+                        yield f"data: {json.dumps({'event': 'zipline_info', 'zipline_info': zip_payload})}\n\n"
                 if sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question
@@ -2926,6 +2955,9 @@ async def create_response_stream(request: ChatRequest):
                 elif pack_llama_intent:
                     formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
                     mock_chunks = [str(formatted_llama.get("answer", ""))]
+                elif zipline_intent:
+                    formatted_zip = format_zipline_response(zipline_intent, request.question)
+                    mock_chunks = [str(formatted_zip.get("answer", ""))]
                 elif sandboarding_intent:
                     formatted_sand = format_sandboarding_response(
                         sandboarding_intent, request.question

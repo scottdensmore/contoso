@@ -112,6 +112,12 @@ from .wild_ice import (
     get_wild_ice_venue,
     get_wild_ice_venues,
 )
+from .zipline import (
+    ZiplineIntent,
+    detect_zipline_intent,
+    format_zipline_response,
+    zipline_tool,
+)
 
 
 def _resolve_mw_args(
@@ -601,6 +607,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "fire_lookout_tool": fire_lookout_tool,
     "pack_goat_tool": pack_goat_tool,
     "pack_llama_tool": pack_llama_tool,
+    "zipline_tool": zipline_tool,
 }
 
 
@@ -630,6 +637,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_pack_goat_response(intent, req=question)
     if isinstance(intent, PackLlamaIntent):
         return format_pack_llama_response(intent, req=question)
+    if isinstance(intent, ZiplineIntent):
+        return format_zipline_response(intent, query=question)
     return None
 
 
@@ -649,6 +658,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    zl_intent = detect_zipline_intent(question)
+    if zl_intent:
+        fmt = resolve_tool(zl_intent, question=question)
+        return str(fmt), "zipline_info", fmt.get("zipline_info")
+
     pl_intent = detect_pack_llama_intent(question)
     if pl_intent:
         fmt = resolve_tool(pl_intent, question=question)
