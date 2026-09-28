@@ -10,6 +10,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.night_via_ferrata import (
+    detect_night_via_ferrata_intent,
+    format_night_via_ferrata_response,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -127,6 +131,17 @@ def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_turtle_patrol_response(intent, question)
     return {
         "turtle_patrol_info": formatted.get("turtle_patrol_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format night via ferrata intent in the cascade."""
+    intent = detect_night_via_ferrata_intent(question)
+    if not intent:
+        return None
+    formatted = format_night_via_ferrata_response(intent, question)
+    return {
+        "night_via_ferrata_info": formatted.get("night_via_ferrata_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
 
