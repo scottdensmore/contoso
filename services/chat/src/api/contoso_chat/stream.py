@@ -15,6 +15,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.mudflat_trekking import (
+    detect_mudflat_intent,
+    format_mudflat_response,
+)
 from contoso_chat.night_via_ferrata import (
     detect_night_via_ferrata_intent,
     format_night_via_ferrata_response,
@@ -300,3 +304,28 @@ async def generate_canyon_bouldering_stream_events(question: str) -> AsyncGenera
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
+async def generate_mudflat_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events mudflat_trekking_lookup and mudflat_trekking_calculated when mudflat trekking intent is handled."""
+    intent = detect_mudflat_intent(question)
+    if not intent:
+        return
+
+    formatted = format_mudflat_response(intent, question)
+    mf_payload = formatted.get("mudflat_trekking_info")
+
+    event_name = (
+        "mudflat_trekking_calculated"
+        if intent.action in ("calculate_dynamics", "calculate")
+        else "mudflat_trekking_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'mudflat_trekking_info': mf_payload, event_name: mf_payload})}\n\n"
+    if event_name != "mudflat_trekking_info":
+        yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mf_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
