@@ -3,6 +3,10 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.canyon_bouldering import (
+    detect_canyon_bouldering_intent,
+    format_canyon_bouldering_response,
+)
 from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
@@ -265,6 +269,30 @@ async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenera
     yield f"data: {json.dumps({'event': event_name, 'night_via_ferrata_info': nvf_payload, event_name: nvf_payload})}\n\n"
     if event_name != "night_via_ferrata_info":
         yield f"data: {json.dumps({'event': 'night_via_ferrata_info', 'night_via_ferrata_info': nvf_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+async def generate_canyon_bouldering_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events canyon_bouldering_lookup and canyon_bouldering_calculated when canyon bouldering intent is handled."""
+    intent = detect_canyon_bouldering_intent(question)
+    if not intent:
+        return
+
+    formatted = format_canyon_bouldering_response(intent, question)
+    cb_payload = formatted.get("canyon_bouldering_info")
+
+    event_name = (
+        "canyon_bouldering_calculated"
+        if intent.action in ("calculate_dynamics", "calculate")
+        else "canyon_bouldering_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'canyon_bouldering_info': cb_payload, event_name: cb_payload})}\n\n"
+    if event_name != "canyon_bouldering_info":
+        yield f"data: {json.dumps({'event': 'canyon_bouldering_info', 'canyon_bouldering_info': cb_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

@@ -108,6 +108,10 @@ from contoso_chat.canoe_expedition import (
     get_canoe_route_by_id,
     get_canoe_routes,
 )
+from contoso_chat.canyon_bouldering import (
+    detect_canyon_bouldering_intent,
+    format_canyon_bouldering_response,
+)
 from contoso_chat.canyoneering import (
     CanyoneeringGearRequirement,
     RopeRiggingRequest,
@@ -561,6 +565,7 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
@@ -983,6 +988,7 @@ app.include_router(cave_diving_router)
 app.include_router(telemark_skiing_router)
 app.include_router(falconry_router)
 app.include_router(turtle_patrol_router)
+app.include_router(canyon_bouldering_router)
 app.include_router(night_via_ferrata_router)
 
 
@@ -1239,6 +1245,7 @@ async def create_response(request: ChatRequest):
             weather_intent = detect_weather_intent(request.question)
             ski_tour_intent = detect_ski_tour_intent(request.question)
             whitewater_intent = detect_whitewater_intent(request.question)
+            canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -1535,6 +1542,14 @@ async def create_response(request: ChatRequest):
                 formatted_ww = format_whitewater_response(whitewater_intent)
                 mock_payload["whitewater_info"] = formatted_ww.get("whitewater_info")
                 mock_payload["answer"] = formatted_ww.get("answer", mock_payload["answer"])
+            if canyon_bouldering_intent:
+                formatted_cb = format_canyon_bouldering_response(
+                    canyon_bouldering_intent, request.question
+                )
+                mock_payload["canyon_bouldering_info"] = formatted_cb.get(
+                    "canyon_bouldering_info"
+                )
+                mock_payload["answer"] = formatted_cb.get("answer", mock_payload["answer"])
             if climbing_intent and not adventure_intent:
                 formatted_climbing = format_climbing_response(climbing_intent)
                 mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
@@ -1982,6 +1997,7 @@ async def create_response_stream(request: ChatRequest):
                 weather_intent = detect_weather_intent(request.question)
                 ski_tour_intent = detect_ski_tour_intent(request.question)
                 whitewater_intent = detect_whitewater_intent(request.question)
+                canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -2168,6 +2184,25 @@ async def create_response_stream(request: ChatRequest):
                 if whitewater_intent:
                     formatted_ww = format_whitewater_response(whitewater_intent)
                     yield f"data: {json.dumps({'event': 'whitewater_info', 'whitewater_info': formatted_ww.get('whitewater_info')})}\n\n"
+                if canyon_bouldering_intent:
+                    formatted_cb = format_canyon_bouldering_response(
+                        canyon_bouldering_intent, request.question
+                    )
+                    cb_payload = formatted_cb.get("canyon_bouldering_info")
+                    event_map = {
+                        "sectors_list": "canyon_bouldering_lookup",
+                        "sector_detail": "canyon_bouldering_lookup",
+                        "calculate_dynamics": "canyon_bouldering_calculated",
+                        "calculate": "canyon_bouldering_calculated",
+                        "gear_checklist": "canyon_bouldering_lookup",
+                        "gear": "canyon_bouldering_lookup",
+                    }
+                    event_name = event_map.get(
+                        canyon_bouldering_intent.action, "canyon_bouldering_lookup"
+                    )
+                    yield f"data: {json.dumps({'event': event_name, 'canyon_bouldering_info': cb_payload, event_name: cb_payload})}\n\n"
+                    if event_name != "canyon_bouldering_info":
+                        yield f"data: {json.dumps({'event': 'canyon_bouldering_info', 'canyon_bouldering_info': cb_payload})}\n\n"
                 if climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
@@ -2927,6 +2962,11 @@ async def create_response_stream(request: ChatRequest):
                 elif ski_tour_intent:
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     mock_chunks = [str(formatted_tour.get("answer", ""))]
+                elif canyon_bouldering_intent:
+                    formatted_cb = format_canyon_bouldering_response(
+                        canyon_bouldering_intent, request.question
+                    )
+                    mock_chunks = [str(formatted_cb.get("answer", ""))]
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     mock_chunks = [str(formatted_climbing.get("answer", ""))]
