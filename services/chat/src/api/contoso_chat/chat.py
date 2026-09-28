@@ -26,6 +26,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.turtle_patrol import (
+    detect_turtle_patrol_intent,
+    format_turtle_patrol_response,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -114,3 +118,15 @@ def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
         "falconry_info": formatted.get("falconry_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format turtle patrol intent in the cascade."""
+    intent = detect_turtle_patrol_intent(question)
+    if not intent:
+        return None
+    formatted = format_turtle_patrol_response(intent, question)
+    return {
+        "turtle_patrol_info": formatted.get("turtle_patrol_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+

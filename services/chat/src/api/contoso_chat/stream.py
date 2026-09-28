@@ -27,6 +27,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.turtle_patrol import (
+    detect_turtle_patrol_intent,
+    format_turtle_patrol_response,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -213,3 +217,29 @@ async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, 
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
+
+async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events turtle_patrol_lookup and turtle_patrol_calculated when turtle patrol intent is handled."""
+    intent = detect_turtle_patrol_intent(question)
+    if not intent:
+        return
+
+    formatted = format_turtle_patrol_response(intent, question)
+    turtle_payload = formatted.get("turtle_patrol_info")
+
+    event_name = (
+        "turtle_patrol_calculated"
+        if intent.action in ("calculate_dynamics", "calculate")
+        else "turtle_patrol_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'turtle_patrol_info': turtle_payload, event_name: turtle_payload})}\n\n"
+    if event_name != "turtle_patrol_info":
+        yield f"data: {json.dumps({'event': 'turtle_patrol_info', 'turtle_patrol_info': turtle_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+

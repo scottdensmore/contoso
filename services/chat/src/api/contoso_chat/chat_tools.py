@@ -102,6 +102,12 @@ from .tree_climbing import (
     get_canopy_groves,
     get_tree_gear,
 )
+from .turtle_patrol import (
+    TurtlePatrolIntent,
+    detect_turtle_patrol_intent,
+    format_turtle_patrol_response,
+    turtle_patrol_tool,
+)
 from .wild_ice import (
     WildIceIntent,
     WildIceRequest,
@@ -608,6 +614,7 @@ TOOL_REGISTRY: dict[str, Callable[..., Any]] = {
     "pack_goat_tool": pack_goat_tool,
     "pack_llama_tool": pack_llama_tool,
     "zipline_tool": zipline_tool,
+    "turtle_patrol_tool": turtle_patrol_tool,
 }
 
 
@@ -639,6 +646,8 @@ def resolve_tool(intent: Any, question: str = "", **kwargs: Any) -> Any:
         return format_pack_llama_response(intent, req=question)
     if isinstance(intent, ZiplineIntent):
         return format_zipline_response(intent, query=question)
+    if isinstance(intent, TurtlePatrolIntent):
+        return format_turtle_patrol_response(intent, query=question)
     return None
 
 
@@ -658,6 +667,11 @@ def _extract_request_context(
 
 
 def _dispatch_tool(question: str) -> Optional[tuple[str, str, Any]]:
+    turtle_intent = detect_turtle_patrol_intent(question)
+    if turtle_intent:
+        fmt = resolve_tool(turtle_intent, question=question)
+        return str(fmt), "turtle_patrol_info", fmt.get("turtle_patrol_info")
+
     zl_intent = detect_zipline_intent(question)
     if zl_intent:
         fmt = resolve_tool(zl_intent, question=question)
