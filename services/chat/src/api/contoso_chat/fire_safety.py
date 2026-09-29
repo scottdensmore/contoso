@@ -284,6 +284,12 @@ def detect_fire_safety_intent(query: str) -> Optional[FireSafetyIntent]:
     """Detects inquiries regarding fire danger index, campfire regulations, stove compliance, smoke reports, and LNT."""
     q_lower = query.lower()
 
+    # Exclusions for smoke advisory and air quality domain
+    if any(k in q_lower for k in ["smoke advisory", "air quality", "pm2.5", "aqi", "smoke drift", "inversion smoke", "particulate mask", "wildfire aqi"]):
+        return None
+    if "wildfire smoke" in q_lower and not any(k in q_lower for k in ["report", "sighting", "saw smoke", "see smoke"]):
+        return None
+
     fire_keywords = [
         "campfire", "campfires", "fire ban", "burn ban", "fire danger",
         "fire safety", "fire restriction", "fire restrictions", "stage 1",
@@ -583,3 +589,6 @@ def format_fire_safety_response(intent: FireSafetyIntent) -> dict[str, Any]:
             "zones": [z.model_dump() for z in zones],
         },
     }
+
+
+detect_fire_danger_intent = detect_fire_safety_intent

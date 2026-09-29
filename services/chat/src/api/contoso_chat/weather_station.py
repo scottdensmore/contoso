@@ -303,7 +303,8 @@ def detect_weather_station_intent(query: str) -> Optional[WeatherStationIntent]:
         "snowshoe", "sandboarding", "cave diving", "caving", "ski touring", "steep skiing",
         "nordic", "telemark", "falconry", "llama", "pack llama", "zipline", "zip line",
         "turtle patrol", "sea turtle", "night via ferrata", "via ferrata",
-        "canyon bouldering", "bouldering", "mudflat trekking", "mudflat", "rentals", "rental"
+        "canyon bouldering", "bouldering", "mudflat trekking", "mudflat", "rentals", "rental",
+        "smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi",
     ]
     if any(k in q for k in exclusions):
         return None

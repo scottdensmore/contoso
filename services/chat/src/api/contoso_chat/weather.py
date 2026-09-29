@@ -298,6 +298,8 @@ def detect_weather_intent(query: str) -> Optional[WeatherIntent]:
         return None
     if any(k in q_lower for k in ["return policy", "order status", "track order", "rental", "shoe size", "tent size", "store hours"]):
         return None
+    if any(k in q_lower for k in ["smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi"]):
+        return None
 
     # Positive detection categories
     is_lightning = any(k in q_lower for k in ["lightning", "thunder", "30/30", "30-30", "whiteout"])
