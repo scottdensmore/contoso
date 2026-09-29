@@ -291,6 +291,7 @@ def detect_mountain_weather_intent(message: str) -> Optional[MountainWeatherInte
     if any(k in q_lower for k in [
         "track order", "order #", "order status", "return label", "refund",
         "rental", "store hours", "parking pass", "shuttle", "membership",
+        "smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi",
     ]):
         return None
 

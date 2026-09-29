@@ -577,6 +577,7 @@ from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_r
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
+from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.weather_station import router as weather_station_router
@@ -664,6 +665,10 @@ from contoso_chat.ski_touring import (
     get_ski_tour_route_by_id,
     get_ski_tour_routes,
     get_skin_track_etiquette_and_policies,
+)
+from contoso_chat.smoke_advisory import (
+    detect_smoke_advisory_intent,
+    format_smoke_advisory_response,
 )
 from contoso_chat.snowkiting import (
     SnowkitingCalculationRequest,
@@ -1002,6 +1007,8 @@ app.include_router(canyon_bouldering_router)
 app.include_router(mudflat_trekking_router)
 app.include_router(night_via_ferrata_router)
 app.include_router(weather_station_router)
+app.include_router(smoke_advisory_router, prefix="/smoke-advisory", tags=["smoke-advisory"])
+app.include_router(smoke_advisory_router, prefix="/api/smoke-advisory", tags=["smoke-advisory"])
 
 
 # Middleware for request logging
@@ -1175,6 +1182,8 @@ async def health_dependencies():
     }
 
 
+@app.post("/chat")
+@app.post("/api/chat")
 @app.post("/api/create_response")
 @app.post("/api/chat/service/create_response")
 async def create_response(request: ChatRequest):
@@ -1254,6 +1263,7 @@ async def create_response(request: ChatRequest):
             first_aid_intent = detect_first_aid_intent(request.question)
             lnt_intent = detect_lnt_intent(request.question)
             avalanche_intent = detect_avalanche_intent(request.question)
+            smoke_advisory_intent = detect_smoke_advisory_intent(request.question)
             weather_station_intent = detect_weather_station_intent(request.question)
             weather_intent = detect_weather_intent(request.question)
             ski_tour_intent = detect_ski_tour_intent(request.question)
@@ -1848,6 +1858,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_trail_packing.get(
                     "answer", mock_payload["answer"]
                 )
+            if smoke_advisory_intent:
+                formatted_smoke_advisory = format_smoke_advisory_response(
+                    "smoke_advisory", request.question
+                )
+                mock_payload["smoke_advisory_info"] = formatted_smoke_advisory.get(
+                    "smoke_advisory_info"
+                )
+                mock_payload["answer"] = formatted_smoke_advisory.get(
+                    "answer", mock_payload["answer"]
+                )
             if weather_station_intent:
                 formatted_weather_station = format_weather_station_response(
                     weather_station_intent, request.question
@@ -1937,6 +1957,8 @@ async def create_response(request: ChatRequest):
         return fallback_payload
 
 
+@app.post("/chat/stream")
+@app.post("/api/chat/stream")
 @app.post("/api/create_response/stream")
 @app.post("/api/chat/service/create_response/stream")
 async def create_response_stream(request: ChatRequest):
@@ -2026,6 +2048,7 @@ async def create_response_stream(request: ChatRequest):
                 first_aid_intent = detect_first_aid_intent(request.question)
                 lnt_intent = detect_lnt_intent(request.question)
                 avalanche_intent = detect_avalanche_intent(request.question)
+                smoke_advisory_intent = detect_smoke_advisory_intent(request.question)
                 weather_station_intent = detect_weather_station_intent(request.question)
                 weather_intent = detect_weather_intent(request.question)
                 ski_tour_intent = detect_ski_tour_intent(request.question)
@@ -2810,6 +2833,17 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'trail_packing_info': tp_payload, event_name: tp_payload})}\n\n"
                     if event_name != "trail_packing_info":
                         yield f"data: {json.dumps({'event': 'trail_packing_info', 'trail_packing_info': tp_payload})}\n\n"
+                if smoke_advisory_intent:
+                    formatted_smoke_advisory = format_smoke_advisory_response(
+                        "smoke_advisory", request.question
+                    )
+                    sa_payload = formatted_smoke_advisory.get("smoke_advisory_info")
+                    event_name = "smoke_advisory_lookup"
+                    if isinstance(sa_payload, dict) and sa_payload.get("action") == "calculate":
+                        event_name = "smoke_advisory_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'smoke_advisory_info': sa_payload, event_name: sa_payload})}\n\n"
+                    if event_name != "smoke_advisory_info":
+                        yield f"data: {json.dumps({'event': 'smoke_advisory_info', 'smoke_advisory_info': sa_payload})}\n\n"
                 if weather_station_intent:
                     formatted_weather_station = format_weather_station_response(
                         weather_station_intent, request.question
@@ -3172,6 +3206,11 @@ async def create_response_stream(request: ChatRequest):
                         trail_packing_intent, request.question
                     )
                     mock_chunks = [str(formatted_trail_packing.get("answer", ""))]
+                elif smoke_advisory_intent:
+                    formatted_smoke_advisory = format_smoke_advisory_response(
+                        "smoke_advisory", request.question
+                    )
+                    mock_chunks = [str(formatted_smoke_advisory.get("answer", ""))]
                 elif weather_station_intent:
                     formatted_weather_station = format_weather_station_response(
                         weather_station_intent, request.question
