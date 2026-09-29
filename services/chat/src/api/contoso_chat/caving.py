@@ -389,6 +389,18 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
     if any(vx in q for vx in via_ferrata_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against cave mineralogy in cave_mineralogy.py!
+    cave_mineralogy_exclusions = [
+        "cave pearl",
+        "pisolith",
+        "speleothem",
+        "helictite",
+        "anthodite",
+        "mineralogy",
+    ]
+    if any(cx in q for cx in cave_mineralogy_exclusions):
+        return None
+
     # Caving domain keywords
     caving_keywords = [
         "caving",

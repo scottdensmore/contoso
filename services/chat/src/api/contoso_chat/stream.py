@@ -11,6 +11,10 @@ from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from contoso_chat.cave_mineralogy import (
+    detect_cave_mineralogy_intent,
+    format_cave_mineralogy_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -47,6 +51,32 @@ from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
 )
+
+
+async def generate_cave_mineralogy_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events cave_mineralogy_lookup and cave_mineralogy_calculated when cave mineralogy intent is handled."""
+    intent = detect_cave_mineralogy_intent(question)
+    if not intent:
+        return
+
+    formatted = format_cave_mineralogy_response(intent)
+    cave_payload = formatted.get("cave_mineralogy_info")
+
+    event_name = (
+        "cave_mineralogy_calculated"
+        if intent.action in ("calculate_accretion", "calculate")
+        else "cave_mineralogy_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cave_payload, event_name: cave_payload})}\n\n"
+    if event_name != "cave_mineralogy_info":
+        yield f"data: {json.dumps({'event': 'cave_mineralogy_info', 'cave_mineralogy_info': cave_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
 
 
 async def generate_cave_diving_stream_events(question: str) -> AsyncGenerator[str, None]:
