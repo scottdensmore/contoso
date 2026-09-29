@@ -240,6 +240,12 @@ def test_detect_smoke_advisory_intent_exclusions():
     assert detect_smoke_advisory_intent("Primitive trapping near smoke drift") is False
     assert detect_smoke_advisory_intent("Beachcombing in coastal smoke") is False
     assert detect_smoke_advisory_intent("Fire lookout tower smoke report") is False
+    assert (
+        detect_smoke_advisory_intent(
+            "Calculate bearing azimuth and convection index for smoke plume at Winchester Mountain lookout"
+        )
+        is False
+    )
     assert detect_smoke_advisory_intent("Snowshoe trail air quality") is False
     assert detect_smoke_advisory_intent("Sandboarding dune smoke") is False
     assert detect_smoke_advisory_intent("Cave diving gear checklist") is False
