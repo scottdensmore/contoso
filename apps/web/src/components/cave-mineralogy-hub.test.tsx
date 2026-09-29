@@ -82,8 +82,9 @@ describe('CaveMineralogyHub Component', () => {
     expect(within(resultPanel).getByText(/Stable Laminar Accretion/i)).toBeDefined();
     expect(within(resultPanel).getByText(/Nominal Active Mineralization/i)).toBeDefined();
 
-    // High drip rate -> Active Polishing Rotation
+    // High drip rate and adjusted pH -> Active Polishing Rotation
     fireEvent.change(dripRateInput, { target: { value: '60' } });
+    fireEvent.change(waterPhInput, { target: { value: '8.0' } });
     expect(within(resultPanel).getByText(/Active Polishing Rotation/i)).toBeDefined();
     expect(within(resultPanel).getByText(/2\.70?\s*J\/hr/)).toBeDefined();
 
