@@ -68,6 +68,11 @@ from .cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from .cave_mineralogy import (
+    build_cave_mineralogy_prompt,
+    detect_cave_mineralogy_intent,
+    format_cave_mineralogy_response,
+)
 from .caving import (
     build_caving_prompt,
     detect_caving_intent,
@@ -753,6 +758,7 @@ async def generate_llm_response(
     turtle_patrol_prompt: str = "",
     weather_station_prompt: str = "",
     smoke_advisory_prompt: str = "",
+    cave_mineralogy_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -983,6 +989,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{weather_station_prompt}"
         if smoke_advisory_prompt:
             local_system = f"{local_system}\n\n{smoke_advisory_prompt}"
+        if cave_mineralogy_prompt:
+            local_system = f"{local_system}\n\n{cave_mineralogy_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1198,6 +1206,8 @@ async def generate_llm_response(
             prompt_parts.append(weather_station_prompt)
         if smoke_advisory_prompt:
             prompt_parts.append(smoke_advisory_prompt)
+        if cave_mineralogy_prompt:
+            prompt_parts.append(cave_mineralogy_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2034,6 +2044,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
         bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
 
+    cave_mineralogy_intent = detect_cave_mineralogy_intent(question)
+    cave_mineralogy_prompt = ""
+    cave_mineralogy_info_payload = None
+    if cave_mineralogy_intent:
+        cave_mineralogy_prompt = build_cave_mineralogy_prompt(question)
+        formatted_cm = format_cave_mineralogy_response(
+            "cave_mineralogy", question
+        )
+        cave_mineralogy_info_payload = formatted_cm.get(
+            "cave_mineralogy_info"
+        )
+
     caving_intent = detect_caving_intent(question)
     caving_prompt = ""
     caving_info_payload = None
@@ -2308,6 +2330,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["weather_station_prompt"] = weather_station_prompt
     if smoke_advisory_prompt:
         llm_kwargs["smoke_advisory_prompt"] = smoke_advisory_prompt
+    if cave_mineralogy_prompt:
+        llm_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2451,6 +2475,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["ice_climbing_info"] = ice_climbing_info_payload
     if bushcraft_intent and bushcraft_info_payload:
         response_payload["bushcraft_info"] = bushcraft_info_payload
+    if cave_mineralogy_intent and cave_mineralogy_info_payload:
+        response_payload["cave_mineralogy_info"] = cave_mineralogy_info_payload
     if caving_intent and caving_info_payload:
         response_payload["caving_info"] = caving_info_payload
     if desert_trekking_intent and desert_trekking_info_payload:
@@ -2630,6 +2656,7 @@ def generate_llm_response_stream(
     turtle_patrol_prompt: str = "",
     weather_station_prompt: str = "",
     smoke_advisory_prompt: str = "",
+    cave_mineralogy_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2800,6 +2827,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{weather_station_prompt}"
         if smoke_advisory_prompt:
             local_system = f"{local_system}\n\n{smoke_advisory_prompt}"
+        if cave_mineralogy_prompt:
+            local_system = f"{local_system}\n\n{cave_mineralogy_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -2986,6 +3015,8 @@ def generate_llm_response_stream(
             prompt_parts.append(weather_station_prompt)
         if smoke_advisory_prompt:
             prompt_parts.append(smoke_advisory_prompt)
+        if cave_mineralogy_prompt:
+            prompt_parts.append(cave_mineralogy_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3683,6 +3714,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
         bushcraft_info_payload = formatted_bushcraft.get("bushcraft_info")
 
+    cave_mineralogy_intent = detect_cave_mineralogy_intent(question)
+    cave_mineralogy_prompt = ""
+    cave_mineralogy_info_payload = None
+    if cave_mineralogy_intent:
+        cave_mineralogy_prompt = build_cave_mineralogy_prompt(question)
+        formatted_cm = format_cave_mineralogy_response(
+            "cave_mineralogy", question
+        )
+        cave_mineralogy_info_payload = formatted_cm.get(
+            "cave_mineralogy_info"
+        )
+
     caving_intent = detect_caving_intent(question)
     caving_prompt = ""
     caving_info_payload = None
@@ -3903,6 +3946,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'ice_climbing_info', 'ice_climbing_info': ice_climbing_info_payload})}\n\n"
     if bushcraft_intent and bushcraft_info_payload:
         yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': bushcraft_info_payload})}\n\n"
+    if cave_mineralogy_intent and cave_mineralogy_info_payload:
+        event_name = "cave_mineralogy_lookup"
+        if (
+            isinstance(cave_mineralogy_info_payload, dict)
+            and cave_mineralogy_info_payload.get("action") in ("calculate", "calculate_accretion")
+        ):
+            event_name = "cave_mineralogy_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cave_mineralogy_info_payload, event_name: cave_mineralogy_info_payload})}\n\n"
+        if event_name != "cave_mineralogy_info":
+            yield f"data: {json.dumps({'event': 'cave_mineralogy_info', 'cave_mineralogy_info': cave_mineralogy_info_payload})}\n\n"
     if caving_intent and caving_info_payload:
         yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': caving_info_payload})}\n\n"
     if desert_trekking_intent and desert_trekking_info_payload:
@@ -4714,6 +4767,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["weather_station_prompt"] = weather_station_prompt
     if smoke_advisory_prompt:
         stream_kwargs["smoke_advisory_prompt"] = smoke_advisory_prompt
+    if cave_mineralogy_prompt:
+        stream_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
 
     for chunk in generate_llm_response_stream(
         question,

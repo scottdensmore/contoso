@@ -133,6 +133,10 @@ from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from contoso_chat.cave_mineralogy import (
+    detect_cave_mineralogy_intent,
+    format_cave_mineralogy_response,
+)
 from contoso_chat.caving import (
     CavingGearRequirement,
     CavingRouteModel,
@@ -571,6 +575,7 @@ from contoso_chat.river_sup import (
 )
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
+from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
@@ -1007,6 +1012,8 @@ app.include_router(canyon_bouldering_router)
 app.include_router(mudflat_trekking_router)
 app.include_router(night_via_ferrata_router)
 app.include_router(weather_station_router)
+app.include_router(cave_mineralogy_router, prefix="/cave-mineralogy", tags=["cave-mineralogy"])
+app.include_router(cave_mineralogy_router, prefix="/api/cave-mineralogy", tags=["cave-mineralogy"])
 app.include_router(smoke_advisory_router, prefix="/smoke-advisory", tags=["smoke-advisory"])
 app.include_router(smoke_advisory_router, prefix="/api/smoke-advisory", tags=["smoke-advisory"])
 
@@ -1288,6 +1295,7 @@ async def create_response(request: ChatRequest):
             via_ferrata_intent = detect_via_ferrata_intent(request.question)
             ice_climbing_intent = detect_ice_climbing_intent(request.question)
             bushcraft_intent = detect_bushcraft_intent(request.question)
+            cave_mineralogy_intent = detect_cave_mineralogy_intent(request.question)
             caving_intent = detect_caving_intent(request.question)
             desert_trekking_intent = detect_desert_trekking_intent(request.question)
             coasteering_intent = detect_coasteering_intent(request.question)
@@ -1676,6 +1684,16 @@ async def create_response(request: ChatRequest):
                 formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                 mock_payload["bushcraft_info"] = formatted_bushcraft.get("bushcraft_info")
                 mock_payload["answer"] = formatted_bushcraft.get("answer", mock_payload["answer"])
+            if cave_mineralogy_intent:
+                formatted_cm = format_cave_mineralogy_response(
+                    "cave_mineralogy", request.question
+                )
+                mock_payload["cave_mineralogy_info"] = formatted_cm.get(
+                    "cave_mineralogy_info"
+                )
+                mock_payload["answer"] = formatted_cm.get(
+                    "answer", mock_payload["answer"]
+                )
             if caving_intent:
                 formatted_caving = format_caving_response(caving_intent)
                 mock_payload["caving_info"] = formatted_caving.get("caving_info")
@@ -2073,6 +2091,7 @@ async def create_response_stream(request: ChatRequest):
                 via_ferrata_intent = detect_via_ferrata_intent(request.question)
                 ice_climbing_intent = detect_ice_climbing_intent(request.question)
                 bushcraft_intent = detect_bushcraft_intent(request.question)
+                cave_mineralogy_intent = detect_cave_mineralogy_intent(request.question)
                 caving_intent = detect_caving_intent(request.question)
                 desert_trekking_intent = detect_desert_trekking_intent(request.question)
                 coasteering_intent = detect_coasteering_intent(request.question)
@@ -2351,6 +2370,17 @@ async def create_response_stream(request: ChatRequest):
                 if bushcraft_intent:
                     formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                     yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': formatted_bushcraft.get('bushcraft_info')})}\n\n"
+                if cave_mineralogy_intent:
+                    formatted_cm = format_cave_mineralogy_response(
+                        "cave_mineralogy", request.question
+                    )
+                    cm_payload = formatted_cm.get("cave_mineralogy_info")
+                    event_name = "cave_mineralogy_lookup"
+                    if isinstance(cm_payload, dict) and cm_payload.get("action") in ("calculate", "calculate_accretion"):
+                        event_name = "cave_mineralogy_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cm_payload, event_name: cm_payload})}\n\n"
+                    if event_name != "cave_mineralogy_info":
+                        yield f"data: {json.dumps({'event': 'cave_mineralogy_info', 'cave_mineralogy_info': cm_payload})}\n\n"
                 if caving_intent:
                     formatted_caving = format_caving_response(caving_intent)
                     yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': formatted_caving.get('caving_info')})}\n\n"
@@ -3269,6 +3299,11 @@ async def create_response_stream(request: ChatRequest):
                 elif bushcraft_intent:
                     formatted_bushcraft = format_bushcraft_response(bushcraft_intent)
                     mock_chunks = [str(formatted_bushcraft.get("answer", ""))]
+                elif cave_mineralogy_intent:
+                    formatted_cm = format_cave_mineralogy_response(
+                        "cave_mineralogy", request.question
+                    )
+                    mock_chunks = [str(formatted_cm.get("answer", ""))]
                 elif caving_intent:
                     formatted_caving = format_caving_response(caving_intent)
                     mock_chunks = [str(formatted_caving.get("answer", ""))]

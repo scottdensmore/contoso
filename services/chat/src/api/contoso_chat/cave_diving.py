@@ -355,6 +355,12 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "dry cave",
         "rentals",
         "rental",
+        "cave pearl",
+        "pisolith",
+        "speleothem",
+        "helictite",
+        "anthodite",
+        "mineralogy",
     ]
     if any(ex in q for ex in exclusions):
         return None

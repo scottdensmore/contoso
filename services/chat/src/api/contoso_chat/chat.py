@@ -10,6 +10,10 @@ from contoso_chat.cave_diving import (
     detect_cave_diving_intent,
     format_cave_diving_response,
 )
+from contoso_chat.cave_mineralogy import (
+    detect_cave_mineralogy_intent,
+    format_cave_mineralogy_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -46,6 +50,18 @@ from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
 )
+
+
+def handle_cave_mineralogy_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format cave mineralogy intent in the cascade."""
+    intent = detect_cave_mineralogy_intent(question)
+    if not intent:
+        return None
+    formatted = format_cave_mineralogy_response(intent)
+    return {
+        "cave_mineralogy_info": formatted.get("cave_mineralogy_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
 
 
 def handle_cave_diving_intent(question: str) -> Optional[dict[str, Any]]:
