@@ -2,6 +2,10 @@
 
 from typing import Any, Optional
 
+from contoso_chat.bog_shoeing import (
+    detect_bog_shoeing_intent,
+    format_bog_shoeing_response,
+)
 from contoso_chat.canyon_bouldering import (
     detect_canyon_bouldering_intent,
     format_canyon_bouldering_response,
@@ -188,5 +192,16 @@ def handle_mudflat_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_mudflat_response(intent, question)
     return {
         "mudflat_trekking_info": formatted.get("mudflat_trekking_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_bog_shoeing_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format bog shoeing intent in the cascade."""
+    if not detect_bog_shoeing_intent(question):
+        return None
+    formatted = format_bog_shoeing_response("bog_shoeing", question)
+    return {
+        "bog_shoeing_info": formatted.get("bog_shoeing_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

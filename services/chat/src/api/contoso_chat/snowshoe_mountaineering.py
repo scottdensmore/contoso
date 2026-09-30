@@ -254,6 +254,12 @@ def detect_snowshoe_intent(message: str) -> Optional[SnowshoeIntent]:
         "snare",
         "primitive trap",
         "primitive trapping",
+        "bog shoe",
+        "bog-shoe",
+        "muskeg",
+        "peatland",
+        "quaking bog",
+        "sphagnum",
     ]
     if any(ex in q for ex in exclusions):
         return None

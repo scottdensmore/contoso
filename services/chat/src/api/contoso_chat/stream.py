@@ -3,6 +3,10 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.bog_shoeing import (
+    detect_bog_shoeing_intent,
+    format_bog_shoeing_response,
+)
 from contoso_chat.canyon_bouldering import (
     detect_canyon_bouldering_intent,
     format_canyon_bouldering_response,
@@ -358,4 +362,29 @@ async def generate_mudflat_stream_events(question: str) -> AsyncGenerator[str, N
     tokens = answer.split(" ")
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events bog_shoeing_lookup and bog_shoeing_calculated when bog shoeing intent is handled."""
+    if not detect_bog_shoeing_intent(question):
+        return
+
+    formatted = format_bog_shoeing_response("bog_shoeing", question)
+    bog_payload = formatted.get("bog_shoeing_info")
+
+    event_name = (
+        "bog_shoeing_calculated"
+        if isinstance(bog_payload, dict) and bog_payload.get("action") in ("calculate", "calculate_flotation")
+        else "bog_shoeing_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bog_payload, event_name: bog_payload})}\n\n"
+    if event_name != "bog_shoeing_info":
+        yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bog_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"

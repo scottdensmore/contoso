@@ -38,6 +38,11 @@ from .bikepacking import (
     detect_bikepacking_intent,
     format_bikepacking_response,
 )
+from .bog_shoeing import (
+    build_bog_shoeing_prompt,
+    detect_bog_shoeing_intent,
+    format_bog_shoeing_response,
+)
 from .bushcraft import (
     build_bushcraft_prompt,
     detect_bushcraft_intent,
@@ -759,6 +764,7 @@ async def generate_llm_response(
     weather_station_prompt: str = "",
     smoke_advisory_prompt: str = "",
     cave_mineralogy_prompt: str = "",
+    bog_shoeing_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -991,6 +997,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{smoke_advisory_prompt}"
         if cave_mineralogy_prompt:
             local_system = f"{local_system}\n\n{cave_mineralogy_prompt}"
+        if bog_shoeing_prompt:
+            local_system = f"{local_system}\n\n{bog_shoeing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -1208,6 +1216,8 @@ async def generate_llm_response(
             prompt_parts.append(smoke_advisory_prompt)
         if cave_mineralogy_prompt:
             prompt_parts.append(cave_mineralogy_prompt)
+        if bog_shoeing_prompt:
+            prompt_parts.append(bog_shoeing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -2037,6 +2047,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         ice_climbing_info_payload = formatted_ice_climbing.get("ice_climbing_info")
 
     bushcraft_intent = detect_bushcraft_intent(question)
+    bog_shoeing_intent = detect_bog_shoeing_intent(question)
+    bog_shoeing_prompt = ""
+    bog_shoeing_info_payload = None
+    if bog_shoeing_intent:
+        bog_shoeing_prompt = build_bog_shoeing_prompt(question)
+        formatted_bog = format_bog_shoeing_response("bog_shoeing", question)
+        bog_shoeing_info_payload = formatted_bog.get("bog_shoeing_info")
+
     bushcraft_prompt = ""
     bushcraft_info_payload = None
     if bushcraft_intent:
@@ -2332,6 +2350,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["smoke_advisory_prompt"] = smoke_advisory_prompt
     if cave_mineralogy_prompt:
         llm_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
+    if bog_shoeing_prompt:
+        llm_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2553,6 +2573,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["falconry_info"] = falconry_info_payload
     if turtle_patrol_intent and turtle_patrol_info_payload:
         response_payload["turtle_patrol_info"] = turtle_patrol_info_payload
+    if bog_shoeing_intent and bog_shoeing_info_payload:
+        response_payload["bog_shoeing_info"] = bog_shoeing_info_payload
 
     return response_payload
 
@@ -2657,6 +2679,7 @@ def generate_llm_response_stream(
     weather_station_prompt: str = "",
     smoke_advisory_prompt: str = "",
     cave_mineralogy_prompt: str = "",
+    bog_shoeing_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -2829,6 +2852,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{smoke_advisory_prompt}"
         if cave_mineralogy_prompt:
             local_system = f"{local_system}\n\n{cave_mineralogy_prompt}"
+        if bog_shoeing_prompt:
+            local_system = f"{local_system}\n\n{bog_shoeing_prompt}"
 
         messages = [
             {"role": "system", "content": local_system},
@@ -3017,6 +3042,8 @@ def generate_llm_response_stream(
             prompt_parts.append(smoke_advisory_prompt)
         if cave_mineralogy_prompt:
             prompt_parts.append(cave_mineralogy_prompt)
+        if bog_shoeing_prompt:
+            prompt_parts.append(bog_shoeing_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3706,6 +3733,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_ice_climbing = format_ice_climbing_response(ice_climbing_intent)
         ice_climbing_info_payload = formatted_ice_climbing.get("ice_climbing_info")
 
+    bog_shoeing_intent = detect_bog_shoeing_intent(question)
+    bog_shoeing_prompt = ""
+    bog_shoeing_info_payload = None
+    if bog_shoeing_intent:
+        bog_shoeing_prompt = build_bog_shoeing_prompt(question)
+        formatted_bog = format_bog_shoeing_response("bog_shoeing", question)
+        bog_shoeing_info_payload = formatted_bog.get("bog_shoeing_info")
+
     bushcraft_intent = detect_bushcraft_intent(question)
     bushcraft_prompt = ""
     bushcraft_info_payload = None
@@ -3956,6 +3991,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cave_mineralogy_info_payload, event_name: cave_mineralogy_info_payload})}\n\n"
         if event_name != "cave_mineralogy_info":
             yield f"data: {json.dumps({'event': 'cave_mineralogy_info', 'cave_mineralogy_info': cave_mineralogy_info_payload})}\n\n"
+    if bog_shoeing_intent and bog_shoeing_info_payload:
+        event_name = "bog_shoeing_lookup"
+        if (
+            isinstance(bog_shoeing_info_payload, dict)
+            and bog_shoeing_info_payload.get("action") in ("calculate", "calculate_flotation")
+        ):
+            event_name = "bog_shoeing_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bog_shoeing_info_payload, event_name: bog_shoeing_info_payload})}\n\n"
+        if event_name != "bog_shoeing_info":
+            yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bog_shoeing_info_payload})}\n\n"
     if caving_intent and caving_info_payload:
         yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': caving_info_payload})}\n\n"
     if desert_trekking_intent and desert_trekking_info_payload:
@@ -4769,6 +4814,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["smoke_advisory_prompt"] = smoke_advisory_prompt
     if cave_mineralogy_prompt:
         stream_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
+    if bog_shoeing_prompt:
+        stream_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

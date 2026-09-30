@@ -84,6 +84,10 @@ from contoso_chat.bikepacking import (
     get_bikepacking_route_by_id,
     get_bikepacking_routes,
 )
+from contoso_chat.bog_shoeing import (
+    detect_bog_shoeing_intent,
+    format_bog_shoeing_response,
+)
 from contoso_chat.bushcraft import (
     BushcraftGearRequirement,
     BushcraftProjectModel,
@@ -573,6 +577,7 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
@@ -1016,6 +1021,8 @@ app.include_router(cave_mineralogy_router, prefix="/cave-mineralogy", tags=["cav
 app.include_router(cave_mineralogy_router, prefix="/api/cave-mineralogy", tags=["cave-mineralogy"])
 app.include_router(smoke_advisory_router, prefix="/smoke-advisory", tags=["smoke-advisory"])
 app.include_router(smoke_advisory_router, prefix="/api/smoke-advisory", tags=["smoke-advisory"])
+app.include_router(bog_shoeing_router, prefix="/bog-shoeing", tags=["bog-shoeing"])
+app.include_router(bog_shoeing_router, prefix="/api/bog-shoeing", tags=["bog-shoeing"])
 
 
 # Middleware for request logging
@@ -1316,6 +1323,7 @@ async def create_response(request: ChatRequest):
             steep_skiing_intent = detect_steep_skiing_intent(request.question)
             primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
             gold_prospecting_intent = detect_gold_prospecting_intent(request.question)
+            bog_shoeing_intent = detect_bog_shoeing_intent(request.question)
             snowshoe_intent = detect_snowshoe_intent(request.question)
             trail_packing_intent = detect_trail_packing_intent(request.question)
             mountain_weather_intent = detect_mountain_weather_intent(request.question)
@@ -1860,6 +1868,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_falconry.get(
                     "answer", mock_payload["answer"]
                 )
+            if bog_shoeing_intent:
+                formatted_bog = format_bog_shoeing_response(
+                    "bog_shoeing", request.question
+                )
+                mock_payload["bog_shoeing_info"] = formatted_bog.get("bog_shoeing_info")
+                mock_payload["answer"] = formatted_bog.get("answer", mock_payload["answer"])
             if snowshoe_intent:
                 formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                 mock_payload["snowshoe_mountaineering_info"] = formatted_snowshoe.get(
@@ -2112,6 +2126,7 @@ async def create_response_stream(request: ChatRequest):
                 steep_skiing_intent = detect_steep_skiing_intent(request.question)
                 primitive_trapping_intent = detect_primitive_trapping_intent(request.question)
                 gold_prospecting_intent = detect_gold_prospecting_intent(request.question)
+                bog_shoeing_intent = detect_bog_shoeing_intent(request.question)
                 snowshoe_intent = detect_snowshoe_intent(request.question)
                 trail_packing_intent = detect_trail_packing_intent(request.question)
                 mountain_weather_intent = detect_mountain_weather_intent(request.question)
@@ -2827,6 +2842,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'falconry_info': falconry_payload, event_name: falconry_payload})}\n\n"
                     if event_name != "falconry_info":
                         yield f"data: {json.dumps({'event': 'falconry_info', 'falconry_info': falconry_payload})}\n\n"
+                if bog_shoeing_intent:
+                    formatted_bog = format_bog_shoeing_response(
+                        "bog_shoeing", request.question
+                    )
+                    bs_payload = formatted_bog.get("bog_shoeing_info")
+                    event_name = "bog_shoeing_lookup"
+                    if (
+                        isinstance(bs_payload, dict)
+                        and bs_payload.get("action") in ("calculate", "calculate_flotation")
+                    ):
+                        event_name = "bog_shoeing_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bs_payload, event_name: bs_payload})}\n\n"
+                    if event_name != "bog_shoeing_info":
+                        yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bs_payload})}\n\n"
                 if snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     sm_payload = formatted_snowshoe.get("snowshoe_mountaineering_info")
@@ -3228,6 +3257,11 @@ async def create_response_stream(request: ChatRequest):
                         falconry_intent, request.question
                     )
                     mock_chunks = [str(formatted_falconry.get("answer", ""))]
+                elif bog_shoeing_intent:
+                    formatted_bog = format_bog_shoeing_response(
+                        "bog_shoeing", request.question
+                    )
+                    mock_chunks = [str(formatted_bog.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
                     mock_chunks = [str(formatted_snowshoe.get("answer", ""))]
