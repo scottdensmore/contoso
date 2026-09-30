@@ -308,6 +308,12 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "bouldering",
         "rentals",
         "rental",
+        "bog shoe",
+        "bog-shoe",
+        "muskeg",
+        "peatland",
+        "quaking bog",
+        "sphagnum",
     ]
     if any(ex in q for ex in exclusions):
         return None
