@@ -375,6 +375,17 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
     if any(ex in q for ex in mountaineering_exclusions):
         return None
 
+    # Alpine glacial sledging and pulk exclusions
+    pulk_exclusions = [
+        "pulk",
+        "crevasse pulk",
+        "sled haul",
+        "glacial sledging",
+        "haul shaft",
+    ]
+    if any(ex in q for ex in pulk_exclusions):
+        return None
+
     # Glacier navigation keywords
     glacier_keywords = [
         "glacier",
@@ -495,6 +506,7 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
 
 
 extract_glacier_intent = detect_glacier_intent
+detect_glacier_navigation_intent = detect_glacier_intent
 
 
 def build_glacier_prompt(intent: GlacierIntent) -> str:

@@ -93,6 +93,11 @@ from .coasteering import (
     detect_coasteering_intent,
     format_coasteering_response,
 )
+from .crevasse_pulk import (
+    build_crevasse_pulk_prompt,
+    detect_crevasse_pulk_intent,
+    format_crevasse_pulk_response,
+)
 from .desert_trekking import (
     build_desert_trekking_prompt,
     detect_desert_trekking_intent,
@@ -765,6 +770,7 @@ async def generate_llm_response(
     smoke_advisory_prompt: str = "",
     cave_mineralogy_prompt: str = "",
     bog_shoeing_prompt: str = "",
+    crevasse_pulk_prompt: str = "",
 ):
     """Generates a response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -1218,6 +1224,8 @@ async def generate_llm_response(
             prompt_parts.append(cave_mineralogy_prompt)
         if bog_shoeing_prompt:
             prompt_parts.append(bog_shoeing_prompt)
+        if crevasse_pulk_prompt:
+            prompt_parts.append(crevasse_pulk_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -1765,6 +1773,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         bikepacking_prompt = build_bikepacking_prompt(bikepacking_intent)
         formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
         bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
+
+    crevasse_pulk_intent = detect_crevasse_pulk_intent(question)
+    crevasse_pulk_prompt = ""
+    crevasse_pulk_info_payload = None
+    if crevasse_pulk_intent:
+        crevasse_pulk_prompt = build_crevasse_pulk_prompt(question)
+        formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", question)
+        crevasse_pulk_info_payload = formatted_pulk.get("crevasse_pulk_info")
 
     glacier_intent = detect_glacier_intent(question)
     glacier_prompt = ""
@@ -2352,6 +2368,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
     if bog_shoeing_prompt:
         llm_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
+    if crevasse_pulk_prompt:
+        llm_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2575,6 +2593,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["turtle_patrol_info"] = turtle_patrol_info_payload
     if bog_shoeing_intent and bog_shoeing_info_payload:
         response_payload["bog_shoeing_info"] = bog_shoeing_info_payload
+    if crevasse_pulk_intent and crevasse_pulk_info_payload:
+        response_payload["crevasse_pulk_info"] = crevasse_pulk_info_payload
 
     return response_payload
 
@@ -2680,6 +2700,7 @@ def generate_llm_response_stream(
     smoke_advisory_prompt: str = "",
     cave_mineralogy_prompt: str = "",
     bog_shoeing_prompt: str = "",
+    crevasse_pulk_prompt: str = "",
 ):
     """Generates a streaming response using either local Ollama (via LiteLLM) or GCP Vertex AI."""
     system_instruction = f"""You are a knowledgeable and friendly outdoor gear expert for Contoso Outdoor.
@@ -3044,6 +3065,8 @@ def generate_llm_response_stream(
             prompt_parts.append(cave_mineralogy_prompt)
         if bog_shoeing_prompt:
             prompt_parts.append(bog_shoeing_prompt)
+        if crevasse_pulk_prompt:
+            prompt_parts.append(crevasse_pulk_prompt)
         prompt_parts.append(f"Catalog Context:\n{context}\n\nUser Question: {prompt}")
         full_prompt = "\n\n".join(prompt_parts)
 
@@ -3443,6 +3466,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         bikepacking_prompt = build_bikepacking_prompt(bikepacking_intent)
         formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
         bikepacking_info_payload = formatted_bikepacking.get("bikepacking_info")
+
+    crevasse_pulk_intent = detect_crevasse_pulk_intent(question)
+    crevasse_pulk_prompt = ""
+    crevasse_pulk_info_payload = None
+    if crevasse_pulk_intent:
+        crevasse_pulk_prompt = build_crevasse_pulk_prompt(question)
+        formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", question)
+        crevasse_pulk_info_payload = formatted_pulk.get("crevasse_pulk_info")
 
     glacier_intent = detect_glacier_intent(question)
     glacier_prompt = ""
@@ -4001,6 +4032,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bog_shoeing_info_payload, event_name: bog_shoeing_info_payload})}\n\n"
         if event_name != "bog_shoeing_info":
             yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bog_shoeing_info_payload})}\n\n"
+    if crevasse_pulk_intent and crevasse_pulk_info_payload:
+        event_name = "crevasse_pulk_lookup"
+        if (
+            isinstance(crevasse_pulk_info_payload, dict)
+            and crevasse_pulk_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "crevasse_pulk_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': crevasse_pulk_info_payload, event_name: crevasse_pulk_info_payload})}\n\n"
+        if event_name != "crevasse_pulk_info":
+            yield f"data: {json.dumps({'event': 'crevasse_pulk_info', 'crevasse_pulk_info': crevasse_pulk_info_payload})}\n\n"
     if caving_intent and caving_info_payload:
         yield f"data: {json.dumps({'event': 'caving_info', 'caving_info': caving_info_payload})}\n\n"
     if desert_trekking_intent and desert_trekking_info_payload:
@@ -4816,6 +4857,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["cave_mineralogy_prompt"] = cave_mineralogy_prompt
     if bog_shoeing_prompt:
         stream_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
+    if crevasse_pulk_prompt:
+        stream_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
 
     for chunk in generate_llm_response_stream(
         question,

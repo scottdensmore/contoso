@@ -19,6 +19,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.crevasse_pulk import (
+    detect_crevasse_pulk_intent,
+    format_crevasse_pulk_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -382,6 +386,30 @@ async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[st
     yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bog_payload, event_name: bog_payload})}\n\n"
     if event_name != "bog_shoeing_info":
         yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bog_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events crevasse_pulk_lookup and crevasse_pulk_calculated when crevasse pulk intent is handled."""
+    if not detect_crevasse_pulk_intent(question):
+        return
+
+    formatted = format_crevasse_pulk_response("crevasse_pulk", question)
+    pulk_payload = formatted.get("crevasse_pulk_info")
+
+    event_name = (
+        "crevasse_pulk_calculated"
+        if isinstance(pulk_payload, dict) and pulk_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "crevasse_pulk_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': pulk_payload, event_name: pulk_payload})}\n\n"
+    if event_name != "crevasse_pulk_info":
+        yield f"data: {json.dumps({'event': 'crevasse_pulk_info', 'crevasse_pulk_info': pulk_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

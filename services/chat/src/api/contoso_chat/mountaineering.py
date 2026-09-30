@@ -332,6 +332,17 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
     if not has_trigger:
         return None
 
+    # Alpine glacial sledging and pulk exclusions
+    pulk_exclusions = [
+        "pulk",
+        "crevasse pulk",
+        "sled haul",
+        "glacial sledging",
+        "haul shaft",
+    ]
+    if any(ex in q_norm for ex in pulk_exclusions):
+        return None
+
     # Disambiguation guards:
     # 1. Reject rock climbing queries that mention crag/sport/bouldering/trad rack without glacier context
     rock_climbing_terms = [

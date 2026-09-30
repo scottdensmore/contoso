@@ -362,6 +362,9 @@ def extract_dogsled_intent(message: str) -> Optional[DogsledIntent]:
     # Customer support exclusions
     if any(k in q for k in ["order #", "order tracking", "shipping label", "return label", "membership reward"]):
         return None
+    # Must not hijack alpine glacial pulk expeditions
+    if any(k in q for k in ["pulk", "crevasse pulk", "sled haul", "glacial sledging", "haul shaft"]):
+        return None
 
     # Trigger keywords
     triggers = [
@@ -449,6 +452,7 @@ def extract_dogsled_intent(message: str) -> Optional[DogsledIntent]:
 
 
 detect_dogsled_intent = extract_dogsled_intent
+detect_dogsledding_intent = extract_dogsled_intent
 
 
 class FormattedDogsledResponse(str):
