@@ -593,6 +593,14 @@ def detect_crevasse_pulk_intent(message: str) -> bool:
         "smoke",
         "rentals",
         "rental",
+        "snowkite",
+        "snowkiting",
+        "kite",
+        "kiting",
+        "foil kite",
+        "chickenloop",
+        "dog sled",
+        "mushing",
     ]
     if any(ex in q for ex in exclusions):
         return False
