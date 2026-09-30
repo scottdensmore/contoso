@@ -18,6 +18,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.crevasse_pulk import (
+    detect_crevasse_pulk_intent,
+    format_crevasse_pulk_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -203,5 +207,15 @@ def handle_bog_shoeing_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_bog_shoeing_response("bog_shoeing", question)
     return {
         "bog_shoeing_info": formatted.get("bog_shoeing_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+def handle_crevasse_pulk_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format crevasse pulk intent in the cascade."""
+    if not detect_crevasse_pulk_intent(question):
+        return None
+    formatted = format_crevasse_pulk_response("crevasse_pulk", question)
+    return {
+        "crevasse_pulk_info": formatted.get("crevasse_pulk_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

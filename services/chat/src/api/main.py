@@ -176,6 +176,10 @@ from contoso_chat.coasteering import (
     get_coasteering_route_by_id,
     get_coasteering_routes,
 )
+from contoso_chat.crevasse_pulk import (
+    detect_crevasse_pulk_intent,
+    format_crevasse_pulk_response,
+)
 from contoso_chat.desert_trekking import (
     DesertGearRequirement,
     DesertRouteModel,
@@ -581,6 +585,7 @@ from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
+from contoso_chat.routers.crevasse_pulk import router as crevasse_pulk_router
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
@@ -1023,6 +1028,8 @@ app.include_router(smoke_advisory_router, prefix="/smoke-advisory", tags=["smoke
 app.include_router(smoke_advisory_router, prefix="/api/smoke-advisory", tags=["smoke-advisory"])
 app.include_router(bog_shoeing_router, prefix="/bog-shoeing", tags=["bog-shoeing"])
 app.include_router(bog_shoeing_router, prefix="/api/bog-shoeing", tags=["bog-shoeing"])
+app.include_router(crevasse_pulk_router, prefix="/crevasse-pulk", tags=["crevasse-pulk"])
+app.include_router(crevasse_pulk_router, prefix="/api/crevasse-pulk", tags=["crevasse-pulk"])
 
 
 # Middleware for request logging
@@ -1311,6 +1318,7 @@ async def create_response(request: ChatRequest):
             dogsled_intent = extract_dogsled_intent(request.question)
             canoe_intent = extract_canoe_intent(request.question)
             shelter_intent = extract_shelter_intent(request.question)
+            crevasse_pulk_intent = detect_crevasse_pulk_intent(request.question)
             glacier_intent = detect_glacier_intent(request.question)
             river_sup_intent = detect_river_sup_intent(request.question)
             wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
@@ -1736,6 +1744,12 @@ async def create_response(request: ChatRequest):
                 formatted_shelter = format_shelter_response(shelter_intent)
                 mock_payload["shelter_info"] = formatted_shelter.get("shelter_info")
                 mock_payload["answer"] = formatted_shelter.get("answer", mock_payload["answer"])
+            if crevasse_pulk_intent:
+                formatted_pulk = format_crevasse_pulk_response(
+                    "crevasse_pulk", request.question
+                )
+                mock_payload["crevasse_pulk_info"] = formatted_pulk.get("crevasse_pulk_info")
+                mock_payload["answer"] = formatted_pulk.get("answer", mock_payload["answer"])
             if glacier_intent:
                 formatted_glacier = format_glacier_response(glacier_intent, request.question)
                 mock_payload["glacier_info"] = formatted_glacier.get("glacier_info")
@@ -2114,6 +2128,7 @@ async def create_response_stream(request: ChatRequest):
                 dogsled_intent = extract_dogsled_intent(request.question)
                 canoe_intent = extract_canoe_intent(request.question)
                 shelter_intent = extract_shelter_intent(request.question)
+                crevasse_pulk_intent = detect_crevasse_pulk_intent(request.question)
                 glacier_intent = detect_glacier_intent(request.question)
                 river_sup_intent = detect_river_sup_intent(request.question)
                 wilderness_tracking_intent = detect_wilderness_tracking_intent(request.question)
@@ -2474,6 +2489,21 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'shelter_info': s_payload, event_name: s_payload})}\n\n"
                     if event_name != "shelter_info":
                         yield f"data: {json.dumps({'event': 'shelter_info', 'shelter_info': s_payload})}\n\n"
+
+                if crevasse_pulk_intent:
+                    formatted_pulk = format_crevasse_pulk_response(
+                        "crevasse_pulk", request.question
+                    )
+                    cp_payload = formatted_pulk.get("crevasse_pulk_info")
+                    event_name = "crevasse_pulk_lookup"
+                    if (
+                        isinstance(cp_payload, dict)
+                        and cp_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "crevasse_pulk_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': cp_payload, event_name: cp_payload})}\n\n"
+                    if event_name != "crevasse_pulk_info":
+                        yield f"data: {json.dumps({'event': 'crevasse_pulk_info', 'crevasse_pulk_info': cp_payload})}\n\n"
 
                 if glacier_intent:
                     formatted_glacier = format_glacier_response(glacier_intent, request.question)
@@ -3161,6 +3191,11 @@ async def create_response_stream(request: ChatRequest):
                 elif bikepacking_intent:
                     formatted_bikepacking = format_bikepacking_response(bikepacking_intent)
                     mock_chunks = [str(formatted_bikepacking.get("answer", ""))]
+                elif crevasse_pulk_intent:
+                    formatted_pulk = format_crevasse_pulk_response(
+                        "crevasse_pulk", request.question
+                    )
+                    mock_chunks = [str(formatted_pulk.get("answer", ""))]
                 elif glacier_intent:
                     formatted_glacier = format_glacier_response(glacier_intent, request.question)
                     mock_chunks = [str(formatted_glacier.get("answer", ""))]
