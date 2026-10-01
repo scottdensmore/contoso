@@ -42,6 +42,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.pothole_escape import (
+    detect_pothole_escape_intent,
+    format_pothole_escape_response,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -217,5 +221,16 @@ def handle_crevasse_pulk_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_crevasse_pulk_response("crevasse_pulk", question)
     return {
         "crevasse_pulk_info": formatted.get("crevasse_pulk_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_pothole_escape_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format pothole escape intent in the cascade."""
+    if not detect_pothole_escape_intent(question):
+        return None
+    formatted = format_pothole_escape_response("pothole_escape", question)
+    return {
+        "pothole_escape_info": formatted.get("pothole_escape_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

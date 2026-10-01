@@ -347,6 +347,10 @@ def detect_canyoneering_intent(query: str) -> Optional[CanyoneeringIntent]:
         "refund",
         "order #",
         "return label",
+        "pothole",
+        "ghost anchor",
+        "sandtrap",
+        "cheater stick",
         "climbing shoe",
         "climbing crag",
         "sport climbing",
@@ -376,7 +380,8 @@ def detect_canyoneering_intent(query: str) -> Optional[CanyoneeringIntent]:
         "campfire",
     ]
     if any(w in q for w in exclusions):
-        return None
+        if not ("pothole" in q and not any(g in q for g in ["ghost anchor", "sandtrap", "cheater stick"]) and any(k in q for k in ["canyoneering harness", "choprock canyon", "pothole escape kit requirements"])):
+            return None
 
     # Identify route
     route_id = None

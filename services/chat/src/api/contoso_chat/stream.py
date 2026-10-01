@@ -43,6 +43,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.pothole_escape import (
+    detect_pothole_escape_intent,
+    format_pothole_escape_response,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -410,6 +414,31 @@ async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[
     yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': pulk_payload, event_name: pulk_payload})}\n\n"
     if event_name != "crevasse_pulk_info":
         yield f"data: {json.dumps({'event': 'crevasse_pulk_info', 'crevasse_pulk_info': pulk_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events pothole_escape_lookup, pothole_escape_calculated, and pothole_escape_info when pothole escape intent is handled."""
+    if not detect_pothole_escape_intent(question):
+        return
+
+    formatted = format_pothole_escape_response("pothole_escape", question)
+    pe_payload = formatted.get("pothole_escape_info")
+
+    event_name = (
+        "pothole_escape_calculated"
+        if isinstance(pe_payload, dict) and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "pothole_escape_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pe_payload, event_name: pe_payload})}\n\n"
+    if event_name != "pothole_escape_info":
+        yield f"data: {json.dumps({'event': 'pothole_escape_info', 'pothole_escape_info': pe_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

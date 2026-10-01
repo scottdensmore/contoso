@@ -487,6 +487,10 @@ from contoso_chat.policies import (
     get_policy_by_id,
     get_store_policies,
 )
+from contoso_chat.pothole_escape import (
+    detect_pothole_escape_intent,
+    format_pothole_escape_response,
+)
 from contoso_chat.primitive_trapping import (
     TrappingCalculationRequest,
     TrappingCalculationResponse,
@@ -591,6 +595,7 @@ from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_rou
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
+from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
@@ -1030,6 +1035,8 @@ app.include_router(bog_shoeing_router, prefix="/bog-shoeing", tags=["bog-shoeing
 app.include_router(bog_shoeing_router, prefix="/api/bog-shoeing", tags=["bog-shoeing"])
 app.include_router(crevasse_pulk_router, prefix="/crevasse-pulk", tags=["crevasse-pulk"])
 app.include_router(crevasse_pulk_router, prefix="/api/crevasse-pulk", tags=["crevasse-pulk"])
+app.include_router(pothole_escape_router, prefix="/pothole-escape", tags=["pothole-escape"])
+app.include_router(pothole_escape_router, prefix="/api/pothole-escape", tags=["pothole-escape"])
 
 
 # Middleware for request logging
@@ -1302,6 +1309,7 @@ async def create_response(request: ChatRequest):
             mountaineering_intent = detect_mountaineering_intent(request.question)
             sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
             packrafting_intent = detect_packrafting_intent(request.question)
+            pothole_escape_intent = detect_pothole_escape_intent(request.question)
             canyoneering_intent = detect_canyoneering_intent(request.question)
             acclimatization_intent = detect_acclimatization_intent(request.question)
             nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
@@ -1660,7 +1668,15 @@ async def create_response(request: ChatRequest):
                 formatted_packrafting = format_packrafting_response(packrafting_intent)
                 mock_payload["packrafting_info"] = formatted_packrafting.get("packrafting_info")
                 mock_payload["answer"] = formatted_packrafting.get("answer", mock_payload["answer"])
-            if canyoneering_intent:
+            if pothole_escape_intent:
+                formatted_pothole = format_pothole_escape_response(
+                    "pothole_escape", request.question
+                )
+                mock_payload["pothole_escape_info"] = formatted_pothole.get("pothole_escape_info")
+                mock_payload["answer"] = formatted_pothole.get(
+                    "answer", mock_payload["answer"]
+                )
+            if canyoneering_intent and not pothole_escape_intent:
                 formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                 mock_payload["canyoneering_info"] = formatted_canyoneering.get("canyoneering_info")
                 mock_payload["answer"] = formatted_canyoneering.get(
@@ -2112,6 +2128,7 @@ async def create_response_stream(request: ChatRequest):
                 mountaineering_intent = detect_mountaineering_intent(request.question)
                 sea_kayaking_intent = detect_sea_kayaking_intent(request.question)
                 packrafting_intent = detect_packrafting_intent(request.question)
+                pothole_escape_intent = detect_pothole_escape_intent(request.question)
                 canyoneering_intent = detect_canyoneering_intent(request.question)
                 acclimatization_intent = detect_acclimatization_intent(request.question)
                 nordic_skiing_intent = detect_nordic_skiing_intent(request.question)
@@ -2361,7 +2378,21 @@ async def create_response_stream(request: ChatRequest):
                 if packrafting_intent:
                     formatted_packrafting = format_packrafting_response(packrafting_intent)
                     yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': formatted_packrafting.get('packrafting_info')})}\n\n"
-                if canyoneering_intent:
+                if pothole_escape_intent:
+                    formatted_pothole = format_pothole_escape_response(
+                        "pothole_escape", request.question
+                    )
+                    pe_payload = formatted_pothole.get("pothole_escape_info")
+                    event_name = "pothole_escape_lookup"
+                    if (
+                        isinstance(pe_payload, dict)
+                        and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "pothole_escape_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pe_payload, event_name: pe_payload})}\n\n"
+                    if event_name != "pothole_escape_info":
+                        yield f"data: {json.dumps({'event': 'pothole_escape_info', 'pothole_escape_info': pe_payload})}\n\n"
+                if canyoneering_intent and not pothole_escape_intent:
                     formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                     yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': formatted_canyoneering.get('canyoneering_info')})}\n\n"
                 if acclimatization_intent:
@@ -3343,6 +3374,11 @@ async def create_response_stream(request: ChatRequest):
                 elif packrafting_intent:
                     formatted_packrafting = format_packrafting_response(packrafting_intent)
                     mock_chunks = [str(formatted_packrafting.get("answer", ""))]
+                elif pothole_escape_intent:
+                    formatted_pothole = format_pothole_escape_response(
+                        "pothole_escape", request.question
+                    )
+                    mock_chunks = [str(formatted_pothole.get("answer", ""))]
                 elif canyoneering_intent:
                     formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                     mock_chunks = [str(formatted_canyoneering.get("answer", ""))]
