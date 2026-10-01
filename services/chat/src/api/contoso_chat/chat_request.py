@@ -246,6 +246,11 @@ from .policies import (
     build_policy_prompt,
     detect_policy_intent,
 )
+from .pothole_escape import (
+    build_pothole_escape_prompt,
+    detect_pothole_escape_intent,
+    format_pothole_escape_response,
+)
 from .primitive_trapping import (
     build_primitive_trapping_prompt,
     detect_primitive_trapping_intent,
@@ -721,6 +726,7 @@ async def generate_llm_response(
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
+    pothole_escape_prompt: str = "",
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
@@ -899,6 +905,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{sea_kayaking_prompt}"
         if packrafting_prompt:
             local_system = f"{local_system}\n\n{packrafting_prompt}"
+        if pothole_escape_prompt:
+            local_system = f"{local_system}\n\n{pothole_escape_prompt}"
         if canyoneering_prompt:
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
         if acclimatization_prompt:
@@ -1120,6 +1128,8 @@ async def generate_llm_response(
             prompt_parts.append(sea_kayaking_prompt)
         if packrafting_prompt:
             prompt_parts.append(packrafting_prompt)
+        if pothole_escape_prompt:
+            prompt_parts.append(pothole_escape_prompt)
         if canyoneering_prompt:
             prompt_parts.append(canyoneering_prompt)
         if acclimatization_prompt:
@@ -2010,6 +2020,14 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    pothole_escape_intent = detect_pothole_escape_intent(question)
+    pothole_escape_prompt = ""
+    pothole_escape_info_payload = None
+    if pothole_escape_intent:
+        pothole_escape_prompt = build_pothole_escape_prompt(question)
+        formatted_pothole = format_pothole_escape_response("pothole_escape", question)
+        pothole_escape_info_payload = formatted_pothole.get("pothole_escape_info")
+
     canyoneering_intent = detect_canyoneering_intent(question)
     canyoneering_prompt = ""
     canyoneering_info_payload = None
@@ -2370,6 +2388,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
     if crevasse_pulk_prompt:
         llm_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
+    if pothole_escape_prompt:
+        llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2499,6 +2519,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["sea_kayaking_info"] = sea_kayaking_info_payload
     if packrafting_intent and packrafting_info_payload:
         response_payload["packrafting_info"] = packrafting_info_payload
+    if pothole_escape_intent and pothole_escape_info_payload:
+        response_payload["pothole_escape_info"] = pothole_escape_info_payload
     if canyoneering_intent and canyoneering_info_payload:
         response_payload["canyoneering_info"] = canyoneering_info_payload
     if acclimatization_intent and acclimatization_info_payload:
@@ -2652,6 +2674,7 @@ def generate_llm_response_stream(
     mountaineering_prompt: str = "",
     sea_kayaking_prompt: str = "",
     packrafting_prompt: str = "",
+    pothole_escape_prompt: str = "",
     canyoneering_prompt: str = "",
     acclimatization_prompt: str = "",
     nordic_skiing_prompt: str = "",
@@ -2813,6 +2836,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{fly_fishing_prompt}"
         if packrafting_prompt:
             local_system = f"{local_system}\n\n{packrafting_prompt}"
+        if pothole_escape_prompt:
+            local_system = f"{local_system}\n\n{pothole_escape_prompt}"
         if canyoneering_prompt:
             local_system = f"{local_system}\n\n{canyoneering_prompt}"
         if acclimatization_prompt:
@@ -2985,6 +3010,8 @@ def generate_llm_response_stream(
             prompt_parts.append(bikepacking_prompt)
         if packrafting_prompt:
             prompt_parts.append(packrafting_prompt)
+        if pothole_escape_prompt:
+            prompt_parts.append(pothole_escape_prompt)
         if canyoneering_prompt:
             prompt_parts.append(canyoneering_prompt)
         if acclimatization_prompt:
@@ -3704,6 +3731,14 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_sea_kayaking = format_sea_kayaking_response(sea_kayaking_intent)
         sea_kayaking_info_payload = formatted_sea_kayaking.get("sea_kayaking_info")
 
+    pothole_escape_intent = detect_pothole_escape_intent(question)
+    pothole_escape_prompt = ""
+    pothole_escape_info_payload = None
+    if pothole_escape_intent:
+        pothole_escape_prompt = build_pothole_escape_prompt(question)
+        formatted_pothole = format_pothole_escape_response("pothole_escape", question)
+        pothole_escape_info_payload = formatted_pothole.get("pothole_escape_info")
+
     canyoneering_intent = detect_canyoneering_intent(question)
     canyoneering_prompt = ""
     canyoneering_info_payload = None
@@ -3985,6 +4020,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'sea_kayaking_info', 'sea_kayaking_info': sea_kayaking_info_payload})}\n\n"
     if packrafting_intent and packrafting_info_payload:
         yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': packrafting_info_payload})}\n\n"
+    if pothole_escape_intent and pothole_escape_info_payload:
+        event_name = "pothole_escape_lookup"
+        if (
+            isinstance(pothole_escape_info_payload, dict)
+            and pothole_escape_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "pothole_escape_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pothole_escape_info_payload, event_name: pothole_escape_info_payload})}\n\n"
+        if event_name != "pothole_escape_info":
+            yield f"data: {json.dumps({'event': 'pothole_escape_info', 'pothole_escape_info': pothole_escape_info_payload})}\n\n"
     if canyoneering_intent and canyoneering_info_payload:
         yield f"data: {json.dumps({'event': 'canyoneering_info', 'canyoneering_info': canyoneering_info_payload})}\n\n"
     if acclimatization_intent and acclimatization_info_payload:
@@ -4859,6 +4904,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["bog_shoeing_prompt"] = bog_shoeing_prompt
     if crevasse_pulk_prompt:
         stream_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
+    if pothole_escape_prompt:
+        stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
 
     for chunk in generate_llm_response_stream(
         question,
