@@ -22,6 +22,10 @@ from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
 )
+from contoso_chat.cryokarst_speleology import (
+    detect_cryokarst_speleology_intent,
+    format_cryokarst_speleology_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -247,5 +251,16 @@ def handle_tundra_lichen_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_tundra_lichen_response("tundra_lichen", question)
     return {
         "tundra_lichen_info": formatted.get("tundra_lichen_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_cryokarst_speleology_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format cryokarst speleology intent in the cascade."""
+    if not detect_cryokarst_speleology_intent(question):
+        return None
+    formatted = format_cryokarst_speleology_response("cryokarst_speleology", question)
+    return {
+        "cryokarst_speleology_info": formatted.get("cryokarst_speleology_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

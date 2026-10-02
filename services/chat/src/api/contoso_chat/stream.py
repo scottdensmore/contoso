@@ -23,6 +23,10 @@ from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
 )
+from contoso_chat.cryokarst_speleology import (
+    detect_cryokarst_speleology_intent,
+    format_cryokarst_speleology_response,
+)
 from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
@@ -467,6 +471,31 @@ async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[
     yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
     if event_name != "tundra_lichen_info":
         yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_cryokarst_speleology_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events cryokarst_speleology_calculated, cryokarst_speleology_lookup, and cryokarst_speleology_info when cryokarst speleology intent is handled."""
+    if not detect_cryokarst_speleology_intent(question):
+        return
+
+    formatted = format_cryokarst_speleology_response("cryokarst_speleology", question)
+    cs_payload = formatted.get("cryokarst_speleology_info")
+
+    event_name = (
+        "cryokarst_speleology_calculated"
+        if isinstance(cs_payload, dict) and cs_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "cryokarst_speleology_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
+    if event_name != "cryokarst_speleology_info":
+        yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cs_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

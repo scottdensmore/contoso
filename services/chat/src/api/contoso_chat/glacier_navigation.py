@@ -386,6 +386,16 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
     if any(ex in q for ex in pulk_exclusions):
         return None
 
+    # Cryokarst speleology exclusions
+    cryokarst_exclusions = [
+        "cryokarst",
+        "moulin",
+        "ice cave",
+        "subglacial",
+    ]
+    if any(ex in q for ex in cryokarst_exclusions):
+        return None
+
     # Glacier navigation keywords
     glacier_keywords = [
         "glacier",
