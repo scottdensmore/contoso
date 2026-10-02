@@ -604,6 +604,9 @@ from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
+from contoso_chat.routers.slickrock_burro import (
+    router as slickrock_burro_router,
+)
 from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
@@ -693,6 +696,10 @@ from contoso_chat.ski_touring import (
     get_ski_tour_route_by_id,
     get_ski_tour_routes,
     get_skin_track_etiquette_and_policies,
+)
+from contoso_chat.slickrock_burro import (
+    detect_slickrock_burro_intent,
+    format_slickrock_burro_response,
 )
 from contoso_chat.smoke_advisory import (
     detect_smoke_advisory_intent,
@@ -1059,6 +1066,16 @@ app.include_router(
     prefix="/api/cryokarst-speleology",
     tags=["cryokarst-speleology"],
 )
+app.include_router(
+    slickrock_burro_router,
+    prefix="/slickrock-burro",
+    tags=["slickrock-burro"],
+)
+app.include_router(
+    slickrock_burro_router,
+    prefix="/api/slickrock-burro",
+    tags=["slickrock-burro"],
+)
 app.include_router(tundra_lichen_router, prefix="/tundra-lichen", tags=["tundra-lichen"])
 app.include_router(tundra_lichen_router, prefix="/api/tundra-lichen", tags=["tundra-lichen"])
 
@@ -1324,6 +1341,7 @@ async def create_response(request: ChatRequest):
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
+            slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -1652,6 +1670,16 @@ async def create_response(request: ChatRequest):
                     "cryokarst_speleology_info"
                 )
                 mock_payload["answer"] = formatted_cryokarst.get(
+                    "answer", mock_payload["answer"]
+                )
+            if slickrock_burro_intent:
+                formatted_slickrock = format_slickrock_burro_response(
+                    "slickrock_burro", request.question
+                )
+                mock_payload["slickrock_burro_info"] = formatted_slickrock.get(
+                    "slickrock_burro_info"
+                )
+                mock_payload["answer"] = formatted_slickrock.get(
                     "answer", mock_payload["answer"]
                 )
             if tundra_lichen_intent:
@@ -2010,7 +2038,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_tree_climbing.get(
                     "answer", mock_payload["answer"]
                 )
-            if pack_burro_intent:
+            if pack_burro_intent and not slickrock_burro_intent:
                 formatted_pack_burro = format_pack_burro_response(
                     pack_burro_intent, request.question
                 )
@@ -2165,6 +2193,7 @@ async def create_response_stream(request: ChatRequest):
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
+                slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -2410,6 +2439,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
                     if event_name != "cryokarst_speleology_info":
                         yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cs_payload})}\n\n"
+                if slickrock_burro_intent:
+                    formatted_slickrock = format_slickrock_burro_response(
+                        "slickrock_burro", request.question
+                    )
+                    sb_payload = formatted_slickrock.get("slickrock_burro_info")
+                    event_name = "slickrock_burro_lookup"
+                    if (
+                        isinstance(sb_payload, dict)
+                        and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "slickrock_burro_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': sb_payload, event_name: sb_payload})}\n\n"
+                    if event_name != "slickrock_burro_info":
+                        yield f"data: {json.dumps({'event': 'slickrock_burro_info', 'slickrock_burro_info': sb_payload})}\n\n"
                 if tundra_lichen_intent:
                     formatted_tundra_lichen = format_tundra_lichen_response(
                         "tundra_lichen", request.question
@@ -3141,7 +3184,7 @@ async def create_response_stream(request: ChatRequest):
                             }
                         )
                         yield f"data: {tc_fallback}\n\n"
-                if pack_burro_intent:
+                if pack_burro_intent and not slickrock_burro_intent:
                     formatted_pack_burro = format_pack_burro_response(
                         pack_burro_intent, request.question
                     )
@@ -3282,6 +3325,11 @@ async def create_response_stream(request: ChatRequest):
                         "cryokarst_speleology", request.question
                     )
                     mock_chunks = [str(formatted_cryokarst.get("answer", ""))]
+                elif slickrock_burro_intent:
+                    formatted_slickrock = format_slickrock_burro_response(
+                        "slickrock_burro", request.question
+                    )
+                    mock_chunks = [str(formatted_slickrock.get("answer", ""))]
                 elif tundra_lichen_intent:
                     formatted_tundra_lichen = format_tundra_lichen_response(
                         "tundra_lichen", request.question

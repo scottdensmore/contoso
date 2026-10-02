@@ -342,6 +342,11 @@ from .ski_touring import (
     detect_ski_tour_intent,
     format_ski_tour_response,
 )
+from .slickrock_burro import (
+    build_slickrock_burro_prompt,
+    detect_slickrock_burro_intent,
+    format_slickrock_burro_response,
+)
 from .smoke_advisory import (
     build_smoke_advisory_prompt,
     detect_smoke_advisory_intent,
@@ -727,6 +732,7 @@ async def generate_llm_response(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
+    slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -893,6 +899,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
+        if slickrock_burro_prompt:
+            local_system = f"{local_system}\n\n{slickrock_burro_prompt}"
         if tundra_lichen_prompt:
             local_system = f"{local_system}\n\n{tundra_lichen_prompt}"
         if foraging_prompt:
@@ -1122,6 +1130,8 @@ async def generate_llm_response(
             prompt_parts.append(climbing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
+        if slickrock_burro_prompt:
+            prompt_parts.append(slickrock_burro_prompt)
         if tundra_lichen_prompt:
             prompt_parts.append(tundra_lichen_prompt)
         if foraging_prompt:
@@ -1757,16 +1767,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             "cryokarst_speleology", question
         )
         cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
-
-    cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
-    cryokarst_speleology_prompt = ""
-    cryokarst_speleology_info_payload = None
-    if cryokarst_speleology_intent:
-        cryokarst_speleology_prompt = build_cryokarst_speleology_prompt(question)
-        formatted_cryokarst_speleology = format_cryokarst_speleology_response(
-            "cryokarst_speleology", question
+    slickrock_burro_intent = detect_slickrock_burro_intent(question)
+    slickrock_burro_prompt = ""
+    slickrock_burro_info_payload = None
+    if slickrock_burro_intent:
+        slickrock_burro_prompt = build_slickrock_burro_prompt(question)
+        formatted_slickrock_burro = format_slickrock_burro_response(
+            "slickrock_burro", question
         )
-        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+        slickrock_burro_info_payload = formatted_slickrock_burro.get("slickrock_burro_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
     tundra_lichen_prompt = ""
@@ -2442,6 +2451,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if cryokarst_speleology_prompt:
         llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
+    if slickrock_burro_prompt:
+        llm_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
         llm_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
 
@@ -2553,6 +2564,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["climbing_info"] = climbing_info_payload
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
+    if slickrock_burro_intent and slickrock_burro_info_payload:
+        response_payload["slickrock_burro_info"] = slickrock_burro_info_payload
     if tundra_lichen_intent and tundra_lichen_info_payload:
         response_payload["tundra_lichen_info"] = tundra_lichen_info_payload
     if foraging_intent and foraging_info_payload:
@@ -2723,6 +2736,7 @@ def generate_llm_response_stream(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
+    slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -2884,6 +2898,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
+        if slickrock_burro_prompt:
+            local_system = f"{local_system}\n\n{slickrock_burro_prompt}"
         if tundra_lichen_prompt:
             local_system = f"{local_system}\n\n{tundra_lichen_prompt}"
         if foraging_prompt:
@@ -3060,6 +3076,8 @@ def generate_llm_response_stream(
             prompt_parts.append(climbing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
+        if slickrock_burro_prompt:
+            prompt_parts.append(slickrock_burro_prompt)
         if tundra_lichen_prompt:
             prompt_parts.append(tundra_lichen_prompt)
         if foraging_prompt:
@@ -3515,6 +3533,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "cryokarst_speleology", question
         )
         cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+
+    slickrock_burro_intent = detect_slickrock_burro_intent(question)
+    slickrock_burro_prompt = ""
+    slickrock_burro_info_payload = None
+    if slickrock_burro_intent:
+        slickrock_burro_prompt = build_slickrock_burro_prompt(question)
+        formatted_slickrock_burro = format_slickrock_burro_response(
+            "slickrock_burro", question
+        )
+        slickrock_burro_info_payload = formatted_slickrock_burro.get("slickrock_burro_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
     tundra_lichen_prompt = ""
@@ -4098,6 +4126,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cryokarst_speleology_info_payload, event_name: cryokarst_speleology_info_payload})}\n\n"
         if event_name != "cryokarst_speleology_info":
             yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cryokarst_speleology_info_payload})}\n\n"
+    if slickrock_burro_intent and slickrock_burro_info_payload:
+        event_name = "slickrock_burro_lookup"
+        if (
+            isinstance(slickrock_burro_info_payload, dict)
+            and slickrock_burro_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "slickrock_burro_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': slickrock_burro_info_payload, event_name: slickrock_burro_info_payload})}\n\n"
+        if event_name != "slickrock_burro_info":
+            yield f"data: {json.dumps({'event': 'slickrock_burro_info', 'slickrock_burro_info': slickrock_burro_info_payload})}\n\n"
 
     if tundra_lichen_intent and tundra_lichen_info_payload:
         event_name = "tundra_lichen_lookup"
@@ -5017,6 +5055,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if cryokarst_speleology_prompt:
         stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
+    if slickrock_burro_prompt:
+        stream_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
         stream_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
 

@@ -260,6 +260,11 @@ def detect_pack_burro_intent(message: str) -> Optional[PackBurroIntent]:
     if any(re.search(pat, q) for pat in dogsled_pats):
         return None
 
+    # Disambiguation guards against slickrock burro expedition
+    slickrock_pats = [r"\bslickrock\b", r"\bdry\s+wash\b", r"\bsawbuck\b", r"\bpannier(?:s)?\b", r"\btinaja(?:s)?\b"]
+    if any(re.search(pat, q) for pat in slickrock_pats):
+        return None
+
     # Positive pack burro & ass packing triggers
     burro_keywords = [
         r"\bpack[\s-]burro\b", r"\bburro\s+rac(?:e|ing)\b", r"\bpack[\s-]donkey\b",
