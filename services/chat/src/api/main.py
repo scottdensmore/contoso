@@ -599,6 +599,7 @@ from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
+from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.weather_station import router as weather_station_router
 from contoso_chat.routers.zipline import router as zipline_router
@@ -823,6 +824,10 @@ from contoso_chat.trip_planner import (
     generate_wilderness_trip_plan,
     get_trip_templates,
 )
+from contoso_chat.tundra_lichen import (
+    detect_tundra_lichen_intent,
+    format_tundra_lichen_response,
+)
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
@@ -1037,6 +1042,8 @@ app.include_router(crevasse_pulk_router, prefix="/crevasse-pulk", tags=["crevass
 app.include_router(crevasse_pulk_router, prefix="/api/crevasse-pulk", tags=["crevasse-pulk"])
 app.include_router(pothole_escape_router, prefix="/pothole-escape", tags=["pothole-escape"])
 app.include_router(pothole_escape_router, prefix="/api/pothole-escape", tags=["pothole-escape"])
+app.include_router(tundra_lichen_router, prefix="/tundra-lichen", tags=["tundra-lichen"])
+app.include_router(tundra_lichen_router, prefix="/api/tundra-lichen", tags=["tundra-lichen"])
 
 
 # Middleware for request logging
@@ -1299,6 +1306,7 @@ async def create_response(request: ChatRequest):
             canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
+            tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1618,7 +1626,17 @@ async def create_response(request: ChatRequest):
                 formatted_climbing = format_climbing_response(climbing_intent)
                 mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
                 mock_payload["answer"] = formatted_climbing.get("answer", mock_payload["answer"])
-            if foraging_intent:
+            if tundra_lichen_intent:
+                formatted_tundra_lichen = format_tundra_lichen_response(
+                    "tundra_lichen", request.question
+                )
+                mock_payload["tundra_lichen_info"] = formatted_tundra_lichen.get(
+                    "tundra_lichen_info"
+                )
+                mock_payload["answer"] = formatted_tundra_lichen.get(
+                    "answer", mock_payload["answer"]
+                )
+            if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
                 mock_payload["answer"] = formatted_foraging.get("answer", mock_payload["answer"])
@@ -2118,6 +2136,7 @@ async def create_response_stream(request: ChatRequest):
                 canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
+                tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2348,7 +2367,21 @@ async def create_response_stream(request: ChatRequest):
                 if climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
-                if foraging_intent:
+                if tundra_lichen_intent:
+                    formatted_tundra_lichen = format_tundra_lichen_response(
+                        "tundra_lichen", request.question
+                    )
+                    tl_payload = formatted_tundra_lichen.get("tundra_lichen_info")
+                    event_name = "tundra_lichen_lookup"
+                    if (
+                        isinstance(tl_payload, dict)
+                        and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "tundra_lichen_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
+                    if event_name != "tundra_lichen_info":
+                        yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
+                if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
                 if stargazing_intent:
@@ -3201,6 +3234,11 @@ async def create_response_stream(request: ChatRequest):
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     mock_chunks = [str(formatted_climbing.get("answer", ""))]
+                elif tundra_lichen_intent:
+                    formatted_tundra_lichen = format_tundra_lichen_response(
+                        "tundra_lichen", request.question
+                    )
+                    mock_chunks = [str(formatted_tundra_lichen.get("answer", ""))]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [str(formatted_foraging.get("answer", ""))]

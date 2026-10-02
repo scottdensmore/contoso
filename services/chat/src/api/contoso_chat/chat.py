@@ -54,6 +54,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.tundra_lichen import (
+    detect_tundra_lichen_intent,
+    format_tundra_lichen_response,
+)
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
@@ -232,5 +236,16 @@ def handle_pothole_escape_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_pothole_escape_response("pothole_escape", question)
     return {
         "pothole_escape_info": formatted.get("pothole_escape_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_tundra_lichen_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format tundra lichen intent in the cascade."""
+    if not detect_tundra_lichen_intent(question):
+        return None
+    formatted = format_tundra_lichen_response("tundra_lichen", question)
+    return {
+        "tundra_lichen_info": formatted.get("tundra_lichen_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

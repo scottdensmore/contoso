@@ -322,6 +322,8 @@ def detect_foraging_intent(query: str) -> Optional[ForagingIntent]:
             "skin track",
             "shuttle quote",
             "fire ban",
+            "lichen",
+            "bryophyte",
         ]
     ):
         return None
