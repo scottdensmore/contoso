@@ -55,6 +55,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.slickrock_burro import (
+    detect_slickrock_burro_intent,
+    format_slickrock_burro_response,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -496,6 +500,31 @@ async def generate_cryokarst_speleology_stream_events(question: str) -> AsyncGen
     yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
     if event_name != "cryokarst_speleology_info":
         yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cs_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_slickrock_burro_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events slickrock_burro_calculated, slickrock_burro_lookup, and slickrock_burro_info when slickrock burro intent is handled."""
+    if not detect_slickrock_burro_intent(question):
+        return
+
+    formatted = format_slickrock_burro_response("slickrock_burro", question)
+    sb_payload = formatted.get("slickrock_burro_info")
+
+    event_name = (
+        "slickrock_burro_calculated"
+        if isinstance(sb_payload, dict) and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "slickrock_burro_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': sb_payload, event_name: sb_payload})}\n\n"
+    if event_name != "slickrock_burro_info":
+        yield f"data: {json.dumps({'event': 'slickrock_burro_info', 'slickrock_burro_info': sb_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

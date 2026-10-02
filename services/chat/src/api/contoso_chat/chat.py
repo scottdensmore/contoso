@@ -54,6 +54,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.slickrock_burro import (
+    detect_slickrock_burro_intent,
+    format_slickrock_burro_response,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -262,5 +266,16 @@ def handle_cryokarst_speleology_intent(question: str) -> Optional[dict[str, Any]
     formatted = format_cryokarst_speleology_response("cryokarst_speleology", question)
     return {
         "cryokarst_speleology_info": formatted.get("cryokarst_speleology_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_slickrock_burro_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format slickrock burro intent in the cascade."""
+    if not detect_slickrock_burro_intent(question):
+        return None
+    formatted = format_slickrock_burro_response("slickrock_burro", question)
+    return {
+        "slickrock_burro_info": formatted.get("slickrock_burro_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
