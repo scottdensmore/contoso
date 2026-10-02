@@ -55,6 +55,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.tundra_lichen import (
+    detect_tundra_lichen_intent,
+    format_tundra_lichen_response,
+)
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
@@ -439,6 +443,30 @@ async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator
     yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pe_payload, event_name: pe_payload})}\n\n"
     if event_name != "pothole_escape_info":
         yield f"data: {json.dumps({'event': 'pothole_escape_info', 'pothole_escape_info': pe_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events tundra_lichen_lookup, tundra_lichen_calculated, and tundra_lichen_info when tundra lichen intent is handled."""
+    if not detect_tundra_lichen_intent(question):
+        return
+
+    formatted = format_tundra_lichen_response("tundra_lichen", question)
+    tl_payload = formatted.get("tundra_lichen_info")
+
+    event_name = (
+        "tundra_lichen_calculated"
+        if isinstance(tl_payload, dict) and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "tundra_lichen_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
+    if event_name != "tundra_lichen_info":
+        yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")
