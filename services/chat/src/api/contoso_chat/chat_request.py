@@ -98,6 +98,11 @@ from .crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
 )
+from .cryokarst_speleology import (
+    build_cryokarst_speleology_prompt,
+    detect_cryokarst_speleology_intent,
+    format_cryokarst_speleology_response,
+)
 from .desert_trekking import (
     build_desert_trekking_prompt,
     detect_desert_trekking_intent,
@@ -721,6 +726,7 @@ async def generate_llm_response(
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
+    cryokarst_speleology_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -885,6 +891,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{whitewater_prompt}"
         if climbing_prompt:
             local_system = f"{local_system}\n\n{climbing_prompt}"
+        if cryokarst_speleology_prompt:
+            local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if tundra_lichen_prompt:
             local_system = f"{local_system}\n\n{tundra_lichen_prompt}"
         if foraging_prompt:
@@ -1112,6 +1120,8 @@ async def generate_llm_response(
             prompt_parts.append(whitewater_prompt)
         if climbing_prompt:
             prompt_parts.append(climbing_prompt)
+        if cryokarst_speleology_prompt:
+            prompt_parts.append(cryokarst_speleology_prompt)
         if tundra_lichen_prompt:
             prompt_parts.append(tundra_lichen_prompt)
         if foraging_prompt:
@@ -1737,6 +1747,26 @@ async def get_response(customer_id, question, chat_history: Any = None):
         climbing_prompt = build_climbing_prompt(climbing_intent)
         formatted_climbing = format_climbing_response(climbing_intent)
         climbing_info_payload = formatted_climbing.get("climbing_info")
+
+    cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
+    cryokarst_speleology_prompt = ""
+    cryokarst_speleology_info_payload = None
+    if cryokarst_speleology_intent:
+        cryokarst_speleology_prompt = build_cryokarst_speleology_prompt(question)
+        formatted_cryokarst_speleology = format_cryokarst_speleology_response(
+            "cryokarst_speleology", question
+        )
+        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+
+    cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
+    cryokarst_speleology_prompt = ""
+    cryokarst_speleology_info_payload = None
+    if cryokarst_speleology_intent:
+        cryokarst_speleology_prompt = build_cryokarst_speleology_prompt(question)
+        formatted_cryokarst_speleology = format_cryokarst_speleology_response(
+            "cryokarst_speleology", question
+        )
+        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
     tundra_lichen_prompt = ""
@@ -2410,6 +2440,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
     if pothole_escape_prompt:
         llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
+    if cryokarst_speleology_prompt:
+        llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if tundra_lichen_prompt:
         llm_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
 
@@ -2519,6 +2551,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["mudflat_trekking_info"] = mudflat_trekking_info_payload
     if climbing_intent and climbing_info_payload:
         response_payload["climbing_info"] = climbing_info_payload
+    if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
+        response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
     if tundra_lichen_intent and tundra_lichen_info_payload:
         response_payload["tundra_lichen_info"] = tundra_lichen_info_payload
     if foraging_intent and foraging_info_payload:
@@ -2688,6 +2722,7 @@ def generate_llm_response_stream(
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
+    cryokarst_speleology_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -2847,6 +2882,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{whitewater_prompt}"
         if climbing_prompt:
             local_system = f"{local_system}\n\n{climbing_prompt}"
+        if cryokarst_speleology_prompt:
+            local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if tundra_lichen_prompt:
             local_system = f"{local_system}\n\n{tundra_lichen_prompt}"
         if foraging_prompt:
@@ -3021,6 +3058,8 @@ def generate_llm_response_stream(
             prompt_parts.append(whitewater_prompt)
         if climbing_prompt:
             prompt_parts.append(climbing_prompt)
+        if cryokarst_speleology_prompt:
+            prompt_parts.append(cryokarst_speleology_prompt)
         if tundra_lichen_prompt:
             prompt_parts.append(tundra_lichen_prompt)
         if foraging_prompt:
@@ -3466,6 +3505,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         climbing_prompt = build_climbing_prompt(climbing_intent)
         formatted_climbing = format_climbing_response(climbing_intent)
         climbing_info_payload = formatted_climbing.get("climbing_info")
+
+    cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
+    cryokarst_speleology_prompt = ""
+    cryokarst_speleology_info_payload = None
+    if cryokarst_speleology_intent:
+        cryokarst_speleology_prompt = build_cryokarst_speleology_prompt(question)
+        formatted_cryokarst_speleology = format_cryokarst_speleology_response(
+            "cryokarst_speleology", question
+        )
+        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
     tundra_lichen_prompt = ""
@@ -4039,6 +4088,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mudflat_trekking_info_payload})}\n\n"
     if climbing_intent and climbing_info_payload:
         yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
+    if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
+        event_name = "cryokarst_speleology_lookup"
+        if (
+            isinstance(cryokarst_speleology_info_payload, dict)
+            and cryokarst_speleology_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "cryokarst_speleology_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cryokarst_speleology_info_payload, event_name: cryokarst_speleology_info_payload})}\n\n"
+        if event_name != "cryokarst_speleology_info":
+            yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cryokarst_speleology_info_payload})}\n\n"
+
     if tundra_lichen_intent and tundra_lichen_info_payload:
         event_name = "tundra_lichen_lookup"
         if (
@@ -4955,6 +5015,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
     if pothole_escape_prompt:
         stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
+    if cryokarst_speleology_prompt:
+        stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if tundra_lichen_prompt:
         stream_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
 
