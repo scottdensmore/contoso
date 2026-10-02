@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import OrderDetailPage from './page'
 import { useSession } from 'next-auth/react'
@@ -23,9 +23,15 @@ vi.mock('@/components/header', () => ({
 describe('OrderDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-09-15T12:00:00.000Z'))
     vi.stubGlobal('fetch', vi.fn())
     vi.mocked(useParams).mockReturnValue({ id: 'order_123' })
     window.print = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('renders loading state when session is loading', () => {
