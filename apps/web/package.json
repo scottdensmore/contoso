@@ -18,15 +18,15 @@
     "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "marked": "^18.0.12",
+    "marked": "^18.0.14",
     "next": "16.3.3",
     "next-auth": "^4.24.15",
-    "pg": "^8.23.0",
+    "pg": "^8.23.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-remark": "^2.1.0",
     "remark-gemoji": "^8.0.0",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -45,11 +45,11 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
-    "lint-staged": "^17.5.0",
+    "lint-staged": "^17.6.0",
     "postcss": "^8",
     "prisma": "^7.10.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.13",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.0.16"
   },
