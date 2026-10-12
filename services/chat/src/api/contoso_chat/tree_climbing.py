@@ -305,6 +305,24 @@ _TREE_KEYWORD_REGEX = re.compile(
 def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
     q = message.lower()
 
+    canopy_bryophyte_keywords = (
+        "canopy bryophyte",
+        "canopy bryophytes",
+        "epiphytic bryophyte",
+        "epiphytic bryophytes",
+        "tree fern",
+        "tree-fern",
+        "caudex",
+        "nurse log",
+        "nurse logs",
+        "pendulous moss",
+        "canopy moss",
+        "takayna",
+        "dicksonia",
+    )
+    if any(k in q for k in canopy_bryophyte_keywords):
+        return None
+
     tree_climbing_explicit = (
         "tree climbing",
         "climbing tree",

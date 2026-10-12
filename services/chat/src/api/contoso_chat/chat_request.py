@@ -53,6 +53,11 @@ from .canoe_expedition import (
     extract_canoe_intent,
     format_canoe_response,
 )
+from .canopy_bryophyte import (
+    build_canopy_bryophyte_prompt,
+    detect_canopy_bryophyte_intent,
+    format_canopy_bryophyte_response,
+)
 from .canyon_bouldering import (
     build_canyon_bouldering_prompt,
     detect_canyon_bouldering_intent,
@@ -732,6 +737,7 @@ async def generate_llm_response(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
+    canopy_bryophyte_prompt: str = "",
     slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
@@ -899,6 +905,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
+        if canopy_bryophyte_prompt:
+            local_system = f"{local_system}\n\n{canopy_bryophyte_prompt}"
         if slickrock_burro_prompt:
             local_system = f"{local_system}\n\n{slickrock_burro_prompt}"
         if tundra_lichen_prompt:
@@ -1130,6 +1138,8 @@ async def generate_llm_response(
             prompt_parts.append(climbing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
+        if canopy_bryophyte_prompt:
+            prompt_parts.append(canopy_bryophyte_prompt)
         if slickrock_burro_prompt:
             prompt_parts.append(slickrock_burro_prompt)
         if tundra_lichen_prompt:
@@ -1767,6 +1777,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             "cryokarst_speleology", question
         )
         cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+    canopy_bryophyte_intent = detect_canopy_bryophyte_intent(question)
+    canopy_bryophyte_prompt = ""
+    canopy_bryophyte_info_payload = None
+    if canopy_bryophyte_intent:
+        canopy_bryophyte_prompt = build_canopy_bryophyte_prompt(question)
+        formatted_canopy_bryophyte = format_canopy_bryophyte_response(
+            "canopy_bryophyte", question
+        )
+        canopy_bryophyte_info_payload = formatted_canopy_bryophyte.get("canopy_bryophyte_info")
     slickrock_burro_intent = detect_slickrock_burro_intent(question)
     slickrock_burro_prompt = ""
     slickrock_burro_info_payload = None
@@ -2451,6 +2470,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if cryokarst_speleology_prompt:
         llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
+    if canopy_bryophyte_prompt:
+        llm_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
     if slickrock_burro_prompt:
         llm_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
@@ -2564,6 +2585,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["climbing_info"] = climbing_info_payload
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
+    if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
+        response_payload["canopy_bryophyte_info"] = canopy_bryophyte_info_payload
     if slickrock_burro_intent and slickrock_burro_info_payload:
         response_payload["slickrock_burro_info"] = slickrock_burro_info_payload
     if tundra_lichen_intent and tundra_lichen_info_payload:
@@ -2736,6 +2759,7 @@ def generate_llm_response_stream(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
+    canopy_bryophyte_prompt: str = "",
     slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
@@ -2898,6 +2922,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
+        if canopy_bryophyte_prompt:
+            local_system = f"{local_system}\n\n{canopy_bryophyte_prompt}"
         if slickrock_burro_prompt:
             local_system = f"{local_system}\n\n{slickrock_burro_prompt}"
         if tundra_lichen_prompt:
@@ -3076,6 +3102,8 @@ def generate_llm_response_stream(
             prompt_parts.append(climbing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
+        if canopy_bryophyte_prompt:
+            prompt_parts.append(canopy_bryophyte_prompt)
         if slickrock_burro_prompt:
             prompt_parts.append(slickrock_burro_prompt)
         if tundra_lichen_prompt:
@@ -3534,6 +3562,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         )
         cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
 
+    canopy_bryophyte_intent = detect_canopy_bryophyte_intent(question)
+    canopy_bryophyte_prompt = ""
+    canopy_bryophyte_info_payload = None
+    if canopy_bryophyte_intent:
+        canopy_bryophyte_prompt = build_canopy_bryophyte_prompt(question)
+        formatted_canopy_bryophyte = format_canopy_bryophyte_response(
+            "canopy_bryophyte", question
+        )
+        canopy_bryophyte_info_payload = formatted_canopy_bryophyte.get("canopy_bryophyte_info")
     slickrock_burro_intent = detect_slickrock_burro_intent(question)
     slickrock_burro_prompt = ""
     slickrock_burro_info_payload = None
@@ -4126,6 +4163,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cryokarst_speleology_info_payload, event_name: cryokarst_speleology_info_payload})}\n\n"
         if event_name != "cryokarst_speleology_info":
             yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cryokarst_speleology_info_payload})}\n\n"
+    if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
+        event_name = "canopy_bryophyte_lookup"
+        if (
+            isinstance(canopy_bryophyte_info_payload, dict)
+            and canopy_bryophyte_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "canopy_bryophyte_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': canopy_bryophyte_info_payload, event_name: canopy_bryophyte_info_payload})}\n\n"
+        if event_name != "canopy_bryophyte_info":
+            yield f"data: {json.dumps({'event': 'canopy_bryophyte_info', 'canopy_bryophyte_info': canopy_bryophyte_info_payload})}\n\n"
     if slickrock_burro_intent and slickrock_burro_info_payload:
         event_name = "slickrock_burro_lookup"
         if (
@@ -5055,6 +5102,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if cryokarst_speleology_prompt:
         stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
+    if canopy_bryophyte_prompt:
+        stream_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
     if slickrock_burro_prompt:
         stream_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
