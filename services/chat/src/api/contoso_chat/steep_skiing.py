@@ -405,6 +405,23 @@ def detect_steep_skiing_intent(message: str) -> SteepSkiingIntent:
     if any(t in q for t in touring_terms) and not any(k in q for k in steep_specific):
         return SteepSkiingIntent(intent_detected=False, couloir_id=None, action="", confidence=0.0)
 
+    # 6. Glacier ski traverse guard (glacier_ski_traverse.py)
+    glacier_ski_terms = [
+        "glacier ski",
+        "ski-traverse",
+        "ski traverse",
+        "serac zone",
+        "icefall descent",
+        "crevasse bridge",
+        "haute route",
+        "wapta",
+        "spearhead traverse",
+        "bagley icefield",
+        "berner oberland",
+    ]
+    if any(g in q for g in glacier_ski_terms):
+        return SteepSkiingIntent(intent_detected=False, couloir_id=None, action="", confidence=0.0)
+
     has_steep_keyword = any(k in q for k in steep_specific)
     if not has_steep_keyword:
         return SteepSkiingIntent(intent_detected=False, couloir_id=None, action="", confidence=0.0)

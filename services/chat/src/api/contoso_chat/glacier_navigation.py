@@ -396,6 +396,23 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
     if any(ex in q for ex in cryokarst_exclusions):
         return None
 
+    # Glacier ski traverse exclusions
+    glacier_ski_traverse_exclusions = [
+        "glacier ski",
+        "ski-traverse",
+        "ski traverse",
+        "serac zone",
+        "icefall descent",
+        "crevasse bridge",
+        "haute route",
+        "wapta",
+        "spearhead traverse",
+        "bagley icefield",
+        "berner oberland",
+    ]
+    if any(ex in q for ex in glacier_ski_traverse_exclusions):
+        return None
+
     # Glacier navigation keywords
     glacier_keywords = [
         "glacier",

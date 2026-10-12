@@ -34,6 +34,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.glacier_ski_traverse import (
+    detect_glacier_ski_traverse_intent,
+    format_glacier_ski_traverse_response,
+)
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
     format_mudflat_response,
@@ -292,5 +296,16 @@ def handle_canopy_bryophyte_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_canopy_bryophyte_response("canopy_bryophyte", question)
     return {
         "canopy_bryophyte_info": formatted.get("canopy_bryophyte_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_glacier_ski_traverse_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format glacier ski traverse intent in the cascade."""
+    if not detect_glacier_ski_traverse_intent(question):
+        return None
+    formatted = format_glacier_ski_traverse_response("glacier_ski_traverse", question)
+    return {
+        "glacier_ski_traverse_info": formatted.get("glacier_ski_traverse_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
