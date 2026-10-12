@@ -601,6 +601,18 @@ def detect_crevasse_pulk_intent(message: str) -> bool:
         "chickenloop",
         "dog sled",
         "mushing",
+        "glacier ski",
+        "ski-traverse",
+        "ski traverse",
+        "serac zone",
+        "icefall descent",
+        "crevasse bridge",
+        "haute route",
+        "wapta",
+        "spearhead traverse",
+        "bagley ski",
+        "bagley icefield ski",
+        "berner oberland",
     ]
     if any(ex in q for ex in exclusions):
         return False

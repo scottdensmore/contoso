@@ -667,6 +667,17 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "tundra lichen",
         "lichen",
         "bryophyte",
+        "glacier ski",
+        "ski-traverse",
+        "ski traverse",
+        "serac zone",
+        "icefall descent",
+        "crevasse bridge",
+        "haute route",
+        "wapta",
+        "spearhead traverse",
+        "bagley icefield",
+        "berner oberland",
     ]
 
     # If it is not explicitly about cryokarst / glacier caves, apply all exclusions

@@ -162,6 +162,11 @@ from .glacier_navigation import (
     detect_glacier_intent,
     format_glacier_response,
 )
+from .glacier_ski_traverse import (
+    build_glacier_ski_traverse_prompt,
+    detect_glacier_ski_traverse_intent,
+    format_glacier_ski_traverse_response,
+)
 from .gold_prospecting import (
     build_gold_prospecting_prompt,
     detect_gold_prospecting_intent,
@@ -738,6 +743,7 @@ async def generate_llm_response(
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
+    glacier_ski_traverse_prompt: str = "",
     slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
@@ -907,6 +913,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
             local_system = f"{local_system}\n\n{canopy_bryophyte_prompt}"
+        if glacier_ski_traverse_prompt:
+            local_system = f"{local_system}\n\n{glacier_ski_traverse_prompt}"
         if slickrock_burro_prompt:
             local_system = f"{local_system}\n\n{slickrock_burro_prompt}"
         if tundra_lichen_prompt:
@@ -1140,6 +1148,8 @@ async def generate_llm_response(
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
             prompt_parts.append(canopy_bryophyte_prompt)
+        if glacier_ski_traverse_prompt:
+            prompt_parts.append(glacier_ski_traverse_prompt)
         if slickrock_burro_prompt:
             prompt_parts.append(slickrock_burro_prompt)
         if tundra_lichen_prompt:
@@ -1870,6 +1880,16 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", question)
         crevasse_pulk_info_payload = formatted_pulk.get("crevasse_pulk_info")
 
+    glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(question)
+    glacier_ski_traverse_prompt = ""
+    glacier_ski_traverse_info_payload = None
+    if glacier_ski_traverse_intent:
+        glacier_ski_traverse_prompt = build_glacier_ski_traverse_prompt(question)
+        formatted_glacier_ski = format_glacier_ski_traverse_response(
+            "glacier_ski_traverse", question
+        )
+        glacier_ski_traverse_info_payload = formatted_glacier_ski.get("glacier_ski_traverse_info")
+
     glacier_intent = detect_glacier_intent(question)
     glacier_prompt = ""
     glacier_info_payload = None
@@ -2472,6 +2492,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:
         llm_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
+    if glacier_ski_traverse_prompt:
+        llm_kwargs["glacier_ski_traverse_prompt"] = glacier_ski_traverse_prompt
     if slickrock_burro_prompt:
         llm_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
@@ -2587,6 +2609,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
     if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
         response_payload["canopy_bryophyte_info"] = canopy_bryophyte_info_payload
+    if glacier_ski_traverse_intent and glacier_ski_traverse_info_payload:
+        response_payload["glacier_ski_traverse_info"] = glacier_ski_traverse_info_payload
     if slickrock_burro_intent and slickrock_burro_info_payload:
         response_payload["slickrock_burro_info"] = slickrock_burro_info_payload
     if tundra_lichen_intent and tundra_lichen_info_payload:
@@ -2760,6 +2784,7 @@ def generate_llm_response_stream(
     climbing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
+    glacier_ski_traverse_prompt: str = "",
     slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     foraging_prompt: str = "",
@@ -3655,6 +3680,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", question)
         crevasse_pulk_info_payload = formatted_pulk.get("crevasse_pulk_info")
 
+    glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(question)
+    glacier_ski_traverse_prompt = ""
+    glacier_ski_traverse_info_payload = None
+    if glacier_ski_traverse_intent:
+        glacier_ski_traverse_prompt = build_glacier_ski_traverse_prompt(question)
+        formatted_glacier_ski = format_glacier_ski_traverse_response(
+            "glacier_ski_traverse", question
+        )
+        glacier_ski_traverse_info_payload = formatted_glacier_ski.get("glacier_ski_traverse_info")
+
     glacier_intent = detect_glacier_intent(question)
     glacier_prompt = ""
     glacier_info_payload = None
@@ -4173,6 +4208,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': canopy_bryophyte_info_payload, event_name: canopy_bryophyte_info_payload})}\n\n"
         if event_name != "canopy_bryophyte_info":
             yield f"data: {json.dumps({'event': 'canopy_bryophyte_info', 'canopy_bryophyte_info': canopy_bryophyte_info_payload})}\n\n"
+    if glacier_ski_traverse_intent and glacier_ski_traverse_info_payload:
+        event_name = "glacier_ski_traverse_lookup"
+        if (
+            isinstance(glacier_ski_traverse_info_payload, dict)
+            and glacier_ski_traverse_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "glacier_ski_traverse_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload, event_name: glacier_ski_traverse_info_payload})}\n\n"
+        if event_name != "glacier_ski_traverse_info":
+            yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload})}\n\n"
     if slickrock_burro_intent and slickrock_burro_info_payload:
         event_name = "slickrock_burro_lookup"
         if (
@@ -5104,6 +5149,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:
         stream_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
+    if glacier_ski_traverse_prompt:
+        stream_kwargs["glacier_ski_traverse_prompt"] = glacier_ski_traverse_prompt
     if slickrock_burro_prompt:
         stream_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:

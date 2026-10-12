@@ -290,6 +290,17 @@ def detect_ski_tour_intent(query: str) -> Optional[SkiTourIntent]:
             "shipping tracking",
             "water filter",
             "fire ban",
+            "glacier ski",
+            "ski-traverse",
+            "ski traverse",
+            "serac zone",
+            "icefall descent",
+            "crevasse bridge",
+            "haute route",
+            "wapta",
+            "spearhead traverse",
+            "bagley icefield",
+            "berner oberland",
         ]
     ):
         return None
