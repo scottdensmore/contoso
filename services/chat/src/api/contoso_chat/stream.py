@@ -7,6 +7,10 @@ from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
 )
+from contoso_chat.canopy_bryophyte import (
+    detect_canopy_bryophyte_intent,
+    format_canopy_bryophyte_response,
+)
 from contoso_chat.canyon_bouldering import (
     detect_canyon_bouldering_intent,
     format_canyon_bouldering_response,
@@ -525,6 +529,31 @@ async def generate_slickrock_burro_stream_events(question: str) -> AsyncGenerato
     yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': sb_payload, event_name: sb_payload})}\n\n"
     if event_name != "slickrock_burro_info":
         yield f"data: {json.dumps({'event': 'slickrock_burro_info', 'slickrock_burro_info': sb_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_canopy_bryophyte_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events canopy_bryophyte_calculated, canopy_bryophyte_lookup, and canopy_bryophyte_info when canopy bryophyte intent is handled."""
+    if not detect_canopy_bryophyte_intent(question):
+        return
+
+    formatted = format_canopy_bryophyte_response("canopy_bryophyte", question)
+    cb_payload = formatted.get("canopy_bryophyte_info")
+
+    event_name = (
+        "canopy_bryophyte_calculated"
+        if isinstance(cb_payload, dict) and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "canopy_bryophyte_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': cb_payload, event_name: cb_payload})}\n\n"
+    if event_name != "canopy_bryophyte_info":
+        yield f"data: {json.dumps({'event': 'canopy_bryophyte_info', 'canopy_bryophyte_info': cb_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

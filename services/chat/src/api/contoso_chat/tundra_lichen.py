@@ -641,6 +641,19 @@ def detect_tundra_lichen_intent(message: str) -> bool:
         "pot-hole",
         "sandtrap",
         "cheater stick",
+        "canopy bryophyte",
+        "canopy bryophytes",
+        "epiphytic bryophyte",
+        "epiphytic bryophytes",
+        "tree fern",
+        "tree-fern",
+        "caudex",
+        "nurse log",
+        "nurse logs",
+        "pendulous moss",
+        "canopy moss",
+        "takayna",
+        "dicksonia",
     ]
     if any(ex in q for ex in exclusions):
         return False

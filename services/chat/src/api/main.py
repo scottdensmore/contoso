@@ -112,6 +112,10 @@ from contoso_chat.canoe_expedition import (
     get_canoe_route_by_id,
     get_canoe_routes,
 )
+from contoso_chat.canopy_bryophyte import (
+    detect_canopy_bryophyte_intent,
+    format_canopy_bryophyte_response,
+)
 from contoso_chat.canyon_bouldering import (
     detect_canyon_bouldering_intent,
     format_canyon_bouldering_response,
@@ -590,6 +594,9 @@ from contoso_chat.river_sup import (
     get_river_sup_runs,
 )
 from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
+from contoso_chat.routers.canopy_bryophyte import (
+    router as canopy_bryophyte_router,
+)
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
@@ -1067,6 +1074,16 @@ app.include_router(
     tags=["cryokarst-speleology"],
 )
 app.include_router(
+    canopy_bryophyte_router,
+    prefix="/canopy-bryophyte",
+    tags=["canopy-bryophyte"],
+)
+app.include_router(
+    canopy_bryophyte_router,
+    prefix="/api/canopy-bryophyte",
+    tags=["canopy-bryophyte"],
+)
+app.include_router(
     slickrock_burro_router,
     prefix="/slickrock-burro",
     tags=["slickrock-burro"],
@@ -1341,6 +1358,7 @@ async def create_response(request: ChatRequest):
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
+            canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
             slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
@@ -1670,6 +1688,16 @@ async def create_response(request: ChatRequest):
                     "cryokarst_speleology_info"
                 )
                 mock_payload["answer"] = formatted_cryokarst.get(
+                    "answer", mock_payload["answer"]
+                )
+            if canopy_bryophyte_intent:
+                formatted_canopy_bryo = format_canopy_bryophyte_response(
+                    "canopy_bryophyte", request.question
+                )
+                mock_payload["canopy_bryophyte_info"] = formatted_canopy_bryo.get(
+                    "canopy_bryophyte_info"
+                )
+                mock_payload["answer"] = formatted_canopy_bryo.get(
                     "answer", mock_payload["answer"]
                 )
             if slickrock_burro_intent:
@@ -2193,6 +2221,7 @@ async def create_response_stream(request: ChatRequest):
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
+                canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
                 slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
@@ -2439,6 +2468,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
                     if event_name != "cryokarst_speleology_info":
                         yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cs_payload})}\n\n"
+                if canopy_bryophyte_intent:
+                    formatted_canopy_bryo = format_canopy_bryophyte_response(
+                        "canopy_bryophyte", request.question
+                    )
+                    cb_payload = formatted_canopy_bryo.get("canopy_bryophyte_info")
+                    event_name = "canopy_bryophyte_lookup"
+                    if (
+                        isinstance(cb_payload, dict)
+                        and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "canopy_bryophyte_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': cb_payload, event_name: cb_payload})}\n\n"
+                    if event_name != "canopy_bryophyte_info":
+                        yield f"data: {json.dumps({'event': 'canopy_bryophyte_info', 'canopy_bryophyte_info': cb_payload})}\n\n"
                 if slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question
@@ -3325,6 +3368,11 @@ async def create_response_stream(request: ChatRequest):
                         "cryokarst_speleology", request.question
                     )
                     mock_chunks = [str(formatted_cryokarst.get("answer", ""))]
+                elif canopy_bryophyte_intent:
+                    formatted_canopy_bryo = format_canopy_bryophyte_response(
+                        "canopy_bryophyte", request.question
+                    )
+                    mock_chunks = [str(formatted_canopy_bryo.get("answer", ""))]
                 elif slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question

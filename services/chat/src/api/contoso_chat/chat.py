@@ -6,6 +6,10 @@ from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
 )
+from contoso_chat.canopy_bryophyte import (
+    detect_canopy_bryophyte_intent,
+    format_canopy_bryophyte_response,
+)
 from contoso_chat.canyon_bouldering import (
     detect_canyon_bouldering_intent,
     format_canyon_bouldering_response,
@@ -277,5 +281,16 @@ def handle_slickrock_burro_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_slickrock_burro_response("slickrock_burro", question)
     return {
         "slickrock_burro_info": formatted.get("slickrock_burro_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_canopy_bryophyte_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format canopy bryophyte intent in the cascade."""
+    if not detect_canopy_bryophyte_intent(question):
+        return None
+    formatted = format_canopy_bryophyte_response("canopy_bryophyte", question)
+    return {
+        "canopy_bryophyte_info": formatted.get("canopy_bryophyte_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
