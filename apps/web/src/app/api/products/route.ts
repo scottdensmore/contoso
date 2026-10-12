@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request?: Request) {
+export async function GET(request: Request) {
   if (process.env.NEXT_BUILD_SKIP_DB === "1") {
     return NextResponse.json([]);
   }

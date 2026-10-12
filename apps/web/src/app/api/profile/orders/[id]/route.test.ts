@@ -168,7 +168,7 @@ describe('Profile Order Detail API', () => {
     vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder as any)
 
     const request = new Request('http://localhost/api/profile/orders/order_123')
-    const context = { params: { id: 'order_123' } }
+    const context = { params: Promise.resolve({ id: 'order_123' }) }
 
     const response = await GET(request, context)
     expect(response.status).toBe(200)
