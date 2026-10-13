@@ -9,7 +9,7 @@ from evaluators.custom_evals.coherence import coherence_evaluation
 from evaluators.custom_evals.fluency import fluency_evaluation
 from evaluators.custom_evals.groundedness import groundedness_evaluation
 from evaluators.custom_evals.relevance import relevance_evaluation
-from prompty.tracer import trace
+from prompty import trace
 from tracing import init_tracing
 
 # %% [markdown]
