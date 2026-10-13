@@ -2,7 +2,7 @@ import contextlib
 
 from opentelemetry import trace as oteltrace
 from opentelemetry.sdk.trace import TracerProvider
-from prompty.tracer import PromptyTracer, Tracer
+from prompty import PromptyTracer, Tracer
 
 _tracer = "prompty"
 
