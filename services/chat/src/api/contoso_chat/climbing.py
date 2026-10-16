@@ -475,6 +475,23 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
     if any(cb_ex in q for cb_ex in canyon_bouldering_exclusions):
         return None
 
+    scree_running_exclusions = [
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
+    ]
+    if any(sr_ex in q for sr_ex in scree_running_exclusions):
+        return None
+
     climbing_patterns = [
         r"\bclimb",
         r"\bcrags?\b",

@@ -618,6 +618,7 @@ from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
+from contoso_chat.routers.scree_running import router as scree_running_router
 from contoso_chat.routers.slickrock_burro import (
     router as slickrock_burro_router,
 )
@@ -657,6 +658,10 @@ from contoso_chat.safety import (
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
+)
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
 )
 from contoso_chat.sea_kayaking import (
     SeaKayakGearRequirement,
@@ -1112,6 +1117,8 @@ app.include_router(
 )
 app.include_router(tundra_lichen_router, prefix="/tundra-lichen", tags=["tundra-lichen"])
 app.include_router(tundra_lichen_router, prefix="/api/tundra-lichen", tags=["tundra-lichen"])
+app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
+app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
 
 # Middleware for request logging
@@ -1377,6 +1384,7 @@ async def create_response(request: ChatRequest):
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
             canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
             glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
+            scree_running_intent = detect_scree_running_intent(request.question)
             slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
@@ -1726,6 +1734,16 @@ async def create_response(request: ChatRequest):
                     "glacier_ski_traverse_info"
                 )
                 mock_payload["answer"] = formatted_gst.get(
+                    "answer", mock_payload["answer"]
+                )
+            if scree_running_intent:
+                formatted_sr = format_scree_running_response(
+                    "scree_running", request.question
+                )
+                mock_payload["scree_running_info"] = formatted_sr.get(
+                    "scree_running_info"
+                )
+                mock_payload["answer"] = formatted_sr.get(
                     "answer", mock_payload["answer"]
                 )
             if slickrock_burro_intent:
@@ -2251,6 +2269,7 @@ async def create_response_stream(request: ChatRequest):
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
                 canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
                 glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
+                scree_running_intent = detect_scree_running_intent(request.question)
                 slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
@@ -2525,6 +2544,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': gst_payload, event_name: gst_payload})}\n\n"
                     if event_name != "glacier_ski_traverse_info":
                         yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': gst_payload})}\n\n"
+                if scree_running_intent:
+                    formatted_sr = format_scree_running_response(
+                        "scree_running", request.question
+                    )
+                    sr_payload = formatted_sr.get("scree_running_info")
+                    event_name = "scree_running_lookup"
+                    if (
+                        isinstance(sr_payload, dict)
+                        and sr_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "scree_running_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
+                    if event_name != "scree_running_info":
+                        yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': sr_payload})}\n\n"
                 if slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question
@@ -3421,6 +3454,11 @@ async def create_response_stream(request: ChatRequest):
                         "glacier_ski_traverse", request.question
                     )
                     mock_chunks = [str(formatted_gst.get("answer", ""))]
+                elif scree_running_intent:
+                    formatted_sr = format_scree_running_response(
+                        "scree_running", request.question
+                    )
+                    mock_chunks = [str(formatted_sr.get("answer", ""))]
                 elif slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question

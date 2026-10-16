@@ -332,6 +332,11 @@ from .sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from .scree_running import (
+    build_scree_running_prompt,
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
 from .sea_kayaking import (
     build_sea_kayaking_prompt,
     detect_sea_kayaking_intent,
@@ -741,6 +746,7 @@ async def generate_llm_response(
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
+    scree_running_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -909,6 +915,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{whitewater_prompt}"
         if climbing_prompt:
             local_system = f"{local_system}\n\n{climbing_prompt}"
+        if scree_running_prompt:
+            local_system = f"{local_system}\n\n{scree_running_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1144,6 +1152,8 @@ async def generate_llm_response(
             prompt_parts.append(whitewater_prompt)
         if climbing_prompt:
             prompt_parts.append(climbing_prompt)
+        if scree_running_prompt:
+            prompt_parts.append(scree_running_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1768,6 +1778,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         )
         mudflat_trekking_info_payload = formatted_mudflat.get(
             "mudflat_trekking_info"
+        )
+
+    scree_running_intent = detect_scree_running_intent(question)
+    scree_running_prompt = ""
+    scree_running_info_payload = None
+    if scree_running_intent:
+        scree_running_prompt = build_scree_running_prompt(question)
+        formatted_scree_running = format_scree_running_response(
+            "scree_running", question
+        )
+        scree_running_info_payload = formatted_scree_running.get(
+            "scree_running_info"
         )
 
     climbing_intent = detect_climbing_intent(question)
@@ -2494,6 +2516,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
     if glacier_ski_traverse_prompt:
         llm_kwargs["glacier_ski_traverse_prompt"] = glacier_ski_traverse_prompt
+    if scree_running_prompt:
+        llm_kwargs["scree_running_prompt"] = scree_running_prompt
     if slickrock_burro_prompt:
         llm_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
@@ -2603,6 +2627,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["canyon_bouldering_info"] = canyon_bouldering_info_payload
     if mudflat_intent and mudflat_trekking_info_payload:
         response_payload["mudflat_trekking_info"] = mudflat_trekking_info_payload
+    if scree_running_intent and scree_running_info_payload:
+        response_payload["scree_running_info"] = scree_running_info_payload
     if climbing_intent and climbing_info_payload:
         response_payload["climbing_info"] = climbing_info_payload
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
@@ -2782,6 +2808,7 @@ def generate_llm_response_stream(
     ski_tour_prompt: str = "",
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
+    scree_running_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -2945,6 +2972,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{whitewater_prompt}"
         if climbing_prompt:
             local_system = f"{local_system}\n\n{climbing_prompt}"
+        if scree_running_prompt:
+            local_system = f"{local_system}\n\n{scree_running_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -3125,6 +3154,8 @@ def generate_llm_response_stream(
             prompt_parts.append(whitewater_prompt)
         if climbing_prompt:
             prompt_parts.append(climbing_prompt)
+        if scree_running_prompt:
+            prompt_parts.append(scree_running_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -3567,6 +3598,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         )
         mudflat_trekking_info_payload = formatted_mudflat.get(
             "mudflat_trekking_info"
+        )
+
+    scree_running_intent = detect_scree_running_intent(question)
+    scree_running_prompt = ""
+    scree_running_info_payload = None
+    if scree_running_intent:
+        scree_running_prompt = build_scree_running_prompt(question)
+        formatted_scree_running = format_scree_running_response(
+            "scree_running", question
+        )
+        scree_running_info_payload = formatted_scree_running.get(
+            "scree_running_info"
         )
 
     climbing_intent = detect_climbing_intent(question)
@@ -4218,6 +4261,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload, event_name: glacier_ski_traverse_info_payload})}\n\n"
         if event_name != "glacier_ski_traverse_info":
             yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload})}\n\n"
+    if scree_running_intent and scree_running_info_payload:
+        event_name = "scree_running_lookup"
+        if (
+            isinstance(scree_running_info_payload, dict)
+            and scree_running_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "scree_running_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'scree_running_info': scree_running_info_payload, event_name: scree_running_info_payload})}\n\n"
+        if event_name != "scree_running_info":
+            yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': scree_running_info_payload})}\n\n"
     if slickrock_burro_intent and slickrock_burro_info_payload:
         event_name = "slickrock_burro_lookup"
         if (
@@ -5151,6 +5204,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["canopy_bryophyte_prompt"] = canopy_bryophyte_prompt
     if glacier_ski_traverse_prompt:
         stream_kwargs["glacier_ski_traverse_prompt"] = glacier_ski_traverse_prompt
+    if scree_running_prompt:
+        stream_kwargs["scree_running_prompt"] = scree_running_prompt
     if slickrock_burro_prompt:
         stream_kwargs["slickrock_burro_prompt"] = slickrock_burro_prompt
     if tundra_lichen_prompt:
