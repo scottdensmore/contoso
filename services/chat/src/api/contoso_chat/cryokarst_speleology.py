@@ -678,6 +678,20 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "spearhead traverse",
         "bagley icefield",
         "berner oberland",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
     ]
 
     # If it is not explicitly about cryokarst / glacier caves, apply all exclusions
@@ -686,7 +700,7 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
             return False
         return False
 
-    # When explicit cryokarst is present, still reject non-chat / order ecommerce queries
+    # When explicit cryokarst is present, still reject non-chat / order ecommerce queries or lava tube biospeleology
     ecommerce_exclusions = [
         "order #",
         "refund",
@@ -694,6 +708,20 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "shipping tracking",
         "rentals",
         "rental",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
