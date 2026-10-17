@@ -63,6 +63,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
@@ -583,6 +587,31 @@ async def generate_glacier_ski_traverse_stream_events(question: str) -> AsyncGen
     yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': gst_payload, event_name: gst_payload})}\n\n"
     if event_name != "glacier_ski_traverse_info":
         yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': gst_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_scree_running_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events scree_running_calculated, scree_running_lookup, and scree_running_info when scree running intent is handled."""
+    if not detect_scree_running_intent(question):
+        return
+
+    formatted = format_scree_running_response("scree_running", question)
+    sr_payload = formatted.get("scree_running_info")
+
+    event_name = (
+        "scree_running_calculated"
+        if isinstance(sr_payload, dict) and sr_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "scree_running_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
+    if event_name != "scree_running_info":
+        yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': sr_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

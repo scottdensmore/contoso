@@ -62,6 +62,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
@@ -307,5 +311,16 @@ def handle_glacier_ski_traverse_intent(question: str) -> Optional[dict[str, Any]
     formatted = format_glacier_ski_traverse_response("glacier_ski_traverse", question)
     return {
         "glacier_ski_traverse_info": formatted.get("glacier_ski_traverse_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_scree_running_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format scree running intent in the cascade."""
+    if not detect_scree_running_intent(question):
+        return None
+    formatted = format_scree_running_response("scree_running", question)
+    return {
+        "scree_running_info": formatted.get("scree_running_info"),
         "answer": formatted.get("answer", str(formatted)),
     }

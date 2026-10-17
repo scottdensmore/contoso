@@ -343,6 +343,23 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
     if any(ex in q_norm for ex in pulk_exclusions):
         return None
 
+    scree_running_exclusions = [
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
+    ]
+    if any(ex in q_norm for ex in scree_running_exclusions):
+        return None
+
     # Disambiguation guards:
     # 1. Reject rock climbing queries that mention crag/sport/bouldering/trad rack without glacier context
     rock_climbing_terms = [

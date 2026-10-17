@@ -292,6 +292,18 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "ice climbing",
         "rentals",
         "rental",
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
     ]
     if any(ex in q for ex in exclusions):
         return None
