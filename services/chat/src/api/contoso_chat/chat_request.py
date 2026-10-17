@@ -192,6 +192,11 @@ from .ice_climbing import (
     detect_ice_climbing_intent,
     format_ice_climbing_response,
 )
+from .lava_tube_biospeleology import (
+    build_lava_tube_biospeleology_prompt,
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
 from .leave_no_trace import (
     build_lnt_prompt,
     detect_lnt_intent,
@@ -747,6 +752,7 @@ async def generate_llm_response(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     scree_running_prompt: str = "",
+    lava_tube_biospeleology_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -917,6 +923,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if scree_running_prompt:
             local_system = f"{local_system}\n\n{scree_running_prompt}"
+        if lava_tube_biospeleology_prompt:
+            local_system = f"{local_system}\n\n{lava_tube_biospeleology_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1154,6 +1162,8 @@ async def generate_llm_response(
             prompt_parts.append(climbing_prompt)
         if scree_running_prompt:
             prompt_parts.append(scree_running_prompt)
+        if lava_tube_biospeleology_prompt:
+            prompt_parts.append(lava_tube_biospeleology_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1799,6 +1809,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         climbing_prompt = build_climbing_prompt(climbing_intent)
         formatted_climbing = format_climbing_response(climbing_intent)
         climbing_info_payload = formatted_climbing.get("climbing_info")
+
+    lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(question)
+    lava_tube_biospeleology_prompt = ""
+    lava_tube_biospeleology_info_payload = None
+    if lava_tube_biospeleology_intent:
+        lava_tube_biospeleology_prompt = build_lava_tube_biospeleology_prompt(question)
+        formatted_lava_tube_biospeleology = format_lava_tube_biospeleology_response(
+            "lava_tube_biospeleology", question
+        )
+        lava_tube_biospeleology_info_payload = formatted_lava_tube_biospeleology.get(
+            "lava_tube_biospeleology_info"
+        )
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
     cryokarst_speleology_prompt = ""
@@ -2510,6 +2532,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
     if pothole_escape_prompt:
         llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
+    if lava_tube_biospeleology_prompt:
+        llm_kwargs["lava_tube_biospeleology_prompt"] = lava_tube_biospeleology_prompt
     if cryokarst_speleology_prompt:
         llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:
@@ -2631,6 +2655,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["scree_running_info"] = scree_running_info_payload
     if climbing_intent and climbing_info_payload:
         response_payload["climbing_info"] = climbing_info_payload
+    if lava_tube_biospeleology_intent and lava_tube_biospeleology_info_payload:
+        response_payload["lava_tube_biospeleology_info"] = lava_tube_biospeleology_info_payload
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
     if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
@@ -2809,6 +2835,7 @@ def generate_llm_response_stream(
     whitewater_prompt: str = "",
     climbing_prompt: str = "",
     scree_running_prompt: str = "",
+    lava_tube_biospeleology_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -2974,6 +3001,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{climbing_prompt}"
         if scree_running_prompt:
             local_system = f"{local_system}\n\n{scree_running_prompt}"
+        if lava_tube_biospeleology_prompt:
+            local_system = f"{local_system}\n\n{lava_tube_biospeleology_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -3156,6 +3185,8 @@ def generate_llm_response_stream(
             prompt_parts.append(climbing_prompt)
         if scree_running_prompt:
             prompt_parts.append(scree_running_prompt)
+        if lava_tube_biospeleology_prompt:
+            prompt_parts.append(lava_tube_biospeleology_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -3619,6 +3650,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         climbing_prompt = build_climbing_prompt(climbing_intent)
         formatted_climbing = format_climbing_response(climbing_intent)
         climbing_info_payload = formatted_climbing.get("climbing_info")
+
+    lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(question)
+    lava_tube_biospeleology_prompt = ""
+    lava_tube_biospeleology_info_payload = None
+    if lava_tube_biospeleology_intent:
+        lava_tube_biospeleology_prompt = build_lava_tube_biospeleology_prompt(question)
+        formatted_lava_tube_biospeleology = format_lava_tube_biospeleology_response(
+            "lava_tube_biospeleology", question
+        )
+        lava_tube_biospeleology_info_payload = formatted_lava_tube_biospeleology.get(
+            "lava_tube_biospeleology_info"
+        )
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
     cryokarst_speleology_prompt = ""
@@ -4231,6 +4274,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mudflat_trekking_info_payload})}\n\n"
     if climbing_intent and climbing_info_payload:
         yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
+    if lava_tube_biospeleology_intent and lava_tube_biospeleology_info_payload:
+        event_name = "lava_tube_biospeleology_lookup"
+        if (
+            isinstance(lava_tube_biospeleology_info_payload, dict)
+            and lava_tube_biospeleology_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "lava_tube_biospeleology_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload, event_name: lava_tube_biospeleology_info_payload})}\n\n"
+        if event_name != "lava_tube_biospeleology_info":
+            yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload})}\n\n"
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         event_name = "cryokarst_speleology_lookup"
         if (
@@ -5198,6 +5251,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["crevasse_pulk_prompt"] = crevasse_pulk_prompt
     if pothole_escape_prompt:
         stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
+    if lava_tube_biospeleology_prompt:
+        stream_kwargs["lava_tube_biospeleology_prompt"] = lava_tube_biospeleology_prompt
     if cryokarst_speleology_prompt:
         stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:

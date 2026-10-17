@@ -39,6 +39,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
     format_mudflat_response,
@@ -612,6 +616,31 @@ async def generate_scree_running_stream_events(question: str) -> AsyncGenerator[
     yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
     if event_name != "scree_running_info":
         yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': sr_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_lava_tube_biospeleology_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events lava_tube_biospeleology_calculated, lava_tube_biospeleology_lookup, and lava_tube_biospeleology_info when lava tube biospeleology intent is handled."""
+    if not detect_lava_tube_biospeleology_intent(question):
+        return
+
+    formatted = format_lava_tube_biospeleology_response("lava_tube_biospeleology", question)
+    ltb_payload = formatted.get("lava_tube_biospeleology_info")
+
+    event_name = (
+        "lava_tube_biospeleology_calculated"
+        if isinstance(ltb_payload, dict) and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "lava_tube_biospeleology_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
+    if event_name != "lava_tube_biospeleology_info":
+        yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': ltb_payload})}\n\n"
 
     answer = str(formatted.get("answer", ""))
     tokens = answer.split(" ")

@@ -548,6 +548,20 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "smoke",
         "rentals",
         "rental",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
     ]
     if any(k in q for k in exclusions):
         return None

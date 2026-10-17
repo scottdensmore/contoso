@@ -381,6 +381,10 @@ from contoso_chat.ice_climbing import (
     get_ice_climbing_route_by_id,
     get_ice_climbing_routes,
 )
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
 from contoso_chat.leave_no_trace import (
     LntPrincipleModel,
     PackOutCalcRequest,
@@ -611,6 +615,9 @@ from contoso_chat.routers.cryokarst_speleology import (
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.glacier_ski_traverse import (
     router as glacier_ski_traverse_router,
+)
+from contoso_chat.routers.lava_tube_biospeleology import (
+    router as lava_tube_biospeleology_router,
 )
 from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
@@ -1086,6 +1093,16 @@ app.include_router(
     tags=["cryokarst-speleology"],
 )
 app.include_router(
+    lava_tube_biospeleology_router,
+    prefix="/lava-tube-biospeleology",
+    tags=["lava-tube-biospeleology"],
+)
+app.include_router(
+    lava_tube_biospeleology_router,
+    prefix="/api/lava-tube-biospeleology",
+    tags=["lava-tube-biospeleology"],
+)
+app.include_router(
     canopy_bryophyte_router,
     prefix="/canopy-bryophyte",
     tags=["canopy-bryophyte"],
@@ -1381,6 +1398,7 @@ async def create_response(request: ChatRequest):
             canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
+            lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
             canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
             glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
@@ -1706,6 +1724,16 @@ async def create_response(request: ChatRequest):
                 formatted_climbing = format_climbing_response(climbing_intent)
                 mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
                 mock_payload["answer"] = formatted_climbing.get("answer", mock_payload["answer"])
+            if lava_tube_biospeleology_intent:
+                formatted_ltb = format_lava_tube_biospeleology_response(
+                    "lava_tube_biospeleology", request.question
+                )
+                mock_payload["lava_tube_biospeleology_info"] = formatted_ltb.get(
+                    "lava_tube_biospeleology_info"
+                )
+                mock_payload["answer"] = formatted_ltb.get(
+                    "answer", mock_payload["answer"]
+                )
             if cryokarst_speleology_intent:
                 formatted_cryokarst = format_cryokarst_speleology_response(
                     "cryokarst_speleology", request.question
@@ -2266,6 +2294,7 @@ async def create_response_stream(request: ChatRequest):
                 canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
+                lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
                 canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
                 glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
@@ -2502,6 +2531,20 @@ async def create_response_stream(request: ChatRequest):
                 if climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
+                if lava_tube_biospeleology_intent:
+                    formatted_ltb = format_lava_tube_biospeleology_response(
+                        "lava_tube_biospeleology", request.question
+                    )
+                    ltb_payload = formatted_ltb.get("lava_tube_biospeleology_info")
+                    event_name = "lava_tube_biospeleology_lookup"
+                    if (
+                        isinstance(ltb_payload, dict)
+                        and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "lava_tube_biospeleology_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
+                    if event_name != "lava_tube_biospeleology_info":
+                        yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': ltb_payload})}\n\n"
                 if cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question
@@ -3439,6 +3482,11 @@ async def create_response_stream(request: ChatRequest):
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     mock_chunks = [str(formatted_climbing.get("answer", ""))]
+                elif lava_tube_biospeleology_intent:
+                    formatted_ltb = format_lava_tube_biospeleology_response(
+                        "lava_tube_biospeleology", request.question
+                    )
+                    mock_chunks = [str(formatted_ltb.get("answer", ""))]
                 elif cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question
