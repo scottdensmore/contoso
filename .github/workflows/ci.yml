@@ -60,6 +60,10 @@ jobs:
     name: Chat core lint, types and unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # Evaluator unit tests mock genai.Client but still validate this input.
+      PROJECT_ID: ci-no-cloud-project
+      GOOGLE_APPLICATION_CREDENTIALS: /nonexistent/ci-no-cloud-credentials.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
