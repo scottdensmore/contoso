@@ -657,6 +657,9 @@ from contoso_chat.routers.salt_pan_navigation import (
 )
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.scree_running import router as scree_running_router
+from contoso_chat.routers.sea_cave_pneumatics import (
+    router as sea_cave_pneumatics_router,
+)
 from contoso_chat.routers.slickrock_burro import (
     router as slickrock_burro_router,
 )
@@ -707,6 +710,10 @@ from contoso_chat.sandboarding import (
 from contoso_chat.scree_running import (
     detect_scree_running_intent,
     format_scree_running_response,
+)
+from contoso_chat.sea_cave_pneumatics import (
+    detect_sea_cave_pneumatics_intent,
+    format_sea_cave_pneumatics_response,
 )
 from contoso_chat.sea_kayaking import (
     SeaKayakGearRequirement,
@@ -1239,6 +1246,17 @@ app.include_router(
     tags=["rock-glacier-navigation"],
 )
 logger.info("Registered High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation router (/rock-glacier-navigation, /api/rock-glacier-navigation)")
+app.include_router(
+    sea_cave_pneumatics_router,
+    prefix="/sea-cave-pneumatics",
+    tags=["sea-cave-pneumatics"],
+)
+app.include_router(
+    sea_cave_pneumatics_router,
+    prefix="/api/sea-cave-pneumatics",
+    tags=["sea-cave-pneumatics"],
+)
+logger.info("Registered Coastal Blowhole, Surge Channel & Sea-Cave Pneumatic Wave-Hazard Navigation router (/sea-cave-pneumatics, /api/sea-cave-pneumatics)")
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1517,6 +1535,7 @@ async def create_response(request: ChatRequest):
             aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
             salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
             rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
+            sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1946,6 +1965,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["rock_glacier_navigation_info"] = rg_info
                 mock_payload["answer"] = rg_answer
+            if sea_cave_pneumatics_intent:
+                scp_answer, scp_info = format_sea_cave_pneumatics_response(
+                    request.question
+                )
+                mock_payload["sea_cave_pneumatics_info"] = scp_info
+                mock_payload["answer"] = scp_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2461,6 +2486,7 @@ async def create_response_stream(request: ChatRequest):
                 aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
                 salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
                 rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
+                sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2868,6 +2894,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
                     if event_name != "rock_glacier_navigation_info":
                         yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
+                if sea_cave_pneumatics_intent:
+                    _, scp_payload = format_sea_cave_pneumatics_response(
+                        request.question
+                    )
+                    event_name = (
+                        scp_payload.get("action", "sea_cave_pneumatics_info")
+                        if isinstance(scp_payload, dict)
+                        else "sea_cave_pneumatics_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(scp_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': scp_payload, event_name: scp_payload})}\n\n"
+                    if event_name != "sea_cave_pneumatics_info":
+                        yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3713,6 +3752,11 @@ async def create_response_stream(request: ChatRequest):
                         request.question
                     )
                     mock_chunks = [str(rg_answer)]
+                elif sea_cave_pneumatics_intent:
+                    scp_answer, _ = format_sea_cave_pneumatics_response(
+                        request.question
+                    )
+                    mock_chunks = [str(scp_answer)]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4116,6 +4160,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_aufeis_crossing_intent(request.question)
                 or detect_salt_pan_navigation_intent(request.question)
                 or detect_rock_glacier_navigation_intent(request.question)
+                or detect_sea_cave_pneumatics_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

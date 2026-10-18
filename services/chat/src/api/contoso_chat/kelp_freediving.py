@@ -693,8 +693,20 @@ def detect_kelp_freediving_intent(message: str) -> bool:
         "shipping tracking",
         "rentals",
         "rental",
+        "blowhole",
+        "sea cave",
+        "sea-cave",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
+        return False
+    if "surge channel" in q and "urchin barren" not in q:
         return False
 
     return True
