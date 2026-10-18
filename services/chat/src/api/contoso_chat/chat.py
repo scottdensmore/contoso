@@ -38,6 +38,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -339,3 +343,15 @@ def handle_lava_tube_biospeleology_intent(question: str) -> Optional[dict[str, A
         "lava_tube_biospeleology_info": formatted.get("lava_tube_biospeleology_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+
+def handle_kelp_freediving_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format kelp freediving intent in the cascade."""
+    if not detect_kelp_freediving_intent(question):
+        return None
+    formatted = format_kelp_freediving_response("kelp_freediving", question)
+    return {
+        "kelp_freediving_info": formatted.get("kelp_freediving_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+

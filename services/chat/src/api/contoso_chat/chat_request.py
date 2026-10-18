@@ -192,6 +192,11 @@ from .ice_climbing import (
     detect_ice_climbing_intent,
     format_ice_climbing_response,
 )
+from .kelp_freediving import (
+    build_kelp_freediving_prompt,
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
 from .lava_tube_biospeleology import (
     build_lava_tube_biospeleology_prompt,
     detect_lava_tube_biospeleology_intent,
@@ -753,6 +758,7 @@ async def generate_llm_response(
     climbing_prompt: str = "",
     scree_running_prompt: str = "",
     lava_tube_biospeleology_prompt: str = "",
+    kelp_freediving_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -925,6 +931,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{scree_running_prompt}"
         if lava_tube_biospeleology_prompt:
             local_system = f"{local_system}\n\n{lava_tube_biospeleology_prompt}"
+        if kelp_freediving_prompt:
+            local_system = f"{local_system}\n\n{kelp_freediving_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1164,6 +1172,8 @@ async def generate_llm_response(
             prompt_parts.append(scree_running_prompt)
         if lava_tube_biospeleology_prompt:
             prompt_parts.append(lava_tube_biospeleology_prompt)
+        if kelp_freediving_prompt:
+            prompt_parts.append(kelp_freediving_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1820,6 +1830,18 @@ async def get_response(customer_id, question, chat_history: Any = None):
         )
         lava_tube_biospeleology_info_payload = formatted_lava_tube_biospeleology.get(
             "lava_tube_biospeleology_info"
+        )
+
+    kelp_freediving_intent = detect_kelp_freediving_intent(question)
+    kelp_freediving_prompt = ""
+    kelp_freediving_info_payload = None
+    if kelp_freediving_intent:
+        kelp_freediving_prompt = build_kelp_freediving_prompt(question)
+        formatted_kelp_freediving = format_kelp_freediving_response(
+            "kelp_freediving", question
+        )
+        kelp_freediving_info_payload = formatted_kelp_freediving.get(
+            "kelp_freediving_info"
         )
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
@@ -2534,6 +2556,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if lava_tube_biospeleology_prompt:
         llm_kwargs["lava_tube_biospeleology_prompt"] = lava_tube_biospeleology_prompt
+    if kelp_freediving_prompt:
+        llm_kwargs["kelp_freediving_prompt"] = kelp_freediving_prompt
     if cryokarst_speleology_prompt:
         llm_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:
@@ -2657,6 +2681,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["climbing_info"] = climbing_info_payload
     if lava_tube_biospeleology_intent and lava_tube_biospeleology_info_payload:
         response_payload["lava_tube_biospeleology_info"] = lava_tube_biospeleology_info_payload
+    if kelp_freediving_intent and kelp_freediving_info_payload:
+        response_payload["kelp_freediving_info"] = kelp_freediving_info_payload
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         response_payload["cryokarst_speleology_info"] = cryokarst_speleology_info_payload
     if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
@@ -2836,6 +2862,7 @@ def generate_llm_response_stream(
     climbing_prompt: str = "",
     scree_running_prompt: str = "",
     lava_tube_biospeleology_prompt: str = "",
+    kelp_freediving_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -3003,6 +3030,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{scree_running_prompt}"
         if lava_tube_biospeleology_prompt:
             local_system = f"{local_system}\n\n{lava_tube_biospeleology_prompt}"
+        if kelp_freediving_prompt:
+            local_system = f"{local_system}\n\n{kelp_freediving_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -3187,6 +3216,8 @@ def generate_llm_response_stream(
             prompt_parts.append(scree_running_prompt)
         if lava_tube_biospeleology_prompt:
             prompt_parts.append(lava_tube_biospeleology_prompt)
+        if kelp_freediving_prompt:
+            prompt_parts.append(kelp_freediving_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -3661,6 +3692,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         )
         lava_tube_biospeleology_info_payload = formatted_lava_tube_biospeleology.get(
             "lava_tube_biospeleology_info"
+        )
+
+    kelp_freediving_intent = detect_kelp_freediving_intent(question)
+    kelp_freediving_prompt = ""
+    kelp_freediving_info_payload = None
+    if kelp_freediving_intent:
+        kelp_freediving_prompt = build_kelp_freediving_prompt(question)
+        formatted_kelp_freediving = format_kelp_freediving_response(
+            "kelp_freediving", question
+        )
+        kelp_freediving_info_payload = formatted_kelp_freediving.get(
+            "kelp_freediving_info"
         )
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
@@ -4284,6 +4327,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload, event_name: lava_tube_biospeleology_info_payload})}\n\n"
         if event_name != "lava_tube_biospeleology_info":
             yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload})}\n\n"
+    if kelp_freediving_intent and kelp_freediving_info_payload:
+        event_name = "kelp_freediving_lookup"
+        if (
+            isinstance(kelp_freediving_info_payload, dict)
+            and kelp_freediving_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        ):
+            event_name = "kelp_freediving_calculated"
+        yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kelp_freediving_info_payload, event_name: kelp_freediving_info_payload})}\n\n"
+        if event_name != "kelp_freediving_info":
+            yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kelp_freediving_info_payload})}\n\n"
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         event_name = "cryokarst_speleology_lookup"
         if (
@@ -5253,6 +5306,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["pothole_escape_prompt"] = pothole_escape_prompt
     if lava_tube_biospeleology_prompt:
         stream_kwargs["lava_tube_biospeleology_prompt"] = lava_tube_biospeleology_prompt
+    if kelp_freediving_prompt:
+        stream_kwargs["kelp_freediving_prompt"] = kelp_freediving_prompt
     if cryokarst_speleology_prompt:
         stream_kwargs["cryokarst_speleology_prompt"] = cryokarst_speleology_prompt
     if canopy_bryophyte_prompt:

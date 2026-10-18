@@ -302,6 +302,18 @@ def detect_beachcombing_intent(message: str) -> Optional[BeachcombingIntent]:
         "gold panning",
         "rentals",
         "rental",
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
     ]
     if any(ex in q for ex in exclusions):
         return None

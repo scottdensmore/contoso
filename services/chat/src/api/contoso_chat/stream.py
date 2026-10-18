@@ -39,6 +39,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -647,3 +651,29 @@ async def generate_lava_tube_biospeleology_stream_events(question: str) -> Async
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_kelp_freediving_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events kelp_freediving_calculated, kelp_freediving_lookup, and kelp_freediving_info when kelp freediving intent is handled."""
+    if not detect_kelp_freediving_intent(question):
+        return
+
+    formatted = format_kelp_freediving_response("kelp_freediving", question)
+    kf_payload = formatted.get("kelp_freediving_info")
+
+    event_name = (
+        "kelp_freediving_calculated"
+        if isinstance(kf_payload, dict) and kf_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "kelp_freediving_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kf_payload, event_name: kf_payload})}\n\n"
+    if event_name != "kelp_freediving_info":
+        yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kf_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+

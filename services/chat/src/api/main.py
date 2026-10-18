@@ -381,6 +381,10 @@ from contoso_chat.ice_climbing import (
     get_ice_climbing_route_by_id,
     get_ice_climbing_routes,
 )
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -615,6 +619,9 @@ from contoso_chat.routers.cryokarst_speleology import (
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.glacier_ski_traverse import (
     router as glacier_ski_traverse_router,
+)
+from contoso_chat.routers.kelp_freediving import (
+    router as kelp_freediving_router,
 )
 from contoso_chat.routers.lava_tube_biospeleology import (
     router as lava_tube_biospeleology_router,
@@ -1103,6 +1110,16 @@ app.include_router(
     tags=["lava-tube-biospeleology"],
 )
 app.include_router(
+    kelp_freediving_router,
+    prefix="/kelp-freediving",
+    tags=["kelp-freediving"],
+)
+app.include_router(
+    kelp_freediving_router,
+    prefix="/api/kelp-freediving",
+    tags=["kelp-freediving"],
+)
+app.include_router(
     canopy_bryophyte_router,
     prefix="/canopy-bryophyte",
     tags=["canopy-bryophyte"],
@@ -1399,6 +1416,7 @@ async def create_response(request: ChatRequest):
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
             lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
+            kelp_freediving_intent = detect_kelp_freediving_intent(request.question)
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
             canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
             glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
@@ -1732,6 +1750,16 @@ async def create_response(request: ChatRequest):
                     "lava_tube_biospeleology_info"
                 )
                 mock_payload["answer"] = formatted_ltb.get(
+                    "answer", mock_payload["answer"]
+                )
+            if kelp_freediving_intent:
+                formatted_kf = format_kelp_freediving_response(
+                    "kelp_freediving", request.question
+                )
+                mock_payload["kelp_freediving_info"] = formatted_kf.get(
+                    "kelp_freediving_info"
+                )
+                mock_payload["answer"] = formatted_kf.get(
                     "answer", mock_payload["answer"]
                 )
             if cryokarst_speleology_intent:
@@ -2295,6 +2323,7 @@ async def create_response_stream(request: ChatRequest):
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
                 lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
+                kelp_freediving_intent = detect_kelp_freediving_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
                 canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
                 glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
@@ -2545,6 +2574,20 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
                     if event_name != "lava_tube_biospeleology_info":
                         yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': ltb_payload})}\n\n"
+                if kelp_freediving_intent:
+                    formatted_kf = format_kelp_freediving_response(
+                        "kelp_freediving", request.question
+                    )
+                    kf_payload = formatted_kf.get("kelp_freediving_info")
+                    event_name = "kelp_freediving_lookup"
+                    if (
+                        isinstance(kf_payload, dict)
+                        and kf_payload.get("action") in ("calculate", "calculate_dynamics")
+                    ):
+                        event_name = "kelp_freediving_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kf_payload, event_name: kf_payload})}\n\n"
+                    if event_name != "kelp_freediving_info":
+                        yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kf_payload})}\n\n"
                 if cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question
@@ -3487,6 +3530,11 @@ async def create_response_stream(request: ChatRequest):
                         "lava_tube_biospeleology", request.question
                     )
                     mock_chunks = [str(formatted_ltb.get("answer", ""))]
+                elif kelp_freediving_intent:
+                    formatted_kf = format_kelp_freediving_response(
+                        "kelp_freediving", request.question
+                    )
+                    mock_chunks = [str(formatted_kf.get("answer", ""))]
                 elif cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question

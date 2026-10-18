@@ -403,6 +403,27 @@ def detect_coasteering_intent(message: str) -> Optional[CoasteeringIntent]:
     if any(rx in q for rx in climbing_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against Kelp forest freediving (kelp_freediving.py)
+    kelp_freediving_exclusions = [
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "kelp free diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
+        "stipe entanglement",
+        "great african seaforest",
+    ]
+    if any(kx in q for kx in kelp_freediving_exclusions):
+        return None
+
     # Coasteering keywords
     coasteering_keywords = [
         "coasteering",
