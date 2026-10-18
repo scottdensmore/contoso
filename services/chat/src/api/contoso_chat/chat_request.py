@@ -337,6 +337,11 @@ from .river_sup import (
     detect_river_sup_intent,
     format_river_sup_response,
 )
+from .rock_glacier_navigation import (
+    build_rock_glacier_navigation_prompt,
+    detect_rock_glacier_navigation_intent,
+    format_rock_glacier_navigation_response,
+)
 from .routes import (
     build_route_prompt,
     detect_route_intent,
@@ -783,6 +788,7 @@ async def generate_llm_response(
     solfatara_navigation_prompt: str = "",
     aufeis_crossing_prompt: str = "",
     salt_pan_navigation_prompt: str = "",
+    rock_glacier_navigation_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -965,6 +971,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{aufeis_crossing_prompt}"
         if salt_pan_navigation_prompt:
             local_system = f"{local_system}\n\n{salt_pan_navigation_prompt}"
+        if rock_glacier_navigation_prompt:
+            local_system = f"{local_system}\n\n{rock_glacier_navigation_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1214,6 +1222,8 @@ async def generate_llm_response(
             prompt_parts.append(aufeis_crossing_prompt)
         if salt_pan_navigation_prompt:
             prompt_parts.append(salt_pan_navigation_prompt)
+        if rock_glacier_navigation_prompt:
+            prompt_parts.append(rock_glacier_navigation_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1803,6 +1813,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         whitewater_prompt = build_whitewater_prompt(whitewater_intent)
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
+    rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(question)
+    rock_glacier_navigation_prompt = ""
+    rock_glacier_navigation_info_payload = None
+    if rock_glacier_navigation_intent:
+        rock_glacier_navigation_prompt = build_rock_glacier_navigation_prompt(question)
+        _, rock_glacier_navigation_info_payload = (
+            format_rock_glacier_navigation_response(question)
+        )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2654,6 +2673,10 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["aufeis_crossing_prompt"] = aufeis_crossing_prompt
     if salt_pan_navigation_prompt:
         llm_kwargs["salt_pan_navigation_prompt"] = salt_pan_navigation_prompt
+    if rock_glacier_navigation_prompt:
+        llm_kwargs["rock_glacier_navigation_prompt"] = (
+            rock_glacier_navigation_prompt
+        )
 
     answer = await generate_llm_response(
         question,
@@ -2786,6 +2809,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if salt_pan_navigation_intent and salt_pan_navigation_info_payload:
         response_payload["salt_pan_navigation_info"] = (
             salt_pan_navigation_info_payload
+        )
+    if (
+        rock_glacier_navigation_intent
+        and rock_glacier_navigation_info_payload
+    ):
+        response_payload["rock_glacier_navigation_info"] = (
+            rock_glacier_navigation_info_payload
         )
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
@@ -2966,6 +2996,7 @@ def generate_llm_response_stream(
     solfatara_navigation_prompt: str = "",
     aufeis_crossing_prompt: str = "",
     salt_pan_navigation_prompt: str = "",
+    rock_glacier_navigation_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3146,6 +3177,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{aufeis_crossing_prompt}"
         if salt_pan_navigation_prompt:
             local_system = f"{local_system}\n\n{salt_pan_navigation_prompt}"
+        if rock_glacier_navigation_prompt:
+            local_system = f"{local_system}\n\n{rock_glacier_navigation_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3340,6 +3373,8 @@ def generate_llm_response_stream(
             prompt_parts.append(aufeis_crossing_prompt)
         if salt_pan_navigation_prompt:
             prompt_parts.append(salt_pan_navigation_prompt)
+        if rock_glacier_navigation_prompt:
+            prompt_parts.append(rock_glacier_navigation_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3751,6 +3786,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         whitewater_prompt = build_whitewater_prompt(whitewater_intent)
         formatted_whitewater = format_whitewater_response(whitewater_intent)
         whitewater_info_payload = formatted_whitewater.get("whitewater_info")
+
+    rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(question)
+    rock_glacier_navigation_prompt = ""
+    rock_glacier_navigation_info_payload = None
+    if rock_glacier_navigation_intent:
+        rock_glacier_navigation_prompt = build_rock_glacier_navigation_prompt(question)
+        _, rock_glacier_navigation_info_payload = (
+            format_rock_glacier_navigation_response(question)
+        )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4591,6 +4635,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': salt_pan_navigation_info_payload, event_name: salt_pan_navigation_info_payload})}\n\n"
         if event_name != "salt_pan_navigation_info":
             yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': salt_pan_navigation_info_payload})}\n\n"
+    if (
+        rock_glacier_navigation_intent
+        and rock_glacier_navigation_info_payload
+    ):
+        event_name = (
+            rock_glacier_navigation_info_payload.get(
+                "action", "rock_glacier_navigation_info"
+            )
+            if isinstance(rock_glacier_navigation_info_payload, dict)
+            else "rock_glacier_navigation_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(rock_glacier_navigation_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rock_glacier_navigation_info_payload, event_name: rock_glacier_navigation_info_payload})}\n\n"
+        if event_name != "rock_glacier_navigation_info":
+            yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rock_glacier_navigation_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5521,6 +5580,10 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["aufeis_crossing_prompt"] = aufeis_crossing_prompt
     if salt_pan_navigation_prompt:
         stream_kwargs["salt_pan_navigation_prompt"] = salt_pan_navigation_prompt
+    if rock_glacier_navigation_prompt:
+        stream_kwargs["rock_glacier_navigation_prompt"] = (
+            rock_glacier_navigation_prompt
+        )
 
     for chunk in generate_llm_response_stream(
         question,

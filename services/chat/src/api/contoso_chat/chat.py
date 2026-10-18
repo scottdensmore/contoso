@@ -74,6 +74,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.rock_glacier_navigation import (
+    format_rock_glacier_navigation_response,
+    is_rock_glacier_navigation_query,
+)
 from contoso_chat.salt_pan_navigation import (
     format_salt_pan_navigation_response,
     is_salt_pan_navigation_query,
@@ -422,5 +426,15 @@ def handle_salt_pan_navigation_intent(
     }
 
 
-
-
+def handle_rock_glacier_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format rock glacier navigation intent in the cascade."""
+    if not is_rock_glacier_navigation_query(question):
+        return None
+    answer, info = format_rock_glacier_navigation_response(question)
+    return {
+        "rock_glacier_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }

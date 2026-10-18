@@ -724,6 +724,16 @@ def detect_glacier_ski_traverse_intent(message: str) -> bool:
         "sun cup",
         "ablation blade",
         "ablation spire",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

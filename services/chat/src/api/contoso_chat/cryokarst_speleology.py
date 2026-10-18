@@ -692,6 +692,16 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "undara",
         "manjanggul",
         "cueva de los verdes",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
     ]
 
     # If it is not explicitly about cryokarst / glacier caves, apply all exclusions
@@ -722,6 +732,16 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "undara",
         "manjanggul",
         "cueva de los verdes",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
