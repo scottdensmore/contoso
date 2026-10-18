@@ -680,6 +680,15 @@ def detect_lava_tube_biospeleology_intent(message: str) -> bool:
         "pot-hole",
         "tundra lichen",
         "glacier ski",
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
     ]
 
     if not is_explicit_lava_tube:
@@ -694,6 +703,15 @@ def detect_lava_tube_biospeleology_intent(message: str) -> bool:
         "shipping tracking",
         "rentals",
         "rental",
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

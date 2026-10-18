@@ -474,6 +474,15 @@ def detect_smoke_advisory_intent(message: str) -> bool:
         "anemometry",
         "rentals",
         "rental",
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
     ]
     if any(k in q for k in exclusions):
         return False

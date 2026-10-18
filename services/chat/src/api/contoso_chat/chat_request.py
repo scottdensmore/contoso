@@ -397,6 +397,11 @@ from .snowshoe_mountaineering import (
     detect_snowshoe_intent,
     format_snowshoe_response,
 )
+from .solfatara_navigation import (
+    build_solfatara_navigation_prompt,
+    detect_solfatara_navigation_intent,
+    format_solfatara_navigation_response,
+)
 from .stargazing import (
     build_stargazing_prompt,
     detect_stargazing_intent,
@@ -765,6 +770,7 @@ async def generate_llm_response(
     lava_tube_biospeleology_prompt: str = "",
     kelp_freediving_prompt: str = "",
     penitentes_navigation_prompt: str = "",
+    solfatara_navigation_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -941,6 +947,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{kelp_freediving_prompt}"
         if penitentes_navigation_prompt:
             local_system = f"{local_system}\n\n{penitentes_navigation_prompt}"
+        if solfatara_navigation_prompt:
+            local_system = f"{local_system}\n\n{solfatara_navigation_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1184,6 +1192,8 @@ async def generate_llm_response(
             prompt_parts.append(kelp_freediving_prompt)
         if penitentes_navigation_prompt:
             prompt_parts.append(penitentes_navigation_prompt)
+        if solfatara_navigation_prompt:
+            prompt_parts.append(solfatara_navigation_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1901,6 +1911,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             question
         )
 
+    solfatara_navigation_intent = detect_solfatara_navigation_intent(question)
+    solfatara_navigation_prompt = ""
+    solfatara_navigation_info_payload = None
+    if solfatara_navigation_intent:
+        solfatara_navigation_prompt = build_solfatara_navigation_prompt(question)
+        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(
+            question
+        )
+
     foraging_intent = detect_foraging_intent(question)
     foraging_prompt = ""
     foraging_info_payload = None
@@ -2591,6 +2610,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
     if penitentes_navigation_prompt:
         llm_kwargs["penitentes_navigation_prompt"] = penitentes_navigation_prompt
+    if solfatara_navigation_prompt:
+        llm_kwargs["solfatara_navigation_prompt"] = solfatara_navigation_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2716,6 +2737,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["tundra_lichen_info"] = tundra_lichen_info_payload
     if penitentes_navigation_intent and penitentes_navigation_info_payload:
         response_payload["penitentes_navigation_info"] = penitentes_navigation_info_payload
+    if solfatara_navigation_intent and solfatara_navigation_info_payload:
+        response_payload["solfatara_navigation_info"] = solfatara_navigation_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -2892,6 +2915,7 @@ def generate_llm_response_stream(
     slickrock_burro_prompt: str = "",
     tundra_lichen_prompt: str = "",
     penitentes_navigation_prompt: str = "",
+    solfatara_navigation_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3066,6 +3090,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{tundra_lichen_prompt}"
         if penitentes_navigation_prompt:
             local_system = f"{local_system}\n\n{penitentes_navigation_prompt}"
+        if solfatara_navigation_prompt:
+            local_system = f"{local_system}\n\n{solfatara_navigation_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3254,6 +3280,8 @@ def generate_llm_response_stream(
             prompt_parts.append(tundra_lichen_prompt)
         if penitentes_navigation_prompt:
             prompt_parts.append(penitentes_navigation_prompt)
+        if solfatara_navigation_prompt:
+            prompt_parts.append(solfatara_navigation_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3779,6 +3807,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if penitentes_navigation_intent:
         penitentes_navigation_prompt = build_penitentes_navigation_prompt(question)
         _, penitentes_navigation_info_payload = format_penitentes_navigation_response(
+            question
+        )
+
+    solfatara_navigation_intent = detect_solfatara_navigation_intent(question)
+    solfatara_navigation_prompt = ""
+    solfatara_navigation_info_payload = None
+    if solfatara_navigation_intent:
+        solfatara_navigation_prompt = build_solfatara_navigation_prompt(question)
+        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(
             question
         )
 
@@ -4446,6 +4483,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': penitentes_navigation_info_payload, event_name: penitentes_navigation_info_payload})}\n\n"
         if event_name != "penitentes_navigation_info":
             yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': penitentes_navigation_info_payload})}\n\n"
+    if solfatara_navigation_intent and solfatara_navigation_info_payload:
+        event_name = (
+            solfatara_navigation_info_payload.get("action", "solfatara_navigation_info")
+            if isinstance(solfatara_navigation_info_payload, dict)
+            else "solfatara_navigation_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(solfatara_navigation_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': solfatara_navigation_info_payload, event_name: solfatara_navigation_info_payload})}\n\n"
+        if event_name != "solfatara_navigation_info":
+            yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': solfatara_navigation_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5370,6 +5417,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["tundra_lichen_prompt"] = tundra_lichen_prompt
     if penitentes_navigation_prompt:
         stream_kwargs["penitentes_navigation_prompt"] = penitentes_navigation_prompt
+    if solfatara_navigation_prompt:
+        stream_kwargs["solfatara_navigation_prompt"] = solfatara_navigation_prompt
 
     for chunk in generate_llm_response_stream(
         question,

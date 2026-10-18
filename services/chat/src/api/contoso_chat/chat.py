@@ -82,6 +82,10 @@ from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
 )
+from contoso_chat.solfatara_navigation import (
+    format_solfatara_navigation_response,
+    is_solfatara_navigation_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -367,6 +371,18 @@ def handle_penitentes_navigation_intent(question: str) -> Optional[dict[str, Any
     answer, info = format_penitentes_navigation_response(question)
     return {
         "penitentes_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_solfatara_navigation_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format solfatara navigation intent in the cascade."""
+    if not is_solfatara_navigation_query(question):
+        return None
+    answer, info = format_solfatara_navigation_response(question)
+    return {
+        "solfatara_navigation_info": info,
         "action": info.get("action"),
         "answer": answer,
     }

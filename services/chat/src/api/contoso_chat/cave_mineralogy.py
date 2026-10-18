@@ -562,6 +562,15 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "undara",
         "manjanggul",
         "cueva de los verdes",
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
     ]
     if any(k in q for k in exclusions):
         return None

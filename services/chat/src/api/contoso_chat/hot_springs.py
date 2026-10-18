@@ -396,6 +396,27 @@ def detect_hot_spring_intent(query: str) -> Optional[HotSpringIntent]:
 
     q_lower = query.lower()
 
+    solfatara_exclusions = (
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
+        "ten thousand smokes",
+        "novarupta",
+        "bumpass hell",
+        "el tatio",
+        "mutnovsky",
+        "kverkfjoll",
+        "kverkfjöll",
+    )
+    if any(ex in q_lower for ex in solfatara_exclusions):
+        return None
+
     # Primary hot spring identifiers
     hot_spring_patterns = [
         r"\bhot\s+spring(?:s)?\b",
