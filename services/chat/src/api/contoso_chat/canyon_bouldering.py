@@ -304,6 +304,16 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "mount stephen talus",
         "scree gaiters",
         "scree gaiter",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
     ]
     if any(ex in q for ex in exclusions):
         return None

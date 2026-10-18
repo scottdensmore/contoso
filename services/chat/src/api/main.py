@@ -613,6 +613,10 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.rock_glacier_navigation import (
+    detect_rock_glacier_navigation_intent,
+    format_rock_glacier_navigation_response,
+)
 from contoso_chat.routers.aufeis_crossing import (
     router as aufeis_crossing_router,
 )
@@ -645,6 +649,9 @@ from contoso_chat.routers.penitentes_navigation import (
     router as penitentes_navigation_router,
 )
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
+from contoso_chat.routers.rock_glacier_navigation import (
+    router as rock_glacier_navigation_router,
+)
 from contoso_chat.routers.salt_pan_navigation import (
     router as salt_pan_navigation_router,
 )
@@ -1221,6 +1228,17 @@ app.include_router(
     tags=["salt-pan-navigation"],
 )
 logger.info("Registered Arid Playas & Salt Pan Crust Navigation router (/salt-pan-navigation, /api/salt-pan-navigation)")
+app.include_router(
+    rock_glacier_navigation_router,
+    prefix="/rock-glacier-navigation",
+    tags=["rock-glacier-navigation"],
+)
+app.include_router(
+    rock_glacier_navigation_router,
+    prefix="/api/rock-glacier-navigation",
+    tags=["rock-glacier-navigation"],
+)
+logger.info("Registered High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation router (/rock-glacier-navigation, /api/rock-glacier-navigation)")
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1498,6 +1516,7 @@ async def create_response(request: ChatRequest):
             solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
             aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
             salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
+            rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1921,6 +1940,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["salt_pan_navigation_info"] = sp_info
                 mock_payload["answer"] = sp_answer
+            if rock_glacier_navigation_intent:
+                rg_answer, rg_info = format_rock_glacier_navigation_response(
+                    request.question
+                )
+                mock_payload["rock_glacier_navigation_info"] = rg_info
+                mock_payload["answer"] = rg_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2435,6 +2460,7 @@ async def create_response_stream(request: ChatRequest):
                 solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
                 aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
                 salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
+                rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2829,6 +2855,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': sp_payload, event_name: sp_payload})}\n\n"
                     if event_name != "salt_pan_navigation_info":
                         yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
+                if rock_glacier_navigation_intent:
+                    _, rg_payload = format_rock_glacier_navigation_response(
+                        request.question
+                    )
+                    event_name = (
+                        rg_payload.get("action", "rock_glacier_navigation_info")
+                        if isinstance(rg_payload, dict)
+                        else "rock_glacier_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(rg_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
+                    if event_name != "rock_glacier_navigation_info":
+                        yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3669,6 +3708,11 @@ async def create_response_stream(request: ChatRequest):
                 elif ski_tour_intent:
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     mock_chunks = [str(formatted_tour.get("answer", ""))]
+                elif rock_glacier_navigation_intent:
+                    rg_answer, _ = format_rock_glacier_navigation_response(
+                        request.question
+                    )
+                    mock_chunks = [str(rg_answer)]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4071,6 +4115,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_solfatara_navigation_intent(request.question)
                 or detect_aufeis_crossing_intent(request.question)
                 or detect_salt_pan_navigation_intent(request.question)
+                or detect_rock_glacier_navigation_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

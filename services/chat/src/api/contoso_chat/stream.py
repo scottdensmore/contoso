@@ -75,6 +75,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.rock_glacier_navigation import (
+    format_rock_glacier_navigation_response,
+    is_rock_glacier_navigation_query,
+)
 from contoso_chat.salt_pan_navigation import (
     format_salt_pan_navigation_response,
     is_salt_pan_navigation_query,
@@ -782,5 +786,23 @@ async def generate_salt_pan_navigation_stream_events(
     yield "data: [DONE]\n\n"
 
 
+async def generate_rock_glacier_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for rock glacier navigation queries."""
+    if not is_rock_glacier_navigation_query(question):
+        return
 
+    answer, rg_payload = format_rock_glacier_navigation_response(question)
+    event_name = str(rg_payload.get("action", "rock_glacier_navigation_info"))
 
+    yield f"event: metadata\ndata: {json.dumps(rg_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
+    if event_name != "rock_glacier_navigation_info":
+        yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"

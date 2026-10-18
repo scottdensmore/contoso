@@ -668,6 +668,16 @@ def detect_scree_running_intent(message: str) -> bool:
         "crashpad",
         "blubber pad",
         "pebble wrestling",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
