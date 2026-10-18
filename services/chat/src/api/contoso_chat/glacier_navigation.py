@@ -413,6 +413,19 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
     if any(ex in q for ex in glacier_ski_traverse_exclusions):
         return None
 
+    # High-alpine snowfield sun-cup & penitentes crampon navigation exclusions
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+    ]
+    if any(ex in q for ex in penitentes_exclusions):
+        return None
+
     # Glacier navigation keywords
     glacier_keywords = [
         "glacier",

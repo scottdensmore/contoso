@@ -260,6 +260,13 @@ def detect_snowshoe_intent(message: str) -> Optional[SnowshoeIntent]:
         "peatland",
         "quaking bog",
         "sphagnum",
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
     ]
     if any(ex in q for ex in exclusions):
         return None

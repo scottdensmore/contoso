@@ -360,6 +360,18 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
     if any(ex in q_norm for ex in scree_running_exclusions):
         return None
 
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+    ]
+    if any(ex in q or ex in q_norm for ex in penitentes_exclusions):
+        return None
+
     # Disambiguation guards:
     # 1. Reject rock climbing queries that mention crag/sport/bouldering/trad rack without glacier context
     rock_climbing_terms = [
