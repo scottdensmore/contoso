@@ -3,6 +3,10 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.aufeis_crossing import (
+    format_aufeis_crossing_response,
+    is_aufeis_crossing_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -728,5 +732,28 @@ async def generate_solfatara_navigation_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_aufeis_crossing_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for aufeis crossing queries."""
+    if not is_aufeis_crossing_query(question):
+        return
+
+    answer, ac_payload = format_aufeis_crossing_response(question)
+    event_name = str(ac_payload.get("action", "aufeis_crossing_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ac_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'aufeis_crossing_info': ac_payload, event_name: ac_payload})}\n\n"
+    if event_name != "aufeis_crossing_info":
+        yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': ac_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 

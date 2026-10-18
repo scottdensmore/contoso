@@ -2,6 +2,10 @@
 
 from typing import Any, Optional
 
+from contoso_chat.aufeis_crossing import (
+    format_aufeis_crossing_response,
+    is_aufeis_crossing_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -386,5 +390,18 @@ def handle_solfatara_navigation_intent(question: str) -> Optional[dict[str, Any]
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_aufeis_crossing_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format aufeis crossing intent in the cascade."""
+    if not is_aufeis_crossing_query(question):
+        return None
+    answer, info = format_aufeis_crossing_response(question)
+    return {
+        "aufeis_crossing_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 

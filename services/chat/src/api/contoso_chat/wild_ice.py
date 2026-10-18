@@ -149,6 +149,17 @@ def calculate_wild_ice(request: WildIceRequest) -> WildIceResponse:
 
 
 def _is_excluded_domain(q: str, has_explicit: bool) -> bool:
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(k in q for k in aufeis_exclusions):
+        return True
     if has_explicit:
         return False
     all_excluded = [
@@ -160,6 +171,8 @@ def _is_excluded_domain(q: str, has_explicit: bool) -> bool:
         "waterfall ice", "dry tooling", "crampons", "belay",
         "fishing boat", "boat rental", "swimming", "kayak rental",
         "canoe rental",
+        "aufeis", "naled", "overflow ice", "frost blister",
+        "icing sheet", "ulakhan-taryn", "candle ice",
     ]
     return any(k in q for k in all_excluded)
 

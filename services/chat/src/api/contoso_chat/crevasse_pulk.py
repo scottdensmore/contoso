@@ -613,6 +613,13 @@ def detect_crevasse_pulk_intent(message: str) -> bool:
         "bagley ski",
         "bagley icefield ski",
         "berner oberland",
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
     ]
     if any(ex in q for ex in exclusions):
         return False
