@@ -344,6 +344,18 @@ def detect_sea_kayaking_intent(query: str) -> Optional[SeaKayakingIntent]:
         "rock climbing clinic",
         "glacier travel",
         "mount rainier",
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
     ]
     if any(u in q for u in unrelated):
         return None

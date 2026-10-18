@@ -375,6 +375,18 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "undara",
         "manjanggul",
         "cueva de los verdes",
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
     ]
     if any(ex in q for ex in exclusions):
         return None
