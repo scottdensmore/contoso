@@ -717,6 +717,13 @@ def detect_glacier_ski_traverse_intent(message: str) -> bool:
         "pulk harness",
         "glacial sledging",
         "haul shaft",
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

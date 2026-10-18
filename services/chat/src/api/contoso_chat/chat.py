@@ -62,6 +62,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.penitentes_navigation import (
+    format_penitentes_navigation_response,
+    is_penitentes_navigation_query,
+)
 from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
@@ -354,4 +358,17 @@ def handle_kelp_freediving_intent(question: str) -> Optional[dict[str, Any]]:
         "kelp_freediving_info": formatted.get("kelp_freediving_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+
+def handle_penitentes_navigation_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format penitentes navigation intent in the cascade."""
+    if not is_penitentes_navigation_query(question):
+        return None
+    answer, info = format_penitentes_navigation_response(question)
+    return {
+        "penitentes_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 

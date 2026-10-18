@@ -63,6 +63,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.penitentes_navigation import (
+    format_penitentes_navigation_response,
+    is_penitentes_navigation_query,
+)
 from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
@@ -676,4 +680,27 @@ async def generate_kelp_freediving_stream_events(question: str) -> AsyncGenerato
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_penitentes_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for penitentes navigation queries."""
+    if not is_penitentes_navigation_query(question):
+        return
+
+    answer, pn_payload = format_penitentes_navigation_response(question)
+    event_name = str(pn_payload.get("action", "penitentes_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+    if event_name != "penitentes_navigation_info":
+        yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 

@@ -492,6 +492,10 @@ from contoso_chat.packrafting import (
     get_packraft_route_by_id,
     get_packraft_routes,
 )
+from contoso_chat.penitentes_navigation import (
+    detect_penitentes_navigation_intent,
+    format_penitentes_navigation_response,
+)
 from contoso_chat.permits import (
     ParkPassInfo,
     PermitLotteryInfo,
@@ -630,6 +634,9 @@ from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_rou
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
+from contoso_chat.routers.penitentes_navigation import (
+    router as penitentes_navigation_router,
+)
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.scree_running import router as scree_running_router
@@ -1151,6 +1158,16 @@ app.include_router(
 )
 app.include_router(tundra_lichen_router, prefix="/tundra-lichen", tags=["tundra-lichen"])
 app.include_router(tundra_lichen_router, prefix="/api/tundra-lichen", tags=["tundra-lichen"])
+app.include_router(
+    penitentes_navigation_router,
+    prefix="/penitentes-navigation",
+    tags=["penitentes-navigation"],
+)
+app.include_router(
+    penitentes_navigation_router,
+    prefix="/api/penitentes-navigation",
+    tags=["penitentes-navigation"],
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1253,6 +1270,7 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/health")
 @app.get("/healthz")
 @app.get("/ready")
 async def health():
@@ -1423,6 +1441,7 @@ async def create_response(request: ChatRequest):
             scree_running_intent = detect_scree_running_intent(request.question)
             slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
+            penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1822,6 +1841,12 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_tundra_lichen.get(
                     "answer", mock_payload["answer"]
                 )
+            if penitentes_navigation_intent:
+                pn_answer, pn_info = format_penitentes_navigation_response(
+                    request.question
+                )
+                mock_payload["penitentes_navigation_info"] = pn_info
+                mock_payload["answer"] = pn_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2277,6 +2302,8 @@ async def create_response_stream(request: ChatRequest):
                         except (json.JSONDecodeError, TypeError) as exc:
                             logger.debug("Ignoring non-JSON SSE chunk: %s", exc)
                         yield chunk
+                    elif chunk.startswith("event: "):
+                        yield chunk
                     else:
                         accumulated_chunks.append(chunk)
                         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
@@ -2330,6 +2357,7 @@ async def create_response_stream(request: ChatRequest):
                 scree_running_intent = detect_scree_running_intent(request.question)
                 slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
+                penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2672,6 +2700,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
                     if event_name != "tundra_lichen_info":
                         yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
+                if penitentes_navigation_intent:
+                    _, pn_payload = format_penitentes_navigation_response(
+                        request.question
+                    )
+                    event_name = (
+                        pn_payload.get("action", "penitentes_navigation_info")
+                        if isinstance(pn_payload, dict)
+                        else "penitentes_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+                    if event_name != "penitentes_navigation_info":
+                        yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3565,6 +3606,11 @@ async def create_response_stream(request: ChatRequest):
                         "tundra_lichen", request.question
                     )
                     mock_chunks = [str(formatted_tundra_lichen.get("answer", ""))]
+                elif penitentes_navigation_intent:
+                    pn_answer, _ = format_penitentes_navigation_response(
+                        request.question
+                    )
+                    mock_chunks = [str(pn_answer)]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [str(formatted_foraging.get("answer", ""))]
@@ -3889,6 +3935,8 @@ async def create_response_stream(request: ChatRequest):
                     order_tracking=captured_order_tracking,
                 )
 
+            if detect_penitentes_navigation_intent(request.question):
+                yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(

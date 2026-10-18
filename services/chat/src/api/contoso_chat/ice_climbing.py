@@ -451,6 +451,18 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
     if any(vx in q for vx in via_ferrata_exclusions):
         return None
 
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+    ]
+    if any(px in q for px in penitentes_exclusions):
+        return None
+
     # Waterfall ice climbing keywords
     ice_keywords = [
         "ice climb",
