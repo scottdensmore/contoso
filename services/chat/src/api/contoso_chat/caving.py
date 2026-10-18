@@ -411,6 +411,26 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
     if any(cx in q for cx in cryokarst_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against lava tube biospeleology in lava_tube_biospeleology.py!
+    lava_tube_exclusions = [
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
+    ]
+    if any(lx in q for lx in lava_tube_exclusions):
+        return None
+
     # Caving domain keywords
     caving_keywords = [
         "caving",

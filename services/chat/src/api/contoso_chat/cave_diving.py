@@ -361,6 +361,20 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "helictite",
         "anthodite",
         "mineralogy",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
     ]
     if any(ex in q for ex in exclusions):
         return None

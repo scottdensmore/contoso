@@ -38,6 +38,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
     format_mudflat_response,
@@ -322,5 +326,16 @@ def handle_scree_running_intent(question: str) -> Optional[dict[str, Any]]:
     formatted = format_scree_running_response("scree_running", question)
     return {
         "scree_running_info": formatted.get("scree_running_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_lava_tube_biospeleology_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format lava tube biospeleology intent in the cascade."""
+    if not detect_lava_tube_biospeleology_intent(question):
+        return None
+    formatted = format_lava_tube_biospeleology_response("lava_tube_biospeleology", question)
+    return {
+        "lava_tube_biospeleology_info": formatted.get("lava_tube_biospeleology_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
