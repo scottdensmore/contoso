@@ -75,6 +75,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.salt_pan_navigation import (
+    format_salt_pan_navigation_response,
+    is_salt_pan_navigation_query,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -754,6 +758,29 @@ async def generate_aufeis_crossing_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_salt_pan_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for salt pan navigation queries."""
+    if not is_salt_pan_navigation_query(question):
+        return
+
+    answer, sp_payload = format_salt_pan_navigation_response(question)
+    event_name = str(sp_payload.get("action", "salt_pan_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sp_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': sp_payload, event_name: sp_payload})}\n\n"
+    if event_name != "salt_pan_navigation_info":
+        yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
 

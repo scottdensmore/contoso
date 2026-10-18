@@ -314,6 +314,16 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "peatland",
         "quaking bog",
         "sphagnum",
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
     ]
     if any(ex in q for ex in exclusions):
         return None

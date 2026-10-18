@@ -74,6 +74,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.salt_pan_navigation import (
+    format_salt_pan_navigation_response,
+    is_salt_pan_navigation_query,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
@@ -402,6 +406,21 @@ def handle_aufeis_crossing_intent(question: str) -> Optional[dict[str, Any]]:
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_salt_pan_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format salt pan navigation intent in the cascade."""
+    if not is_salt_pan_navigation_query(question):
+        return None
+    answer, info = format_salt_pan_navigation_response(question)
+    return {
+        "salt_pan_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 
 

@@ -636,6 +636,16 @@ def detect_slickrock_burro_intent(message: str) -> bool:
         "burro race",
         "pack burro race",
         "burro racing",
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
     ]
 
     # Explicit exclusions check

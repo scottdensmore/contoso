@@ -645,6 +645,9 @@ from contoso_chat.routers.penitentes_navigation import (
     router as penitentes_navigation_router,
 )
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
+from contoso_chat.routers.salt_pan_navigation import (
+    router as salt_pan_navigation_router,
+)
 from contoso_chat.routers.sandboarding import router as sandboarding_router
 from contoso_chat.routers.scree_running import router as scree_running_router
 from contoso_chat.routers.slickrock_burro import (
@@ -685,6 +688,10 @@ from contoso_chat.safety import (
     list_emergency_protocols,
     record_beacon_checkin,
     register_safety_beacon,
+)
+from contoso_chat.salt_pan_navigation import (
+    detect_salt_pan_navigation_intent,
+    format_salt_pan_navigation_response,
 )
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
@@ -1203,6 +1210,17 @@ app.include_router(
     tags=["aufeis-crossing"],
 )
 logger.info("Registered Subarctic River Aufeis & Overflow Ice Sheet Crossing router (/aufeis-crossing, /api/aufeis-crossing)")
+app.include_router(
+    salt_pan_navigation_router,
+    prefix="/salt-pan-navigation",
+    tags=["salt-pan-navigation"],
+)
+app.include_router(
+    salt_pan_navigation_router,
+    prefix="/api/salt-pan-navigation",
+    tags=["salt-pan-navigation"],
+)
+logger.info("Registered Arid Playas & Salt Pan Crust Navigation router (/salt-pan-navigation, /api/salt-pan-navigation)")
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1479,6 +1497,7 @@ async def create_response(request: ChatRequest):
             penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
             solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
             aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
+            salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1896,6 +1915,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["aufeis_crossing_info"] = ac_info
                 mock_payload["answer"] = ac_answer
+            if salt_pan_navigation_intent:
+                sp_answer, sp_info = format_salt_pan_navigation_response(
+                    request.question
+                )
+                mock_payload["salt_pan_navigation_info"] = sp_info
+                mock_payload["answer"] = sp_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2409,6 +2434,7 @@ async def create_response_stream(request: ChatRequest):
                 penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
                 solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
                 aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
+                salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2790,6 +2816,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'aufeis_crossing_info': ac_payload, event_name: ac_payload})}\n\n"
                     if event_name != "aufeis_crossing_info":
                         yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': ac_payload})}\n\n"
+                if salt_pan_navigation_intent:
+                    _, sp_payload = format_salt_pan_navigation_response(
+                        request.question
+                    )
+                    event_name = (
+                        sp_payload.get("action", "salt_pan_navigation_info")
+                        if isinstance(sp_payload, dict)
+                        else "salt_pan_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(sp_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': sp_payload, event_name: sp_payload})}\n\n"
+                    if event_name != "salt_pan_navigation_info":
+                        yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3698,6 +3737,11 @@ async def create_response_stream(request: ChatRequest):
                         request.question
                     )
                     mock_chunks = [str(ac_answer)]
+                elif salt_pan_navigation_intent:
+                    sp_answer, _ = format_salt_pan_navigation_response(
+                        request.question
+                    )
+                    mock_chunks = [str(sp_answer)]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [str(formatted_foraging.get("answer", ""))]
@@ -4026,6 +4070,7 @@ async def create_response_stream(request: ChatRequest):
                 detect_penitentes_navigation_intent(request.question)
                 or detect_solfatara_navigation_intent(request.question)
                 or detect_aufeis_crossing_intent(request.question)
+                or detect_salt_pan_navigation_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"
