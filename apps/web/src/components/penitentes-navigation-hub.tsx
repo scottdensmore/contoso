@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   AblationMorphologyType,
   CramponTraversalTechnique,
@@ -616,23 +616,26 @@ export default function PenitentesNavigationHub() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {gearItems.map((item) => {
             const isChecked = Boolean(checkedGearIds[item.id]);
+            const checkboxId = `gear-${item.id}`;
             return (
-              <label
+              <div
                 key={item.id}
-                htmlFor={`gear-${item.id}`}
-                className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:border-sky-400 dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:border-sky-400 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <input
-                  id={`gear-${item.id}`}
+                  id={checkboxId}
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => toggleGearItem(item.id)}
                   className="mt-1 h-4 w-4 rounded border-zinc-300 text-sky-600 focus:ring-sky-500"
                 />
                 <div className="space-y-1">
-                  <div className="font-semibold text-zinc-900 dark:text-zinc-100">
+                  <label
+                    htmlFor={checkboxId}
+                    className="cursor-pointer font-semibold text-zinc-900 dark:text-zinc-100"
+                  >
                     {item.name}
-                  </div>
+                  </label>
                   <div className="text-xs text-zinc-500 dark:text-zinc-400">
                     Category: {item.category} • Weight: {item.weightGrams}g
                   </div>
@@ -640,7 +643,7 @@ export default function PenitentesNavigationHub() {
                     {item.rationale}
                   </p>
                 </div>
-              </label>
+              </div>
             );
           })}
         </div>
