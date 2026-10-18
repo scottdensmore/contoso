@@ -1,0 +1,130 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+  NEXT_TELEMETRY_DISABLED: '1'
+  TOOLCHAIN_CHECK_ALLOW_NON_MISE: '1'
+
+jobs:
+  script-tests:
+    name: Script guardrails
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: make venv toolchain-doctor env-contract-check test-scripts PYTHON_BASE=python
+      - run: git diff --exit-code
+
+  web-ci:
+    name: Web lint, types, unit tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:55432/contoso-db
+      NEXT_BUILD_SKIP_DB: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: make -C apps/web setup ci
+      - run: git diff --exit-code
+
+  chat-ci:
+    name: Chat core lint, types and unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.11'
+      - run: make venv setup-chat PYTHON_BASE=python CHAT_SETUP_PROFILE=core
+      - run: make check-scripts quick-ci-chat PYTHON_BASE=python
+      - run: git diff --exit-code
+
+  integration-e2e:
+    name: Production Compose and Chromium journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DOCKER_COMPOSE: docker compose --project-name contoso-ci -f docker-compose.yml -f .github/ci-compose.yml
+      E2E_BASE_URL: http://localhost:3100
+      KEEP_STACK: '1'
+      PROJECT_ID: ci-no-cloud-project
+      DISCOVERY_ENGINE_APP_ID: ''
+      DISCOVERY_ENGINE_DATASTORE_ID: ''
+      CHAT_INSTALL_LOCAL_STACK: '0'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: make venv PYTHON_BASE=python
+      - run: make -C apps/web setup
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:55432/contoso-db
+      - name: Install Chromium on disposable runner
+        run: npm --prefix apps/web exec -- playwright install --with-deps chromium
+      - name: Validate isolated Compose configuration
+        run: |
+          docker compose version
+          $DOCKER_COMPOSE config --quiet
+      - name: Build production images and run core contract smoke
+        run: make e2e-smoke-lite PYTHON_BASE=python
+      - name: Run all Chromium journeys without retries
+        run: make test-e2e
+      - name: Capture dependency health snapshot
+        if: always()
+        run: |
+          mkdir -p ci-diagnostics
+          curl --silent --show-error --max-time 10 http://127.0.0.1:8100/health/dependencies > ci-diagnostics/e2e-dependencies-health.json || true
+          $DOCKER_COMPOSE ps --all > ci-diagnostics/compose-status.txt
+          $DOCKER_COMPOSE logs --no-color --tail=200 db chat web > ci-diagnostics/compose.log
+          echo 'Core-profile contract smoke and browser journeys do not validate live cloud answers or the optional local-LLM profile.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: integration-failure-${{ github.run_attempt }}
+          path: |
+            ci-diagnostics/
+            apps/web/test-results/
+          retention-days: 3
+      - name: Remove this runner's isolated stack
+        if: always()
+        run: $DOCKER_COMPOSE down --volumes --remove-orphans

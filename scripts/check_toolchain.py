@@ -52,20 +52,19 @@ def main() -> int:
         errors.append(str(exc))
         node_version = "unknown"
 
-    python_source = "mise python@3.11"
+    # CI has already selected Python. Do not invoke a tool manager in this mode:
+    # even a version lookup can mutate that manager's installation state.
+    python_source = f"interpreter ({sys.executable})" if allow_non_mise else "mise python@3.11"
+    python_command = (
+        [sys.executable, "--version"]
+        if allow_non_mise
+        else ["mise", "exec", "python@3.11", "--", "python", "--version"]
+    )
     try:
-        python_version = run(["mise", "exec", "python@3.11", "--", "python", "--version"])
+        python_version = run(python_command)
     except Exception as exc:  # noqa: BLE001
-        if not allow_non_mise:
-            errors.append(str(exc))
-            python_version = "unknown"
-        else:
-            try:
-                python_version = run([sys.executable, "--version"])
-                python_source = f"interpreter ({sys.executable})"
-            except Exception as fallback_exc:  # noqa: BLE001
-                errors.append(str(fallback_exc))
-                python_version = "unknown"
+        errors.append(str(exc))
+        python_version = "unknown"
 
     if python_version != "unknown":
         try:

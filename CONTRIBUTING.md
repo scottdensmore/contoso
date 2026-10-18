@@ -64,6 +64,6 @@ Refer to `docs/` for architecture, database, deployment, and release runbooks.
 - For a full local diagnostics bundle (preflight + health payload + compose status/logs), run `make diagnose-chat-local`.
 - If local-provider startup preflight fails, ensure `ollama serve` is running, `ollama pull <LOCAL_MODEL_NAME>` exists, and docker chat uses `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 - If full-profile integration smoke fails, run `make e2e-smoke-full KEEP_STACK=1` and inspect compose logs (`docker compose logs chat`).
-- All validation runs locally; GitHub Actions workflows are disabled to preserve action minutes.
+- GitHub Actions runs script guardrails, web build/unit tests, chat core unit tests, and Chromium journeys against an isolated Compose stack on pull requests and main pushes. The optional full local-LLM profile and live cloud answers are not validated by CI.
 - Keyboard and focus journeys (e.g. evaluating tab order, focus-out dismissal, or boundary visibility) must be evaluated against a production build (`make build-web` or compose stack). Next.js dev mode injects dev overlay elements (such as the issues portal and error badges) into the DOM that alter tab stop sequences and focus behavior. See `.claude/agents/ui-review.md`.
 - TypeScript is pinned to `^5` in `apps/web/package.json` because `eslint-config-next` bundles `typescript-eslint` with peer dependency `typescript <6.1.0`. TypeScript 7 will be adopted once supported upstream (see `apps/web/README.md`).
