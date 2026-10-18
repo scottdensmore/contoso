@@ -83,6 +83,10 @@ from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
 )
+from contoso_chat.solfatara_navigation import (
+    format_solfatara_navigation_response,
+    is_solfatara_navigation_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -696,6 +700,28 @@ async def generate_penitentes_navigation_stream_events(
     yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
     if event_name != "penitentes_navigation_info":
         yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_solfatara_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for solfatara navigation queries."""
+    if not is_solfatara_navigation_query(question):
+        return
+
+    answer, sn_payload = format_solfatara_navigation_response(question)
+    event_name = str(sn_payload.get("action", "solfatara_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': sn_payload, event_name: sn_payload})}\n\n"
+    if event_name != "solfatara_navigation_info":
+        yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': sn_payload})}\n\n"
 
     tokens = answer.split(" ")
     for token in tokens:

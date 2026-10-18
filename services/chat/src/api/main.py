@@ -644,6 +644,9 @@ from contoso_chat.routers.slickrock_burro import (
     router as slickrock_burro_router,
 )
 from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
+from contoso_chat.routers.solfatara_navigation import (
+    router as solfatara_navigation_router,
+)
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
@@ -780,6 +783,10 @@ from contoso_chat.snowshoe_mountaineering import (
     get_snowshoe_gear,
     get_snowshoe_route,
     get_snowshoe_routes,
+)
+from contoso_chat.solfatara_navigation import (
+    detect_solfatara_navigation_intent,
+    format_solfatara_navigation_response,
 )
 from contoso_chat.stargazing import (
     MeteorShowerModel,
@@ -1168,6 +1175,16 @@ app.include_router(
     prefix="/api/penitentes-navigation",
     tags=["penitentes-navigation"],
 )
+app.include_router(
+    solfatara_navigation_router,
+    prefix="/solfatara-navigation",
+    tags=["solfatara-navigation"],
+)
+app.include_router(
+    solfatara_navigation_router,
+    prefix="/api/solfatara-navigation",
+    tags=["solfatara-navigation"],
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1442,6 +1459,7 @@ async def create_response(request: ChatRequest):
             slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
             penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
+            solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1847,6 +1865,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["penitentes_navigation_info"] = pn_info
                 mock_payload["answer"] = pn_answer
+            if solfatara_navigation_intent:
+                sn_answer, sn_info = format_solfatara_navigation_response(
+                    request.question
+                )
+                mock_payload["solfatara_navigation_info"] = sn_info
+                mock_payload["answer"] = sn_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2358,6 +2382,7 @@ async def create_response_stream(request: ChatRequest):
                 slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
                 penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
+                solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2713,6 +2738,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
                     if event_name != "penitentes_navigation_info":
                         yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
+                if solfatara_navigation_intent:
+                    _, sn_payload = format_solfatara_navigation_response(
+                        request.question
+                    )
+                    event_name = (
+                        sn_payload.get("action", "solfatara_navigation_info")
+                        if isinstance(sn_payload, dict)
+                        else "solfatara_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(sn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': sn_payload, event_name: sn_payload})}\n\n"
+                    if event_name != "solfatara_navigation_info":
+                        yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': sn_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3611,6 +3649,11 @@ async def create_response_stream(request: ChatRequest):
                         request.question
                     )
                     mock_chunks = [str(pn_answer)]
+                elif solfatara_navigation_intent:
+                    sn_answer, _ = format_solfatara_navigation_response(
+                        request.question
+                    )
+                    mock_chunks = [str(sn_answer)]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [str(formatted_foraging.get("answer", ""))]
@@ -3935,7 +3978,7 @@ async def create_response_stream(request: ChatRequest):
                     order_tracking=captured_order_tracking,
                 )
 
-            if detect_penitentes_navigation_intent(request.question):
+            if detect_penitentes_navigation_intent(request.question) or detect_solfatara_navigation_intent(request.question):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:

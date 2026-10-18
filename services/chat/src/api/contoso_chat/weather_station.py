@@ -305,6 +305,8 @@ def detect_weather_station_intent(query: str) -> Optional[WeatherStationIntent]:
         "turtle patrol", "sea turtle", "night via ferrata", "via ferrata",
         "canyon bouldering", "bouldering", "mudflat trekking", "mudflat", "rentals", "rental",
         "smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi",
+        "solfatara", "fumarole", "mofette", "geyserite", "sinter crust",
+        "mudpot", "h2s", "hydrogen sulfide", "sulfur dioxide",
     ]
     if any(k in q for k in exclusions):
         return None
