@@ -614,6 +614,15 @@ def detect_bog_shoeing_intent(message: str) -> bool:
         "smoke",
         "rentals",
         "rental",
+        "mangrove",
+        "pneumatophore",
+        "prop root",
+        "prop-root",
+        "rhizophora",
+        "avicennia",
+        "hell bay",
+        "sundarbans",
+        "oyster encrusted",
     ]
     if any(ex in q for ex in exclusions):
         return False

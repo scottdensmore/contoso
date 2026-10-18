@@ -366,6 +366,15 @@ def detect_sea_kayaking_intent(query: str) -> Optional[SeaKayakingIntent]:
         "devil's punchbowl",
         "air compression blast",
         "littoral cave",
+        "mangrove",
+        "pneumatophore",
+        "prop root",
+        "prop-root",
+        "rhizophora",
+        "avicennia",
+        "hell bay",
+        "sundarbans",
+        "oyster encrusted",
     ]
     if any(u in q for u in unrelated):
         return None

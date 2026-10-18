@@ -362,6 +362,15 @@ def extract_canoe_intent(message: str) -> Optional[CanoeIntent]:
         "mount rainier",
         "ski tour",
         "splitboard",
+        "mangrove",
+        "pneumatophore",
+        "prop root",
+        "prop-root",
+        "rhizophora",
+        "avicennia",
+        "hell bay",
+        "sundarbans",
+        "oyster encrusted",
     ]
     if any(u in q for u in unrelated):
         return None
