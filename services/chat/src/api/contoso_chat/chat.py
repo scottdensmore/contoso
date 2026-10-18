@@ -90,6 +90,10 @@ from contoso_chat.scree_running import (
     detect_scree_running_intent,
     format_scree_running_response,
 )
+from contoso_chat.sea_cave_pneumatics import (
+    format_sea_cave_pneumatics_response,
+    is_sea_cave_pneumatics_query,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
@@ -435,6 +439,20 @@ def handle_rock_glacier_navigation_intent(
     answer, info = format_rock_glacier_navigation_response(question)
     return {
         "rock_glacier_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_sea_cave_pneumatics_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format sea cave pneumatics intent in the cascade."""
+    if not is_sea_cave_pneumatics_query(question):
+        return None
+    answer, info = format_sea_cave_pneumatics_response(question)
+    return {
+        "sea_cave_pneumatics_info": info,
         "action": info.get("action"),
         "answer": answer,
     }

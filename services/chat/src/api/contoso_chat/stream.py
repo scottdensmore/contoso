@@ -91,6 +91,10 @@ from contoso_chat.scree_running import (
     detect_scree_running_intent,
     format_scree_running_response,
 )
+from contoso_chat.sea_cave_pneumatics import (
+    format_sea_cave_pneumatics_response,
+    is_sea_cave_pneumatics_query,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
@@ -800,6 +804,28 @@ async def generate_rock_glacier_navigation_stream_events(
     yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
     if event_name != "rock_glacier_navigation_info":
         yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_sea_cave_pneumatics_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for sea cave pneumatics queries."""
+    if not is_sea_cave_pneumatics_query(question):
+        return
+
+    answer, scp_payload = format_sea_cave_pneumatics_response(question)
+    event_name = str(scp_payload.get("action", "sea_cave_pneumatics_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(scp_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': scp_payload, event_name: scp_payload})}\n\n"
+    if event_name != "sea_cave_pneumatics_info":
+        yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
 
     tokens = answer.split(" ")
     for token in tokens:

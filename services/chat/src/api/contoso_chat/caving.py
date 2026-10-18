@@ -411,6 +411,23 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
     if any(cx in q for cx in cryokarst_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against sea-cave pneumatics & blowholes in sea_cave_pneumatics.py!
+    sea_cave_pneumatics_exclusions = [
+        "blowhole",
+        "sea cave",
+        "sea-cave",
+        "surge channel",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
+    ]
+    if any(scx in q for scx in sea_cave_pneumatics_exclusions):
+        return None
+
     # CRITICAL DISAMBIGUATION: Strictly guard against lava tube biospeleology in lava_tube_biospeleology.py!
     lava_tube_exclusions = [
         "lava tube",

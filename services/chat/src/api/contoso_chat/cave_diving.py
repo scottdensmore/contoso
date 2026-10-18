@@ -387,6 +387,17 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "pneumatocyst",
         "urchin barren",
         "kelp crawl",
+        "blowhole",
+        "sea cave",
+        "sea-cave",
+        "surge channel",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
     ]
     if any(ex in q for ex in exclusions):
         return None

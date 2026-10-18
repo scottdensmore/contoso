@@ -356,8 +356,20 @@ def detect_sea_kayaking_intent(query: str) -> Optional[SeaKayakingIntent]:
         "pneumatocyst",
         "urchin barren",
         "kelp crawl",
+        "blowhole",
+        "sea-cave",
+        "surge channel",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
     ]
     if any(u in q for u in unrelated):
+        return None
+    if "sea cave" in q and "apostle islands" not in q:
         return None
 
     # Alpine huts disambiguation ("San Juan Mountains" in Colorado)

@@ -424,6 +424,24 @@ def detect_coasteering_intent(message: str) -> Optional[CoasteeringIntent]:
     if any(kx in q for kx in kelp_freediving_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against Sea-cave pneumatics & blowholes (sea_cave_pneumatics.py)
+    sea_cave_pneumatics_exclusions = [
+        "blowhole",
+        "sea-cave",
+        "surge channel",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
+    ]
+    if any(scx in q for scx in sea_cave_pneumatics_exclusions):
+        return None
+    if "sea cave" in q and "la jolla" not in q:
+        return None
+
     # Coasteering keywords
     coasteering_keywords = [
         "coasteering",
