@@ -401,6 +401,16 @@ def detect_desert_trekking_intent(message: str) -> Optional[DesertTrekkingIntent
         "refund",
         "order #",
         "return label",
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
     ]
     if any(k in q for k in trail_weather_exclusions):
         return None

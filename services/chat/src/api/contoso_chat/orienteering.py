@@ -346,6 +346,22 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
     if any(k in q for k in ["caving", "speleology", "srt", "abseil", "stalactite", "rebelay", "cave "]):
         return None
 
+    # 3b. Salt pan navigation exclusions
+    salt_pan_exclusions = [
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
+    ]
+    if any(k in q for k in salt_pan_exclusions):
+        return None
+
     # 4. Explicit orienteering keywords
     orienteering_keywords = [
         "orienteering",

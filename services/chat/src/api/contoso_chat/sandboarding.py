@@ -347,6 +347,16 @@ def detect_sandboarding_intent(text: str) -> Optional[SandboardingIntent]:
         "snowshoe",
         "rentals",
         "rental",
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
     ]
     if any(ex in q for ex in exclusions):
         return None
