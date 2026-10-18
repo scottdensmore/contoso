@@ -18,6 +18,11 @@ from .alpine_scuba import (
     detect_alpine_scuba_intent,
     format_alpine_scuba_response,
 )
+from .aufeis_crossing import (
+    build_aufeis_crossing_prompt,
+    detect_aufeis_crossing_intent,
+    format_aufeis_crossing_response,
+)
 from .avalanche import (
     build_avalanche_prompt,
     detect_avalanche_intent,
@@ -771,6 +776,7 @@ async def generate_llm_response(
     kelp_freediving_prompt: str = "",
     penitentes_navigation_prompt: str = "",
     solfatara_navigation_prompt: str = "",
+    aufeis_crossing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -949,6 +955,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{penitentes_navigation_prompt}"
         if solfatara_navigation_prompt:
             local_system = f"{local_system}\n\n{solfatara_navigation_prompt}"
+        if aufeis_crossing_prompt:
+            local_system = f"{local_system}\n\n{aufeis_crossing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1194,6 +1202,8 @@ async def generate_llm_response(
             prompt_parts.append(penitentes_navigation_prompt)
         if solfatara_navigation_prompt:
             prompt_parts.append(solfatara_navigation_prompt)
+        if aufeis_crossing_prompt:
+            prompt_parts.append(aufeis_crossing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1920,6 +1930,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
             question
         )
 
+    aufeis_crossing_intent = detect_aufeis_crossing_intent(question)
+    aufeis_crossing_prompt = ""
+    aufeis_crossing_info_payload = None
+    if aufeis_crossing_intent:
+        aufeis_crossing_prompt = build_aufeis_crossing_prompt(question)
+        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(
+            question
+        )
+
     foraging_intent = detect_foraging_intent(question)
     foraging_prompt = ""
     foraging_info_payload = None
@@ -2612,6 +2631,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["penitentes_navigation_prompt"] = penitentes_navigation_prompt
     if solfatara_navigation_prompt:
         llm_kwargs["solfatara_navigation_prompt"] = solfatara_navigation_prompt
+    if aufeis_crossing_prompt:
+        llm_kwargs["aufeis_crossing_prompt"] = aufeis_crossing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2739,6 +2760,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["penitentes_navigation_info"] = penitentes_navigation_info_payload
     if solfatara_navigation_intent and solfatara_navigation_info_payload:
         response_payload["solfatara_navigation_info"] = solfatara_navigation_info_payload
+    if aufeis_crossing_intent and aufeis_crossing_info_payload:
+        response_payload["aufeis_crossing_info"] = aufeis_crossing_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -2916,6 +2939,7 @@ def generate_llm_response_stream(
     tundra_lichen_prompt: str = "",
     penitentes_navigation_prompt: str = "",
     solfatara_navigation_prompt: str = "",
+    aufeis_crossing_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3092,6 +3116,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{penitentes_navigation_prompt}"
         if solfatara_navigation_prompt:
             local_system = f"{local_system}\n\n{solfatara_navigation_prompt}"
+        if aufeis_crossing_prompt:
+            local_system = f"{local_system}\n\n{aufeis_crossing_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3282,6 +3308,8 @@ def generate_llm_response_stream(
             prompt_parts.append(penitentes_navigation_prompt)
         if solfatara_navigation_prompt:
             prompt_parts.append(solfatara_navigation_prompt)
+        if aufeis_crossing_prompt:
+            prompt_parts.append(aufeis_crossing_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3816,6 +3844,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if solfatara_navigation_intent:
         solfatara_navigation_prompt = build_solfatara_navigation_prompt(question)
         _, solfatara_navigation_info_payload = format_solfatara_navigation_response(
+            question
+        )
+
+    aufeis_crossing_intent = detect_aufeis_crossing_intent(question)
+    aufeis_crossing_prompt = ""
+    aufeis_crossing_info_payload = None
+    if aufeis_crossing_intent:
+        aufeis_crossing_prompt = build_aufeis_crossing_prompt(question)
+        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(
             question
         )
 
@@ -4493,6 +4530,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': solfatara_navigation_info_payload, event_name: solfatara_navigation_info_payload})}\n\n"
         if event_name != "solfatara_navigation_info":
             yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': solfatara_navigation_info_payload})}\n\n"
+    if aufeis_crossing_intent and aufeis_crossing_info_payload:
+        event_name = (
+            aufeis_crossing_info_payload.get("action", "aufeis_crossing_info")
+            if isinstance(aufeis_crossing_info_payload, dict)
+            else "aufeis_crossing_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(aufeis_crossing_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'aufeis_crossing_info': aufeis_crossing_info_payload, event_name: aufeis_crossing_info_payload})}\n\n"
+        if event_name != "aufeis_crossing_info":
+            yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': aufeis_crossing_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5419,6 +5466,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["penitentes_navigation_prompt"] = penitentes_navigation_prompt
     if solfatara_navigation_prompt:
         stream_kwargs["solfatara_navigation_prompt"] = solfatara_navigation_prompt
+    if aufeis_crossing_prompt:
+        stream_kwargs["aufeis_crossing_prompt"] = aufeis_crossing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

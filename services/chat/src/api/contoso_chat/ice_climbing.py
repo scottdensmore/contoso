@@ -463,6 +463,18 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
     if any(px in q for px in penitentes_exclusions):
         return None
 
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(ax in q for ax in aufeis_exclusions):
+        return None
+
     # Waterfall ice climbing keywords
     ice_keywords = [
         "ice climb",

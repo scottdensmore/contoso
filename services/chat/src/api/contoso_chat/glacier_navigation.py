@@ -426,6 +426,18 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
     if any(ex in q for ex in penitentes_exclusions):
         return None
 
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(ex in q for ex in aufeis_exclusions):
+        return None
+
     # Glacier navigation keywords
     glacier_keywords = [
         "glacier",

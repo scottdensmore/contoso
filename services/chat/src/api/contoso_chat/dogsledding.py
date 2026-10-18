@@ -365,6 +365,20 @@ def extract_dogsled_intent(message: str) -> Optional[DogsledIntent]:
     # Must not hijack alpine glacial pulk expeditions
     if any(k in q for k in ["pulk", "crevasse pulk", "sled haul", "glacial sledging", "haul shaft"]):
         return None
+    # Must not hijack subarctic river aufeis & overflow ice sheet crossing
+    if any(
+        k in q
+        for k in [
+            "aufeis",
+            "naled",
+            "overflow ice",
+            "frost blister",
+            "icing sheet",
+            "ulakhan-taryn",
+            "candle ice",
+        ]
+    ):
+        return None
 
     # Trigger keywords
     triggers = [

@@ -404,6 +404,18 @@ def detect_nordic_skiing_intent(query: str) -> Optional[NordicSkiingIntent]:
     if any(ex in q for ex in alpine_backcountry_exclusions):
         return None
 
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(ex in q for ex in aufeis_exclusions):
+        return None
+
     # Specific Nordic / Cross-Country skiing keywords
     nordic_keywords = [
         "nordic ski",
