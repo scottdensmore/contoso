@@ -34,7 +34,7 @@ COPY apps/web/next.config.js ./
 # output inlines the resolved value, so the runner never reads the file.
 COPY config/catalogue_images.json /app/config/catalogue_images.json
 COPY apps/web/tsconfig.json ./
-COPY apps/web/tailwind.config.ts ./
+COPY apps/web/tailwind.config.js ./
 COPY apps/web/postcss.config.js ./
 COPY apps/web/eslint.config.mjs ./
 COPY apps/web/prisma ./prisma
