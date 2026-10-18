@@ -358,6 +358,15 @@ def detect_packrafting_intent(query: str) -> Optional[PackraftingIntent]:
             "avalanche danger",
             "snowpack",
             "fire ban",
+            "mangrove",
+            "pneumatophore",
+            "prop root",
+            "prop-root",
+            "rhizophora",
+            "avicennia",
+            "hell bay",
+            "sundarbans",
+            "oyster encrusted",
         ]
     ):
         return None

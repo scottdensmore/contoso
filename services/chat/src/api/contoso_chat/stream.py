@@ -51,6 +51,10 @@ from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
 )
+from contoso_chat.mangrove_labyrinth import (
+    format_mangrove_labyrinth_response,
+    is_mangrove_labyrinth_query,
+)
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
     format_mudflat_response,
@@ -826,6 +830,28 @@ async def generate_sea_cave_pneumatics_stream_events(
     yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': scp_payload, event_name: scp_payload})}\n\n"
     if event_name != "sea_cave_pneumatics_info":
         yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_mangrove_labyrinth_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for mangrove labyrinth queries."""
+    if not is_mangrove_labyrinth_query(question):
+        return
+
+    answer, ml_payload = format_mangrove_labyrinth_response(question)
+    event_name = str(ml_payload.get("action", "mangrove_labyrinth_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ml_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'mangrove_labyrinth_info': ml_payload, event_name: ml_payload})}\n\n"
+    if event_name != "mangrove_labyrinth_info":
+        yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': ml_payload})}\n\n"
 
     tokens = answer.split(" ")
     for token in tokens:

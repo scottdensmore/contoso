@@ -212,6 +212,11 @@ from .leave_no_trace import (
     detect_lnt_intent,
     format_lnt_response,
 )
+from .mangrove_labyrinth import (
+    build_mangrove_labyrinth_prompt,
+    detect_mangrove_labyrinth_intent,
+    format_mangrove_labyrinth_response,
+)
 from .mountain_weather import (
     build_mountain_weather_prompt,
     detect_mountain_weather_intent,
@@ -795,6 +800,7 @@ async def generate_llm_response(
     salt_pan_navigation_prompt: str = "",
     rock_glacier_navigation_prompt: str = "",
     sea_cave_pneumatics_prompt: str = "",
+    mangrove_labyrinth_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -981,6 +987,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{rock_glacier_navigation_prompt}"
         if sea_cave_pneumatics_prompt:
             local_system = f"{local_system}\n\n{sea_cave_pneumatics_prompt}"
+        if mangrove_labyrinth_prompt:
+            local_system = f"{local_system}\n\n{mangrove_labyrinth_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1234,6 +1242,8 @@ async def generate_llm_response(
             prompt_parts.append(rock_glacier_navigation_prompt)
         if sea_cave_pneumatics_prompt:
             prompt_parts.append(sea_cave_pneumatics_prompt)
+        if mangrove_labyrinth_prompt:
+            prompt_parts.append(mangrove_labyrinth_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1840,6 +1850,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         sea_cave_pneumatics_prompt = build_sea_cave_pneumatics_prompt(question)
         _, sea_cave_pneumatics_info_payload = (
             format_sea_cave_pneumatics_response(question)
+        )
+
+    mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(question)
+    mangrove_labyrinth_prompt = ""
+    mangrove_labyrinth_info_payload = None
+    if mangrove_labyrinth_intent:
+        mangrove_labyrinth_prompt = build_mangrove_labyrinth_prompt(question)
+        _, mangrove_labyrinth_info_payload = (
+            format_mangrove_labyrinth_response(question)
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -2698,6 +2717,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         )
     if sea_cave_pneumatics_prompt:
         llm_kwargs["sea_cave_pneumatics_prompt"] = sea_cave_pneumatics_prompt
+    if mangrove_labyrinth_prompt:
+        llm_kwargs["mangrove_labyrinth_prompt"] = mangrove_labyrinth_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2841,6 +2862,10 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if sea_cave_pneumatics_intent and sea_cave_pneumatics_info_payload:
         response_payload["sea_cave_pneumatics_info"] = (
             sea_cave_pneumatics_info_payload
+        )
+    if mangrove_labyrinth_intent and mangrove_labyrinth_info_payload:
+        response_payload["mangrove_labyrinth_info"] = (
+            mangrove_labyrinth_info_payload
         )
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
@@ -3023,6 +3048,7 @@ def generate_llm_response_stream(
     salt_pan_navigation_prompt: str = "",
     rock_glacier_navigation_prompt: str = "",
     sea_cave_pneumatics_prompt: str = "",
+    mangrove_labyrinth_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3207,6 +3233,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{rock_glacier_navigation_prompt}"
         if sea_cave_pneumatics_prompt:
             local_system = f"{local_system}\n\n{sea_cave_pneumatics_prompt}"
+        if mangrove_labyrinth_prompt:
+            local_system = f"{local_system}\n\n{mangrove_labyrinth_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3405,6 +3433,8 @@ def generate_llm_response_stream(
             prompt_parts.append(rock_glacier_navigation_prompt)
         if sea_cave_pneumatics_prompt:
             prompt_parts.append(sea_cave_pneumatics_prompt)
+        if mangrove_labyrinth_prompt:
+            prompt_parts.append(mangrove_labyrinth_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3833,6 +3863,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         sea_cave_pneumatics_prompt = build_sea_cave_pneumatics_prompt(question)
         _, sea_cave_pneumatics_info_payload = (
             format_sea_cave_pneumatics_response(question)
+        )
+
+    mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(question)
+    mangrove_labyrinth_prompt = ""
+    mangrove_labyrinth_info_payload = None
+    if mangrove_labyrinth_intent:
+        mangrove_labyrinth_prompt = build_mangrove_labyrinth_prompt(question)
+        _, mangrove_labyrinth_info_payload = (
+            format_mangrove_labyrinth_response(question)
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -4701,6 +4740,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': sea_cave_pneumatics_info_payload, event_name: sea_cave_pneumatics_info_payload})}\n\n"
         if event_name != "sea_cave_pneumatics_info":
             yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': sea_cave_pneumatics_info_payload})}\n\n"
+    if mangrove_labyrinth_intent and mangrove_labyrinth_info_payload:
+        event_name = (
+            mangrove_labyrinth_info_payload.get(
+                "action", "mangrove_labyrinth_info"
+            )
+            if isinstance(mangrove_labyrinth_info_payload, dict)
+            else "mangrove_labyrinth_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(mangrove_labyrinth_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'mangrove_labyrinth_info': mangrove_labyrinth_info_payload, event_name: mangrove_labyrinth_info_payload})}\n\n"
+        if event_name != "mangrove_labyrinth_info":
+            yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': mangrove_labyrinth_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5638,6 +5689,10 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if sea_cave_pneumatics_prompt:
         stream_kwargs["sea_cave_pneumatics_prompt"] = (
             sea_cave_pneumatics_prompt
+        )
+    if mangrove_labyrinth_prompt:
+        stream_kwargs["mangrove_labyrinth_prompt"] = (
+            mangrove_labyrinth_prompt
         )
 
     for chunk in generate_llm_response_stream(

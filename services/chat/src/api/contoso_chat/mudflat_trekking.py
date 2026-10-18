@@ -324,6 +324,15 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "makgadikgadi",
         "uyuni",
         "fata morgana",
+        "mangrove",
+        "pneumatophore",
+        "prop root",
+        "prop-root",
+        "rhizophora",
+        "avicennia",
+        "hell bay",
+        "sundarbans",
+        "oyster encrusted",
     ]
     if any(ex in q for ex in exclusions):
         return None

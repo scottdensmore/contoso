@@ -50,6 +50,10 @@ from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
 )
+from contoso_chat.mangrove_labyrinth import (
+    format_mangrove_labyrinth_response,
+    is_mangrove_labyrinth_query,
+)
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
     format_mudflat_response,
@@ -453,6 +457,20 @@ def handle_sea_cave_pneumatics_intent(
     answer, info = format_sea_cave_pneumatics_response(question)
     return {
         "sea_cave_pneumatics_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_mangrove_labyrinth_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format mangrove labyrinth intent in the cascade."""
+    if not is_mangrove_labyrinth_query(question):
+        return None
+    answer, info = format_mangrove_labyrinth_response(question)
+    return {
+        "mangrove_labyrinth_info": info,
         "action": info.get("action"),
         "answer": answer,
     }
