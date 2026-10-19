@@ -297,6 +297,9 @@ def detect_mountain_weather_intent(message: str) -> Optional[MountainWeatherInte
         "flash flood", "flash-flood", "slot canyon flood", "escape ledge",
         "escape-ledge", "hydrograph", "blue-sky flood", "flood bore",
         "buckskin gulch", "little wild horse", "wadi mujib", "wadi ghul",
+        "subantarctic", "poa flabellata", "fortuna bay", "south georgia",
+        "macquarie island", "featherbed", "enderby island", "auckland islands",
+        "kerguelen", "azorella", "katabatic", "williwaw", "seal wallow",
     ]):
         return None
 

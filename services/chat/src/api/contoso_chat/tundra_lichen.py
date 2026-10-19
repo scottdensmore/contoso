@@ -676,6 +676,19 @@ def detect_tundra_lichen_intent(message: str) -> bool:
         "sumapaz",
         "el angel",
         "cushion bog",
+        "subantarctic",
+        "poa flabellata",
+        "fortuna bay",
+        "south georgia",
+        "macquarie island",
+        "featherbed",
+        "enderby island",
+        "auckland islands",
+        "kerguelen",
+        "azorella",
+        "katabatic",
+        "williwaw",
+        "seal wallow",
     ]
     if any(ex in q for ex in exclusions):
         return False

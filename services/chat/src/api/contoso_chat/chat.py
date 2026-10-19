@@ -150,6 +150,10 @@ from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
 )
+from contoso_chat.tussock_headland import (
+    format_tussock_headland_response,
+    is_tussock_headland_query,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -630,3 +634,19 @@ def handle_tiankeng_descent_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_tussock_headland_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subantarctic tussock-grass peat bog & katabatic headland intent in the cascade."""
+    if not is_tussock_headland_query(question):
+        return None
+    info = format_tussock_headland_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tussock_headland_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

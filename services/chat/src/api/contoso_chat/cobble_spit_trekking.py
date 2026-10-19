@@ -638,6 +638,20 @@ _COBBLE_SPIT_EXCLUSIONS: tuple[str, ...] = (
     "rhizophora",
     "hell bay",
     "sundarbans",
+    # Subantarctic tussock headland exclusions
+    "subantarctic",
+    "poa flabellata",
+    "fortuna bay",
+    "south georgia",
+    "macquarie island",
+    "featherbed",
+    "enderby island",
+    "auckland islands",
+    "kerguelen",
+    "azorella",
+    "katabatic",
+    "williwaw",
+    "seal wallow",
 )
 
 

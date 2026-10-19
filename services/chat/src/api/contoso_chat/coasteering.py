@@ -448,6 +448,19 @@ def detect_coasteering_intent(message: str) -> Optional[CoasteeringIntent]:
         "intertidal cobble",
         "storm-berm cobble",
         "mucilage slip",
+        "subantarctic",
+        "poa flabellata",
+        "fortuna bay",
+        "south georgia",
+        "macquarie island",
+        "featherbed",
+        "enderby island",
+        "auckland islands",
+        "kerguelen",
+        "azorella",
+        "katabatic",
+        "williwaw",
+        "seal wallow",
     ]
     if any(scx in q for scx in sea_cave_pneumatics_exclusions):
         return None
