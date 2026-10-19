@@ -623,6 +623,16 @@ def detect_bog_shoeing_intent(message: str) -> bool:
         "hell bay",
         "sundarbans",
         "oyster encrusted",
+        "paramo",
+        "páramo",
+        "frailejon",
+        "frailejón",
+        "espeletia",
+        "turbera",
+        "distichia",
+        "sumapaz",
+        "el angel",
+        "cushion bog",
     ]
     if any(ex in q for ex in exclusions):
         return False

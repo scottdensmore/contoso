@@ -358,6 +358,16 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
         "makgadikgadi",
         "uyuni",
         "fata morgana",
+        "paramo",
+        "páramo",
+        "frailejon",
+        "frailejón",
+        "espeletia",
+        "turbera",
+        "distichia",
+        "sumapaz",
+        "el angel",
+        "cushion bog",
     ]
     if any(k in q for k in salt_pan_exclusions):
         return None

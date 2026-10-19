@@ -329,6 +329,16 @@ def detect_pack_llama_intent(text: str) -> Optional[PackLlamaIntent]:
         "falconry",
         "rentals",
         "rental",
+        "paramo",
+        "páramo",
+        "frailejon",
+        "frailejón",
+        "espeletia",
+        "turbera",
+        "distichia",
+        "sumapaz",
+        "el angel",
+        "cushion bog",
     ]
     if any(k in q for k in exclusions):
         return None

@@ -500,6 +500,10 @@ from contoso_chat.packrafting import (
     get_packraft_route_by_id,
     get_packraft_routes,
 )
+from contoso_chat.paramo_navigation import (
+    detect_paramo_navigation_intent,
+    format_paramo_navigation_response,
+)
 from contoso_chat.penitentes_navigation import (
     detect_penitentes_navigation_intent,
     format_penitentes_navigation_response,
@@ -652,6 +656,9 @@ from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_rou
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
+from contoso_chat.routers.paramo_navigation import (
+    router as paramo_navigation_router,
+)
 from contoso_chat.routers.penitentes_navigation import (
     router as penitentes_navigation_router,
 )
@@ -1275,6 +1282,17 @@ app.include_router(
     tags=["mangrove-labyrinth"],
 )
 logger.info("Registered Sub-Canopy Mangroves & Pneumatophore Prop-Root Tidal Labyrinth Navigation router (/mangrove-labyrinth, /api/mangrove-labyrinth)")
+app.include_router(
+    paramo_navigation_router,
+    prefix="/paramo-navigation",
+    tags=["paramo-navigation"],
+)
+app.include_router(
+    paramo_navigation_router,
+    prefix="/api/paramo-navigation",
+    tags=["paramo-navigation"],
+)
+logger.info("Registered High-Altitude Páramo & Frailejón Cushion-Bog Moorland Navigation router (/paramo-navigation, /api/paramo-navigation)")
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1555,6 +1573,7 @@ async def create_response(request: ChatRequest):
             rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
             sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
             mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
+            paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1996,6 +2015,12 @@ async def create_response(request: ChatRequest):
                 )
                 mock_payload["mangrove_labyrinth_info"] = ml_info
                 mock_payload["answer"] = ml_answer
+            if paramo_navigation_intent:
+                prm_answer, prm_info = format_paramo_navigation_response(
+                    request.question
+                )
+                mock_payload["paramo_navigation_info"] = prm_info
+                mock_payload["answer"] = prm_answer
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2513,6 +2538,7 @@ async def create_response_stream(request: ChatRequest):
                 rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
                 sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
                 mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
+                paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2946,6 +2972,19 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'mangrove_labyrinth_info': ml_payload, event_name: ml_payload})}\n\n"
                     if event_name != "mangrove_labyrinth_info":
                         yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': ml_payload})}\n\n"
+                if paramo_navigation_intent:
+                    _, prm_payload = format_paramo_navigation_response(
+                        request.question
+                    )
+                    event_name = (
+                        prm_payload.get("action", "paramo_navigation_info")
+                        if isinstance(prm_payload, dict)
+                        else "paramo_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(prm_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': prm_payload, event_name: prm_payload})}\n\n"
+                    if event_name != "paramo_navigation_info":
+                        yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': prm_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3801,6 +3840,11 @@ async def create_response_stream(request: ChatRequest):
                         request.question
                     )
                     mock_chunks = [str(ml_answer)]
+                elif paramo_navigation_intent:
+                    prm_answer, _ = format_paramo_navigation_response(
+                        request.question
+                    )
+                    mock_chunks = [str(prm_answer)]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4206,6 +4250,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_rock_glacier_navigation_intent(request.question)
                 or detect_sea_cave_pneumatics_intent(request.question)
                 or detect_mangrove_labyrinth_intent(request.question)
+                or detect_paramo_navigation_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

@@ -654,6 +654,16 @@ def detect_tundra_lichen_intent(message: str) -> bool:
         "canopy moss",
         "takayna",
         "dicksonia",
+        "paramo",
+        "páramo",
+        "frailejon",
+        "frailejón",
+        "espeletia",
+        "turbera",
+        "distichia",
+        "sumapaz",
+        "el angel",
+        "cushion bog",
     ]
     if any(ex in q for ex in exclusions):
         return False
