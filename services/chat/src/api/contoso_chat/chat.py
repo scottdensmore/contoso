@@ -42,6 +42,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.glaciere_caving import (
+    format_glaciere_caving_response,
+    is_glaciere_caving_query,
+)
 from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
@@ -516,3 +520,19 @@ def handle_tephra_navigation_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_glaciere_caving_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format glaciere caving intent in the cascade."""
+    if not is_glaciere_caving_query(question):
+        return None
+    info = format_glaciere_caving_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "glaciere_caving_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

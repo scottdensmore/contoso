@@ -625,6 +625,25 @@ def is_aufeis_crossing_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "glaciere",
+            "glacière",
+            "ice-filled lava tube",
+            "cold-trap",
+            "cold trap",
+            "balch effect",
+            "eisriesenwelt",
+            "scarisoara",
+            "scărișoara",
+            "bandera ice cave",
+            "lofthellir",
+            "hoarfrost ceiling",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _AUFEIS_KEYWORDS):
         return True
 

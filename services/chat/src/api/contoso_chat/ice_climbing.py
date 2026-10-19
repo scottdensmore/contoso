@@ -435,6 +435,18 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
         "snow picket",
         "z-pulley",
         "z pulley",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(gx in q for gx in glacier_mountaineering_exclusions):
         return None

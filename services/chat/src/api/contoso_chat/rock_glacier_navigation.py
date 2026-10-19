@@ -638,6 +638,18 @@ def is_rock_glacier_navigation_query(query: str) -> bool:
             "tarawera",
             "chaiten",
             "chaitén",
+            "glaciere",
+            "glacière",
+            "ice-filled lava tube",
+            "cold-trap",
+            "cold trap",
+            "balch effect",
+            "eisriesenwelt",
+            "scarisoara",
+            "scărișoara",
+            "bandera ice cave",
+            "lofthellir",
+            "hoarfrost ceiling",
         )
     ):
         return False

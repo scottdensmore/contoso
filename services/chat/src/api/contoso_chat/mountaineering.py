@@ -380,6 +380,18 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "sun cup",
         "ablation blade",
         "ablation spire",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(ex in q or ex in q_norm for ex in penitentes_exclusions):
         return None

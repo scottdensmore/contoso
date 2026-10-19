@@ -172,6 +172,11 @@ from .glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from .glaciere_caving import (
+    build_glaciere_caving_prompt,
+    detect_glaciere_caving_intent,
+    format_glaciere_caving_response,
+)
 from .gold_prospecting import (
     build_gold_prospecting_prompt,
     detect_gold_prospecting_intent,
@@ -813,6 +818,7 @@ async def generate_llm_response(
     mangrove_labyrinth_prompt: str = "",
     paramo_navigation_prompt: str = "",
     tephra_navigation_prompt: str = "",
+    glaciere_caving_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -1005,6 +1011,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{paramo_navigation_prompt}"
         if tephra_navigation_prompt:
             local_system = f"{local_system}\n\n{tephra_navigation_prompt}"
+        if glaciere_caving_prompt:
+            local_system = f"{local_system}\n\n{glaciere_caving_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1264,6 +1272,8 @@ async def generate_llm_response(
             prompt_parts.append(paramo_navigation_prompt)
         if tephra_navigation_prompt:
             prompt_parts.append(tephra_navigation_prompt)
+        if glaciere_caving_prompt:
+            prompt_parts.append(glaciere_caving_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1882,6 +1892,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if tephra_navigation_intent:
         tephra_navigation_prompt = build_tephra_navigation_prompt(question)
         tephra_navigation_info_payload = dict(format_tephra_navigation_response(question))
+
+    glaciere_caving_intent = detect_glaciere_caving_intent(question)
+    glaciere_caving_prompt = ""
+    glaciere_caving_info_payload = None
+    if glaciere_caving_intent:
+        glaciere_caving_prompt = build_glaciere_caving_prompt(question)
+        glaciere_caving_info_payload = dict(format_glaciere_caving_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2707,6 +2724,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["paramo_navigation_prompt"] = paramo_navigation_prompt
     if tephra_navigation_prompt:
         llm_kwargs["tephra_navigation_prompt"] = tephra_navigation_prompt
+    if glaciere_caving_prompt:
+        llm_kwargs["glaciere_caving_prompt"] = glaciere_caving_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2848,6 +2867,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["paramo_navigation_info"] = paramo_navigation_info_payload
     if tephra_navigation_intent and tephra_navigation_info_payload:
         response_payload["tephra_navigation_info"] = tephra_navigation_info_payload
+    if glaciere_caving_intent and glaciere_caving_info_payload:
+        response_payload["glaciere_caving_info"] = glaciere_caving_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3032,6 +3053,7 @@ def generate_llm_response_stream(
     mangrove_labyrinth_prompt: str = "",
     paramo_navigation_prompt: str = "",
     tephra_navigation_prompt: str = "",
+    glaciere_caving_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3222,6 +3244,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{paramo_navigation_prompt}"
         if tephra_navigation_prompt:
             local_system = f"{local_system}\n\n{tephra_navigation_prompt}"
+        if glaciere_caving_prompt:
+            local_system = f"{local_system}\n\n{glaciere_caving_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3426,6 +3450,8 @@ def generate_llm_response_stream(
             prompt_parts.append(paramo_navigation_prompt)
         if tephra_navigation_prompt:
             prompt_parts.append(tephra_navigation_prompt)
+        if glaciere_caving_prompt:
+            prompt_parts.append(glaciere_caving_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3866,6 +3892,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if tephra_navigation_intent:
         tephra_navigation_prompt = build_tephra_navigation_prompt(question)
         tephra_navigation_info_payload = dict(format_tephra_navigation_response(question))
+
+    glaciere_caving_intent = detect_glaciere_caving_intent(question)
+    glaciere_caving_prompt = ""
+    glaciere_caving_info_payload = None
+    if glaciere_caving_intent:
+        glaciere_caving_prompt = build_glaciere_caving_prompt(question)
+        glaciere_caving_info_payload = dict(format_glaciere_caving_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4723,6 +4756,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tephra_navigation_info_payload, event_name: tephra_navigation_info_payload})}\n\n"
         if event_name != "tephra_navigation_info":
             yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tephra_navigation_info_payload})}\n\n"
+    if glaciere_caving_intent and glaciere_caving_info_payload:
+        event_name = (
+            glaciere_caving_info_payload.get("action", "glaciere_caving_info")
+            if isinstance(glaciere_caving_info_payload, dict)
+            else "glaciere_caving_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(glaciere_caving_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': glaciere_caving_info_payload, event_name: glaciere_caving_info_payload})}\n\n"
+        if event_name != "glaciere_caving_info":
+            yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': glaciere_caving_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5660,6 +5703,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["paramo_navigation_prompt"] = paramo_navigation_prompt
     if tephra_navigation_prompt:
         stream_kwargs["tephra_navigation_prompt"] = tephra_navigation_prompt
+    if glaciere_caving_prompt:
+        stream_kwargs["glaciere_caving_prompt"] = glaciere_caving_prompt
 
     for chunk in generate_llm_response_stream(
         question,
