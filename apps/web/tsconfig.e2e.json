@@ -26,6 +26,6 @@
   // second case is caught by `test_nothing_in_the_test_directory_is_silently_uncollected`
   // rather than by this file, but type-checking it costs nothing and means the
   // failure is about the file not running, not about it also being unchecked.
-  "include": ["e2e/**/*.ts", "e2e/**/*.tsx", "e2e/canopy-bryophyte.spec.ts", "e2e/glacier-ski-traverse.spec.ts", "e2e/scree-running.spec.ts", "e2e/lava-tube-biospeleology.spec.ts", "e2e/kelp-freediving.spec.ts", "e2e/penitentes-navigation.spec.ts", "e2e/solfatara-navigation.spec.ts", "e2e/aufeis-crossing.spec.ts", "e2e/salt-pan-navigation.spec.ts", "e2e/rock-glacier-navigation.spec.ts", "e2e/sea-cave-pneumatics.spec.ts", "e2e/mangrove-labyrinth.spec.ts", "e2e/paramo-navigation.spec.ts", "e2e/tephra-navigation.spec.ts", "e2e/glaciere-caving.spec.ts", "e2e/cobble-spit-trekking.spec.ts"],
+  "include": ["e2e/**/*.ts", "e2e/**/*.tsx", "e2e/canopy-bryophyte.spec.ts", "e2e/glacier-ski-traverse.spec.ts", "e2e/scree-running.spec.ts", "e2e/lava-tube-biospeleology.spec.ts", "e2e/kelp-freediving.spec.ts", "e2e/penitentes-navigation.spec.ts", "e2e/solfatara-navigation.spec.ts", "e2e/aufeis-crossing.spec.ts", "e2e/salt-pan-navigation.spec.ts", "e2e/rock-glacier-navigation.spec.ts", "e2e/sea-cave-pneumatics.spec.ts", "e2e/mangrove-labyrinth.spec.ts", "e2e/paramo-navigation.spec.ts", "e2e/tephra-navigation.spec.ts", "e2e/glaciere-caving.spec.ts", "e2e/cobble-spit-trekking.spec.ts", "e2e/flash-flood-slot.spec.ts"],
   "exclude": ["node_modules"]
 }
