@@ -356,6 +356,18 @@ def detect_river_sup_intent(query: str) -> Optional[RiverSupIntent]:
         "hell bay",
         "sundarbans",
         "oyster encrusted",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
     ]
     if any(ex in q for ex in mangrove_exclusions):
         return None

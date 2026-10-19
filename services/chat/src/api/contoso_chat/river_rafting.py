@@ -357,6 +357,18 @@ def detect_river_rafting_intent(message: str) -> RaftingIntent:
         "little wild horse",
         "wadi mujib",
         "wadi ghul",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
     ]
     if any(t in q for t in ecommerce_terms):
         return RaftingIntent(intent_detected=False, expedition_id=None, action="", confidence=0.0)

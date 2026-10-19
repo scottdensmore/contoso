@@ -110,6 +110,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.sandur_crossing import (
+    format_sandur_crossing_response,
+    is_sandur_crossing_query,
+)
 from contoso_chat.scree_running import (
     detect_scree_running_intent,
     format_scree_running_response,
@@ -589,6 +593,21 @@ def handle_krummholz_bushwhack_intent(
     answer = str(info.get("answer", ""))
     return {
         "krummholz_bushwhack_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_sandur_crossing_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format glacial outwash braided-river sandur crossing intent in the cascade."""
+    if not is_sandur_crossing_query(question):
+        return None
+    info = format_sandur_crossing_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "sandur_crossing_info": dict(info),
         "action": info.get("action"),
         "answer": answer,
     }

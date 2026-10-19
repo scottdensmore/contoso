@@ -650,6 +650,18 @@ def is_rock_glacier_navigation_query(query: str) -> bool:
             "bandera ice cave",
             "lofthellir",
             "hoarfrost ceiling",
+            "sandur",
+            "braided river",
+            "braided-river",
+            "glacial outwash",
+            "outwash plain",
+            "silt-bar",
+            "quicksand silt",
+            "glacial flour quicksand",
+            "skeidararsandur",
+            "skeiðarársandur",
+            "kaskawulsh",
+            "rakaia braids",
         )
     ):
         return False
