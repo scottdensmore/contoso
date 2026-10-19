@@ -375,6 +375,18 @@ def detect_sea_kayaking_intent(query: str) -> Optional[SeaKayakingIntent]:
         "hell bay",
         "sundarbans",
         "oyster encrusted",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(u in q for u in unrelated):
         return None

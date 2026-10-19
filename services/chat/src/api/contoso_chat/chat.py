@@ -26,6 +26,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cobble_spit_trekking import (
+    format_cobble_spit_trekking_response,
+    is_cobble_spit_trekking_query,
+)
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
@@ -536,3 +540,17 @@ def handle_glaciere_caving_intent(
         "answer": answer,
     }
 
+
+def handle_cobble_spit_trekking_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format cobble spit trekking intent in the cascade."""
+    if not is_cobble_spit_trekking_query(question):
+        return None
+    info = format_cobble_spit_trekking_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "cobble_spit_trekking_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }

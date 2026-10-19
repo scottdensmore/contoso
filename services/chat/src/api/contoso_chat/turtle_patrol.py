@@ -325,6 +325,18 @@ def detect_turtle_patrol_intent(query: str) -> Optional[TurtlePatrolIntent]:
         "zip line",
         "rentals",
         "rental",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(ex in q for ex in exclusions):
         return None

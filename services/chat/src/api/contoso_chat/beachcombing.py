@@ -325,6 +325,20 @@ def detect_beachcombing_intent(message: str) -> Optional[BeachcombingIntent]:
         "devil's punchbowl",
         "air compression blast",
         "littoral cave",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
+        "pachena",
+        "carmanah",
     ]
     if any(ex in q for ex in exclusions):
         return None

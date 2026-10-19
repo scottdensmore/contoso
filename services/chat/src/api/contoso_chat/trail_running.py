@@ -308,6 +308,18 @@ def detect_trail_running_intent(query: str) -> Optional[TrailRunningIntent]:
         "mount stephen talus",
         "scree gaiters",
         "scree gaiter",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(ex in q_lower for ex in scree_running_exclusions):
         return None

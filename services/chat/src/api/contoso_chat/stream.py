@@ -27,6 +27,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cobble_spit_trekking import (
+    format_cobble_spit_trekking_response,
+    is_cobble_spit_trekking_query,
+)
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
@@ -958,3 +962,25 @@ async def generate_glaciere_caving_stream_events(
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
 
+
+async def generate_cobble_spit_trekking_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for cobble spit trekking queries."""
+    if not is_cobble_spit_trekking_query(question):
+        return
+
+    cs_payload = dict(format_cobble_spit_trekking_response(question))
+    answer = str(cs_payload.get("answer", ""))
+    event_name = str(cs_payload.get("action", "cobble_spit_trekking_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(cs_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cs_payload, event_name: cs_payload})}\n\n"
+    if event_name != "cobble_spit_trekking_info":
+        yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cs_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
