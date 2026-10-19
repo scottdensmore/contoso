@@ -481,6 +481,11 @@ from .tephra_navigation import (
     detect_tephra_navigation_intent,
     format_tephra_navigation_response,
 )
+from .tepui_navigation import (
+    build_tepui_navigation_prompt,
+    detect_tepui_navigation_intent,
+    format_tepui_navigation_response,
+)
 from .tiankeng_descent import (
     build_tiankeng_descent_prompt,
     detect_tiankeng_descent_intent,
@@ -860,6 +865,7 @@ async def generate_llm_response(
     sandur_crossing_prompt: str = "",
     tiankeng_descent_prompt: str = "",
     tsingy_labyrinth_prompt: str = "",
+    tepui_navigation_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1067,6 +1073,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
         if tsingy_labyrinth_prompt:
             local_system = f"{local_system}\n\n{tsingy_labyrinth_prompt}"
+        if tepui_navigation_prompt:
+            local_system = f"{local_system}\n\n{tepui_navigation_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1342,6 +1350,8 @@ async def generate_llm_response(
             prompt_parts.append(tiankeng_descent_prompt)
         if tsingy_labyrinth_prompt:
             prompt_parts.append(tsingy_labyrinth_prompt)
+        if tepui_navigation_prompt:
+            prompt_parts.append(tepui_navigation_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2018,6 +2028,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if tsingy_labyrinth_intent:
         tsingy_labyrinth_prompt = build_tsingy_labyrinth_prompt(question)
         tsingy_labyrinth_info_payload = dict(format_tsingy_labyrinth_response(question))
+
+    tepui_navigation_intent = detect_tepui_navigation_intent(question)
+    tepui_navigation_prompt = ""
+    tepui_navigation_info_payload: dict[str, Any] | None = None
+    if tepui_navigation_intent:
+        tepui_navigation_prompt = build_tepui_navigation_prompt(question)
+        tepui_navigation_info_payload = dict(format_tepui_navigation_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2857,6 +2874,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
     if tsingy_labyrinth_prompt:
         llm_kwargs["tsingy_labyrinth_prompt"] = tsingy_labyrinth_prompt
+    if tepui_navigation_prompt:
+        llm_kwargs["tepui_navigation_prompt"] = tepui_navigation_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3014,6 +3033,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["tiankeng_descent_info"] = tiankeng_descent_info_payload
     if tsingy_labyrinth_intent and tsingy_labyrinth_info_payload:
         response_payload["tsingy_labyrinth_info"] = tsingy_labyrinth_info_payload
+    if tepui_navigation_intent and tepui_navigation_info_payload:
+        response_payload["tepui_navigation_info"] = tepui_navigation_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3207,6 +3228,7 @@ def generate_llm_response_stream(
     sandur_crossing_prompt: str = "",
     tiankeng_descent_prompt: str = "",
     tsingy_labyrinth_prompt: str = "",
+    tepui_navigation_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3412,6 +3434,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
         if tsingy_labyrinth_prompt:
             local_system = f"{local_system}\n\n{tsingy_labyrinth_prompt}"
+        if tepui_navigation_prompt:
+            local_system = f"{local_system}\n\n{tepui_navigation_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3632,6 +3656,8 @@ def generate_llm_response_stream(
             prompt_parts.append(tiankeng_descent_prompt)
         if tsingy_labyrinth_prompt:
             prompt_parts.append(tsingy_labyrinth_prompt)
+        if tepui_navigation_prompt:
+            prompt_parts.append(tepui_navigation_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4130,6 +4156,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if tsingy_labyrinth_intent:
         tsingy_labyrinth_prompt = build_tsingy_labyrinth_prompt(question)
         tsingy_labyrinth_info_payload = dict(format_tsingy_labyrinth_response(question))
+
+    tepui_navigation_intent = detect_tepui_navigation_intent(question)
+    tepui_navigation_prompt = ""
+    tepui_navigation_info_payload: dict[str, Any] | None = None
+    if tepui_navigation_intent:
+        tepui_navigation_prompt = build_tepui_navigation_prompt(question)
+        tepui_navigation_info_payload = dict(format_tepui_navigation_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -5067,6 +5100,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tsingy_labyrinth_info_payload, event_name: tsingy_labyrinth_info_payload})}\n\n"
         if event_name != "tsingy_labyrinth_info":
             yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tsingy_labyrinth_info_payload})}\n\n"
+    if tepui_navigation_intent and tepui_navigation_info_payload:
+        event_name = (
+            tepui_navigation_info_payload.get("action", "tepui_navigation_info")
+            if isinstance(tepui_navigation_info_payload, dict)
+            else "tepui_navigation_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(tepui_navigation_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'tepui_navigation_info': tepui_navigation_info_payload, event_name: tepui_navigation_info_payload})}\n\n"
+        if event_name != "tepui_navigation_info":
+            yield f"data: {json.dumps({'event': 'tepui_navigation_info', 'tepui_navigation_info': tepui_navigation_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6018,6 +6061,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
     if tsingy_labyrinth_prompt:
         stream_kwargs["tsingy_labyrinth_prompt"] = tsingy_labyrinth_prompt
+    if tepui_navigation_prompt:
+        stream_kwargs["tepui_navigation_prompt"] = tepui_navigation_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

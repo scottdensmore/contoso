@@ -636,6 +636,21 @@ _TIANKENG_DESCENT_EXCLUSIONS: tuple[str, ...] = (
     "epiphytic bryophyte",
     "hall of mosses",
     "poikilohydric",
+    # Table-mountain quartzite tepui plateau navigation exclusions (tepui_navigation.py)
+    "mount roraima",
+    "roraima",
+    "auyan-tepui",
+    "auyán-tepui",
+    "auyan tepui",
+    "kukenan",
+    "kukenán",
+    "matawi",
+    "chiribiquete",
+    "gran sabana",
+    "pseudokarst fissure",
+    "table-mountain quartzite",
+    "brocchinia",
+    "cyanobacteria biofilm",
 )
 
 

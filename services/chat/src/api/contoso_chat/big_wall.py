@@ -341,6 +341,15 @@ def detect_big_wall_intent(message: str) -> Optional[BigWallIntent]:
         "sarisarinama",
         "sarisariñama",
         "sima humboldt",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "pseudokarst",
     ]
     if any(tx in q for tx in tiankeng_exclusions):
         return None

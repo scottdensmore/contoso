@@ -138,6 +138,10 @@ from contoso_chat.tephra_navigation import (
     format_tephra_navigation_response,
     is_tephra_navigation_query,
 )
+from contoso_chat.tepui_navigation import (
+    format_tepui_navigation_response,
+    is_tepui_navigation_query,
+)
 from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
@@ -665,6 +669,21 @@ def handle_tsingy_labyrinth_intent(
     answer = str(info.get("answer", ""))
     return {
         "tsingy_labyrinth_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tepui_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format table-mountain quartzite tepui & sandstone fissure navigation intent in the cascade."""
+    if not is_tepui_navigation_query(question):
+        return None
+    info = format_tepui_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tepui_navigation_info": dict(info),
         "action": info.get("action"),
         "answer": answer,
     }

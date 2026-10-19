@@ -139,6 +139,10 @@ from contoso_chat.tephra_navigation import (
     format_tephra_navigation_response,
     is_tephra_navigation_query,
 )
+from contoso_chat.tepui_navigation import (
+    format_tepui_navigation_response,
+    is_tepui_navigation_query,
+)
 from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
@@ -1140,6 +1144,29 @@ async def generate_tsingy_labyrinth_stream_events(
     yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tl_payload, event_name: tl_payload})}\n\n"
     if event_name != "tsingy_labyrinth_info":
         yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tl_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tepui_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for table-mountain quartzite tepui & sandstone fissure navigation queries."""
+    if not is_tepui_navigation_query(question):
+        return
+
+    tn_payload = dict(format_tepui_navigation_response(question))
+    answer = str(tn_payload.get("answer", ""))
+    event_name = str(tn_payload.get("action", "tepui_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tepui_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+    if event_name != "tepui_navigation_info":
+        yield f"data: {json.dumps({'event': 'tepui_navigation_info', 'tepui_navigation_info': tn_payload})}\n\n"
 
     tokens = answer.split(" ")
     for token in tokens:

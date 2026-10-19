@@ -477,6 +477,15 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
         "stone forest",
         "diaclase",
         "pinnacle karst",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "pseudokarst",
     ]
     if any(tx in q for tx in tiankeng_exclusions):
         return None
