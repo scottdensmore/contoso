@@ -115,6 +115,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.tephra_navigation import (
+    format_tephra_navigation_response,
+    is_tephra_navigation_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -336,6 +340,7 @@ async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, 
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events turtle_patrol_lookup and turtle_patrol_calculated when turtle patrol intent is handled."""
     intent = detect_turtle_patrol_intent(question)
@@ -361,6 +366,7 @@ async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events night_via_ferrata_lookup and night_via_ferrata_calculated when night via ferrata intent is handled."""
     intent = detect_night_via_ferrata_intent(question)
@@ -385,6 +391,8 @@ async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenera
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
+
+
 async def generate_canyon_bouldering_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events canyon_bouldering_lookup and canyon_bouldering_calculated when canyon bouldering intent is handled."""
     intent = detect_canyon_bouldering_intent(question)
@@ -447,7 +455,8 @@ async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[st
 
     event_name = (
         "bog_shoeing_calculated"
-        if isinstance(bog_payload, dict) and bog_payload.get("action") in ("calculate", "calculate_flotation")
+        if isinstance(bog_payload, dict)
+        and bog_payload.get("action") in ("calculate", "calculate_flotation")
         else "bog_shoeing_lookup"
     )
 
@@ -461,6 +470,7 @@ async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[st
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events crevasse_pulk_lookup and crevasse_pulk_calculated when crevasse pulk intent is handled."""
     if not detect_crevasse_pulk_intent(question):
@@ -471,7 +481,8 @@ async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[
 
     event_name = (
         "crevasse_pulk_calculated"
-        if isinstance(pulk_payload, dict) and pulk_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(pulk_payload, dict)
+        and pulk_payload.get("action") in ("calculate", "calculate_dynamics")
         else "crevasse_pulk_lookup"
     )
 
@@ -496,7 +507,8 @@ async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator
 
     event_name = (
         "pothole_escape_calculated"
-        if isinstance(pe_payload, dict) and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(pe_payload, dict)
+        and pe_payload.get("action") in ("calculate", "calculate_dynamics")
         else "pothole_escape_lookup"
     )
 
@@ -510,6 +522,7 @@ async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events tundra_lichen_lookup, tundra_lichen_calculated, and tundra_lichen_info when tundra lichen intent is handled."""
     if not detect_tundra_lichen_intent(question):
@@ -520,7 +533,8 @@ async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[
 
     event_name = (
         "tundra_lichen_calculated"
-        if isinstance(tl_payload, dict) and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(tl_payload, dict)
+        and tl_payload.get("action") in ("calculate", "calculate_dynamics")
         else "tundra_lichen_lookup"
     )
 
@@ -545,7 +559,8 @@ async def generate_cryokarst_speleology_stream_events(question: str) -> AsyncGen
 
     event_name = (
         "cryokarst_speleology_calculated"
-        if isinstance(cs_payload, dict) and cs_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(cs_payload, dict)
+        and cs_payload.get("action") in ("calculate", "calculate_dynamics")
         else "cryokarst_speleology_lookup"
     )
 
@@ -570,7 +585,8 @@ async def generate_slickrock_burro_stream_events(question: str) -> AsyncGenerato
 
     event_name = (
         "slickrock_burro_calculated"
-        if isinstance(sb_payload, dict) and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(sb_payload, dict)
+        and sb_payload.get("action") in ("calculate", "calculate_dynamics")
         else "slickrock_burro_lookup"
     )
 
@@ -595,7 +611,8 @@ async def generate_canopy_bryophyte_stream_events(question: str) -> AsyncGenerat
 
     event_name = (
         "canopy_bryophyte_calculated"
-        if isinstance(cb_payload, dict) and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(cb_payload, dict)
+        and cb_payload.get("action") in ("calculate", "calculate_dynamics")
         else "canopy_bryophyte_lookup"
     )
 
@@ -620,7 +637,8 @@ async def generate_glacier_ski_traverse_stream_events(question: str) -> AsyncGen
 
     event_name = (
         "glacier_ski_traverse_calculated"
-        if isinstance(gst_payload, dict) and gst_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(gst_payload, dict)
+        and gst_payload.get("action") in ("calculate", "calculate_dynamics")
         else "glacier_ski_traverse_lookup"
     )
 
@@ -645,7 +663,8 @@ async def generate_scree_running_stream_events(question: str) -> AsyncGenerator[
 
     event_name = (
         "scree_running_calculated"
-        if isinstance(sr_payload, dict) and sr_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(sr_payload, dict)
+        and sr_payload.get("action") in ("calculate", "calculate_dynamics")
         else "scree_running_lookup"
     )
 
@@ -660,7 +679,9 @@ async def generate_scree_running_stream_events(question: str) -> AsyncGenerator[
     yield "data: [DONE]\n\n"
 
 
-async def generate_lava_tube_biospeleology_stream_events(question: str) -> AsyncGenerator[str, None]:
+async def generate_lava_tube_biospeleology_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
     """Yield SSE events lava_tube_biospeleology_calculated, lava_tube_biospeleology_lookup, and lava_tube_biospeleology_info when lava tube biospeleology intent is handled."""
     if not detect_lava_tube_biospeleology_intent(question):
         return
@@ -670,7 +691,8 @@ async def generate_lava_tube_biospeleology_stream_events(question: str) -> Async
 
     event_name = (
         "lava_tube_biospeleology_calculated"
-        if isinstance(ltb_payload, dict) and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(ltb_payload, dict)
+        and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
         else "lava_tube_biospeleology_lookup"
     )
 
@@ -695,7 +717,8 @@ async def generate_kelp_freediving_stream_events(question: str) -> AsyncGenerato
 
     event_name = (
         "kelp_freediving_calculated"
-        if isinstance(kf_payload, dict) and kf_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(kf_payload, dict)
+        and kf_payload.get("action") in ("calculate", "calculate_dynamics")
         else "kelp_freediving_lookup"
     )
 
@@ -885,3 +908,25 @@ async def generate_paramo_navigation_stream_events(
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
 
+
+async def generate_tephra_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for tephra navigation queries."""
+    if not is_tephra_navigation_query(question):
+        return
+
+    tn_payload = dict(format_tephra_navigation_response(question))
+    answer = str(tn_payload.get("answer", ""))
+    event_name = str(tn_payload.get("action", "tephra_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+    if event_name != "tephra_navigation_info":
+        yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"

@@ -356,6 +356,18 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "mount stephen talus",
         "scree gaiters",
         "scree gaiter",
+        "tephra",
+        "lapilli",
+        "ash fall",
+        "ashfall",
+        "volcanic ash",
+        "scoria scree",
+        "pumice scree",
+        "cristobalite",
+        "mount yasur",
+        "acatenango",
+        "tarawera",
+        "chaiten",
     ]
     if any(ex in q_norm for ex in scree_running_exclusions):
         return None

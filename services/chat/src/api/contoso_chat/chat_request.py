@@ -451,6 +451,11 @@ from .telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from .tephra_navigation import (
+    build_tephra_navigation_prompt,
+    detect_tephra_navigation_intent,
+    format_tephra_navigation_response,
+)
 from .trade_in import (
     build_trade_in_prompt,
     detect_trade_in_intent,
@@ -807,6 +812,7 @@ async def generate_llm_response(
     sea_cave_pneumatics_prompt: str = "",
     mangrove_labyrinth_prompt: str = "",
     paramo_navigation_prompt: str = "",
+    tephra_navigation_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -997,6 +1003,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{mangrove_labyrinth_prompt}"
         if paramo_navigation_prompt:
             local_system = f"{local_system}\n\n{paramo_navigation_prompt}"
+        if tephra_navigation_prompt:
+            local_system = f"{local_system}\n\n{tephra_navigation_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1254,6 +1262,8 @@ async def generate_llm_response(
             prompt_parts.append(mangrove_labyrinth_prompt)
         if paramo_navigation_prompt:
             prompt_parts.append(paramo_navigation_prompt)
+        if tephra_navigation_prompt:
+            prompt_parts.append(tephra_navigation_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1801,12 +1811,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
     smoke_advisory_info_payload = None
     if smoke_advisory_intent:
         smoke_advisory_prompt = build_smoke_advisory_prompt(question)
-        formatted_smoke = format_smoke_advisory_response(
-            "smoke_advisory", question
-        )
-        smoke_advisory_info_payload = formatted_smoke.get(
-            "smoke_advisory_info"
-        )
+        formatted_smoke = format_smoke_advisory_response("smoke_advisory", question)
+        smoke_advisory_info_payload = formatted_smoke.get("smoke_advisory_info")
 
     weather_station_intent = detect_weather_station_intent(question)
     weather_station_prompt = ""
@@ -1816,9 +1822,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_weather_station = format_weather_station_response(
             weather_station_intent, question
         )
-        weather_station_info_payload = formatted_weather_station.get(
-            "weather_station_info"
-        )
+        weather_station_info_payload = formatted_weather_station.get("weather_station_info")
 
     weather_intent = detect_weather_intent(question)
     weather_prompt = ""
@@ -1849,36 +1853,35 @@ async def get_response(customer_id, question, chat_history: Any = None):
     rock_glacier_navigation_info_payload = None
     if rock_glacier_navigation_intent:
         rock_glacier_navigation_prompt = build_rock_glacier_navigation_prompt(question)
-        _, rock_glacier_navigation_info_payload = (
-            format_rock_glacier_navigation_response(question)
-        )
+        _, rock_glacier_navigation_info_payload = format_rock_glacier_navigation_response(question)
 
     sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(question)
     sea_cave_pneumatics_prompt = ""
     sea_cave_pneumatics_info_payload = None
     if sea_cave_pneumatics_intent:
         sea_cave_pneumatics_prompt = build_sea_cave_pneumatics_prompt(question)
-        _, sea_cave_pneumatics_info_payload = (
-            format_sea_cave_pneumatics_response(question)
-        )
+        _, sea_cave_pneumatics_info_payload = format_sea_cave_pneumatics_response(question)
 
     mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(question)
     mangrove_labyrinth_prompt = ""
     mangrove_labyrinth_info_payload = None
     if mangrove_labyrinth_intent:
         mangrove_labyrinth_prompt = build_mangrove_labyrinth_prompt(question)
-        _, mangrove_labyrinth_info_payload = (
-            format_mangrove_labyrinth_response(question)
-        )
+        _, mangrove_labyrinth_info_payload = format_mangrove_labyrinth_response(question)
 
     paramo_navigation_intent = detect_paramo_navigation_intent(question)
     paramo_navigation_prompt = ""
     paramo_navigation_info_payload = None
     if paramo_navigation_intent:
         paramo_navigation_prompt = build_paramo_navigation_prompt(question)
-        _, paramo_navigation_info_payload = (
-            format_paramo_navigation_response(question)
-        )
+        _, paramo_navigation_info_payload = format_paramo_navigation_response(question)
+
+    tephra_navigation_intent = detect_tephra_navigation_intent(question)
+    tephra_navigation_prompt = ""
+    tephra_navigation_info_payload = None
+    if tephra_navigation_intent:
+        tephra_navigation_prompt = build_tephra_navigation_prompt(question)
+        tephra_navigation_info_payload = dict(format_tephra_navigation_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -1888,54 +1891,38 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_canyon_bouldering = format_canyon_bouldering_response(
             canyon_bouldering_intent, question
         )
-        canyon_bouldering_info_payload = formatted_canyon_bouldering.get(
-            "canyon_bouldering_info"
-        )
+        canyon_bouldering_info_payload = formatted_canyon_bouldering.get("canyon_bouldering_info")
 
     salt_pan_navigation_intent = detect_salt_pan_navigation_intent(question)
     salt_pan_navigation_prompt = ""
     salt_pan_navigation_info_payload = None
     if salt_pan_navigation_intent:
         salt_pan_navigation_prompt = build_salt_pan_navigation_prompt(question)
-        _, salt_pan_navigation_info_payload = (
-            format_salt_pan_navigation_response(question)
-        )
+        _, salt_pan_navigation_info_payload = format_salt_pan_navigation_response(question)
 
     mudflat_intent = detect_mudflat_intent(question)
     mudflat_trekking_prompt = ""
     mudflat_trekking_info_payload = None
     if mudflat_intent:
         mudflat_trekking_prompt = build_mudflat_trekking_prompt(mudflat_intent)
-        formatted_mudflat = format_mudflat_response(
-            mudflat_intent, question
-        )
-        mudflat_trekking_info_payload = formatted_mudflat.get(
-            "mudflat_trekking_info"
-        )
+        formatted_mudflat = format_mudflat_response(mudflat_intent, question)
+        mudflat_trekking_info_payload = formatted_mudflat.get("mudflat_trekking_info")
 
     mudflat_intent = detect_mudflat_intent(question)
     mudflat_trekking_prompt = ""
     mudflat_trekking_info_payload = None
     if mudflat_intent:
         mudflat_trekking_prompt = build_mudflat_trekking_prompt(mudflat_intent)
-        formatted_mudflat = format_mudflat_response(
-            mudflat_intent, question
-        )
-        mudflat_trekking_info_payload = formatted_mudflat.get(
-            "mudflat_trekking_info"
-        )
+        formatted_mudflat = format_mudflat_response(mudflat_intent, question)
+        mudflat_trekking_info_payload = formatted_mudflat.get("mudflat_trekking_info")
 
     scree_running_intent = detect_scree_running_intent(question)
     scree_running_prompt = ""
     scree_running_info_payload = None
     if scree_running_intent:
         scree_running_prompt = build_scree_running_prompt(question)
-        formatted_scree_running = format_scree_running_response(
-            "scree_running", question
-        )
-        scree_running_info_payload = formatted_scree_running.get(
-            "scree_running_info"
-        )
+        formatted_scree_running = format_scree_running_response("scree_running", question)
+        scree_running_info_payload = formatted_scree_running.get("scree_running_info")
 
     climbing_intent = detect_climbing_intent(question)
     climbing_prompt = ""
@@ -1962,12 +1949,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
     kelp_freediving_info_payload = None
     if kelp_freediving_intent:
         kelp_freediving_prompt = build_kelp_freediving_prompt(question)
-        formatted_kelp_freediving = format_kelp_freediving_response(
-            "kelp_freediving", question
-        )
-        kelp_freediving_info_payload = formatted_kelp_freediving.get(
-            "kelp_freediving_info"
-        )
+        formatted_kelp_freediving = format_kelp_freediving_response("kelp_freediving", question)
+        kelp_freediving_info_payload = formatted_kelp_freediving.get("kelp_freediving_info")
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
     cryokarst_speleology_prompt = ""
@@ -1977,24 +1960,22 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_cryokarst_speleology = format_cryokarst_speleology_response(
             "cryokarst_speleology", question
         )
-        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get(
+            "cryokarst_speleology_info"
+        )
     canopy_bryophyte_intent = detect_canopy_bryophyte_intent(question)
     canopy_bryophyte_prompt = ""
     canopy_bryophyte_info_payload = None
     if canopy_bryophyte_intent:
         canopy_bryophyte_prompt = build_canopy_bryophyte_prompt(question)
-        formatted_canopy_bryophyte = format_canopy_bryophyte_response(
-            "canopy_bryophyte", question
-        )
+        formatted_canopy_bryophyte = format_canopy_bryophyte_response("canopy_bryophyte", question)
         canopy_bryophyte_info_payload = formatted_canopy_bryophyte.get("canopy_bryophyte_info")
     slickrock_burro_intent = detect_slickrock_burro_intent(question)
     slickrock_burro_prompt = ""
     slickrock_burro_info_payload = None
     if slickrock_burro_intent:
         slickrock_burro_prompt = build_slickrock_burro_prompt(question)
-        formatted_slickrock_burro = format_slickrock_burro_response(
-            "slickrock_burro", question
-        )
+        formatted_slickrock_burro = format_slickrock_burro_response("slickrock_burro", question)
         slickrock_burro_info_payload = formatted_slickrock_burro.get("slickrock_burro_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
@@ -2002,9 +1983,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
     tundra_lichen_info_payload = None
     if tundra_lichen_intent:
         tundra_lichen_prompt = build_tundra_lichen_prompt(question)
-        formatted_tundra_lichen = format_tundra_lichen_response(
-            "tundra_lichen", question
-        )
+        formatted_tundra_lichen = format_tundra_lichen_response("tundra_lichen", question)
         tundra_lichen_info_payload = formatted_tundra_lichen.get("tundra_lichen_info")
 
     penitentes_navigation_intent = detect_penitentes_navigation_intent(question)
@@ -2012,27 +1991,21 @@ async def get_response(customer_id, question, chat_history: Any = None):
     penitentes_navigation_info_payload = None
     if penitentes_navigation_intent:
         penitentes_navigation_prompt = build_penitentes_navigation_prompt(question)
-        _, penitentes_navigation_info_payload = format_penitentes_navigation_response(
-            question
-        )
+        _, penitentes_navigation_info_payload = format_penitentes_navigation_response(question)
 
     solfatara_navigation_intent = detect_solfatara_navigation_intent(question)
     solfatara_navigation_prompt = ""
     solfatara_navigation_info_payload = None
     if solfatara_navigation_intent:
         solfatara_navigation_prompt = build_solfatara_navigation_prompt(question)
-        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(
-            question
-        )
+        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(question)
 
     aufeis_crossing_intent = detect_aufeis_crossing_intent(question)
     aufeis_crossing_prompt = ""
     aufeis_crossing_info_payload = None
     if aufeis_crossing_intent:
         aufeis_crossing_prompt = build_aufeis_crossing_prompt(question)
-        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(
-            question
-        )
+        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(question)
 
     foraging_intent = detect_foraging_intent(question)
     foraging_prompt = ""
@@ -2376,9 +2349,7 @@ async def get_response(customer_id, question, chat_history: Any = None):
         formatted_night_via_ferrata = format_night_via_ferrata_response(
             night_via_ferrata_intent, question
         )
-        night_via_ferrata_info_payload = formatted_night_via_ferrata.get(
-            "night_via_ferrata_info"
-        )
+        night_via_ferrata_info_payload = formatted_night_via_ferrata.get("night_via_ferrata_info")
 
     via_ferrata_intent = detect_via_ferrata_intent(question)
     via_ferrata_prompt = ""
@@ -2417,12 +2388,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
     cave_mineralogy_info_payload = None
     if cave_mineralogy_intent:
         cave_mineralogy_prompt = build_cave_mineralogy_prompt(question)
-        formatted_cm = format_cave_mineralogy_response(
-            "cave_mineralogy", question
-        )
-        cave_mineralogy_info_payload = formatted_cm.get(
-            "cave_mineralogy_info"
-        )
+        formatted_cm = format_cave_mineralogy_response("cave_mineralogy", question)
+        cave_mineralogy_info_payload = formatted_cm.get("cave_mineralogy_info")
 
     caving_intent = detect_caving_intent(question)
     caving_prompt = ""
@@ -2731,15 +2698,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if salt_pan_navigation_prompt:
         llm_kwargs["salt_pan_navigation_prompt"] = salt_pan_navigation_prompt
     if rock_glacier_navigation_prompt:
-        llm_kwargs["rock_glacier_navigation_prompt"] = (
-            rock_glacier_navigation_prompt
-        )
+        llm_kwargs["rock_glacier_navigation_prompt"] = rock_glacier_navigation_prompt
     if sea_cave_pneumatics_prompt:
         llm_kwargs["sea_cave_pneumatics_prompt"] = sea_cave_pneumatics_prompt
     if mangrove_labyrinth_prompt:
         llm_kwargs["mangrove_labyrinth_prompt"] = mangrove_labyrinth_prompt
     if paramo_navigation_prompt:
         llm_kwargs["paramo_navigation_prompt"] = paramo_navigation_prompt
+    if tephra_navigation_prompt:
+        llm_kwargs["tephra_navigation_prompt"] = tephra_navigation_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2870,28 +2837,17 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if aufeis_crossing_intent and aufeis_crossing_info_payload:
         response_payload["aufeis_crossing_info"] = aufeis_crossing_info_payload
     if salt_pan_navigation_intent and salt_pan_navigation_info_payload:
-        response_payload["salt_pan_navigation_info"] = (
-            salt_pan_navigation_info_payload
-        )
-    if (
-        rock_glacier_navigation_intent
-        and rock_glacier_navigation_info_payload
-    ):
-        response_payload["rock_glacier_navigation_info"] = (
-            rock_glacier_navigation_info_payload
-        )
+        response_payload["salt_pan_navigation_info"] = salt_pan_navigation_info_payload
+    if rock_glacier_navigation_intent and rock_glacier_navigation_info_payload:
+        response_payload["rock_glacier_navigation_info"] = rock_glacier_navigation_info_payload
     if sea_cave_pneumatics_intent and sea_cave_pneumatics_info_payload:
-        response_payload["sea_cave_pneumatics_info"] = (
-            sea_cave_pneumatics_info_payload
-        )
+        response_payload["sea_cave_pneumatics_info"] = sea_cave_pneumatics_info_payload
     if mangrove_labyrinth_intent and mangrove_labyrinth_info_payload:
-        response_payload["mangrove_labyrinth_info"] = (
-            mangrove_labyrinth_info_payload
-        )
+        response_payload["mangrove_labyrinth_info"] = mangrove_labyrinth_info_payload
     if paramo_navigation_intent and paramo_navigation_info_payload:
-        response_payload["paramo_navigation_info"] = (
-            paramo_navigation_info_payload
-        )
+        response_payload["paramo_navigation_info"] = paramo_navigation_info_payload
+    if tephra_navigation_intent and tephra_navigation_info_payload:
+        response_payload["tephra_navigation_info"] = tephra_navigation_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3075,6 +3031,7 @@ def generate_llm_response_stream(
     sea_cave_pneumatics_prompt: str = "",
     mangrove_labyrinth_prompt: str = "",
     paramo_navigation_prompt: str = "",
+    tephra_navigation_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3263,6 +3220,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{mangrove_labyrinth_prompt}"
         if paramo_navigation_prompt:
             local_system = f"{local_system}\n\n{paramo_navigation_prompt}"
+        if tephra_navigation_prompt:
+            local_system = f"{local_system}\n\n{tephra_navigation_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3465,6 +3424,8 @@ def generate_llm_response_stream(
             prompt_parts.append(mangrove_labyrinth_prompt)
         if paramo_navigation_prompt:
             prompt_parts.append(paramo_navigation_prompt)
+        if tephra_navigation_prompt:
+            prompt_parts.append(tephra_navigation_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3834,12 +3795,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     smoke_advisory_info_payload = None
     if smoke_advisory_intent:
         smoke_advisory_prompt = build_smoke_advisory_prompt(question)
-        formatted_smoke = format_smoke_advisory_response(
-            "smoke_advisory", question
-        )
-        smoke_advisory_info_payload = formatted_smoke.get(
-            "smoke_advisory_info"
-        )
+        formatted_smoke = format_smoke_advisory_response("smoke_advisory", question)
+        smoke_advisory_info_payload = formatted_smoke.get("smoke_advisory_info")
 
     weather_station_intent = detect_weather_station_intent(question)
     weather_station_prompt = ""
@@ -3849,9 +3806,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_weather_station = format_weather_station_response(
             weather_station_intent, question
         )
-        weather_station_info_payload = formatted_weather_station.get(
-            "weather_station_info"
-        )
+        weather_station_info_payload = formatted_weather_station.get("weather_station_info")
 
     weather_intent = detect_weather_intent(question)
     weather_prompt = ""
@@ -3882,36 +3837,35 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     rock_glacier_navigation_info_payload = None
     if rock_glacier_navigation_intent:
         rock_glacier_navigation_prompt = build_rock_glacier_navigation_prompt(question)
-        _, rock_glacier_navigation_info_payload = (
-            format_rock_glacier_navigation_response(question)
-        )
+        _, rock_glacier_navigation_info_payload = format_rock_glacier_navigation_response(question)
 
     sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(question)
     sea_cave_pneumatics_prompt = ""
     sea_cave_pneumatics_info_payload = None
     if sea_cave_pneumatics_intent:
         sea_cave_pneumatics_prompt = build_sea_cave_pneumatics_prompt(question)
-        _, sea_cave_pneumatics_info_payload = (
-            format_sea_cave_pneumatics_response(question)
-        )
+        _, sea_cave_pneumatics_info_payload = format_sea_cave_pneumatics_response(question)
 
     mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(question)
     mangrove_labyrinth_prompt = ""
     mangrove_labyrinth_info_payload = None
     if mangrove_labyrinth_intent:
         mangrove_labyrinth_prompt = build_mangrove_labyrinth_prompt(question)
-        _, mangrove_labyrinth_info_payload = (
-            format_mangrove_labyrinth_response(question)
-        )
+        _, mangrove_labyrinth_info_payload = format_mangrove_labyrinth_response(question)
 
     paramo_navigation_intent = detect_paramo_navigation_intent(question)
     paramo_navigation_prompt = ""
     paramo_navigation_info_payload = None
     if paramo_navigation_intent:
         paramo_navigation_prompt = build_paramo_navigation_prompt(question)
-        _, paramo_navigation_info_payload = (
-            format_paramo_navigation_response(question)
-        )
+        _, paramo_navigation_info_payload = format_paramo_navigation_response(question)
+
+    tephra_navigation_intent = detect_tephra_navigation_intent(question)
+    tephra_navigation_prompt = ""
+    tephra_navigation_info_payload = None
+    if tephra_navigation_intent:
+        tephra_navigation_prompt = build_tephra_navigation_prompt(question)
+        tephra_navigation_info_payload = dict(format_tephra_navigation_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -3921,42 +3875,30 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_canyon_bouldering = format_canyon_bouldering_response(
             canyon_bouldering_intent, question
         )
-        canyon_bouldering_info_payload = formatted_canyon_bouldering.get(
-            "canyon_bouldering_info"
-        )
+        canyon_bouldering_info_payload = formatted_canyon_bouldering.get("canyon_bouldering_info")
 
     salt_pan_navigation_intent = detect_salt_pan_navigation_intent(question)
     salt_pan_navigation_prompt = ""
     salt_pan_navigation_info_payload = None
     if salt_pan_navigation_intent:
         salt_pan_navigation_prompt = build_salt_pan_navigation_prompt(question)
-        _, salt_pan_navigation_info_payload = (
-            format_salt_pan_navigation_response(question)
-        )
+        _, salt_pan_navigation_info_payload = format_salt_pan_navigation_response(question)
 
     mudflat_intent = detect_mudflat_intent(question)
     mudflat_trekking_prompt = ""
     mudflat_trekking_info_payload = None
     if mudflat_intent:
         mudflat_trekking_prompt = build_mudflat_trekking_prompt(mudflat_intent)
-        formatted_mudflat = format_mudflat_response(
-            mudflat_intent, question
-        )
-        mudflat_trekking_info_payload = formatted_mudflat.get(
-            "mudflat_trekking_info"
-        )
+        formatted_mudflat = format_mudflat_response(mudflat_intent, question)
+        mudflat_trekking_info_payload = formatted_mudflat.get("mudflat_trekking_info")
 
     scree_running_intent = detect_scree_running_intent(question)
     scree_running_prompt = ""
     scree_running_info_payload = None
     if scree_running_intent:
         scree_running_prompt = build_scree_running_prompt(question)
-        formatted_scree_running = format_scree_running_response(
-            "scree_running", question
-        )
-        scree_running_info_payload = formatted_scree_running.get(
-            "scree_running_info"
-        )
+        formatted_scree_running = format_scree_running_response("scree_running", question)
+        scree_running_info_payload = formatted_scree_running.get("scree_running_info")
 
     climbing_intent = detect_climbing_intent(question)
     climbing_prompt = ""
@@ -3983,12 +3925,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     kelp_freediving_info_payload = None
     if kelp_freediving_intent:
         kelp_freediving_prompt = build_kelp_freediving_prompt(question)
-        formatted_kelp_freediving = format_kelp_freediving_response(
-            "kelp_freediving", question
-        )
-        kelp_freediving_info_payload = formatted_kelp_freediving.get(
-            "kelp_freediving_info"
-        )
+        formatted_kelp_freediving = format_kelp_freediving_response("kelp_freediving", question)
+        kelp_freediving_info_payload = formatted_kelp_freediving.get("kelp_freediving_info")
 
     cryokarst_speleology_intent = detect_cryokarst_speleology_intent(question)
     cryokarst_speleology_prompt = ""
@@ -3998,25 +3936,23 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_cryokarst_speleology = format_cryokarst_speleology_response(
             "cryokarst_speleology", question
         )
-        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get("cryokarst_speleology_info")
+        cryokarst_speleology_info_payload = formatted_cryokarst_speleology.get(
+            "cryokarst_speleology_info"
+        )
 
     canopy_bryophyte_intent = detect_canopy_bryophyte_intent(question)
     canopy_bryophyte_prompt = ""
     canopy_bryophyte_info_payload = None
     if canopy_bryophyte_intent:
         canopy_bryophyte_prompt = build_canopy_bryophyte_prompt(question)
-        formatted_canopy_bryophyte = format_canopy_bryophyte_response(
-            "canopy_bryophyte", question
-        )
+        formatted_canopy_bryophyte = format_canopy_bryophyte_response("canopy_bryophyte", question)
         canopy_bryophyte_info_payload = formatted_canopy_bryophyte.get("canopy_bryophyte_info")
     slickrock_burro_intent = detect_slickrock_burro_intent(question)
     slickrock_burro_prompt = ""
     slickrock_burro_info_payload = None
     if slickrock_burro_intent:
         slickrock_burro_prompt = build_slickrock_burro_prompt(question)
-        formatted_slickrock_burro = format_slickrock_burro_response(
-            "slickrock_burro", question
-        )
+        formatted_slickrock_burro = format_slickrock_burro_response("slickrock_burro", question)
         slickrock_burro_info_payload = formatted_slickrock_burro.get("slickrock_burro_info")
 
     tundra_lichen_intent = detect_tundra_lichen_intent(question)
@@ -4024,9 +3960,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     tundra_lichen_info_payload = None
     if tundra_lichen_intent:
         tundra_lichen_prompt = build_tundra_lichen_prompt(question)
-        formatted_tundra_lichen = format_tundra_lichen_response(
-            "tundra_lichen", question
-        )
+        formatted_tundra_lichen = format_tundra_lichen_response("tundra_lichen", question)
         tundra_lichen_info_payload = formatted_tundra_lichen.get("tundra_lichen_info")
 
     penitentes_navigation_intent = detect_penitentes_navigation_intent(question)
@@ -4034,27 +3968,21 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     penitentes_navigation_info_payload = None
     if penitentes_navigation_intent:
         penitentes_navigation_prompt = build_penitentes_navigation_prompt(question)
-        _, penitentes_navigation_info_payload = format_penitentes_navigation_response(
-            question
-        )
+        _, penitentes_navigation_info_payload = format_penitentes_navigation_response(question)
 
     solfatara_navigation_intent = detect_solfatara_navigation_intent(question)
     solfatara_navigation_prompt = ""
     solfatara_navigation_info_payload = None
     if solfatara_navigation_intent:
         solfatara_navigation_prompt = build_solfatara_navigation_prompt(question)
-        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(
-            question
-        )
+        _, solfatara_navigation_info_payload = format_solfatara_navigation_response(question)
 
     aufeis_crossing_intent = detect_aufeis_crossing_intent(question)
     aufeis_crossing_prompt = ""
     aufeis_crossing_info_payload = None
     if aufeis_crossing_intent:
         aufeis_crossing_prompt = build_aufeis_crossing_prompt(question)
-        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(
-            question
-        )
+        _, aufeis_crossing_info_payload = format_aufeis_crossing_response(question)
 
     foraging_intent = detect_foraging_intent(question)
     foraging_prompt = ""
@@ -4407,9 +4335,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         formatted_night_via_ferrata = format_night_via_ferrata_response(
             night_via_ferrata_intent, question
         )
-        night_via_ferrata_info_payload = formatted_night_via_ferrata.get(
-            "night_via_ferrata_info"
-        )
+        night_via_ferrata_info_payload = formatted_night_via_ferrata.get("night_via_ferrata_info")
 
     via_ferrata_intent = detect_via_ferrata_intent(question)
     via_ferrata_prompt = ""
@@ -4448,12 +4374,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     cave_mineralogy_info_payload = None
     if cave_mineralogy_intent:
         cave_mineralogy_prompt = build_cave_mineralogy_prompt(question)
-        formatted_cm = format_cave_mineralogy_response(
-            "cave_mineralogy", question
-        )
-        cave_mineralogy_info_payload = formatted_cm.get(
-            "cave_mineralogy_info"
-        )
+        formatted_cm = format_cave_mineralogy_response("cave_mineralogy", question)
+        cave_mineralogy_info_payload = formatted_cm.get("cave_mineralogy_info")
 
     caving_intent = detect_caving_intent(question)
     caving_prompt = ""
@@ -4620,9 +4542,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "mudflat_trekking_lookup",
             "gear": "mudflat_trekking_lookup",
         }
-        event_name = action_to_event.get(
-            mudflat_intent.action, "mudflat_trekking_lookup"
-        )
+        event_name = action_to_event.get(mudflat_intent.action, "mudflat_trekking_lookup")
         yield f"data: {json.dumps({'event': event_name, 'mudflat_trekking_info': mudflat_trekking_info_payload, event_name: mudflat_trekking_info_payload})}\n\n"
         if event_name != "mudflat_trekking_info":
             yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mudflat_trekking_info_payload})}\n\n"
@@ -4630,9 +4550,11 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': climbing_info_payload})}\n\n"
     if lava_tube_biospeleology_intent and lava_tube_biospeleology_info_payload:
         event_name = "lava_tube_biospeleology_lookup"
-        if (
-            isinstance(lava_tube_biospeleology_info_payload, dict)
-            and lava_tube_biospeleology_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(
+            lava_tube_biospeleology_info_payload, dict
+        ) and lava_tube_biospeleology_info_payload.get("action") in (
+            "calculate",
+            "calculate_dynamics",
         ):
             event_name = "lava_tube_biospeleology_calculated"
         yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload, event_name: lava_tube_biospeleology_info_payload})}\n\n"
@@ -4640,19 +4562,20 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': lava_tube_biospeleology_info_payload})}\n\n"
     if kelp_freediving_intent and kelp_freediving_info_payload:
         event_name = "kelp_freediving_lookup"
-        if (
-            isinstance(kelp_freediving_info_payload, dict)
-            and kelp_freediving_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(kelp_freediving_info_payload, dict) and kelp_freediving_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "kelp_freediving_calculated"
         yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kelp_freediving_info_payload, event_name: kelp_freediving_info_payload})}\n\n"
         if event_name != "kelp_freediving_info":
             yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kelp_freediving_info_payload})}\n\n"
     if cryokarst_speleology_intent and cryokarst_speleology_info_payload:
         event_name = "cryokarst_speleology_lookup"
-        if (
-            isinstance(cryokarst_speleology_info_payload, dict)
-            and cryokarst_speleology_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(
+            cryokarst_speleology_info_payload, dict
+        ) and cryokarst_speleology_info_payload.get("action") in (
+            "calculate",
+            "calculate_dynamics",
         ):
             event_name = "cryokarst_speleology_calculated"
         yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cryokarst_speleology_info_payload, event_name: cryokarst_speleology_info_payload})}\n\n"
@@ -4660,19 +4583,20 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'cryokarst_speleology_info', 'cryokarst_speleology_info': cryokarst_speleology_info_payload})}\n\n"
     if canopy_bryophyte_intent and canopy_bryophyte_info_payload:
         event_name = "canopy_bryophyte_lookup"
-        if (
-            isinstance(canopy_bryophyte_info_payload, dict)
-            and canopy_bryophyte_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(canopy_bryophyte_info_payload, dict) and canopy_bryophyte_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "canopy_bryophyte_calculated"
         yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': canopy_bryophyte_info_payload, event_name: canopy_bryophyte_info_payload})}\n\n"
         if event_name != "canopy_bryophyte_info":
             yield f"data: {json.dumps({'event': 'canopy_bryophyte_info', 'canopy_bryophyte_info': canopy_bryophyte_info_payload})}\n\n"
     if glacier_ski_traverse_intent and glacier_ski_traverse_info_payload:
         event_name = "glacier_ski_traverse_lookup"
-        if (
-            isinstance(glacier_ski_traverse_info_payload, dict)
-            and glacier_ski_traverse_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(
+            glacier_ski_traverse_info_payload, dict
+        ) and glacier_ski_traverse_info_payload.get("action") in (
+            "calculate",
+            "calculate_dynamics",
         ):
             event_name = "glacier_ski_traverse_calculated"
         yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload, event_name: glacier_ski_traverse_info_payload})}\n\n"
@@ -4680,20 +4604,18 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': glacier_ski_traverse_info_payload})}\n\n"
     if scree_running_intent and scree_running_info_payload:
         event_name = "scree_running_lookup"
-        if (
-            isinstance(scree_running_info_payload, dict)
-            and scree_running_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(scree_running_info_payload, dict) and scree_running_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "scree_running_calculated"
         yield f"data: {json.dumps({'event': event_name, 'scree_running_info': scree_running_info_payload, event_name: scree_running_info_payload})}\n\n"
         if event_name != "scree_running_info":
             yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': scree_running_info_payload})}\n\n"
     if slickrock_burro_intent and slickrock_burro_info_payload:
         event_name = "slickrock_burro_lookup"
-        if (
-            isinstance(slickrock_burro_info_payload, dict)
-            and slickrock_burro_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(slickrock_burro_info_payload, dict) and slickrock_burro_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "slickrock_burro_calculated"
         yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': slickrock_burro_info_payload, event_name: slickrock_burro_info_payload})}\n\n"
         if event_name != "slickrock_burro_info":
@@ -4701,19 +4623,20 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
 
     if tundra_lichen_intent and tundra_lichen_info_payload:
         event_name = "tundra_lichen_lookup"
-        if (
-            isinstance(tundra_lichen_info_payload, dict)
-            and tundra_lichen_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(tundra_lichen_info_payload, dict) and tundra_lichen_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "tundra_lichen_calculated"
         yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tundra_lichen_info_payload, event_name: tundra_lichen_info_payload})}\n\n"
         if event_name != "tundra_lichen_info":
             yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tundra_lichen_info_payload})}\n\n"
     if penitentes_navigation_intent and penitentes_navigation_info_payload:
         event_name = "penitentes_navigation_lookup"
-        if (
-            isinstance(penitentes_navigation_info_payload, dict)
-            and penitentes_navigation_info_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(
+            penitentes_navigation_info_payload, dict
+        ) and penitentes_navigation_info_payload.get("action") in (
+            "calculate",
+            "calculate_dynamics",
         ):
             event_name = "penitentes_navigation_calculated"
         yield f"event: metadata\ndata: {json.dumps(penitentes_navigation_info_payload)}\n\n"
@@ -4742,9 +4665,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': aufeis_crossing_info_payload})}\n\n"
     if salt_pan_navigation_intent and salt_pan_navigation_info_payload:
         event_name = (
-            salt_pan_navigation_info_payload.get(
-                "action", "salt_pan_navigation_info"
-            )
+            salt_pan_navigation_info_payload.get("action", "salt_pan_navigation_info")
             if isinstance(salt_pan_navigation_info_payload, dict)
             else "salt_pan_navigation_info"
         )
@@ -4752,14 +4673,9 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': salt_pan_navigation_info_payload, event_name: salt_pan_navigation_info_payload})}\n\n"
         if event_name != "salt_pan_navigation_info":
             yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': salt_pan_navigation_info_payload})}\n\n"
-    if (
-        rock_glacier_navigation_intent
-        and rock_glacier_navigation_info_payload
-    ):
+    if rock_glacier_navigation_intent and rock_glacier_navigation_info_payload:
         event_name = (
-            rock_glacier_navigation_info_payload.get(
-                "action", "rock_glacier_navigation_info"
-            )
+            rock_glacier_navigation_info_payload.get("action", "rock_glacier_navigation_info")
             if isinstance(rock_glacier_navigation_info_payload, dict)
             else "rock_glacier_navigation_info"
         )
@@ -4769,9 +4685,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rock_glacier_navigation_info_payload})}\n\n"
     if sea_cave_pneumatics_intent and sea_cave_pneumatics_info_payload:
         event_name = (
-            sea_cave_pneumatics_info_payload.get(
-                "action", "sea_cave_pneumatics_info"
-            )
+            sea_cave_pneumatics_info_payload.get("action", "sea_cave_pneumatics_info")
             if isinstance(sea_cave_pneumatics_info_payload, dict)
             else "sea_cave_pneumatics_info"
         )
@@ -4781,9 +4695,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': sea_cave_pneumatics_info_payload})}\n\n"
     if mangrove_labyrinth_intent and mangrove_labyrinth_info_payload:
         event_name = (
-            mangrove_labyrinth_info_payload.get(
-                "action", "mangrove_labyrinth_info"
-            )
+            mangrove_labyrinth_info_payload.get("action", "mangrove_labyrinth_info")
             if isinstance(mangrove_labyrinth_info_payload, dict)
             else "mangrove_labyrinth_info"
         )
@@ -4793,9 +4705,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': mangrove_labyrinth_info_payload})}\n\n"
     if paramo_navigation_intent and paramo_navigation_info_payload:
         event_name = (
-            paramo_navigation_info_payload.get(
-                "action", "paramo_navigation_info"
-            )
+            paramo_navigation_info_payload.get("action", "paramo_navigation_info")
             if isinstance(paramo_navigation_info_payload, dict)
             else "paramo_navigation_info"
         )
@@ -4803,6 +4713,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': paramo_navigation_info_payload, event_name: paramo_navigation_info_payload})}\n\n"
         if event_name != "paramo_navigation_info":
             yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': paramo_navigation_info_payload})}\n\n"
+    if tephra_navigation_intent and tephra_navigation_info_payload:
+        event_name = (
+            tephra_navigation_info_payload.get("action", "tephra_navigation_info")
+            if isinstance(tephra_navigation_info_payload, dict)
+            else "tephra_navigation_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(tephra_navigation_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tephra_navigation_info_payload, event_name: tephra_navigation_info_payload})}\n\n"
+        if event_name != "tephra_navigation_info":
+            yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tephra_navigation_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -4825,10 +4745,9 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'packrafting_info', 'packrafting_info': packrafting_info_payload})}\n\n"
     if pothole_escape_intent and pothole_escape_info_payload:
         event_name = "pothole_escape_lookup"
-        if (
-            isinstance(pothole_escape_info_payload, dict)
-            and pothole_escape_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(pothole_escape_info_payload, dict) and pothole_escape_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "pothole_escape_calculated"
         yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pothole_escape_info_payload, event_name: pothole_escape_info_payload})}\n\n"
         if event_name != "pothole_escape_info":
@@ -4862,30 +4781,27 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': 'bushcraft_info', 'bushcraft_info': bushcraft_info_payload})}\n\n"
     if cave_mineralogy_intent and cave_mineralogy_info_payload:
         event_name = "cave_mineralogy_lookup"
-        if (
-            isinstance(cave_mineralogy_info_payload, dict)
-            and cave_mineralogy_info_payload.get("action") in ("calculate", "calculate_accretion")
-        ):
+        if isinstance(cave_mineralogy_info_payload, dict) and cave_mineralogy_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_accretion"):
             event_name = "cave_mineralogy_calculated"
         yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cave_mineralogy_info_payload, event_name: cave_mineralogy_info_payload})}\n\n"
         if event_name != "cave_mineralogy_info":
             yield f"data: {json.dumps({'event': 'cave_mineralogy_info', 'cave_mineralogy_info': cave_mineralogy_info_payload})}\n\n"
     if bog_shoeing_intent and bog_shoeing_info_payload:
         event_name = "bog_shoeing_lookup"
-        if (
-            isinstance(bog_shoeing_info_payload, dict)
-            and bog_shoeing_info_payload.get("action") in ("calculate", "calculate_flotation")
-        ):
+        if isinstance(bog_shoeing_info_payload, dict) and bog_shoeing_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_flotation"):
             event_name = "bog_shoeing_calculated"
         yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bog_shoeing_info_payload, event_name: bog_shoeing_info_payload})}\n\n"
         if event_name != "bog_shoeing_info":
             yield f"data: {json.dumps({'event': 'bog_shoeing_info', 'bog_shoeing_info': bog_shoeing_info_payload})}\n\n"
     if crevasse_pulk_intent and crevasse_pulk_info_payload:
         event_name = "crevasse_pulk_lookup"
-        if (
-            isinstance(crevasse_pulk_info_payload, dict)
-            and crevasse_pulk_info_payload.get("action") in ("calculate", "calculate_dynamics")
-        ):
+        if isinstance(crevasse_pulk_info_payload, dict) and crevasse_pulk_info_payload.get(
+            "action"
+        ) in ("calculate", "calculate_dynamics"):
             event_name = "crevasse_pulk_calculated"
         yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': crevasse_pulk_info_payload, event_name: crevasse_pulk_info_payload})}\n\n"
         if event_name != "crevasse_pulk_info":
@@ -5109,7 +5025,10 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             yield f"data: {json.dumps({'event': 'primitive_trapping_info', 'primitive_trapping_info': primitive_trapping_info_payload})}\n\n"
     if smoke_advisory_intent and smoke_advisory_info_payload:
         event_name = "smoke_advisory_lookup"
-        if isinstance(smoke_advisory_info_payload, dict) and smoke_advisory_info_payload.get("action") == "calculate":
+        if (
+            isinstance(smoke_advisory_info_payload, dict)
+            and smoke_advisory_info_payload.get("action") == "calculate"
+        ):
             event_name = "smoke_advisory_calculated"
         yield f"data: {json.dumps({'event': event_name, 'smoke_advisory_info': smoke_advisory_info_payload, event_name: smoke_advisory_info_payload})}\n\n"
         if event_name != "smoke_advisory_info":
@@ -5123,9 +5042,7 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
             "gear_checklist": "weather_station_lookup",
             "gear": "weather_station_lookup",
         }
-        event_name = action_to_event.get(
-            weather_station_intent.action, "weather_station_lookup"
-        )
+        event_name = action_to_event.get(weather_station_intent.action, "weather_station_lookup")
         yield f"data: {json.dumps({'event': event_name, 'weather_station_info': weather_station_info_payload, event_name: weather_station_info_payload})}\n\n"
         if event_name != "weather_station_info":
             yield f"data: {json.dumps({'event': 'weather_station_info', 'weather_station_info': weather_station_info_payload})}\n\n"
@@ -5734,21 +5651,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if salt_pan_navigation_prompt:
         stream_kwargs["salt_pan_navigation_prompt"] = salt_pan_navigation_prompt
     if rock_glacier_navigation_prompt:
-        stream_kwargs["rock_glacier_navigation_prompt"] = (
-            rock_glacier_navigation_prompt
-        )
+        stream_kwargs["rock_glacier_navigation_prompt"] = rock_glacier_navigation_prompt
     if sea_cave_pneumatics_prompt:
-        stream_kwargs["sea_cave_pneumatics_prompt"] = (
-            sea_cave_pneumatics_prompt
-        )
+        stream_kwargs["sea_cave_pneumatics_prompt"] = sea_cave_pneumatics_prompt
     if mangrove_labyrinth_prompt:
-        stream_kwargs["mangrove_labyrinth_prompt"] = (
-            mangrove_labyrinth_prompt
-        )
+        stream_kwargs["mangrove_labyrinth_prompt"] = mangrove_labyrinth_prompt
     if paramo_navigation_prompt:
-        stream_kwargs["paramo_navigation_prompt"] = (
-            paramo_navigation_prompt
-        )
+        stream_kwargs["paramo_navigation_prompt"] = paramo_navigation_prompt
+    if tephra_navigation_prompt:
+        stream_kwargs["tephra_navigation_prompt"] = tephra_navigation_prompt
 
     for chunk in generate_llm_response_stream(
         question,

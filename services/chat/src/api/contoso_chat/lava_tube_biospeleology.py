@@ -446,11 +446,7 @@ def get_lava_tube_biospeleology_sites(
     if not zone:
         return all_sites
     norm = zone.strip().lower()
-    return [
-        s
-        for s in all_sites
-        if s.dominant_zone.lower() == norm
-    ]
+    return [s for s in all_sites if s.dominant_zone.lower() == norm]
 
 
 def get_lava_tube_biospeleology_site(site_id: str) -> Optional[LavaTubeBiospeleologySite]:
@@ -515,11 +511,7 @@ def calculate_lava_tube_biospeleology_dynamics(
     )
 
     # Conservation status classification
-    if (
-        rh < 78.0
-        or query.ambient_co2_ppm >= 1800.0
-        or microbial_mat_integrity_percent < 70.0
-    ):
+    if rh < 78.0 or query.ambient_co2_ppm >= 1800.0 or microbial_mat_integrity_percent < 70.0:
         conservation_status = (
             BiospeleologyConservationStatus.CRITICAL_ANTHROPOGENIC_BIOCONTAMINATION.value
         )
@@ -532,11 +524,7 @@ def calculate_lava_tube_biospeleology_dynamics(
             "MANDATORY QUATERNARY AMMONIUM DECON: Perform full boot immersion and oversuit scrub with 2% quaternary ammonium "
             "solution before and after egress to halt Ceratocystis ('ohi'a wilt) and surface mold proliferation."
         )
-    elif (
-        rh < 92.0
-        or vapor_pressure_deficit_stress_kpa > 0.15
-        or query.ambient_co2_ppm >= 1000.0
-    ):
+    elif rh < 92.0 or vapor_pressure_deficit_stress_kpa > 0.15 or query.ambient_co2_ppm >= 1000.0:
         conservation_status = (
             BiospeleologyConservationStatus.VULNERABLE_MICROCLIMATE_DESICCATION.value
         )
@@ -549,9 +537,7 @@ def calculate_lava_tube_biospeleology_dynamics(
             "disinfectant at the skylight threshold."
         )
     else:
-        conservation_status = (
-            BiospeleologyConservationStatus.PRISTINE_ENDEMIC_REFUGIUM.value
-        )
+        conservation_status = BiospeleologyConservationStatus.PRISTINE_ENDEMIC_REFUGIUM.value
         non_contact_traversal_protocol = (
             "PRISTINE REFUGIUM NON-CONTACT PROTOCOL: Traverse strictly along the central pahoehoe thalweg using low-lux 630nm red "
             "illumination. Never touch actinobacterial 'lava tube gold' slime walls or disturb ceiling root curtain droplets."
@@ -712,6 +698,19 @@ def detect_lava_tube_biospeleology_intent(message: str) -> bool:
         "h2s",
         "hydrogen sulfide",
         "sulfur dioxide",
+        "tephra",
+        "lapilli",
+        "ash-fall",
+        "ashfall",
+        "volcanic ash",
+        "scoria scree",
+        "pumice scree",
+        "cristobalite",
+        "mount yasur",
+        "acatenango",
+        "tarawera",
+        "chaiten",
+        "chaitén",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
@@ -744,7 +743,9 @@ def extract_lava_tube_biospeleology_intent(message: str) -> LavaTubeBiospeleolog
         ecological_zone = LavaTubeEcologicalZone.SUBTERRANEAN_ROOT_CURTAIN_GALLERY.value
     elif "deep dark" in q or "stagnant saturation" in q or "deep_dark_stagnant_saturation" in q:
         ecological_zone = LavaTubeEcologicalZone.DEEP_DARK_STAGNANT_SATURATION.value
-    elif "transition" in q or "variable microclimate" in q or "transition_variable_microclimate" in q:
+    elif (
+        "transition" in q or "variable microclimate" in q or "transition_variable_microclimate" in q
+    ):
         ecological_zone = LavaTubeEcologicalZone.TRANSITION_VARIABLE_MICROCLIMATE.value
     elif "twilight" in q or "moss threshold" in q or "twilight_moss_threshold" in q:
         ecological_zone = LavaTubeEcologicalZone.TWILIGHT_MOSS_THRESHOLD.value
@@ -900,9 +901,7 @@ def format_lava_tube_biospeleology_response(
         return FormattedLavaTubeBiospeleologyResponse(answer, calc_info)
 
     if resolved_action == "gear_checklist":
-        checklist = (
-            message if isinstance(message, list) else get_lava_tube_biospeleology_gear()
-        )
+        checklist = message if isinstance(message, list) else get_lava_tube_biospeleology_gear()
         items_str = "; ".join(f"{g.name} ({g.description})" for g in checklist)
         answer = (
             f"Mandatory Subterranean Lava Tube Biospeleology & Troglomorphic Fauna Gear Checklist ({len(checklist)} items): "
@@ -954,8 +953,7 @@ def format_lava_tube_biospeleology_response(
         else get_lava_tube_biospeleology_sites(zone=intent_obj.ecological_zone)
     )
     summary_str = "; ".join(
-        f"{s.title} ({s.region}, {s.elevation_meters}m, zone: {s.dominant_zone})"
-        for s in sites
+        f"{s.title} ({s.region}, {s.elevation_meters}m, zone: {s.dominant_zone})" for s in sites
     )
     answer = (
         f"Contoso Subterranean Lava Tube Biospeleology & Troglomorphic Fauna Catalog ({len(sites)} sites): {summary_str}. "

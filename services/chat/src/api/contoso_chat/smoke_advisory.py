@@ -483,6 +483,19 @@ def detect_smoke_advisory_intent(message: str) -> bool:
         "h2s",
         "hydrogen sulfide",
         "sulfur dioxide",
+        "tephra",
+        "lapilli",
+        "ash-fall",
+        "ashfall",
+        "volcanic ash",
+        "scoria scree",
+        "pumice scree",
+        "cristobalite",
+        "mount yasur",
+        "acatenango",
+        "tarawera",
+        "chaiten",
+        "chaitén",
     ]
     if any(k in q for k in exclusions):
         return False

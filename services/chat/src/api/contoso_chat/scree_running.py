@@ -568,7 +568,9 @@ def calculate_scree_running_dynamics(
     elif grading == ScreeGradingClass.COARSE_ANGULAR_TALUS_RUBBLE.value:
         effective_friction = 0.52
 
-    raw_arrest = (velocity_ms**2) / (2.0 * 9.81 * max(0.12, effective_friction - 0.35 * math.sin(angle_rad)))
+    raw_arrest = (velocity_ms**2) / (
+        2.0 * 9.81 * max(0.12, effective_friction - 0.35 * math.sin(angle_rad))
+    )
     slide_arrest_distance_meters = min(18.0, max(0.8, round(raw_arrest, 1)))
 
     # 4. Scree Run Duration (minutes)
@@ -578,7 +580,8 @@ def calculate_scree_running_dynamics(
 
     # 5. Safety Status
     if (
-        exposure in (
+        exposure
+        in (
             RockfallExposureTier.SEVERE_OVERHEAD_COULOIR_FUNNEL.value,
             RockfallExposureTier.CRITICAL_SPONTANEOUS_SCARP_SHED.value,
         )
@@ -587,7 +590,8 @@ def calculate_scree_running_dynamics(
         safety_status = ScreeSafetyStatus.SEVERE_ROCKFALL_WARNING.value
     elif (
         scree_depth < 8.0
-        or grading in (
+        or grading
+        in (
             ScreeGradingClass.COARSE_ANGULAR_TALUS_RUBBLE.value,
             ScreeGradingClass.HARDPAN_EMBEDDED_SCREE_SHEET.value,
         )
@@ -678,6 +682,19 @@ def detect_scree_running_intent(message: str) -> bool:
         "glaciar de escombros",
         "val muragl",
         "dos lenguas",
+        "tephra",
+        "lapilli",
+        "ash-fall",
+        "ashfall",
+        "volcanic ash",
+        "scoria scree",
+        "pumice scree",
+        "cristobalite",
+        "mount yasur",
+        "acatenango",
+        "tarawera",
+        "chaiten",
+        "chaitén",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
@@ -718,9 +735,7 @@ def detect_scree_running_intent(message: str) -> bool:
         "mount sneffels",
     ]
 
-    is_explicit = any(k in q for k in domain_keywords) or any(
-        sm in q for sm in site_matches
-    )
+    is_explicit = any(k in q for k in domain_keywords) or any(sm in q for sm in site_matches)
     return is_explicit
 
 
@@ -864,9 +879,7 @@ def format_scree_running_response(
         elif isinstance(message, ScreeRunningQuery):
             calc_res = calculate_scree_running_dynamics(message)
         else:
-            calc_q = ScreeRunningQuery(
-                site_id=intent_obj.site_id or "mount-sneffels-south-slopes"
-            )
+            calc_q = ScreeRunningQuery(site_id=intent_obj.site_id or "mount-sneffels-south-slopes")
             calc_res = calculate_scree_running_dynamics(calc_q)
 
         answer = (
@@ -897,9 +910,7 @@ def format_scree_running_response(
         return FormattedScreeRunningResponse(answer, calc_info)
 
     if resolved_action == "gear_checklist":
-        checklist = (
-            message if isinstance(message, list) else get_scree_running_gear()
-        )
+        checklist = message if isinstance(message, list) else get_scree_running_gear()
         items_str = "; ".join(f"{g.name} ({g.description})" for g in checklist)
         answer = (
             f"Mandatory High-Altitude Alpine Scree Running Gear Checklist ({len(checklist)} items): "
@@ -1012,9 +1023,7 @@ def build_scree_running_prompt(
         )
 
     if gear is not None and len(gear) > 0:
-        lines.append(
-            f"- Gear Checklist ({len(gear)} items): {', '.join(g.name for g in gear)}"
-        )
+        lines.append(f"- Gear Checklist ({len(gear)} items): {', '.join(g.name for g in gear)}")
 
     return "\n".join(lines)
 
@@ -1027,9 +1036,7 @@ def scree_running_tool(
     **kwargs: Any,
 ) -> Any:
     if action in ("calculate", "calculate_dynamics") or query is not None:
-        calc_q = query or ScreeRunningQuery(
-            site_id=site_id or "mount-sneffels-south-slopes"
-        )
+        calc_q = query or ScreeRunningQuery(site_id=site_id or "mount-sneffels-south-slopes")
         res = calculate_scree_running_dynamics(calc_q)
         formatted = format_scree_running_response("calculate", res)
         return dict(formatted._data)
