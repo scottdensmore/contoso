@@ -716,6 +716,9 @@ from contoso_chat.routers.telemark_skiing import router as telemark_skiing_route
 from contoso_chat.routers.tephra_navigation import (
     router as tephra_navigation_router,
 )
+from contoso_chat.routers.tiankeng_descent import (
+    router as tiankeng_descent_router,
+)
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.weather_station import router as weather_station_router
@@ -905,6 +908,10 @@ from contoso_chat.telemark_skiing import (
 from contoso_chat.tephra_navigation import (
     detect_tephra_navigation_intent,
     format_tephra_navigation_response,
+)
+from contoso_chat.tiankeng_descent import (
+    detect_tiankeng_descent_intent,
+    format_tiankeng_descent_response,
 )
 from contoso_chat.trade_in import (
     EligibleBrandModel,
@@ -1455,6 +1462,24 @@ app.include_router(
 logger.info(
     "Registered Glacial Outwash Braided-River Sandur & Quicksand Silt-Bar Crossing router (/sandur-crossing, /api/sandur-crossing, /api/v1/sandur-crossing)"
 )
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/api/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/api/v1/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+logger.info(
+    "Registered Karst Tiankeng (Giant Collapse Sinkhole) & Vertical Cloud-Forest Rim Descent router (/tiankeng-descent, /api/tiankeng-descent, /api/v1/tiankeng-descent)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1755,6 +1780,7 @@ async def create_response(request: ChatRequest):
             flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
             krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
             sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
+            tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -2182,6 +2208,10 @@ async def create_response(request: ChatRequest):
                 sc_info = dict(format_sandur_crossing_response(request.question))
                 mock_payload["sandur_crossing_info"] = sc_info
                 mock_payload["answer"] = str(sc_info.get("answer", ""))
+            if tiankeng_descent_intent:
+                td_info = dict(format_tiankeng_descent_response(request.question))
+                mock_payload["tiankeng_descent_info"] = td_info
+                mock_payload["answer"] = str(td_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2696,6 +2726,7 @@ async def create_response_stream(request: ChatRequest):
                 flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
                 krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
                 sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
+                tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -3162,6 +3193,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sc_payload, event_name: sc_payload})}\n\n"
                     if event_name != "sandur_crossing_info":
                         yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sc_payload})}\n\n"
+                if tiankeng_descent_intent:
+                    td_payload = dict(format_tiankeng_descent_response(request.question))
+                    event_name = str(td_payload.get("action", "tiankeng_descent_info"))
+                    yield f"event: metadata\ndata: {json.dumps(td_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tiankeng_descent_info': td_payload, event_name: td_payload})}\n\n"
+                    if event_name != "tiankeng_descent_info":
+                        yield f"data: {json.dumps({'event': 'tiankeng_descent_info', 'tiankeng_descent_info': td_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4033,6 +4071,9 @@ async def create_response_stream(request: ChatRequest):
                 elif sandur_crossing_intent:
                     sc_resp = format_sandur_crossing_response(request.question)
                     mock_chunks = [str(sc_resp.get("answer", ""))]
+                elif tiankeng_descent_intent:
+                    td_resp = format_tiankeng_descent_response(request.question)
+                    mock_chunks = [str(td_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4431,6 +4472,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_flash_flood_slot_intent(request.question)
                 or detect_krummholz_bushwhack_intent(request.question)
                 or detect_sandur_crossing_intent(request.question)
+                or detect_tiankeng_descent_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

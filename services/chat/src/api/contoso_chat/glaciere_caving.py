@@ -621,6 +621,16 @@ _GLACIERE_EXCLUSIONS: tuple[str, ...] = (
     "peacock springs",
     "aufeis",
     "rock glacier",
+    "tiankeng",
+    "giant sinkhole",
+    "collapse sinkhole",
+    "mega-doline",
+    "xiaozhai",
+    "dashiwei",
+    "golondrinas",
+    "sarisarinama",
+    "sarisariñama",
+    "sima humboldt",
 )
 
 

@@ -654,6 +654,16 @@ def is_sea_cave_pneumatics_query(query: str) -> bool:
             "intertidal cobble",
             "storm-berm cobble",
             "mucilage slip",
+            "tiankeng",
+            "giant sinkhole",
+            "collapse sinkhole",
+            "mega-doline",
+            "xiaozhai",
+            "dashiwei",
+            "golondrinas",
+            "sarisarinama",
+            "sarisariñama",
+            "sima humboldt",
         )
     ):
         return False

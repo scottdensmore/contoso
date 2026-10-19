@@ -452,6 +452,22 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
     if any(re.search(rf"\b{re.escape(w)}\b", q) for w in exclude_words):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against karst tiankeng descent in tiankeng_descent.py!
+    tiankeng_exclusions = [
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+    ]
+    if any(tx in q for tx in tiankeng_exclusions):
+        return None
+
     # CRITICAL DISAMBIGUATION: Strictly guard against canyon bouldering in canyon_bouldering.py!
     canyon_bouldering_exclusions = [
         "canyon bouldering",

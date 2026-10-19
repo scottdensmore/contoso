@@ -389,6 +389,24 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
     if any(vx in q for vx in via_ferrata_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against karst tiankeng descent in tiankeng_descent.py!
+    tiankeng_exclusions = [
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+        "bell shaft sinkhole",
+        "cloud-forest rim",
+    ]
+    if any(tx in q for tx in tiankeng_exclusions):
+        return None
+
     # CRITICAL DISAMBIGUATION: Strictly guard against cave mineralogy in cave_mineralogy.py!
     cave_mineralogy_exclusions = [
         "cave pearl",

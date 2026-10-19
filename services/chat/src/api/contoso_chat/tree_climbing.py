@@ -341,6 +341,21 @@ def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
     if any(k in q for k in krummholz_bushwhack_keywords):
         return None
 
+    tiankeng_keywords = (
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+    )
+    if any(k in q for k in tiankeng_keywords):
+        return None
+
     tree_climbing_explicit = (
         "tree climbing",
         "climbing tree",
