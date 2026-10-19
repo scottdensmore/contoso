@@ -528,6 +528,26 @@ def is_tephra_navigation_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "yardang",
+            "yardangs",
+            "kalut",
+            "kaluts",
+            "dasht-e lut",
+            "badain jaran",
+            "lop nur",
+            "dunhuang yadan",
+            "barchanoid",
+            "erg djourab",
+            "borkou",
+            "ennedi",
+            "aeolian corridor",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _TEPHRA_NAVIGATION_KEYWORDS):
         return True
 

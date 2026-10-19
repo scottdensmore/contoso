@@ -720,6 +720,19 @@ def detect_scree_running_intent(message: str) -> bool:
         "stone forest",
         "diaclase",
         "pinnacle karst",
+        "yardang",
+        "yardangs",
+        "kalut",
+        "kaluts",
+        "dasht-e lut",
+        "badain jaran",
+        "lop nur",
+        "dunhuang yadan",
+        "barchanoid",
+        "erg djourab",
+        "borkou",
+        "ennedi",
+        "aeolian corridor",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

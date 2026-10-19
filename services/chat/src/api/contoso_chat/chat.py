@@ -162,6 +162,10 @@ from contoso_chat.tussock_headland import (
     format_tussock_headland_response,
     is_tussock_headland_query,
 )
+from contoso_chat.yardang_navigation import (
+    format_yardang_navigation_response,
+    is_yardang_navigation_query,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -687,5 +691,21 @@ def handle_tepui_navigation_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_yardang_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format aeolian yardang & mega-dune slip-face star-dune desert navigation intent in the cascade."""
+    if not is_yardang_navigation_query(question):
+        return None
+    info = format_yardang_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "yardang_navigation_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 

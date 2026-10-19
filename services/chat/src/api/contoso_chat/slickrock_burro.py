@@ -661,6 +661,19 @@ def detect_slickrock_burro_intent(message: str) -> bool:
         "san rafael reef",
         "wadi mujib",
         "wadi ghul",
+        "yardang",
+        "yardangs",
+        "kalut",
+        "kaluts",
+        "dasht-e lut",
+        "badain jaran",
+        "lop nur",
+        "dunhuang yadan",
+        "barchanoid",
+        "erg djourab",
+        "borkou",
+        "ennedi",
+        "aeolian corridor",
     ]
 
     # Explicit exclusions check

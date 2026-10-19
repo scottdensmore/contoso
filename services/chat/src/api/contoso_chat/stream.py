@@ -163,6 +163,10 @@ from contoso_chat.tussock_headland import (
     format_tussock_headland_response,
     is_tussock_headland_query,
 )
+from contoso_chat.yardang_navigation import (
+    format_yardang_navigation_response,
+    is_yardang_navigation_query,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -1173,5 +1177,29 @@ async def generate_tepui_navigation_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_yardang_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for aeolian yardang & mega-dune slip-face star-dune desert navigation queries."""
+    if not is_yardang_navigation_query(question):
+        return
+
+    yn_payload = dict(format_yardang_navigation_response(question))
+    answer = str(yn_payload.get("answer", ""))
+    event_name = str(yn_payload.get("action", "yardang_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(yn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yn_payload, event_name: yn_payload})}\n\n"
+    if event_name != "yardang_navigation_info":
+        yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 

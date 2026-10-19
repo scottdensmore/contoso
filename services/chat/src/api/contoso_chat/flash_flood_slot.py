@@ -600,6 +600,22 @@ _FLASH_FLOOD_SLOT_EXCLUSIONS: tuple[str, ...] = (
     "skeiðarársandur",
     "kaskawulsh",
     "rakaia braids",
+    # Aeolian yardang & mega-dune desert navigation exclusions (yardang_navigation.py)
+    "yardang",
+    "yardangs",
+    "kalut",
+    "kaluts",
+    "dasht-e lut",
+    "gandom beryan",
+    "badain jaran",
+    "bilutu",
+    "lop nur",
+    "dunhuang yadan",
+    "barchanoid",
+    "erg djourab",
+    "borkou",
+    "ennedi",
+    "aeolian corridor",
 )
 
 
