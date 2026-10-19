@@ -384,21 +384,15 @@ def calculate_solfatara_navigation_safety(
             f"subsurface_temp_10cm_c ({subsurface_temp_10cm_c}) must be between 0.0 and 130.0 °C."
         )
     if not (0.0 <= wind_speed_kmh <= 120.0):
-        raise ValueError(
-            f"wind_speed_kmh ({wind_speed_kmh}) must be between 0.0 and 120.0 km/h."
-        )
+        raise ValueError(f"wind_speed_kmh ({wind_speed_kmh}) must be between 0.0 and 120.0 km/h.")
     if not (0.0 <= basin_depression_depth_m <= 60.0):
         raise ValueError(
             f"basin_depression_depth_m ({basin_depression_depth_m}) must be between 0.0 and 60.0 m."
         )
     if not (0.0 <= ambient_so2_ppm <= 100.0):
-        raise ValueError(
-            f"ambient_so2_ppm ({ambient_so2_ppm}) must be between 0.0 and 100.0 ppm."
-        )
+        raise ValueError(f"ambient_so2_ppm ({ambient_so2_ppm}) must be between 0.0 and 100.0 ppm.")
     if not (0.0 <= ambient_h2s_ppm <= 100.0):
-        raise ValueError(
-            f"ambient_h2s_ppm ({ambient_h2s_ppm}) must be between 0.0 and 100.0 ppm."
-        )
+        raise ValueError(f"ambient_h2s_ppm ({ambient_h2s_ppm}) must be between 0.0 and 100.0 ppm.")
 
     crust_modulus_map: dict[str, float] = {
         "siliceous_geyserite_sinter_shield": 1.40,
@@ -410,14 +404,10 @@ def calculate_solfatara_navigation_safety(
     crust_mod = crust_modulus_map[crust_type]
 
     # Thermal softening penalty as 10 cm subsurface temperature approaches boiling
-    thermal_degradation = max(
-        0.35, 1.0 - max(0.0, subsurface_temp_10cm_c - 45.0) * 0.0065
-    )
+    thermal_degradation = max(0.35, 1.0 - max(0.0, subsurface_temp_10cm_c - 45.0) * 0.0065)
 
     # Bearing safety factor: thickness normalized against 12 cm nominal reference
-    raw_safety_factor = (
-        (sinter_crust_thickness_cm / 12.0) * crust_mod * thermal_degradation
-    )
+    raw_safety_factor = (sinter_crust_thickness_cm / 12.0) * crust_mod * thermal_degradation
     crust_bearing_safety_factor = round(max(0.1, min(6.0, raw_safety_factor)), 2)
 
     # Breakthrough probability inversely related to safety factor and elevated by high shallow temperature
@@ -585,6 +575,26 @@ def is_solfatara_navigation_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "tephra",
+            "lapilli",
+            "ash-fall",
+            "ashfall",
+            "volcanic ash",
+            "scoria scree",
+            "pumice scree",
+            "cristobalite",
+            "mount yasur",
+            "acatenango",
+            "tarawera",
+            "chaiten",
+            "chaitén",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _SOLFATARA_KEYWORDS):
         return True
 
@@ -692,11 +702,7 @@ def extract_solfatara_navigation_params(query: str) -> dict[str, Any]:
         params["crust_type"] = "native_sulfur_sublimation_dome"
     elif "travertine_carbonate_terrace" in q or "travertine" in q:
         params["crust_type"] = "travertine_carbonate_terrace"
-    elif (
-        "siliceous_geyserite_sinter_shield" in q
-        or "geyserite" in q
-        or "sinter shield" in q
-    ):
+    elif "siliceous_geyserite_sinter_shield" in q or "geyserite" in q or "sinter shield" in q:
         params["crust_type"] = "siliceous_geyserite_sinter_shield"
 
     # Override gas_regime if explicitly mentioned
@@ -736,17 +742,13 @@ def extract_solfatara_navigation_params(query: str) -> dict[str, Any]:
     else:
         generic_cm = re.search(r"(\d+(?:\.\d+)?)\s*cm\b", q)
         if generic_cm and "10 cm" not in generic_cm.group(0) and "10cm" not in generic_cm.group(0):
-            params["sinter_crust_thickness_cm"] = max(
-                1.0, min(150.0, float(generic_cm.group(1)))
-            )
+            params["sinter_crust_thickness_cm"] = max(1.0, min(150.0, float(generic_cm.group(1))))
             params["has_explicit_numbers"] = True
 
     # Extract subsurface temperature (°C)
     temp_match = re.search(r"(\d+(?:\.\d+)?)\s*°?\s*c\b", q)
     if temp_match:
-        params["subsurface_temp_10cm_c"] = max(
-            0.0, min(130.0, float(temp_match.group(1)))
-        )
+        params["subsurface_temp_10cm_c"] = max(0.0, min(130.0, float(temp_match.group(1))))
         params["has_explicit_numbers"] = True
 
     # Extract wind speed (km/h)
@@ -894,8 +896,7 @@ def format_solfatara_navigation_response(query: str) -> tuple[str, dict[str, Any
         for s in sites_list
     )
     gear_bullets = "\n".join(
-        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}"
-        for g in gear_list
+        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}" for g in gear_list
     )
     answer = (
         "### Backcountry Geothermal Fumarole Field & Solfatara Gas Hazard Navigation Guide\n\n"

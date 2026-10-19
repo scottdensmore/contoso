@@ -114,6 +114,10 @@ from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
 )
+from contoso_chat.tephra_navigation import (
+    format_tephra_navigation_response,
+    is_tephra_navigation_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -223,6 +227,7 @@ def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
 def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format turtle patrol intent in the cascade."""
     intent = detect_turtle_patrol_intent(question)
@@ -234,6 +239,7 @@ def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
 def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format night via ferrata intent in the cascade."""
     intent = detect_night_via_ferrata_intent(question)
@@ -244,6 +250,8 @@ def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
         "night_via_ferrata_info": formatted.get("night_via_ferrata_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+
 def handle_canyon_bouldering_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format wilderness canyon bouldering intent in the cascade."""
     intent = detect_canyon_bouldering_intent(question)
@@ -277,6 +285,7 @@ def handle_bog_shoeing_intent(question: str) -> Optional[dict[str, Any]]:
         "bog_shoeing_info": formatted.get("bog_shoeing_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
 
 def handle_crevasse_pulk_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format crevasse pulk intent in the cascade."""
@@ -493,3 +502,17 @@ def handle_paramo_navigation_intent(
         "answer": answer,
     }
 
+
+def handle_tephra_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format tephra navigation intent in the cascade."""
+    if not is_tephra_navigation_query(question):
+        return None
+    info = format_tephra_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tephra_navigation_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }

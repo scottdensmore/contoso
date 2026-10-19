@@ -375,9 +375,7 @@ def calculate_rock_glacier_navigation_safety(
             f"mean_block_diameter_cm ({mean_block_diameter_cm}) must be between 15.0 and 300.0 cm."
         )
     if not (5.0 <= slope_angle_deg <= 55.0):
-        raise ValueError(
-            f"slope_angle_deg ({slope_angle_deg}) must be between 5.0 and 55.0 deg."
-        )
+        raise ValueError(f"slope_angle_deg ({slope_angle_deg}) must be between 5.0 and 55.0 deg.")
     if not (10.0 <= active_layer_thaw_depth_cm <= 400.0):
         raise ValueError(
             f"active_layer_thaw_depth_cm ({active_layer_thaw_depth_cm}) must be between 10.0 and 400.0 cm."
@@ -391,9 +389,7 @@ def calculate_rock_glacier_navigation_safety(
             f"ambient_air_temp_c ({ambient_air_temp_c}) must be between -35.0 and 35.0 °C."
         )
     if not (0.0 <= pack_weight_kg <= 50.0):
-        raise ValueError(
-            f"pack_weight_kg ({pack_weight_kg}) must be between 0.0 and 50.0 kg."
-        )
+        raise ValueError(f"pack_weight_kg ({pack_weight_kg}) must be between 0.0 and 50.0 kg.")
 
     morphology_factor_map: dict[str, float] = {
         "relict_collapsed_boulder_blockfield": 1.28,
@@ -418,13 +414,9 @@ def calculate_rock_glacier_navigation_safety(
     # Block rotational inertia increases with block diameter; steep slopes and deep thaw reduce stability
     block_size_factor = (mean_block_diameter_cm / 75.0) ** 0.45
     slope_stability_factor = max(0.32, 1.55 - (slope_angle_deg / 48.0))
-    thaw_stability_factor = max(
-        0.40, 1.32 - (active_layer_thaw_depth_cm / 340.0)
-    )
+    thaw_stability_factor = max(0.40, 1.32 - (active_layer_thaw_depth_cm / 340.0))
     thermal_factor = (
-        1.10
-        if ambient_air_temp_c <= 0.0
-        else max(0.68, 1.0 - (ambient_air_temp_c * 0.012))
+        1.10 if ambient_air_temp_c <= 0.0 else max(0.68, 1.0 - (ambient_air_temp_c * 0.012))
     )
     pack_penalty_factor = max(0.75, 1.06 - (pack_weight_kg * 0.008))
 
@@ -439,9 +431,7 @@ def calculate_rock_glacier_navigation_safety(
         * thermal_factor
         * pack_penalty_factor
     )
-    block_rotational_stability_index = round(
-        max(0.12, min(5.0, raw_stability)), 2
-    )
+    block_rotational_stability_index = round(max(0.12, min(5.0, raw_stability)), 2)
 
     # Perched block tip probability (0.01 to 0.99)
     slope_excess = max(0.0, (slope_angle_deg - 24.0) / 45.0)
@@ -465,17 +455,11 @@ def calculate_rock_glacier_navigation_safety(
         and ice_state == "cryo_cemented_permafrost_lock"
     ):
         raw_tip_prob = min(raw_tip_prob, 0.16)
-    perched_block_tip_probability = round(
-        max(0.01, min(0.99, raw_tip_prob)), 3
-    )
+    perched_block_tip_probability = round(max(0.01, min(0.99, raw_tip_prob)), 3)
 
     # Sub-carapace void entrapment risk percent (2.0 to 98.0%)
-    piping_bonus = (
-        11.0 if ice_state == "basal_meltwater_piping_undercut" else 0.0
-    )
-    labyrinth_bonus = (
-        8.0 if morphology == "thermokarst_furrow_and_ridge_labyrinth" else 0.0
-    )
+    piping_bonus = 11.0 if ice_state == "basal_meltwater_piping_undercut" else 0.0
+    labyrinth_bonus = 8.0 if morphology == "thermokarst_furrow_and_ridge_labyrinth" else 0.0
     raw_void_risk = (
         (interstitial_void_ratio_percent * 0.72)
         + (active_layer_thaw_depth_cm * 0.055)
@@ -484,9 +468,7 @@ def calculate_rock_glacier_navigation_safety(
         + labyrinth_bonus
         - (block_rotational_stability_index * 4.2)
     )
-    sub_carapace_void_entrapment_risk_percent = round(
-        max(2.0, min(98.0, raw_void_risk)), 1
-    )
+    sub_carapace_void_entrapment_risk_percent = round(max(2.0, min(98.0, raw_void_risk)), 1)
 
     # Effective horizontal pace (m/hr)
     base_pace_map: dict[str, float] = {
@@ -496,9 +478,7 @@ def calculate_rock_glacier_navigation_safety(
         "belayed_frontal_scarp_switchbacking": 195.0,
     }
     slope_pace_multiplier = max(0.35, 1.18 - (slope_angle_deg / 52.0))
-    void_pace_multiplier = max(
-        0.45, 1.12 - (interstitial_void_ratio_percent / 85.0)
-    )
+    void_pace_multiplier = max(0.45, 1.12 - (interstitial_void_ratio_percent / 85.0))
     pack_pace_multiplier = max(0.60, 1.05 - (pack_weight_kg / 95.0))
     raw_pace = (
         base_pace_map[technique]
@@ -589,9 +569,7 @@ def calculate_rock_glacier_navigation_safety(
             "mean_block_diameter_cm": round(mean_block_diameter_cm, 1),
             "slope_angle_deg": round(slope_angle_deg, 1),
             "active_layer_thaw_depth_cm": round(active_layer_thaw_depth_cm, 1),
-            "interstitial_void_ratio_percent": round(
-                interstitial_void_ratio_percent, 1
-            ),
+            "interstitial_void_ratio_percent": round(interstitial_void_ratio_percent, 1),
             "ambient_air_temp_c": round(ambient_air_temp_c, 1),
             "pack_weight_kg": round(pack_weight_kg, 1),
             "block_rotational_stability_index": block_rotational_stability_index,
@@ -643,6 +621,26 @@ def is_rock_glacier_navigation_query(query: str) -> bool:
     if not query or not query.strip():
         return False
     q = query.lower()
+
+    if any(
+        ex in q
+        for ex in (
+            "tephra",
+            "lapilli",
+            "ash-fall",
+            "ashfall",
+            "volcanic ash",
+            "scoria scree",
+            "pumice scree",
+            "cristobalite",
+            "mount yasur",
+            "acatenango",
+            "tarawera",
+            "chaiten",
+            "chaitén",
+        )
+    ):
+        return False
 
     if any(kw in q for kw in _ROCK_GLACIER_KEYWORDS):
         return True
@@ -726,16 +724,10 @@ def extract_rock_glacier_navigation_params(query: str) -> dict[str, Any]:
                 params["morphology"] = site["morphology"]
                 params["ice_state"] = site["ice_state"]
                 params["technique"] = site["technique"]
-                params["mean_block_diameter_cm"] = site[
-                    "mean_block_diameter_cm"
-                ]
+                params["mean_block_diameter_cm"] = site["mean_block_diameter_cm"]
                 params["slope_angle_deg"] = site["slope_angle_deg"]
-                params["active_layer_thaw_depth_cm"] = site[
-                    "active_layer_thaw_depth_cm"
-                ]
-                params["interstitial_void_ratio_percent"] = site[
-                    "interstitial_void_ratio_percent"
-                ]
+                params["active_layer_thaw_depth_cm"] = site["active_layer_thaw_depth_cm"]
+                params["interstitial_void_ratio_percent"] = site["interstitial_void_ratio_percent"]
             break
 
     # Override morphology if explicitly mentioned
@@ -758,29 +750,19 @@ def extract_rock_glacier_navigation_params(query: str) -> dict[str, Any]:
     ):
         params["morphology"] = "relict_collapsed_boulder_blockfield"
     elif (
-        "tongue_shaped_interstitial_ice_matrix" in q
-        or "tongue-shaped" in q
-        or "tongue shaped" in q
+        "tongue_shaped_interstitial_ice_matrix" in q or "tongue-shaped" in q or "tongue shaped" in q
     ):
         params["morphology"] = "tongue_shaped_interstitial_ice_matrix"
     elif (
-        "active_lobate_ice_cored_carapace" in q
-        or "active lobate" in q
-        or "ice-cored carapace" in q
+        "active_lobate_ice_cored_carapace" in q or "active lobate" in q or "ice-cored carapace" in q
     ):
         params["morphology"] = "active_lobate_ice_cored_carapace"
 
     # Override ice_state if explicitly mentioned
-    if (
-        "isothermal_debris_creep_slump" in q
-        or "isothermal debris" in q
-        or "creep slump" in q
-    ):
+    if "isothermal_debris_creep_slump" in q or "isothermal debris" in q or "creep slump" in q:
         params["ice_state"] = "isothermal_debris_creep_slump"
     elif (
-        "basal_meltwater_piping_undercut" in q
-        or "meltwater piping" in q
-        or "piping undercut" in q
+        "basal_meltwater_piping_undercut" in q or "meltwater piping" in q or "piping undercut" in q
     ):
         params["ice_state"] = "basal_meltwater_piping_undercut"
     elif (
@@ -816,11 +798,7 @@ def extract_rock_glacier_navigation_params(query: str) -> dict[str, Any]:
         or "slab stepping" in q
     ):
         params["technique"] = "three_point_imbricated_slab_stepping"
-    elif (
-        "compression_ridge_crest_hopping" in q
-        or "compression ridge" in q
-        or "crest hopping" in q
-    ):
+    elif "compression_ridge_crest_hopping" in q or "compression ridge" in q or "crest hopping" in q:
         params["technique"] = "compression_ridge_crest_hopping"
 
     # Extract mean block diameter (cm)
@@ -914,12 +892,8 @@ def format_rock_glacier_navigation_response(
             technique=params["technique"],
             mean_block_diameter_cm=float(params["mean_block_diameter_cm"]),
             slope_angle_deg=float(params["slope_angle_deg"]),
-            active_layer_thaw_depth_cm=float(
-                params["active_layer_thaw_depth_cm"]
-            ),
-            interstitial_void_ratio_percent=float(
-                params["interstitial_void_ratio_percent"]
-            ),
+            active_layer_thaw_depth_cm=float(params["active_layer_thaw_depth_cm"]),
+            interstitial_void_ratio_percent=float(params["interstitial_void_ratio_percent"]),
             ambient_air_temp_c=float(params["ambient_air_temp_c"]),
             pack_weight_kg=float(params["pack_weight_kg"]),
         )
@@ -961,12 +935,8 @@ def format_rock_glacier_navigation_response(
                 technique=site["technique"],
                 mean_block_diameter_cm=float(site["mean_block_diameter_cm"]),
                 slope_angle_deg=float(site["slope_angle_deg"]),
-                active_layer_thaw_depth_cm=float(
-                    site["active_layer_thaw_depth_cm"]
-                ),
-                interstitial_void_ratio_percent=float(
-                    site["interstitial_void_ratio_percent"]
-                ),
+                active_layer_thaw_depth_cm=float(site["active_layer_thaw_depth_cm"]),
+                interstitial_void_ratio_percent=float(site["interstitial_void_ratio_percent"]),
                 ambient_air_temp_c=2.0,
                 pack_weight_kg=14.0,
             )
@@ -974,9 +944,7 @@ def format_rock_glacier_navigation_response(
                 "action": "rock_glacier_navigation_lookup",
                 "site": dict(site),
                 "baseline_calculation": dict(site_calc),
-                "gear_checklist": [
-                    dict(g) for g in get_rock_glacier_gear_checklist()
-                ],
+                "gear_checklist": [dict(g) for g in get_rock_glacier_gear_checklist()],
             }
             answer = (
                 f"### {site['name']} ({site['region']})\n\n"
@@ -1004,8 +972,7 @@ def format_rock_glacier_navigation_response(
         for s in sites_list
     )
     gear_bullets = "\n".join(
-        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}"
-        for g in gear_list
+        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}" for g in gear_list
     )
     answer = (
         "### High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation Guide\n\n"

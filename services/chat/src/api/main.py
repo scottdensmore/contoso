@@ -682,6 +682,9 @@ from contoso_chat.routers.solfatara_navigation import (
     router as solfatara_navigation_router,
 )
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
+from contoso_chat.routers.tephra_navigation import (
+    router as tephra_navigation_router,
+)
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.weather_station import router as weather_station_router
@@ -863,6 +866,10 @@ from contoso_chat.stores import (
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
+)
+from contoso_chat.tephra_navigation import (
+    detect_tephra_navigation_intent,
+    format_tephra_navigation_response,
 )
 from contoso_chat.trade_in import (
     EligibleBrandModel,
@@ -1056,7 +1063,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from local_provider_health import evaluate_local_provider_health
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 # Import our real chat logic (simplified)
 try:
@@ -1237,7 +1244,9 @@ app.include_router(
     prefix="/api/aufeis-crossing",
     tags=["aufeis-crossing"],
 )
-logger.info("Registered Subarctic River Aufeis & Overflow Ice Sheet Crossing router (/aufeis-crossing, /api/aufeis-crossing)")
+logger.info(
+    "Registered Subarctic River Aufeis & Overflow Ice Sheet Crossing router (/aufeis-crossing, /api/aufeis-crossing)"
+)
 app.include_router(
     salt_pan_navigation_router,
     prefix="/salt-pan-navigation",
@@ -1248,7 +1257,9 @@ app.include_router(
     prefix="/api/salt-pan-navigation",
     tags=["salt-pan-navigation"],
 )
-logger.info("Registered Arid Playas & Salt Pan Crust Navigation router (/salt-pan-navigation, /api/salt-pan-navigation)")
+logger.info(
+    "Registered Arid Playas & Salt Pan Crust Navigation router (/salt-pan-navigation, /api/salt-pan-navigation)"
+)
 app.include_router(
     rock_glacier_navigation_router,
     prefix="/rock-glacier-navigation",
@@ -1259,7 +1270,9 @@ app.include_router(
     prefix="/api/rock-glacier-navigation",
     tags=["rock-glacier-navigation"],
 )
-logger.info("Registered High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation router (/rock-glacier-navigation, /api/rock-glacier-navigation)")
+logger.info(
+    "Registered High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation router (/rock-glacier-navigation, /api/rock-glacier-navigation)"
+)
 app.include_router(
     sea_cave_pneumatics_router,
     prefix="/sea-cave-pneumatics",
@@ -1270,7 +1283,9 @@ app.include_router(
     prefix="/api/sea-cave-pneumatics",
     tags=["sea-cave-pneumatics"],
 )
-logger.info("Registered Coastal Blowhole, Surge Channel & Sea-Cave Pneumatic Wave-Hazard Navigation router (/sea-cave-pneumatics, /api/sea-cave-pneumatics)")
+logger.info(
+    "Registered Coastal Blowhole, Surge Channel & Sea-Cave Pneumatic Wave-Hazard Navigation router (/sea-cave-pneumatics, /api/sea-cave-pneumatics)"
+)
 app.include_router(
     mangrove_labyrinth_router,
     prefix="/mangrove-labyrinth",
@@ -1281,7 +1296,9 @@ app.include_router(
     prefix="/api/mangrove-labyrinth",
     tags=["mangrove-labyrinth"],
 )
-logger.info("Registered Sub-Canopy Mangroves & Pneumatophore Prop-Root Tidal Labyrinth Navigation router (/mangrove-labyrinth, /api/mangrove-labyrinth)")
+logger.info(
+    "Registered Sub-Canopy Mangroves & Pneumatophore Prop-Root Tidal Labyrinth Navigation router (/mangrove-labyrinth, /api/mangrove-labyrinth)"
+)
 app.include_router(
     paramo_navigation_router,
     prefix="/paramo-navigation",
@@ -1292,7 +1309,27 @@ app.include_router(
     prefix="/api/paramo-navigation",
     tags=["paramo-navigation"],
 )
-logger.info("Registered High-Altitude Páramo & Frailejón Cushion-Bog Moorland Navigation router (/paramo-navigation, /api/paramo-navigation)")
+logger.info(
+    "Registered High-Altitude Páramo & Frailejón Cushion-Bog Moorland Navigation router (/paramo-navigation, /api/paramo-navigation)"
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/api/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/api/v1/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+logger.info(
+    "Registered Volcanic Tephra, Ash-Fall & Lapilli Scree Slope Descent & Respirator router (/tephra-navigation, /api/tephra-navigation, /api/v1/tephra-navigation)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1381,6 +1418,16 @@ class ChatRequest(BaseModel):
     customer_id: Optional[str] = None
     chat_history: Optional[Any] = "[]"
     session_id: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_message_to_question(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "question" not in data:
+            if "message" in data and data["message"] is not None:
+                data = {**data, "question": data["message"]}
+            elif "query" in data and data["query"] is not None:
+                data = {**data, "question": data["query"]}
+        return data
 
 
 @app.get("/")
@@ -1471,6 +1518,9 @@ async def health_dependencies():
 
 @app.post("/chat")
 @app.post("/api/chat")
+@app.post("/api/v1/chat")
+@app.post("/api/chat/message")
+@app.post("/api/v1/chat/message")
 @app.post("/api/create_response")
 @app.post("/api/chat/service/create_response")
 async def create_response(request: ChatRequest):
@@ -1574,6 +1624,7 @@ async def create_response(request: ChatRequest):
             sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
             mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
             paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
+            tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1877,17 +1928,11 @@ async def create_response(request: ChatRequest):
                 formatted_cb = format_canyon_bouldering_response(
                     canyon_bouldering_intent, request.question
                 )
-                mock_payload["canyon_bouldering_info"] = formatted_cb.get(
-                    "canyon_bouldering_info"
-                )
+                mock_payload["canyon_bouldering_info"] = formatted_cb.get("canyon_bouldering_info")
                 mock_payload["answer"] = formatted_cb.get("answer", mock_payload["answer"])
             if mudflat_intent:
-                formatted_mf = format_mudflat_response(
-                    mudflat_intent, request.question
-                )
-                mock_payload["mudflat_trekking_info"] = formatted_mf.get(
-                    "mudflat_trekking_info"
-                )
+                formatted_mf = format_mudflat_response(mudflat_intent, request.question)
+                mock_payload["mudflat_trekking_info"] = formatted_mf.get("mudflat_trekking_info")
                 mock_payload["answer"] = formatted_mf.get("answer", mock_payload["answer"])
             if climbing_intent and not adventure_intent:
                 formatted_climbing = format_climbing_response(climbing_intent)
@@ -1900,19 +1945,11 @@ async def create_response(request: ChatRequest):
                 mock_payload["lava_tube_biospeleology_info"] = formatted_ltb.get(
                     "lava_tube_biospeleology_info"
                 )
-                mock_payload["answer"] = formatted_ltb.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_ltb.get("answer", mock_payload["answer"])
             if kelp_freediving_intent:
-                formatted_kf = format_kelp_freediving_response(
-                    "kelp_freediving", request.question
-                )
-                mock_payload["kelp_freediving_info"] = formatted_kf.get(
-                    "kelp_freediving_info"
-                )
-                mock_payload["answer"] = formatted_kf.get(
-                    "answer", mock_payload["answer"]
-                )
+                formatted_kf = format_kelp_freediving_response("kelp_freediving", request.question)
+                mock_payload["kelp_freediving_info"] = formatted_kf.get("kelp_freediving_info")
+                mock_payload["answer"] = formatted_kf.get("answer", mock_payload["answer"])
             if cryokarst_speleology_intent:
                 formatted_cryokarst = format_cryokarst_speleology_response(
                     "cryokarst_speleology", request.question
@@ -1920,9 +1957,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["cryokarst_speleology_info"] = formatted_cryokarst.get(
                     "cryokarst_speleology_info"
                 )
-                mock_payload["answer"] = formatted_cryokarst.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_cryokarst.get("answer", mock_payload["answer"])
             if canopy_bryophyte_intent:
                 formatted_canopy_bryo = format_canopy_bryophyte_response(
                     "canopy_bryophyte", request.question
@@ -1930,9 +1965,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["canopy_bryophyte_info"] = formatted_canopy_bryo.get(
                     "canopy_bryophyte_info"
                 )
-                mock_payload["answer"] = formatted_canopy_bryo.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_canopy_bryo.get("answer", mock_payload["answer"])
             if glacier_ski_traverse_intent:
                 formatted_gst = format_glacier_ski_traverse_response(
                     "glacier_ski_traverse", request.question
@@ -1940,19 +1973,11 @@ async def create_response(request: ChatRequest):
                 mock_payload["glacier_ski_traverse_info"] = formatted_gst.get(
                     "glacier_ski_traverse_info"
                 )
-                mock_payload["answer"] = formatted_gst.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_gst.get("answer", mock_payload["answer"])
             if scree_running_intent:
-                formatted_sr = format_scree_running_response(
-                    "scree_running", request.question
-                )
-                mock_payload["scree_running_info"] = formatted_sr.get(
-                    "scree_running_info"
-                )
-                mock_payload["answer"] = formatted_sr.get(
-                    "answer", mock_payload["answer"]
-                )
+                formatted_sr = format_scree_running_response("scree_running", request.question)
+                mock_payload["scree_running_info"] = formatted_sr.get("scree_running_info")
+                mock_payload["answer"] = formatted_sr.get("answer", mock_payload["answer"])
             if slickrock_burro_intent:
                 formatted_slickrock = format_slickrock_burro_response(
                     "slickrock_burro", request.question
@@ -1960,9 +1985,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["slickrock_burro_info"] = formatted_slickrock.get(
                     "slickrock_burro_info"
                 )
-                mock_payload["answer"] = formatted_slickrock.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_slickrock.get("answer", mock_payload["answer"])
             if tundra_lichen_intent:
                 formatted_tundra_lichen = format_tundra_lichen_response(
                     "tundra_lichen", request.question
@@ -1974,53 +1997,41 @@ async def create_response(request: ChatRequest):
                     "answer", mock_payload["answer"]
                 )
             if penitentes_navigation_intent:
-                pn_answer, pn_info = format_penitentes_navigation_response(
-                    request.question
-                )
+                pn_answer, pn_info = format_penitentes_navigation_response(request.question)
                 mock_payload["penitentes_navigation_info"] = pn_info
                 mock_payload["answer"] = pn_answer
             if solfatara_navigation_intent:
-                sn_answer, sn_info = format_solfatara_navigation_response(
-                    request.question
-                )
+                sn_answer, sn_info = format_solfatara_navigation_response(request.question)
                 mock_payload["solfatara_navigation_info"] = sn_info
                 mock_payload["answer"] = sn_answer
             if aufeis_crossing_intent:
-                ac_answer, ac_info = format_aufeis_crossing_response(
-                    request.question
-                )
+                ac_answer, ac_info = format_aufeis_crossing_response(request.question)
                 mock_payload["aufeis_crossing_info"] = ac_info
                 mock_payload["answer"] = ac_answer
             if salt_pan_navigation_intent:
-                sp_answer, sp_info = format_salt_pan_navigation_response(
-                    request.question
-                )
+                sp_answer, sp_info = format_salt_pan_navigation_response(request.question)
                 mock_payload["salt_pan_navigation_info"] = sp_info
                 mock_payload["answer"] = sp_answer
             if rock_glacier_navigation_intent:
-                rg_answer, rg_info = format_rock_glacier_navigation_response(
-                    request.question
-                )
+                rg_answer, rg_info = format_rock_glacier_navigation_response(request.question)
                 mock_payload["rock_glacier_navigation_info"] = rg_info
                 mock_payload["answer"] = rg_answer
             if sea_cave_pneumatics_intent:
-                scp_answer, scp_info = format_sea_cave_pneumatics_response(
-                    request.question
-                )
+                scp_answer, scp_info = format_sea_cave_pneumatics_response(request.question)
                 mock_payload["sea_cave_pneumatics_info"] = scp_info
                 mock_payload["answer"] = scp_answer
             if mangrove_labyrinth_intent:
-                ml_answer, ml_info = format_mangrove_labyrinth_response(
-                    request.question
-                )
+                ml_answer, ml_info = format_mangrove_labyrinth_response(request.question)
                 mock_payload["mangrove_labyrinth_info"] = ml_info
                 mock_payload["answer"] = ml_answer
             if paramo_navigation_intent:
-                prm_answer, prm_info = format_paramo_navigation_response(
-                    request.question
-                )
+                prm_answer, prm_info = format_paramo_navigation_response(request.question)
                 mock_payload["paramo_navigation_info"] = prm_info
                 mock_payload["answer"] = prm_answer
+            if tephra_navigation_intent:
+                tn_info = dict(format_tephra_navigation_response(request.question))
+                mock_payload["tephra_navigation_info"] = tn_info
+                mock_payload["answer"] = str(tn_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2076,9 +2087,7 @@ async def create_response(request: ChatRequest):
                     "pothole_escape", request.question
                 )
                 mock_payload["pothole_escape_info"] = formatted_pothole.get("pothole_escape_info")
-                mock_payload["answer"] = formatted_pothole.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_pothole.get("answer", mock_payload["answer"])
             if canyoneering_intent and not pothole_escape_intent:
                 formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                 mock_payload["canyoneering_info"] = formatted_canyoneering.get("canyoneering_info")
@@ -2101,9 +2110,7 @@ async def create_response(request: ChatRequest):
                 formatted_nvf = format_night_via_ferrata_response(
                     night_via_ferrata_intent, request.question
                 )
-                mock_payload["night_via_ferrata_info"] = formatted_nvf.get(
-                    "night_via_ferrata_info"
-                )
+                mock_payload["night_via_ferrata_info"] = formatted_nvf.get("night_via_ferrata_info")
                 mock_payload["answer"] = formatted_nvf.get("answer", mock_payload["answer"])
             if via_ferrata_intent:
                 formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
@@ -2120,15 +2127,9 @@ async def create_response(request: ChatRequest):
                 mock_payload["bushcraft_info"] = formatted_bushcraft.get("bushcraft_info")
                 mock_payload["answer"] = formatted_bushcraft.get("answer", mock_payload["answer"])
             if cave_mineralogy_intent:
-                formatted_cm = format_cave_mineralogy_response(
-                    "cave_mineralogy", request.question
-                )
-                mock_payload["cave_mineralogy_info"] = formatted_cm.get(
-                    "cave_mineralogy_info"
-                )
-                mock_payload["answer"] = formatted_cm.get(
-                    "answer", mock_payload["answer"]
-                )
+                formatted_cm = format_cave_mineralogy_response("cave_mineralogy", request.question)
+                mock_payload["cave_mineralogy_info"] = formatted_cm.get("cave_mineralogy_info")
+                mock_payload["answer"] = formatted_cm.get("answer", mock_payload["answer"])
             if caving_intent:
                 formatted_caving = format_caving_response(caving_intent)
                 mock_payload["caving_info"] = formatted_caving.get("caving_info")
@@ -2164,9 +2165,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["shelter_info"] = formatted_shelter.get("shelter_info")
                 mock_payload["answer"] = formatted_shelter.get("answer", mock_payload["answer"])
             if crevasse_pulk_intent:
-                formatted_pulk = format_crevasse_pulk_response(
-                    "crevasse_pulk", request.question
-                )
+                formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", request.question)
                 mock_payload["crevasse_pulk_info"] = formatted_pulk.get("crevasse_pulk_info")
                 mock_payload["answer"] = formatted_pulk.get("answer", mock_payload["answer"])
             if glacier_intent:
@@ -2291,20 +2290,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_cave.get("answer", mock_payload["answer"])
             if telemark_intent:
                 formatted_telemark = format_telemark_response(telemark_intent)
-                mock_payload["telemark_skiing_info"] = formatted_telemark.get("telemark_skiing_info")
+                mock_payload["telemark_skiing_info"] = formatted_telemark.get(
+                    "telemark_skiing_info"
+                )
                 mock_payload["answer"] = formatted_telemark.get("answer", mock_payload["answer"])
             if falconry_intent:
-                formatted_falconry = format_falconry_response(
-                    falconry_intent, request.question
-                )
+                formatted_falconry = format_falconry_response(falconry_intent, request.question)
                 mock_payload["falconry_info"] = formatted_falconry.get("falconry_info")
-                mock_payload["answer"] = formatted_falconry.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_falconry.get("answer", mock_payload["answer"])
             if bog_shoeing_intent:
-                formatted_bog = format_bog_shoeing_response(
-                    "bog_shoeing", request.question
-                )
+                formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                 mock_payload["bog_shoeing_info"] = formatted_bog.get("bog_shoeing_info")
                 mock_payload["answer"] = formatted_bog.get("answer", mock_payload["answer"])
             if snowshoe_intent:
@@ -2424,6 +2419,8 @@ async def create_response(request: ChatRequest):
 
 @app.post("/chat/stream")
 @app.post("/api/chat/stream")
+@app.post("/api/v1/stream")
+@app.post("/api/v1/chat/stream")
 @app.post("/api/create_response/stream")
 @app.post("/api/chat/service/create_response/stream")
 async def create_response_stream(request: ChatRequest):
@@ -2523,7 +2520,9 @@ async def create_response_stream(request: ChatRequest):
                 canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
-                lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
+                lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(
+                    request.question
+                )
                 kelp_freediving_intent = detect_kelp_freediving_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
                 canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
@@ -2535,10 +2534,13 @@ async def create_response_stream(request: ChatRequest):
                 solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
                 aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
                 salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
-                rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
+                rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(
+                    request.question
+                )
                 sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
                 mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
                 paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
+                tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2748,9 +2750,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "canyon_bouldering_info":
                         yield f"data: {json.dumps({'event': 'canyon_bouldering_info', 'canyon_bouldering_info': cb_payload})}\n\n"
                 if mudflat_intent:
-                    formatted_mf = format_mudflat_response(
-                        mudflat_intent, request.question
-                    )
+                    formatted_mf = format_mudflat_response(mudflat_intent, request.question)
                     mf_payload = formatted_mf.get("mudflat_trekking_info")
                     event_map = {
                         "routes_list": "mudflat_trekking_lookup",
@@ -2760,9 +2760,7 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "mudflat_trekking_lookup",
                         "gear": "mudflat_trekking_lookup",
                     }
-                    event_name = event_map.get(
-                        mudflat_intent.action, "mudflat_trekking_lookup"
-                    )
+                    event_name = event_map.get(mudflat_intent.action, "mudflat_trekking_lookup")
                     yield f"data: {json.dumps({'event': event_name, 'mudflat_trekking_info': mf_payload, event_name: mf_payload})}\n\n"
                     if event_name != "mudflat_trekking_info":
                         yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mf_payload})}\n\n"
@@ -2775,9 +2773,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     ltb_payload = formatted_ltb.get("lava_tube_biospeleology_info")
                     event_name = "lava_tube_biospeleology_lookup"
-                    if (
-                        isinstance(ltb_payload, dict)
-                        and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(ltb_payload, dict) and ltb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "lava_tube_biospeleology_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
@@ -2789,9 +2787,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     kf_payload = formatted_kf.get("kelp_freediving_info")
                     event_name = "kelp_freediving_lookup"
-                    if (
-                        isinstance(kf_payload, dict)
-                        and kf_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(kf_payload, dict) and kf_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "kelp_freediving_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kf_payload, event_name: kf_payload})}\n\n"
@@ -2803,9 +2801,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cs_payload = formatted_cryokarst.get("cryokarst_speleology_info")
                     event_name = "cryokarst_speleology_lookup"
-                    if (
-                        isinstance(cs_payload, dict)
-                        and cs_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cs_payload, dict) and cs_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "cryokarst_speleology_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
@@ -2817,9 +2815,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cb_payload = formatted_canopy_bryo.get("canopy_bryophyte_info")
                     event_name = "canopy_bryophyte_lookup"
-                    if (
-                        isinstance(cb_payload, dict)
-                        and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cb_payload, dict) and cb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "canopy_bryophyte_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': cb_payload, event_name: cb_payload})}\n\n"
@@ -2831,23 +2829,21 @@ async def create_response_stream(request: ChatRequest):
                     )
                     gst_payload = formatted_gst.get("glacier_ski_traverse_info")
                     event_name = "glacier_ski_traverse_lookup"
-                    if (
-                        isinstance(gst_payload, dict)
-                        and gst_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(gst_payload, dict) and gst_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "glacier_ski_traverse_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': gst_payload, event_name: gst_payload})}\n\n"
                     if event_name != "glacier_ski_traverse_info":
                         yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': gst_payload})}\n\n"
                 if scree_running_intent:
-                    formatted_sr = format_scree_running_response(
-                        "scree_running", request.question
-                    )
+                    formatted_sr = format_scree_running_response("scree_running", request.question)
                     sr_payload = formatted_sr.get("scree_running_info")
                     event_name = "scree_running_lookup"
-                    if (
-                        isinstance(sr_payload, dict)
-                        and sr_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(sr_payload, dict) and sr_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "scree_running_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
@@ -2859,9 +2855,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     sb_payload = formatted_slickrock.get("slickrock_burro_info")
                     event_name = "slickrock_burro_lookup"
-                    if (
-                        isinstance(sb_payload, dict)
-                        and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(sb_payload, dict) and sb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "slickrock_burro_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': sb_payload, event_name: sb_payload})}\n\n"
@@ -2873,18 +2869,16 @@ async def create_response_stream(request: ChatRequest):
                     )
                     tl_payload = formatted_tundra_lichen.get("tundra_lichen_info")
                     event_name = "tundra_lichen_lookup"
-                    if (
-                        isinstance(tl_payload, dict)
-                        and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(tl_payload, dict) and tl_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "tundra_lichen_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
                     if event_name != "tundra_lichen_info":
                         yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
                 if penitentes_navigation_intent:
-                    _, pn_payload = format_penitentes_navigation_response(
-                        request.question
-                    )
+                    _, pn_payload = format_penitentes_navigation_response(request.question)
                     event_name = (
                         pn_payload.get("action", "penitentes_navigation_info")
                         if isinstance(pn_payload, dict)
@@ -2895,9 +2889,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "penitentes_navigation_info":
                         yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
                 if solfatara_navigation_intent:
-                    _, sn_payload = format_solfatara_navigation_response(
-                        request.question
-                    )
+                    _, sn_payload = format_solfatara_navigation_response(request.question)
                     event_name = (
                         sn_payload.get("action", "solfatara_navigation_info")
                         if isinstance(sn_payload, dict)
@@ -2908,9 +2900,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "solfatara_navigation_info":
                         yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': sn_payload})}\n\n"
                 if aufeis_crossing_intent:
-                    _, ac_payload = format_aufeis_crossing_response(
-                        request.question
-                    )
+                    _, ac_payload = format_aufeis_crossing_response(request.question)
                     event_name = (
                         ac_payload.get("action", "aufeis_crossing_info")
                         if isinstance(ac_payload, dict)
@@ -2921,9 +2911,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "aufeis_crossing_info":
                         yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': ac_payload})}\n\n"
                 if salt_pan_navigation_intent:
-                    _, sp_payload = format_salt_pan_navigation_response(
-                        request.question
-                    )
+                    _, sp_payload = format_salt_pan_navigation_response(request.question)
                     event_name = (
                         sp_payload.get("action", "salt_pan_navigation_info")
                         if isinstance(sp_payload, dict)
@@ -2934,9 +2922,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "salt_pan_navigation_info":
                         yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
                 if rock_glacier_navigation_intent:
-                    _, rg_payload = format_rock_glacier_navigation_response(
-                        request.question
-                    )
+                    _, rg_payload = format_rock_glacier_navigation_response(request.question)
                     event_name = (
                         rg_payload.get("action", "rock_glacier_navigation_info")
                         if isinstance(rg_payload, dict)
@@ -2947,9 +2933,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "rock_glacier_navigation_info":
                         yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
                 if sea_cave_pneumatics_intent:
-                    _, scp_payload = format_sea_cave_pneumatics_response(
-                        request.question
-                    )
+                    _, scp_payload = format_sea_cave_pneumatics_response(request.question)
                     event_name = (
                         scp_payload.get("action", "sea_cave_pneumatics_info")
                         if isinstance(scp_payload, dict)
@@ -2960,9 +2944,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "sea_cave_pneumatics_info":
                         yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
                 if mangrove_labyrinth_intent:
-                    _, ml_payload = format_mangrove_labyrinth_response(
-                        request.question
-                    )
+                    _, ml_payload = format_mangrove_labyrinth_response(request.question)
                     event_name = (
                         ml_payload.get("action", "mangrove_labyrinth_info")
                         if isinstance(ml_payload, dict)
@@ -2973,9 +2955,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "mangrove_labyrinth_info":
                         yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': ml_payload})}\n\n"
                 if paramo_navigation_intent:
-                    _, prm_payload = format_paramo_navigation_response(
-                        request.question
-                    )
+                    _, prm_payload = format_paramo_navigation_response(request.question)
                     event_name = (
                         prm_payload.get("action", "paramo_navigation_info")
                         if isinstance(prm_payload, dict)
@@ -2985,6 +2965,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': prm_payload, event_name: prm_payload})}\n\n"
                     if event_name != "paramo_navigation_info":
                         yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': prm_payload})}\n\n"
+                if tephra_navigation_intent:
+                    tn_payload = dict(format_tephra_navigation_response(request.question))
+                    event_name = str(tn_payload.get("action", "tephra_navigation_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+                    if event_name != "tephra_navigation_info":
+                        yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tn_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3021,9 +3008,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     pe_payload = formatted_pothole.get("pothole_escape_info")
                     event_name = "pothole_escape_lookup"
-                    if (
-                        isinstance(pe_payload, dict)
-                        and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(pe_payload, dict) and pe_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "pothole_escape_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pe_payload, event_name: pe_payload})}\n\n"
@@ -3074,7 +3061,10 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cm_payload = formatted_cm.get("cave_mineralogy_info")
                     event_name = "cave_mineralogy_lookup"
-                    if isinstance(cm_payload, dict) and cm_payload.get("action") in ("calculate", "calculate_accretion"):
+                    if isinstance(cm_payload, dict) and cm_payload.get("action") in (
+                        "calculate",
+                        "calculate_accretion",
+                    ):
                         event_name = "cave_mineralogy_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cm_payload, event_name: cm_payload})}\n\n"
                     if event_name != "cave_mineralogy_info":
@@ -3164,9 +3154,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cp_payload = formatted_pulk.get("crevasse_pulk_info")
                     event_name = "crevasse_pulk_lookup"
-                    if (
-                        isinstance(cp_payload, dict)
-                        and cp_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cp_payload, dict) and cp_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "crevasse_pulk_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': cp_payload, event_name: cp_payload})}\n\n"
@@ -3424,7 +3414,9 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "pack_goat_info":
                         yield f"data: {json.dumps({'event': 'pack_goat_info', 'pack_goat_info': goat_payload})}\n\n"
                 if pack_llama_intent:
-                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    formatted_llama = format_pack_llama_response(
+                        pack_llama_intent, request.question
+                    )
                     llama_payload = formatted_llama.get("pack_llama_info")
                     action_to_event = {
                         "routes_list": "pack_llama_lookup",
@@ -3502,7 +3494,9 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "cave_diving_lookup",
                         "gear": "cave_diving_lookup",
                     }
-                    event_name = action_to_event.get(cave_diving_intent.action, "cave_diving_lookup")
+                    event_name = action_to_event.get(
+                        cave_diving_intent.action, "cave_diving_lookup"
+                    )
                     yield f"data: {json.dumps({'event': event_name, 'cave_diving_info': cave_payload, event_name: cave_payload})}\n\n"
                     if event_name != "cave_diving_info":
                         yield f"data: {json.dumps({'event': 'cave_diving_info', 'cave_diving_info': cave_payload})}\n\n"
@@ -3522,9 +3516,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "telemark_skiing_info":
                         yield f"data: {json.dumps({'event': 'telemark_skiing_info', 'telemark_skiing_info': tele_payload})}\n\n"
                 if falconry_intent:
-                    formatted_falconry = format_falconry_response(
-                        falconry_intent, request.question
-                    )
+                    formatted_falconry = format_falconry_response(falconry_intent, request.question)
                     falconry_payload = formatted_falconry.get("falconry_info")
                     action_to_event = {
                         "grounds_list": "falconry_lookup",
@@ -3534,21 +3526,17 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "falconry_lookup",
                         "gear": "falconry_lookup",
                     }
-                    event_name = action_to_event.get(
-                        falconry_intent.action, "falconry_lookup"
-                    )
+                    event_name = action_to_event.get(falconry_intent.action, "falconry_lookup")
                     yield f"data: {json.dumps({'event': event_name, 'falconry_info': falconry_payload, event_name: falconry_payload})}\n\n"
                     if event_name != "falconry_info":
                         yield f"data: {json.dumps({'event': 'falconry_info', 'falconry_info': falconry_payload})}\n\n"
                 if bog_shoeing_intent:
-                    formatted_bog = format_bog_shoeing_response(
-                        "bog_shoeing", request.question
-                    )
+                    formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                     bs_payload = formatted_bog.get("bog_shoeing_info")
                     event_name = "bog_shoeing_lookup"
-                    if (
-                        isinstance(bs_payload, dict)
-                        and bs_payload.get("action") in ("calculate", "calculate_flotation")
+                    if isinstance(bs_payload, dict) and bs_payload.get("action") in (
+                        "calculate",
+                        "calculate_flotation",
                     ):
                         event_name = "bog_shoeing_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bs_payload, event_name: bs_payload})}\n\n"
@@ -3826,34 +3814,27 @@ async def create_response_stream(request: ChatRequest):
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     mock_chunks = [str(formatted_tour.get("answer", ""))]
                 elif rock_glacier_navigation_intent:
-                    rg_answer, _ = format_rock_glacier_navigation_response(
-                        request.question
-                    )
+                    rg_answer, _ = format_rock_glacier_navigation_response(request.question)
                     mock_chunks = [str(rg_answer)]
                 elif sea_cave_pneumatics_intent:
-                    scp_answer, _ = format_sea_cave_pneumatics_response(
-                        request.question
-                    )
+                    scp_answer, _ = format_sea_cave_pneumatics_response(request.question)
                     mock_chunks = [str(scp_answer)]
                 elif mangrove_labyrinth_intent:
-                    ml_answer, _ = format_mangrove_labyrinth_response(
-                        request.question
-                    )
+                    ml_answer, _ = format_mangrove_labyrinth_response(request.question)
                     mock_chunks = [str(ml_answer)]
                 elif paramo_navigation_intent:
-                    prm_answer, _ = format_paramo_navigation_response(
-                        request.question
-                    )
+                    prm_answer, _ = format_paramo_navigation_response(request.question)
                     mock_chunks = [str(prm_answer)]
+                elif tephra_navigation_intent:
+                    tn_resp = format_tephra_navigation_response(request.question)
+                    mock_chunks = [str(tn_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
                     )
                     mock_chunks = [str(formatted_cb.get("answer", ""))]
                 elif mudflat_intent:
-                    formatted_mf = format_mudflat_response(
-                        mudflat_intent, request.question
-                    )
+                    formatted_mf = format_mudflat_response(mudflat_intent, request.question)
                     mock_chunks = [str(formatted_mf.get("answer", ""))]
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
@@ -3884,9 +3865,7 @@ async def create_response_stream(request: ChatRequest):
                     )
                     mock_chunks = [str(formatted_gst.get("answer", ""))]
                 elif scree_running_intent:
-                    formatted_sr = format_scree_running_response(
-                        "scree_running", request.question
-                    )
+                    formatted_sr = format_scree_running_response("scree_running", request.question)
                     mock_chunks = [str(formatted_sr.get("answer", ""))]
                 elif slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
@@ -3899,24 +3878,16 @@ async def create_response_stream(request: ChatRequest):
                     )
                     mock_chunks = [str(formatted_tundra_lichen.get("answer", ""))]
                 elif penitentes_navigation_intent:
-                    pn_answer, _ = format_penitentes_navigation_response(
-                        request.question
-                    )
+                    pn_answer, _ = format_penitentes_navigation_response(request.question)
                     mock_chunks = [str(pn_answer)]
                 elif solfatara_navigation_intent:
-                    sn_answer, _ = format_solfatara_navigation_response(
-                        request.question
-                    )
+                    sn_answer, _ = format_solfatara_navigation_response(request.question)
                     mock_chunks = [str(sn_answer)]
                 elif aufeis_crossing_intent:
-                    ac_answer, _ = format_aufeis_crossing_response(
-                        request.question
-                    )
+                    ac_answer, _ = format_aufeis_crossing_response(request.question)
                     mock_chunks = [str(ac_answer)]
                 elif salt_pan_navigation_intent:
-                    sp_answer, _ = format_salt_pan_navigation_response(
-                        request.question
-                    )
+                    sp_answer, _ = format_salt_pan_navigation_response(request.question)
                     mock_chunks = [str(sp_answer)]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
@@ -4014,7 +3985,9 @@ async def create_response_stream(request: ChatRequest):
                     formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
                     mock_chunks = [str(formatted_goat.get("answer", ""))]
                 elif pack_llama_intent:
-                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    formatted_llama = format_pack_llama_response(
+                        pack_llama_intent, request.question
+                    )
                     mock_chunks = [str(formatted_llama.get("answer", ""))]
                 elif zipline_intent:
                     formatted_zip = format_zipline_response(zipline_intent, request.question)
@@ -4036,14 +4009,10 @@ async def create_response_stream(request: ChatRequest):
                     formatted_telemark = format_telemark_response(telemark_intent)
                     mock_chunks = [str(formatted_telemark.get("answer", ""))]
                 elif falconry_intent:
-                    formatted_falconry = format_falconry_response(
-                        falconry_intent, request.question
-                    )
+                    formatted_falconry = format_falconry_response(falconry_intent, request.question)
                     mock_chunks = [str(formatted_falconry.get("answer", ""))]
                 elif bog_shoeing_intent:
-                    formatted_bog = format_bog_shoeing_response(
-                        "bog_shoeing", request.question
-                    )
+                    formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                     mock_chunks = [str(formatted_bog.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
@@ -4251,6 +4220,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_sea_cave_pneumatics_intent(request.question)
                 or detect_mangrove_labyrinth_intent(request.question)
                 or detect_paramo_navigation_intent(request.question)
+                or detect_tephra_navigation_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"
