@@ -401,6 +401,10 @@ from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
 )
+from contoso_chat.krummholz_bushwhack import (
+    detect_krummholz_bushwhack_intent,
+    format_krummholz_bushwhack_response,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -666,6 +670,9 @@ from contoso_chat.routers.glaciere_caving import (
 )
 from contoso_chat.routers.kelp_freediving import (
     router as kelp_freediving_router,
+)
+from contoso_chat.routers.krummholz_bushwhack import (
+    router as krummholz_bushwhack_router,
 )
 from contoso_chat.routers.lava_tube_biospeleology import (
     router as lava_tube_biospeleology_router,
@@ -1405,6 +1412,24 @@ app.include_router(
 logger.info(
     "Registered High-Desert Slot-Canyon Ephemeral Flash-Flood Hydrograph & Escape-Ledge Navigation router (/flash-flood-slot, /api/flash-flood-slot, /api/v1/flash-flood-slot)"
 )
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/api/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/api/v1/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+logger.info(
+    "Registered Subalpine Krummholz & Wind-Sculpted Dwarf-Conifer Thicket Bushwhacking router (/krummholz-bushwhack, /api/krummholz-bushwhack, /api/v1/krummholz-bushwhack)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1703,6 +1728,7 @@ async def create_response(request: ChatRequest):
             glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
             cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
             flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
+            krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -2122,6 +2148,10 @@ async def create_response(request: ChatRequest):
                 ff_info = dict(format_flash_flood_slot_response(request.question))
                 mock_payload["flash_flood_slot_info"] = ff_info
                 mock_payload["answer"] = str(ff_info.get("answer", ""))
+            if krummholz_bushwhack_intent:
+                kb_info = dict(format_krummholz_bushwhack_response(request.question))
+                mock_payload["krummholz_bushwhack_info"] = kb_info
+                mock_payload["answer"] = str(kb_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2634,6 +2664,7 @@ async def create_response_stream(request: ChatRequest):
                 glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
                 cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
                 flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
+                krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -3086,6 +3117,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': ff_payload, event_name: ff_payload})}\n\n"
                     if event_name != "flash_flood_slot_info":
                         yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': ff_payload})}\n\n"
+                if krummholz_bushwhack_intent:
+                    kb_payload = dict(format_krummholz_bushwhack_response(request.question))
+                    event_name = str(kb_payload.get("action", "krummholz_bushwhack_info"))
+                    yield f"event: metadata\ndata: {json.dumps(kb_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': kb_payload, event_name: kb_payload})}\n\n"
+                    if event_name != "krummholz_bushwhack_info":
+                        yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': kb_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3951,6 +3989,9 @@ async def create_response_stream(request: ChatRequest):
                 elif flash_flood_slot_intent:
                     ff_resp = format_flash_flood_slot_response(request.question)
                     mock_chunks = [str(ff_resp.get("answer", ""))]
+                elif krummholz_bushwhack_intent:
+                    kb_resp = format_krummholz_bushwhack_response(request.question)
+                    mock_chunks = [str(kb_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4347,6 +4388,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_glaciere_caving_intent(request.question)
                 or detect_cobble_spit_trekking_intent(request.question)
                 or detect_flash_flood_slot_intent(request.question)
+                or detect_krummholz_bushwhack_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

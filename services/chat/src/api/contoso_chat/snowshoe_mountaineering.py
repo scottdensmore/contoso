@@ -267,6 +267,18 @@ def detect_snowshoe_intent(message: str) -> Optional[SnowshoeIntent]:
         "sun cup",
         "ablation blade",
         "ablation spire",
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "dwarf-conifer",
+        "spruce trap",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai-matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
     ]
     if any(ex in q for ex in exclusions):
         return None

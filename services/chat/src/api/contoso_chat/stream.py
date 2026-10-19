@@ -59,6 +59,10 @@ from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
 )
+from contoso_chat.krummholz_bushwhack import (
+    format_krummholz_bushwhack_response,
+    is_krummholz_bushwhack_query,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -1011,4 +1015,28 @@ async def generate_flash_flood_slot_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_krummholz_bushwhack_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subalpine krummholz bushwhack queries."""
+    if not is_krummholz_bushwhack_query(question):
+        return
+
+    kb_payload = dict(format_krummholz_bushwhack_response(question))
+    answer = str(kb_payload.get("answer", ""))
+    event_name = str(kb_payload.get("action", "krummholz_bushwhack_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(kb_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': kb_payload, event_name: kb_payload})}\n\n"
+    if event_name != "krummholz_bushwhack_info":
+        yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': kb_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 

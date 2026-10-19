@@ -323,6 +323,24 @@ def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
     if any(k in q for k in canopy_bryophyte_keywords):
         return None
 
+    krummholz_bushwhack_keywords = (
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "dwarf-conifer",
+        "spruce trap",
+        "spruce traps",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai-matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
+    )
+    if any(k in q for k in krummholz_bushwhack_keywords):
+        return None
+
     tree_climbing_explicit = (
         "tree climbing",
         "climbing tree",

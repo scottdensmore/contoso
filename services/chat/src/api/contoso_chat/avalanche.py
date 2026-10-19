@@ -402,6 +402,27 @@ def detect_avalanche_intent(query: str) -> Optional[AvalancheIntent]:
     if any(k in q_lower for k in ["satellite beacon", "beacon check-in", "beacon checkin", "register beacon", "beacon registration"]):
         return None
 
+    # Exclusion for subalpine krummholz & dwarf-conifer bushwhacking queries
+    if any(
+        k in q_lower
+        for k in [
+            "krummholz",
+            "bushwhack",
+            "bushwhacking",
+            "dwarf conifer",
+            "dwarf-conifer",
+            "spruce trap",
+            "spruce traps",
+            "latschenkiefer",
+            "pinus mugo",
+            "hai-matsu",
+            "slide alder",
+            "cripplebrush",
+            "timberline thicket",
+        ]
+    ):
+        return None
+
     # Extract zone_id
     zone_id = None
     if "stevens" in q_lower:

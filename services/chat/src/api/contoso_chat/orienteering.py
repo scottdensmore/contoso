@@ -368,6 +368,18 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
         "sumapaz",
         "el angel",
         "cushion bog",
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "dwarf-conifer",
+        "spruce trap",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai-matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
     ]
     if any(k in q for k in salt_pan_exclusions):
         return None
