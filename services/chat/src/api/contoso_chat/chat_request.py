@@ -392,6 +392,11 @@ from .sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from .sandur_crossing import (
+    build_sandur_crossing_prompt,
+    detect_sandur_crossing_intent,
+    format_sandur_crossing_response,
+)
 from .scree_running import (
     build_scree_running_prompt,
     detect_scree_running_intent,
@@ -837,6 +842,7 @@ async def generate_llm_response(
     cobble_spit_trekking_prompt: str = "",
     flash_flood_slot_prompt: str = "",
     krummholz_bushwhack_prompt: str = "",
+    sandur_crossing_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -1037,6 +1043,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
         if krummholz_bushwhack_prompt:
             local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
+        if sandur_crossing_prompt:
+            local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1304,6 +1312,8 @@ async def generate_llm_response(
             prompt_parts.append(flash_flood_slot_prompt)
         if krummholz_bushwhack_prompt:
             prompt_parts.append(krummholz_bushwhack_prompt)
+        if sandur_crossing_prompt:
+            prompt_parts.append(sandur_crossing_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1950,6 +1960,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if krummholz_bushwhack_intent:
         krummholz_bushwhack_prompt = build_krummholz_bushwhack_prompt(question)
         krummholz_bushwhack_info_payload = dict(format_krummholz_bushwhack_response(question))
+
+    sandur_crossing_intent = detect_sandur_crossing_intent(question)
+    sandur_crossing_prompt = ""
+    sandur_crossing_info_payload: dict[str, Any] | None = None
+    if sandur_crossing_intent:
+        sandur_crossing_prompt = build_sandur_crossing_prompt(question)
+        sandur_crossing_info_payload = dict(format_sandur_crossing_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2783,6 +2800,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
     if krummholz_bushwhack_prompt:
         llm_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
+    if sandur_crossing_prompt:
+        llm_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2932,6 +2951,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["flash_flood_slot_info"] = flash_flood_slot_info_payload
     if krummholz_bushwhack_intent and krummholz_bushwhack_info_payload:
         response_payload["krummholz_bushwhack_info"] = krummholz_bushwhack_info_payload
+    if sandur_crossing_intent and sandur_crossing_info_payload:
+        response_payload["sandur_crossing_info"] = sandur_crossing_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3120,6 +3141,7 @@ def generate_llm_response_stream(
     cobble_spit_trekking_prompt: str = "",
     flash_flood_slot_prompt: str = "",
     krummholz_bushwhack_prompt: str = "",
+    sandur_crossing_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3318,6 +3340,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
         if krummholz_bushwhack_prompt:
             local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
+        if sandur_crossing_prompt:
+            local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3530,6 +3554,8 @@ def generate_llm_response_stream(
             prompt_parts.append(flash_flood_slot_prompt)
         if krummholz_bushwhack_prompt:
             prompt_parts.append(krummholz_bushwhack_prompt)
+        if sandur_crossing_prompt:
+            prompt_parts.append(sandur_crossing_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3998,6 +4024,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if krummholz_bushwhack_intent:
         krummholz_bushwhack_prompt = build_krummholz_bushwhack_prompt(question)
         krummholz_bushwhack_info_payload = dict(format_krummholz_bushwhack_response(question))
+
+    sandur_crossing_intent = detect_sandur_crossing_intent(question)
+    sandur_crossing_prompt = ""
+    sandur_crossing_info_payload: dict[str, Any] | None = None
+    if sandur_crossing_intent:
+        sandur_crossing_prompt = build_sandur_crossing_prompt(question)
+        sandur_crossing_info_payload = dict(format_sandur_crossing_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4895,6 +4928,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': krummholz_bushwhack_info_payload, event_name: krummholz_bushwhack_info_payload})}\n\n"
         if event_name != "krummholz_bushwhack_info":
             yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': krummholz_bushwhack_info_payload})}\n\n"
+    if sandur_crossing_intent and sandur_crossing_info_payload:
+        event_name = (
+            sandur_crossing_info_payload.get("action", "sandur_crossing_info")
+            if isinstance(sandur_crossing_info_payload, dict)
+            else "sandur_crossing_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(sandur_crossing_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sandur_crossing_info_payload, event_name: sandur_crossing_info_payload})}\n\n"
+        if event_name != "sandur_crossing_info":
+            yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sandur_crossing_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5840,6 +5883,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
     if krummholz_bushwhack_prompt:
         stream_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
+    if sandur_crossing_prompt:
+        stream_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
 
     for chunk in generate_llm_response_stream(
         question,

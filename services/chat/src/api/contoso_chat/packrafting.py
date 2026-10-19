@@ -367,6 +367,18 @@ def detect_packrafting_intent(query: str) -> Optional[PackraftingIntent]:
             "hell bay",
             "sundarbans",
             "oyster encrusted",
+            "sandur",
+            "braided river",
+            "braided-river",
+            "glacial outwash",
+            "outwash plain",
+            "silt-bar",
+            "quicksand silt",
+            "glacial flour quicksand",
+            "skeidararsandur",
+            "skeiðarársandur",
+            "kaskawulsh",
+            "rakaia braids",
         ]
     ):
         return None

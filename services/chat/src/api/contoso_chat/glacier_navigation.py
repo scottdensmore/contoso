@@ -461,6 +461,19 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
         "glaciar de escombros",
         "val muragl",
         "dos lenguas",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
+        "sheridan glacier",
     ]
     if any(ex in q for ex in rock_glacier_exclusions):
         return None

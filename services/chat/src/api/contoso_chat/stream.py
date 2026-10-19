@@ -111,6 +111,10 @@ from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.sandur_crossing import (
+    format_sandur_crossing_response,
+    is_sandur_crossing_query,
+)
 from contoso_chat.scree_running import (
     detect_scree_running_intent,
     format_scree_running_response,
@@ -1038,5 +1042,29 @@ async def generate_krummholz_bushwhack_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_sandur_crossing_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for glacial outwash braided-river sandur crossing queries."""
+    if not is_sandur_crossing_query(question):
+        return
+
+    sc_payload = dict(format_sandur_crossing_response(question))
+    answer = str(sc_payload.get("answer", ""))
+    event_name = str(sc_payload.get("action", "sandur_crossing_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sc_payload, event_name: sc_payload})}\n\n"
+    if event_name != "sandur_crossing_info":
+        yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 

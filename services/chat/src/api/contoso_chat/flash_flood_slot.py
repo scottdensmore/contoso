@@ -587,6 +587,19 @@ _FLASH_FLOOD_SLOT_EXCLUSIONS: tuple[str, ...] = (
     "boulder drop",
     "tumwater",
     "eskimo roll",
+    # Sandur / braided glacial outwash exclusions
+    "sandur",
+    "braided river",
+    "braided-river",
+    "glacial outwash",
+    "outwash plain",
+    "silt-bar",
+    "quicksand silt",
+    "glacial flour quicksand",
+    "skeidararsandur",
+    "skeiðarársandur",
+    "kaskawulsh",
+    "rakaia braids",
 )
 
 

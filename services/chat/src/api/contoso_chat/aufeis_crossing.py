@@ -640,6 +640,17 @@ def is_aufeis_crossing_query(query: str) -> bool:
             "bandera ice cave",
             "lofthellir",
             "hoarfrost ceiling",
+            "sandur",
+            "quicksand silt",
+            "silt-bar",
+            "glacial flour quicksand",
+            "skeidararsandur",
+            "skeiðarársandur",
+            "krossa",
+            "krossá",
+            "kaskawulsh",
+            "rakaia braids",
+            "jokulhlaup outwash",
         )
     ):
         return False

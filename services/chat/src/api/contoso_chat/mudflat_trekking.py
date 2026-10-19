@@ -345,6 +345,19 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "intertidal cobble",
         "storm-berm cobble",
         "mucilage slip",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
+        "jokulhlaup",
     ]
     if any(ex in q for ex in exclusions):
         return None

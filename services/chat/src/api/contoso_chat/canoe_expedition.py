@@ -371,6 +371,18 @@ def extract_canoe_intent(message: str) -> Optional[CanoeIntent]:
         "hell bay",
         "sundarbans",
         "oyster encrusted",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
     ]
     if any(u in q for u in unrelated):
         return None
