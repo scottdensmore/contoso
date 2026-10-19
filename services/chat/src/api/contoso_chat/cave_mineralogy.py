@@ -593,6 +593,19 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "bandera ice cave",
         "lofthellir",
         "hoarfrost ceiling",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(k in q for k in exclusions):
         return None

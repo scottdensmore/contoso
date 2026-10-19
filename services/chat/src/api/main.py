@@ -719,6 +719,9 @@ from contoso_chat.routers.tephra_navigation import (
 from contoso_chat.routers.tiankeng_descent import (
     router as tiankeng_descent_router,
 )
+from contoso_chat.routers.tsingy_labyrinth import (
+    router as tsingy_labyrinth_router,
+)
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
 from contoso_chat.routers.tussock_headland import (
@@ -978,6 +981,10 @@ from contoso_chat.trip_planner import (
     format_trip_planner_response,
     generate_wilderness_trip_plan,
     get_trip_templates,
+)
+from contoso_chat.tsingy_labyrinth import (
+    detect_tsingy_labyrinth_intent,
+    format_tsingy_labyrinth_response,
 )
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
@@ -1505,6 +1512,24 @@ app.include_router(
 logger.info(
     "Registered Subantarctic Tussock-Grass Peat Bog & Katabatic Headland Navigation router (/tussock-headland, /api/tussock-headland, /api/v1/tussock-headland)"
 )
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/api/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/api/v1/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+logger.info(
+    "Registered Tropical Tsingy (Pinnacle Karst Labyrinth) & Razor-Limestone Arête Scrambling router (/tsingy-labyrinth, /api/tsingy-labyrinth, /api/v1/tsingy-labyrinth)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1806,6 +1831,7 @@ async def create_response(request: ChatRequest):
             krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
             sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
             tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
+            tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2238,6 +2264,10 @@ async def create_response(request: ChatRequest):
                 td_info = dict(format_tiankeng_descent_response(request.question))
                 mock_payload["tiankeng_descent_info"] = td_info
                 mock_payload["answer"] = str(td_info.get("answer", ""))
+            if tsingy_labyrinth_intent:
+                tl_info = dict(format_tsingy_labyrinth_response(request.question))
+                mock_payload["tsingy_labyrinth_info"] = tl_info
+                mock_payload["answer"] = str(tl_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2757,6 +2787,7 @@ async def create_response_stream(request: ChatRequest):
                 krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
                 sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
                 tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
+                tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3238,6 +3269,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'tussock_headland_info': th_payload, event_name: th_payload})}\n\n"
                     if event_name != "tussock_headland_info":
                         yield f"data: {json.dumps({'event': 'tussock_headland_info', 'tussock_headland_info': th_payload})}\n\n"
+                if tsingy_labyrinth_intent:
+                    tl_payload = dict(format_tsingy_labyrinth_response(request.question))
+                    event_name = str(tl_payload.get("action", "tsingy_labyrinth_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tl_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tl_payload, event_name: tl_payload})}\n\n"
+                    if event_name != "tsingy_labyrinth_info":
+                        yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tl_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4115,6 +4153,9 @@ async def create_response_stream(request: ChatRequest):
                 elif tussock_headland_intent:
                     th_resp = format_tussock_headland_response(request.question)
                     mock_chunks = [str(th_resp.get("answer", ""))]
+                elif tsingy_labyrinth_intent:
+                    tl_resp = format_tsingy_labyrinth_response(request.question)
+                    mock_chunks = [str(tl_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4514,6 +4555,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_krummholz_bushwhack_intent(request.question)
                 or detect_sandur_crossing_intent(request.question)
                 or detect_tiankeng_descent_intent(request.question)
+                or detect_tsingy_labyrinth_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

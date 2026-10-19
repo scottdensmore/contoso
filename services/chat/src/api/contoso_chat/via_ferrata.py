@@ -395,6 +395,25 @@ def detect_via_ferrata_intent(message: str) -> Optional[ViaFerrataIntent]:
     if any(nx in q for nx in night_via_ferrata_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against tropical tsingy labyrinth in tsingy_labyrinth.py!
+    tsingy_labyrinth_exclusions = [
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
+    ]
+    if any(tx in q for tx in tsingy_labyrinth_exclusions):
+        return None
+
     # Via ferrata domain keywords
     vf_keywords = [
         "via ferrata",

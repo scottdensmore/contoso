@@ -142,6 +142,10 @@ from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
 )
+from contoso_chat.tsingy_labyrinth import (
+    format_tsingy_labyrinth_response,
+    is_tsingy_labyrinth_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -649,4 +653,20 @@ def handle_tussock_headland_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_tsingy_labyrinth_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format tropical tsingy pinnacle karst labyrinth & razor-limestone arête intent in the cascade."""
+    if not is_tsingy_labyrinth_query(question):
+        return None
+    info = format_tsingy_labyrinth_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tsingy_labyrinth_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 

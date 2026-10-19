@@ -464,6 +464,19 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
         "sarisarinama",
         "sarisariñama",
         "sima humboldt",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(tx in q for tx in tiankeng_exclusions):
         return None

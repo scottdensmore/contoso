@@ -143,6 +143,10 @@ from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
 )
+from contoso_chat.tsingy_labyrinth import (
+    format_tsingy_labyrinth_response,
+    is_tsingy_labyrinth_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -1119,4 +1123,28 @@ async def generate_tussock_headland_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_tsingy_labyrinth_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for tropical tsingy pinnacle karst labyrinth & razor-limestone arête queries."""
+    if not is_tsingy_labyrinth_query(question):
+        return
+
+    tl_payload = dict(format_tsingy_labyrinth_response(question))
+    answer = str(tl_payload.get("answer", ""))
+    event_name = str(tl_payload.get("action", "tsingy_labyrinth_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tl_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tl_payload, event_name: tl_payload})}\n\n"
+    if event_name != "tsingy_labyrinth_info":
+        yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tl_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
