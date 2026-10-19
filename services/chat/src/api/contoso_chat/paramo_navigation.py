@@ -664,6 +664,19 @@ def is_paramo_navigation_query(query: str) -> bool:
             "slide alder",
             "cripplebrush",
             "timberline thicket",
+            "subantarctic",
+            "poa flabellata",
+            "fortuna bay",
+            "south georgia",
+            "macquarie island",
+            "featherbed",
+            "enderby island",
+            "auckland islands",
+            "kerguelen",
+            "azorella",
+            "katabatic",
+            "williwaw",
+            "seal wallow",
         )
     ):
         return False

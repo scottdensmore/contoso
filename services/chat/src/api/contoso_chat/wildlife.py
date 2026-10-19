@@ -433,6 +433,29 @@ def assess_wildlife_encounter(req: EncounterAssessmentRequest) -> EncounterAsses
 def detect_wildlife_intent(query: str) -> Optional[WildlifeIntent]:
     q_lower = query.lower()
 
+    if any(
+        excl in q_lower
+        for excl in [
+            "subantarctic",
+            "poa flabellata",
+            "fortuna bay",
+            "south georgia",
+            "macquarie island",
+            "featherbed",
+            "enderby island",
+            "auckland islands",
+            "kerguelen",
+            "azorella",
+            "katabatic",
+            "williwaw",
+            "seal wallow",
+            "fur seal",
+            "elephant seal",
+            "sea lion",
+        ]
+    ):
+        return None
+
     # Trail disambiguation: "rattlesnake ridge" or "rattlesnake ledge" without snake context
     if ("rattlesnake ridge" in q_lower or "rattlesnake ledge" in q_lower) and not any(
         re.search(pattern, q_lower) for pattern in [r"\bsnakes?\b", r"\bbite\b", r"\bvenom\b", r"\bstrike\b", r"\bencounter\b", r"\bslither\b", r"\breptile\b"]

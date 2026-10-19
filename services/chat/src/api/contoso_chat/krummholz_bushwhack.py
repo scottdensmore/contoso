@@ -598,6 +598,20 @@ _KRUMMHOLZ_BUSHWHACK_EXCLUSIONS: tuple[str, ...] = (
     "frailejón",
     "espeletia",
     "chuscales",
+    # Subantarctic tussock headland exclusions
+    "subantarctic",
+    "poa flabellata",
+    "fortuna bay",
+    "south georgia",
+    "macquarie island",
+    "featherbed",
+    "enderby island",
+    "auckland islands",
+    "kerguelen",
+    "azorella",
+    "katabatic",
+    "williwaw",
+    "seal wallow",
 )
 
 

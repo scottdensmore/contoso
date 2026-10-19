@@ -151,6 +151,10 @@ from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
 )
+from contoso_chat.tussock_headland import (
+    format_tussock_headland_response,
+    is_tussock_headland_query,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -1092,3 +1096,27 @@ async def generate_tiankeng_descent_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_tussock_headland_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subantarctic tussock-grass peat bog & katabatic headland queries."""
+    if not is_tussock_headland_query(question):
+        return
+
+    th_payload = dict(format_tussock_headland_response(question))
+    answer = str(th_payload.get("answer", ""))
+    event_name = str(th_payload.get("action", "tussock_headland_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(th_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tussock_headland_info': th_payload, event_name: th_payload})}\n\n"
+    if event_name != "tussock_headland_info":
+        yield f"data: {json.dumps({'event': 'tussock_headland_info', 'tussock_headland_info': th_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
