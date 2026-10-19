@@ -58,6 +58,10 @@ from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
 )
+from contoso_chat.krummholz_bushwhack import (
+    format_krummholz_bushwhack_response,
+    is_krummholz_bushwhack_query,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -573,4 +577,20 @@ def handle_flash_flood_slot_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_krummholz_bushwhack_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subalpine krummholz bushwhack intent in the cascade."""
+    if not is_krummholz_bushwhack_query(question):
+        return None
+    info = format_krummholz_bushwhack_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "krummholz_bushwhack_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 

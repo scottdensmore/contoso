@@ -217,6 +217,11 @@ from .kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
 )
+from .krummholz_bushwhack import (
+    build_krummholz_bushwhack_prompt,
+    detect_krummholz_bushwhack_intent,
+    format_krummholz_bushwhack_response,
+)
 from .lava_tube_biospeleology import (
     build_lava_tube_biospeleology_prompt,
     detect_lava_tube_biospeleology_intent,
@@ -831,6 +836,7 @@ async def generate_llm_response(
     glaciere_caving_prompt: str = "",
     cobble_spit_trekking_prompt: str = "",
     flash_flood_slot_prompt: str = "",
+    krummholz_bushwhack_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -1029,6 +1035,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{cobble_spit_trekking_prompt}"
         if flash_flood_slot_prompt:
             local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
+        if krummholz_bushwhack_prompt:
+            local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1294,6 +1302,8 @@ async def generate_llm_response(
             prompt_parts.append(cobble_spit_trekking_prompt)
         if flash_flood_slot_prompt:
             prompt_parts.append(flash_flood_slot_prompt)
+        if krummholz_bushwhack_prompt:
+            prompt_parts.append(krummholz_bushwhack_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1933,6 +1943,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if flash_flood_slot_intent:
         flash_flood_slot_prompt = build_flash_flood_slot_prompt(question)
         flash_flood_slot_info_payload = dict(format_flash_flood_slot_response(question))
+
+    krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(question)
+    krummholz_bushwhack_prompt = ""
+    krummholz_bushwhack_info_payload: dict[str, Any] | None = None
+    if krummholz_bushwhack_intent:
+        krummholz_bushwhack_prompt = build_krummholz_bushwhack_prompt(question)
+        krummholz_bushwhack_info_payload = dict(format_krummholz_bushwhack_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2764,6 +2781,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["cobble_spit_trekking_prompt"] = cobble_spit_trekking_prompt
     if flash_flood_slot_prompt:
         llm_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
+    if krummholz_bushwhack_prompt:
+        llm_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2911,6 +2930,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["cobble_spit_trekking_info"] = cobble_spit_trekking_info_payload
     if flash_flood_slot_intent and flash_flood_slot_info_payload:
         response_payload["flash_flood_slot_info"] = flash_flood_slot_info_payload
+    if krummholz_bushwhack_intent and krummholz_bushwhack_info_payload:
+        response_payload["krummholz_bushwhack_info"] = krummholz_bushwhack_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3098,6 +3119,7 @@ def generate_llm_response_stream(
     glaciere_caving_prompt: str = "",
     cobble_spit_trekking_prompt: str = "",
     flash_flood_slot_prompt: str = "",
+    krummholz_bushwhack_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3294,6 +3316,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{cobble_spit_trekking_prompt}"
         if flash_flood_slot_prompt:
             local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
+        if krummholz_bushwhack_prompt:
+            local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3504,6 +3528,8 @@ def generate_llm_response_stream(
             prompt_parts.append(cobble_spit_trekking_prompt)
         if flash_flood_slot_prompt:
             prompt_parts.append(flash_flood_slot_prompt)
+        if krummholz_bushwhack_prompt:
+            prompt_parts.append(krummholz_bushwhack_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3965,6 +3991,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if flash_flood_slot_intent:
         flash_flood_slot_prompt = build_flash_flood_slot_prompt(question)
         flash_flood_slot_info_payload = dict(format_flash_flood_slot_response(question))
+
+    krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(question)
+    krummholz_bushwhack_prompt = ""
+    krummholz_bushwhack_info_payload: dict[str, Any] | None = None
+    if krummholz_bushwhack_intent:
+        krummholz_bushwhack_prompt = build_krummholz_bushwhack_prompt(question)
+        krummholz_bushwhack_info_payload = dict(format_krummholz_bushwhack_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4852,6 +4885,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': flash_flood_slot_info_payload, event_name: flash_flood_slot_info_payload})}\n\n"
         if event_name != "flash_flood_slot_info":
             yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': flash_flood_slot_info_payload})}\n\n"
+    if krummholz_bushwhack_intent and krummholz_bushwhack_info_payload:
+        event_name = (
+            krummholz_bushwhack_info_payload.get("action", "krummholz_bushwhack_info")
+            if isinstance(krummholz_bushwhack_info_payload, dict)
+            else "krummholz_bushwhack_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(krummholz_bushwhack_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': krummholz_bushwhack_info_payload, event_name: krummholz_bushwhack_info_payload})}\n\n"
+        if event_name != "krummholz_bushwhack_info":
+            yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': krummholz_bushwhack_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5795,6 +5838,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["cobble_spit_trekking_prompt"] = cobble_spit_trekking_prompt
     if flash_flood_slot_prompt:
         stream_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
+    if krummholz_bushwhack_prompt:
+        stream_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
 
     for chunk in generate_llm_response_stream(
         question,

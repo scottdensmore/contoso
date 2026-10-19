@@ -649,6 +649,25 @@ def is_paramo_navigation_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        excl in q
+        for excl in (
+            "krummholz",
+            "bushwhack",
+            "bushwhacking",
+            "dwarf conifer",
+            "dwarf-conifer",
+            "spruce trap",
+            "latschenkiefer",
+            "pinus mugo",
+            "hai-matsu",
+            "slide alder",
+            "cripplebrush",
+            "timberline thicket",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _PARAMO_NAVIGATION_KEYWORDS):
         return True
 

@@ -339,6 +339,17 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "sled haul",
         "glacial sledging",
         "haul shaft",
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "spruce trap",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
     ]
     if any(ex in q_norm for ex in pulk_exclusions):
         return None
