@@ -352,6 +352,15 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "stone forest",
         "diaclase",
         "pinnacle karst",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "pseudokarst",
     ]
     if any(ex in q for ex in exclusions):
         return None

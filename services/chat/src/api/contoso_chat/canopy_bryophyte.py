@@ -594,6 +594,16 @@ def detect_canopy_bryophyte_intent(message: str) -> bool:
         "sport climbing",
         "chalk bag",
         "canyoneering",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "brocchinia",
+        "cyanobacteria biofilm",
     ]
     if any(ex in q for ex in exclusions):
         return False

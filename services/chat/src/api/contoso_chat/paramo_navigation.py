@@ -677,6 +677,18 @@ def is_paramo_navigation_query(query: str) -> bool:
             "katabatic",
             "williwaw",
             "seal wallow",
+            "tepui",
+            "roraima",
+            "auyan-tepui",
+            "auyán-tepui",
+            "kukenan",
+            "kukenán",
+            "chiribiquete",
+            "gran sabana",
+            "guiana shield",
+            "brocchinia",
+            "heliamphora",
+            "stegolepis",
         )
     ):
         return False

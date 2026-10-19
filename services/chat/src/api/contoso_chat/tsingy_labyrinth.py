@@ -644,6 +644,20 @@ _TSINGY_LABYRINTH_EXCLUSIONS: tuple[str, ...] = (
     "fruit bowl",
     "weblock",
     "buckingham pulley",
+    # Table-mountain quartzite tepui plateau navigation exclusions (tepui_navigation.py)
+    "tepui",
+    "mount roraima",
+    "roraima",
+    "auyan-tepui",
+    "auyán-tepui",
+    "kukenan",
+    "kukenán",
+    "chiribiquete",
+    "gran sabana",
+    "guiana shield",
+    "pseudokarst",
+    "brocchinia",
+    "cyanobacteria biofilm",
 )
 
 

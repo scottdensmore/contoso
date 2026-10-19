@@ -646,6 +646,17 @@ def detect_bog_shoeing_intent(message: str) -> bool:
         "katabatic",
         "williwaw",
         "seal wallow",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "brocchinia",
+        "heliamphora",
+        "stegolepis",
     ]
     if any(ex in q for ex in exclusions):
         return False
