@@ -42,6 +42,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.flash_flood_slot import (
+    format_flash_flood_slot_response,
+    is_flash_flood_slot_query,
+)
 from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
@@ -554,3 +558,19 @@ def handle_cobble_spit_trekking_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_flash_flood_slot_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format slot-canyon flash-flood intent in the cascade."""
+    if not is_flash_flood_slot_query(question):
+        return None
+    info = format_flash_flood_slot_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "flash_flood_slot_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

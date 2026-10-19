@@ -294,6 +294,9 @@ def detect_mountain_weather_intent(message: str) -> Optional[MountainWeatherInte
         "smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi",
         "paramo", "páramo", "frailejon", "frailejón", "espeletia",
         "turbera", "distichia", "sumapaz", "el angel", "cushion bog",
+        "flash flood", "flash-flood", "slot canyon flood", "escape ledge",
+        "escape-ledge", "hydrograph", "blue-sky flood", "flood bore",
+        "buckskin gulch", "little wild horse", "wadi mujib", "wadi ghul",
     ]):
         return None
 

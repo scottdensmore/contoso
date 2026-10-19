@@ -285,6 +285,10 @@ from contoso_chat.first_aid import (
     get_medical_condition_by_id,
     get_medical_conditions,
 )
+from contoso_chat.flash_flood_slot import (
+    detect_flash_flood_slot_intent,
+    format_flash_flood_slot_response,
+)
 from contoso_chat.fly_fishing import (
     FishingLocationModel,
     FlyFishingGearRegulationsResponse,
@@ -651,6 +655,9 @@ from contoso_chat.routers.cryokarst_speleology import (
     router as cryokarst_speleology_router,
 )
 from contoso_chat.routers.falconry import router as falconry_router
+from contoso_chat.routers.flash_flood_slot import (
+    router as flash_flood_slot_router,
+)
 from contoso_chat.routers.glacier_ski_traverse import (
     router as glacier_ski_traverse_router,
 )
@@ -1380,6 +1387,24 @@ app.include_router(
 logger.info(
     "Registered Coastal Kelp-Wrack Boulder Reef & Intertidal Cobble Spit Trekking router (/cobble-spit-trekking, /api/cobble-spit-trekking, /api/v1/cobble-spit-trekking)"
 )
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/api/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/api/v1/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+logger.info(
+    "Registered High-Desert Slot-Canyon Ephemeral Flash-Flood Hydrograph & Escape-Ledge Navigation router (/flash-flood-slot, /api/flash-flood-slot, /api/v1/flash-flood-slot)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1677,6 +1702,7 @@ async def create_response(request: ChatRequest):
             tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
             glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
             cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
+            flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -2092,6 +2118,10 @@ async def create_response(request: ChatRequest):
                 cs_info = dict(format_cobble_spit_trekking_response(request.question))
                 mock_payload["cobble_spit_trekking_info"] = cs_info
                 mock_payload["answer"] = str(cs_info.get("answer", ""))
+            if flash_flood_slot_intent:
+                ff_info = dict(format_flash_flood_slot_response(request.question))
+                mock_payload["flash_flood_slot_info"] = ff_info
+                mock_payload["answer"] = str(ff_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2603,6 +2633,7 @@ async def create_response_stream(request: ChatRequest):
                 tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
                 glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
                 cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
+                flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -3048,6 +3079,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cs_payload, event_name: cs_payload})}\n\n"
                     if event_name != "cobble_spit_trekking_info":
                         yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cs_payload})}\n\n"
+                if flash_flood_slot_intent:
+                    ff_payload = dict(format_flash_flood_slot_response(request.question))
+                    event_name = str(ff_payload.get("action", "flash_flood_slot_info"))
+                    yield f"event: metadata\ndata: {json.dumps(ff_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': ff_payload, event_name: ff_payload})}\n\n"
+                    if event_name != "flash_flood_slot_info":
+                        yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': ff_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3910,6 +3948,9 @@ async def create_response_stream(request: ChatRequest):
                 elif cobble_spit_trekking_intent:
                     cs_resp = format_cobble_spit_trekking_response(request.question)
                     mock_chunks = [str(cs_resp.get("answer", ""))]
+                elif flash_flood_slot_intent:
+                    ff_resp = format_flash_flood_slot_response(request.question)
+                    mock_chunks = [str(ff_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4305,6 +4346,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_tephra_navigation_intent(request.question)
                 or detect_glaciere_caving_intent(request.question)
                 or detect_cobble_spit_trekking_intent(request.question)
+                or detect_flash_flood_slot_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

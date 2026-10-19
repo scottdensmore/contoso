@@ -345,6 +345,18 @@ def detect_river_rafting_intent(message: str) -> RaftingIntent:
         "track my order",
         "order status",
         "tracking number",
+        "flash flood",
+        "flash-flood",
+        "slot canyon flood",
+        "escape ledge",
+        "escape-ledge",
+        "hydrograph",
+        "blue-sky flood",
+        "flood bore",
+        "buckskin gulch",
+        "little wild horse",
+        "wadi mujib",
+        "wadi ghul",
     ]
     if any(t in q for t in ecommerce_terms):
         return RaftingIntent(intent_detected=False, expedition_id=None, action="", confidence=0.0)

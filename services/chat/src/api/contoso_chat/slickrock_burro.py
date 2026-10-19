@@ -646,6 +646,21 @@ def detect_slickrock_burro_intent(message: str) -> bool:
         "makgadikgadi",
         "uyuni",
         "fata morgana",
+        "flash flood",
+        "flash-flood",
+        "slot canyon flood",
+        "escape ledge",
+        "escape-ledge",
+        "hydrograph",
+        "blue-sky flood",
+        "blue sky flood",
+        "flood bore",
+        "buckskin gulch",
+        "little wild horse",
+        "bell canyon",
+        "san rafael reef",
+        "wadi mujib",
+        "wadi ghul",
     ]
 
     # Explicit exclusions check

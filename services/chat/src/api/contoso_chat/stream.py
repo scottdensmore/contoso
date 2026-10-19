@@ -43,6 +43,10 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.flash_flood_slot import (
+    format_flash_flood_slot_response,
+    is_flash_flood_slot_query,
+)
 from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
@@ -984,3 +988,27 @@ async def generate_cobble_spit_trekking_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_flash_flood_slot_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for slot-canyon flash-flood queries."""
+    if not is_flash_flood_slot_query(question):
+        return
+
+    ff_payload = dict(format_flash_flood_slot_response(question))
+    answer = str(ff_payload.get("answer", ""))
+    event_name = str(ff_payload.get("action", "flash_flood_slot_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ff_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': ff_payload, event_name: ff_payload})}\n\n"
+    if event_name != "flash_flood_slot_info":
+        yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': ff_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
