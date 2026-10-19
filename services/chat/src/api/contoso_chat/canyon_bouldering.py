@@ -339,6 +339,19 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "little wild horse",
         "wadi mujib",
         "wadi ghul",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(ex in q for ex in exclusions):
         return None

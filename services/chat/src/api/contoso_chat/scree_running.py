@@ -707,6 +707,19 @@ def detect_scree_running_intent(message: str) -> bool:
         "intertidal cobble",
         "storm-berm cobble",
         "mucilage slip",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

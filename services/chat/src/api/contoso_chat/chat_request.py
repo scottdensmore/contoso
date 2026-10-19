@@ -517,6 +517,11 @@ from .trip_planner import (
     detect_trip_planner_intent,
     format_trip_planner_response,
 )
+from .tsingy_labyrinth import (
+    build_tsingy_labyrinth_prompt,
+    detect_tsingy_labyrinth_intent,
+    format_tsingy_labyrinth_response,
+)
 from .tundra_lichen import (
     build_tundra_lichen_prompt,
     detect_tundra_lichen_intent,
@@ -854,6 +859,7 @@ async def generate_llm_response(
     krummholz_bushwhack_prompt: str = "",
     sandur_crossing_prompt: str = "",
     tiankeng_descent_prompt: str = "",
+    tsingy_labyrinth_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1059,6 +1065,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
         if tiankeng_descent_prompt:
             local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
+        if tsingy_labyrinth_prompt:
+            local_system = f"{local_system}\n\n{tsingy_labyrinth_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1332,6 +1340,8 @@ async def generate_llm_response(
             prompt_parts.append(sandur_crossing_prompt)
         if tiankeng_descent_prompt:
             prompt_parts.append(tiankeng_descent_prompt)
+        if tsingy_labyrinth_prompt:
+            prompt_parts.append(tsingy_labyrinth_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2001,6 +2011,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if tussock_headland_intent:
         tussock_headland_prompt = build_tussock_headland_prompt(question)
         tussock_headland_info_payload = dict(format_tussock_headland_response(question))
+
+    tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(question)
+    tsingy_labyrinth_prompt = ""
+    tsingy_labyrinth_info_payload: dict[str, Any] | None = None
+    if tsingy_labyrinth_intent:
+        tsingy_labyrinth_prompt = build_tsingy_labyrinth_prompt(question)
+        tsingy_labyrinth_info_payload = dict(format_tsingy_labyrinth_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2838,6 +2855,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
     if tiankeng_descent_prompt:
         llm_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
+    if tsingy_labyrinth_prompt:
+        llm_kwargs["tsingy_labyrinth_prompt"] = tsingy_labyrinth_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -2993,6 +3012,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["sandur_crossing_info"] = sandur_crossing_info_payload
     if tiankeng_descent_intent and tiankeng_descent_info_payload:
         response_payload["tiankeng_descent_info"] = tiankeng_descent_info_payload
+    if tsingy_labyrinth_intent and tsingy_labyrinth_info_payload:
+        response_payload["tsingy_labyrinth_info"] = tsingy_labyrinth_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3185,6 +3206,7 @@ def generate_llm_response_stream(
     krummholz_bushwhack_prompt: str = "",
     sandur_crossing_prompt: str = "",
     tiankeng_descent_prompt: str = "",
+    tsingy_labyrinth_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3388,6 +3410,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
         if tiankeng_descent_prompt:
             local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
+        if tsingy_labyrinth_prompt:
+            local_system = f"{local_system}\n\n{tsingy_labyrinth_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3606,6 +3630,8 @@ def generate_llm_response_stream(
             prompt_parts.append(sandur_crossing_prompt)
         if tiankeng_descent_prompt:
             prompt_parts.append(tiankeng_descent_prompt)
+        if tsingy_labyrinth_prompt:
+            prompt_parts.append(tsingy_labyrinth_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4097,6 +4123,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if tussock_headland_intent:
         tussock_headland_prompt = build_tussock_headland_prompt(question)
         tussock_headland_info_payload = dict(format_tussock_headland_response(question))
+
+    tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(question)
+    tsingy_labyrinth_prompt = ""
+    tsingy_labyrinth_info_payload: dict[str, Any] | None = None
+    if tsingy_labyrinth_intent:
+        tsingy_labyrinth_prompt = build_tsingy_labyrinth_prompt(question)
+        tsingy_labyrinth_info_payload = dict(format_tsingy_labyrinth_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -5024,6 +5057,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'tussock_headland_info': tussock_headland_info_payload, event_name: tussock_headland_info_payload})}\n\n"
         if event_name != "tussock_headland_info":
             yield f"data: {json.dumps({'event': 'tussock_headland_info', 'tussock_headland_info': tussock_headland_info_payload})}\n\n"
+    if tsingy_labyrinth_intent and tsingy_labyrinth_info_payload:
+        event_name = (
+            tsingy_labyrinth_info_payload.get("action", "tsingy_labyrinth_info")
+            if isinstance(tsingy_labyrinth_info_payload, dict)
+            else "tsingy_labyrinth_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(tsingy_labyrinth_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tsingy_labyrinth_info_payload, event_name: tsingy_labyrinth_info_payload})}\n\n"
+        if event_name != "tsingy_labyrinth_info":
+            yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tsingy_labyrinth_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5973,6 +6016,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
     if tiankeng_descent_prompt:
         stream_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
+    if tsingy_labyrinth_prompt:
+        stream_kwargs["tsingy_labyrinth_prompt"] = tsingy_labyrinth_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

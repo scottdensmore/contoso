@@ -403,6 +403,19 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
         "sima humboldt",
         "bell shaft sinkhole",
         "cloud-forest rim",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(tx in q for tx in tiankeng_exclusions):
         return None
