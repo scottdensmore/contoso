@@ -731,6 +731,9 @@ from contoso_chat.routers.tussock_headland import (
     router as tussock_headland_router,
 )
 from contoso_chat.routers.weather_station import router as weather_station_router
+from contoso_chat.routers.yardang_navigation import (
+    router as yardang_navigation_router,
+)
 from contoso_chat.routers.zipline import router as zipline_router
 from contoso_chat.routes import (
     RouteExportRequest,
@@ -1116,6 +1119,10 @@ from contoso_chat.wildlife import (
     get_food_storage_guidelines,
     get_wildlife_species,
     get_wildlife_species_by_id,
+)
+from contoso_chat.yardang_navigation import (
+    detect_yardang_navigation_intent,
+    format_yardang_navigation_response,
 )
 from contoso_chat.zipline import (
     detect_zipline_intent,
@@ -1555,6 +1562,24 @@ app.include_router(
 logger.info(
     "Registered Table-Mountain Quartzite Tepui & High-Plateau Sandstone Fissure Navigation router (/tepui-navigation, /api/tepui-navigation, /api/v1/tepui-navigation)"
 )
+app.include_router(
+    yardang_navigation_router,
+    prefix="/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+app.include_router(
+    yardang_navigation_router,
+    prefix="/api/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+app.include_router(
+    yardang_navigation_router,
+    prefix="/api/v1/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+logger.info(
+    "Registered Aeolian Yardang & Mega-Dune Slip-Face Star-Dune Desert Navigation router (/yardang-navigation, /api/yardang-navigation, /api/v1/yardang-navigation)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1858,6 +1883,7 @@ async def create_response(request: ChatRequest):
             tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
             tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
             tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
+            yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2298,6 +2324,10 @@ async def create_response(request: ChatRequest):
                 tn_info = dict(format_tepui_navigation_response(request.question))
                 mock_payload["tepui_navigation_info"] = tn_info
                 mock_payload["answer"] = str(tn_info.get("answer", ""))
+            if yardang_navigation_intent:
+                yn_info = dict(format_yardang_navigation_response(request.question))
+                mock_payload["yardang_navigation_info"] = yn_info
+                mock_payload["answer"] = str(yn_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2819,6 +2849,7 @@ async def create_response_stream(request: ChatRequest):
                 tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
                 tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
                 tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
+                yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3314,6 +3345,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'tepui_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
                     if event_name != "tepui_navigation_info":
                         yield f"data: {json.dumps({'event': 'tepui_navigation_info', 'tepui_navigation_info': tn_payload})}\n\n"
+                if yardang_navigation_intent:
+                    yn_payload = dict(format_yardang_navigation_response(request.question))
+                    event_name = str(yn_payload.get("action", "yardang_navigation_info"))
+                    yield f"event: metadata\ndata: {json.dumps(yn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yn_payload, event_name: yn_payload})}\n\n"
+                    if event_name != "yardang_navigation_info":
+                        yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yn_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4197,6 +4235,9 @@ async def create_response_stream(request: ChatRequest):
                 elif tepui_navigation_intent:
                     tn_resp = format_tepui_navigation_response(request.question)
                     mock_chunks = [str(tn_resp.get("answer", ""))]
+                elif yardang_navigation_intent:
+                    yn_resp = format_yardang_navigation_response(request.question)
+                    mock_chunks = [str(yn_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4598,6 +4639,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_tiankeng_descent_intent(request.question)
                 or detect_tsingy_labyrinth_intent(request.question)
                 or detect_tepui_navigation_intent(request.question)
+                or detect_yardang_navigation_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

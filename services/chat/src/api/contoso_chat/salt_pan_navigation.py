@@ -625,6 +625,30 @@ def is_salt_pan_navigation_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "yardang",
+            "yardangs",
+            "kalut",
+            "kaluts",
+            "dasht-e lut",
+            "gandom beryan",
+            "badain jaran",
+            "bilutu",
+            "lop nur",
+            "dunhuang yadan",
+            "barchanoid",
+            "erg djourab",
+            "borkou",
+            "ennedi",
+            "aeolian corridor",
+            "star-dune",
+            "mega-dune",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _SALT_PAN_KEYWORDS):
         return True
 
