@@ -639,6 +639,25 @@ def is_sea_cave_pneumatics_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "cobble spit",
+            "shingle spit",
+            "kelp-wrack",
+            "kelp wrack",
+            "boulder reef",
+            "dungeness spit",
+            "chesil beach",
+            "nelson boulder bank",
+            "farewell spit",
+            "intertidal cobble",
+            "storm-berm cobble",
+            "mucilage slip",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _SEA_CAVE_PNEUMATICS_KEYWORDS):
         return True
 

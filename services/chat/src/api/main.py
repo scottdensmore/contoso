@@ -184,6 +184,10 @@ from contoso_chat.coasteering import (
     get_coasteering_route_by_id,
     get_coasteering_routes,
 )
+from contoso_chat.cobble_spit_trekking import (
+    detect_cobble_spit_trekking_intent,
+    format_cobble_spit_trekking_response,
+)
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
@@ -639,6 +643,9 @@ from contoso_chat.routers.canopy_bryophyte import (
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
+from contoso_chat.routers.cobble_spit_trekking import (
+    router as cobble_spit_trekking_router,
+)
 from contoso_chat.routers.crevasse_pulk import router as crevasse_pulk_router
 from contoso_chat.routers.cryokarst_speleology import (
     router as cryokarst_speleology_router,
@@ -1355,6 +1362,24 @@ app.include_router(
 logger.info(
     "Registered Subterranean Ice-Filled Lava Tube & Permafrost Glacière Cave Navigation router (/glaciere-caving, /api/glaciere-caving, /api/v1/glaciere-caving)"
 )
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/api/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/api/v1/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+logger.info(
+    "Registered Coastal Kelp-Wrack Boulder Reef & Intertidal Cobble Spit Trekking router (/cobble-spit-trekking, /api/cobble-spit-trekking, /api/v1/cobble-spit-trekking)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1651,6 +1676,7 @@ async def create_response(request: ChatRequest):
             paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
             tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
             glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
+            cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -2062,6 +2088,10 @@ async def create_response(request: ChatRequest):
                 gc_info = dict(format_glaciere_caving_response(request.question))
                 mock_payload["glaciere_caving_info"] = gc_info
                 mock_payload["answer"] = str(gc_info.get("answer", ""))
+            if cobble_spit_trekking_intent:
+                cs_info = dict(format_cobble_spit_trekking_response(request.question))
+                mock_payload["cobble_spit_trekking_info"] = cs_info
+                mock_payload["answer"] = str(cs_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2572,6 +2602,7 @@ async def create_response_stream(request: ChatRequest):
                 paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
                 tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
                 glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
+                cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -3010,6 +3041,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': gc_payload, event_name: gc_payload})}\n\n"
                     if event_name != "glaciere_caving_info":
                         yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': gc_payload})}\n\n"
+                if cobble_spit_trekking_intent:
+                    cs_payload = dict(format_cobble_spit_trekking_response(request.question))
+                    event_name = str(cs_payload.get("action", "cobble_spit_trekking_info"))
+                    yield f"event: metadata\ndata: {json.dumps(cs_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cs_payload, event_name: cs_payload})}\n\n"
+                    if event_name != "cobble_spit_trekking_info":
+                        yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cs_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3869,6 +3907,9 @@ async def create_response_stream(request: ChatRequest):
                 elif glaciere_caving_intent:
                     gc_resp = format_glaciere_caving_response(request.question)
                     mock_chunks = [str(gc_resp.get("answer", ""))]
+                elif cobble_spit_trekking_intent:
+                    cs_resp = format_cobble_spit_trekking_response(request.question)
+                    mock_chunks = [str(cs_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4263,6 +4304,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_paramo_navigation_intent(request.question)
                 or detect_tephra_navigation_intent(request.question)
                 or detect_glaciere_caving_intent(request.question)
+                or detect_cobble_spit_trekking_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

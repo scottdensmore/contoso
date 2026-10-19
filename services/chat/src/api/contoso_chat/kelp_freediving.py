@@ -703,6 +703,18 @@ def detect_kelp_freediving_intent(message: str) -> bool:
         "devil's punchbowl",
         "air compression blast",
         "littoral cave",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

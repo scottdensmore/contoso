@@ -650,6 +650,25 @@ def is_mangrove_labyrinth_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(
+        ex in q
+        for ex in (
+            "cobble spit",
+            "shingle spit",
+            "kelp-wrack",
+            "kelp wrack",
+            "boulder reef",
+            "dungeness spit",
+            "chesil beach",
+            "nelson boulder bank",
+            "farewell spit",
+            "intertidal cobble",
+            "storm-berm cobble",
+            "mucilage slip",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _MANGROVE_LABYRINTH_KEYWORDS):
         return True
 

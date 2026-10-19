@@ -436,6 +436,18 @@ def detect_coasteering_intent(message: str) -> Optional[CoasteeringIntent]:
         "devil's punchbowl",
         "air compression blast",
         "littoral cave",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(scx in q for scx in sea_cave_pneumatics_exclusions):
         return None

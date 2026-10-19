@@ -695,6 +695,18 @@ def detect_scree_running_intent(message: str) -> bool:
         "tarawera",
         "chaiten",
         "chaitén",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
