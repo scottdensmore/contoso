@@ -43,6 +43,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.glaciere_caving import (
+    format_glaciere_caving_response,
+    is_glaciere_caving_query,
+)
 from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
@@ -930,3 +934,27 @@ async def generate_tephra_navigation_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_glaciere_caving_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for glacière caving queries."""
+    if not is_glaciere_caving_query(question):
+        return
+
+    gc_payload = dict(format_glaciere_caving_response(question))
+    answer = str(gc_payload.get("answer", ""))
+    event_name = str(gc_payload.get("action", "glaciere_caving_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(gc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': gc_payload, event_name: gc_payload})}\n\n"
+    if event_name != "glaciere_caving_info":
+        yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': gc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+

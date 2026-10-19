@@ -571,6 +571,18 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "h2s",
         "hydrogen sulfide",
         "sulfur dioxide",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(k in q for k in exclusions):
         return None

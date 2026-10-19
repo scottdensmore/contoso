@@ -324,6 +324,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.glaciere_caving import (
+    detect_glaciere_caving_intent,
+    format_glaciere_caving_response,
+)
 from contoso_chat.gold_prospecting import (
     PlacerRequest,
     PlacerResponse,
@@ -642,6 +646,9 @@ from contoso_chat.routers.cryokarst_speleology import (
 from contoso_chat.routers.falconry import router as falconry_router
 from contoso_chat.routers.glacier_ski_traverse import (
     router as glacier_ski_traverse_router,
+)
+from contoso_chat.routers.glaciere_caving import (
+    router as glaciere_caving_router,
 )
 from contoso_chat.routers.kelp_freediving import (
     router as kelp_freediving_router,
@@ -1330,6 +1337,24 @@ app.include_router(
 logger.info(
     "Registered Volcanic Tephra, Ash-Fall & Lapilli Scree Slope Descent & Respirator router (/tephra-navigation, /api/tephra-navigation, /api/v1/tephra-navigation)"
 )
+app.include_router(
+    glaciere_caving_router,
+    prefix="/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+app.include_router(
+    glaciere_caving_router,
+    prefix="/api/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+app.include_router(
+    glaciere_caving_router,
+    prefix="/api/v1/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+logger.info(
+    "Registered Subterranean Ice-Filled Lava Tube & Permafrost Glacière Cave Navigation router (/glaciere-caving, /api/glaciere-caving, /api/v1/glaciere-caving)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1625,6 +1650,7 @@ async def create_response(request: ChatRequest):
             mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
             paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
             tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
+            glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -2032,6 +2058,10 @@ async def create_response(request: ChatRequest):
                 tn_info = dict(format_tephra_navigation_response(request.question))
                 mock_payload["tephra_navigation_info"] = tn_info
                 mock_payload["answer"] = str(tn_info.get("answer", ""))
+            if glaciere_caving_intent:
+                gc_info = dict(format_glaciere_caving_response(request.question))
+                mock_payload["glaciere_caving_info"] = gc_info
+                mock_payload["answer"] = str(gc_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -2541,6 +2571,7 @@ async def create_response_stream(request: ChatRequest):
                 mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
                 paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
                 tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
+                glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2972,6 +3003,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
                     if event_name != "tephra_navigation_info":
                         yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tn_payload})}\n\n"
+                if glaciere_caving_intent:
+                    gc_payload = dict(format_glaciere_caving_response(request.question))
+                    event_name = str(gc_payload.get("action", "glaciere_caving_info"))
+                    yield f"event: metadata\ndata: {json.dumps(gc_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': gc_payload, event_name: gc_payload})}\n\n"
+                    if event_name != "glaciere_caving_info":
+                        yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': gc_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -3828,6 +3866,9 @@ async def create_response_stream(request: ChatRequest):
                 elif tephra_navigation_intent:
                     tn_resp = format_tephra_navigation_response(request.question)
                     mock_chunks = [str(tn_resp.get("answer", ""))]
+                elif glaciere_caving_intent:
+                    gc_resp = format_glaciere_caving_response(request.question)
+                    mock_chunks = [str(gc_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4221,6 +4262,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_mangrove_labyrinth_intent(request.question)
                 or detect_paramo_navigation_intent(request.question)
                 or detect_tephra_navigation_intent(request.question)
+                or detect_glaciere_caving_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"

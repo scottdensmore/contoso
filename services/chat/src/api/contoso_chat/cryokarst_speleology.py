@@ -742,6 +742,22 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "glaciar de escombros",
         "val muragl",
         "dos lenguas",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "ice filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "tennengebirge",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "candelaria",
+        "lofthellir",
+        "hoarfrost ceiling",
+        "firn-plug",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

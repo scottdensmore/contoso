@@ -711,6 +711,20 @@ def detect_lava_tube_biospeleology_intent(message: str) -> bool:
         "tarawera",
         "chaiten",
         "chaitén",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "ice filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "candelaria",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

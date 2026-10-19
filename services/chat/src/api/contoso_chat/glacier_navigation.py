@@ -392,6 +392,18 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
         "moulin",
         "ice cave",
         "subglacial",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(ex in q for ex in cryokarst_exclusions):
         return None
