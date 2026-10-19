@@ -70,6 +70,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.paramo_navigation import (
+    format_paramo_navigation_response,
+    is_paramo_navigation_query,
+)
 from contoso_chat.penitentes_navigation import (
     format_penitentes_navigation_response,
     is_penitentes_navigation_query,
@@ -474,3 +478,18 @@ def handle_mangrove_labyrinth_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_paramo_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format paramo navigation intent in the cascade."""
+    if not is_paramo_navigation_query(question):
+        return None
+    answer, info = format_paramo_navigation_response(question)
+    return {
+        "paramo_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

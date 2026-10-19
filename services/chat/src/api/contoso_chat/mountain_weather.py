@@ -292,6 +292,8 @@ def detect_mountain_weather_intent(message: str) -> Optional[MountainWeatherInte
         "track order", "order #", "order status", "return label", "refund",
         "rental", "store hours", "parking pass", "shuttle", "membership",
         "smoke", "smoke advisory", "wildfire smoke", "air quality", "pm2.5", "aqi",
+        "paramo", "páramo", "frailejon", "frailejón", "espeletia",
+        "turbera", "distichia", "sumapaz", "el angel", "cushion bog",
     ]):
         return None
 

@@ -71,6 +71,10 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.paramo_navigation import (
+    format_paramo_navigation_response,
+    is_paramo_navigation_query,
+)
 from contoso_chat.penitentes_navigation import (
     format_penitentes_navigation_response,
     is_penitentes_navigation_query,
@@ -858,3 +862,26 @@ async def generate_mangrove_labyrinth_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_paramo_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for paramo navigation queries."""
+    if not is_paramo_navigation_query(question):
+        return
+
+    answer, pn_payload = format_paramo_navigation_response(question)
+    event_name = str(pn_payload.get("action", "paramo_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+    if event_name != "paramo_navigation_info":
+        yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': pn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
