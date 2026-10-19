@@ -510,6 +510,18 @@ def detect_whitewater_intent(query: str) -> Optional[WhitewaterIntent]:
             "avalanche danger",
             "snowpack",
             "fire ban",
+            "flash flood",
+            "flash-flood",
+            "slot canyon flood",
+            "escape ledge",
+            "escape-ledge",
+            "hydrograph",
+            "blue-sky flood",
+            "flood bore",
+            "buckskin gulch",
+            "little wild horse",
+            "wadi mujib",
+            "wadi ghul",
         ]
     ):
         return None

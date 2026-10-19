@@ -157,6 +157,11 @@ from .first_aid import (
     detect_first_aid_intent,
     format_first_aid_response,
 )
+from .flash_flood_slot import (
+    build_flash_flood_slot_prompt,
+    detect_flash_flood_slot_intent,
+    format_flash_flood_slot_response,
+)
 from .fly_fishing import (
     build_fly_fishing_prompt,
     detect_fly_fishing_intent,
@@ -825,6 +830,7 @@ async def generate_llm_response(
     tephra_navigation_prompt: str = "",
     glaciere_caving_prompt: str = "",
     cobble_spit_trekking_prompt: str = "",
+    flash_flood_slot_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -1021,6 +1027,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{glaciere_caving_prompt}"
         if cobble_spit_trekking_prompt:
             local_system = f"{local_system}\n\n{cobble_spit_trekking_prompt}"
+        if flash_flood_slot_prompt:
+            local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1284,6 +1292,8 @@ async def generate_llm_response(
             prompt_parts.append(glaciere_caving_prompt)
         if cobble_spit_trekking_prompt:
             prompt_parts.append(cobble_spit_trekking_prompt)
+        if flash_flood_slot_prompt:
+            prompt_parts.append(flash_flood_slot_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1916,6 +1926,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if cobble_spit_trekking_intent:
         cobble_spit_trekking_prompt = build_cobble_spit_trekking_prompt(question)
         cobble_spit_trekking_info_payload = dict(format_cobble_spit_trekking_response(question))
+
+    flash_flood_slot_intent = detect_flash_flood_slot_intent(question)
+    flash_flood_slot_prompt = ""
+    flash_flood_slot_info_payload = None
+    if flash_flood_slot_intent:
+        flash_flood_slot_prompt = build_flash_flood_slot_prompt(question)
+        flash_flood_slot_info_payload = dict(format_flash_flood_slot_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2745,6 +2762,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["glaciere_caving_prompt"] = glaciere_caving_prompt
     if cobble_spit_trekking_prompt:
         llm_kwargs["cobble_spit_trekking_prompt"] = cobble_spit_trekking_prompt
+    if flash_flood_slot_prompt:
+        llm_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2890,6 +2909,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["glaciere_caving_info"] = glaciere_caving_info_payload
     if cobble_spit_trekking_intent and cobble_spit_trekking_info_payload:
         response_payload["cobble_spit_trekking_info"] = cobble_spit_trekking_info_payload
+    if flash_flood_slot_intent and flash_flood_slot_info_payload:
+        response_payload["flash_flood_slot_info"] = flash_flood_slot_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3076,6 +3097,7 @@ def generate_llm_response_stream(
     tephra_navigation_prompt: str = "",
     glaciere_caving_prompt: str = "",
     cobble_spit_trekking_prompt: str = "",
+    flash_flood_slot_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3270,6 +3292,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{glaciere_caving_prompt}"
         if cobble_spit_trekking_prompt:
             local_system = f"{local_system}\n\n{cobble_spit_trekking_prompt}"
+        if flash_flood_slot_prompt:
+            local_system = f"{local_system}\n\n{flash_flood_slot_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3478,6 +3502,8 @@ def generate_llm_response_stream(
             prompt_parts.append(glaciere_caving_prompt)
         if cobble_spit_trekking_prompt:
             prompt_parts.append(cobble_spit_trekking_prompt)
+        if flash_flood_slot_prompt:
+            prompt_parts.append(flash_flood_slot_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -3932,6 +3958,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if cobble_spit_trekking_intent:
         cobble_spit_trekking_prompt = build_cobble_spit_trekking_prompt(question)
         cobble_spit_trekking_info_payload = dict(format_cobble_spit_trekking_response(question))
+
+    flash_flood_slot_intent = detect_flash_flood_slot_intent(question)
+    flash_flood_slot_prompt = ""
+    flash_flood_slot_info_payload = None
+    if flash_flood_slot_intent:
+        flash_flood_slot_prompt = build_flash_flood_slot_prompt(question)
+        flash_flood_slot_info_payload = dict(format_flash_flood_slot_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4809,6 +4842,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cobble_spit_trekking_info_payload, event_name: cobble_spit_trekking_info_payload})}\n\n"
         if event_name != "cobble_spit_trekking_info":
             yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cobble_spit_trekking_info_payload})}\n\n"
+    if flash_flood_slot_intent and flash_flood_slot_info_payload:
+        event_name = (
+            flash_flood_slot_info_payload.get("action", "flash_flood_slot_info")
+            if isinstance(flash_flood_slot_info_payload, dict)
+            else "flash_flood_slot_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(flash_flood_slot_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': flash_flood_slot_info_payload, event_name: flash_flood_slot_info_payload})}\n\n"
+        if event_name != "flash_flood_slot_info":
+            yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': flash_flood_slot_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5750,6 +5793,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["glaciere_caving_prompt"] = glaciere_caving_prompt
     if cobble_spit_trekking_prompt:
         stream_kwargs["cobble_spit_trekking_prompt"] = cobble_spit_trekking_prompt
+    if flash_flood_slot_prompt:
+        stream_kwargs["flash_flood_slot_prompt"] = flash_flood_slot_prompt
 
     for chunk in generate_llm_response_stream(
         question,

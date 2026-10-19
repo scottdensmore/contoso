@@ -411,6 +411,21 @@ def detect_desert_trekking_intent(message: str) -> Optional[DesertTrekkingIntent
         "makgadikgadi",
         "uyuni",
         "fata morgana",
+        "hydrograph",
+        "escape ledge",
+        "escape-ledge",
+        "flood bore",
+        "blue-sky flood",
+        "blue sky flood",
+        "flood wave lag",
+        "wall of water",
+        "little wild horse",
+        "bell canyon",
+        "wadi mujib",
+        "wadi ghul",
+        "garganta del cares",
+        "flash-flood",
+        "slot canyon flood",
     ]
     if any(k in q for k in trail_weather_exclusions):
         return None

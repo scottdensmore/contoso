@@ -648,6 +648,19 @@ def detect_pothole_escape_intent(message: str) -> bool:
         "mushing",
         "pulk",
         "crevasse pulk",
+        "flash flood",
+        "flash-flood",
+        "slot canyon flood",
+        "escape ledge",
+        "escape-ledge",
+        "hydrograph",
+        "blue-sky flood",
+        "blue sky flood",
+        "flood bore",
+        "buckskin gulch",
+        "little wild horse",
+        "wadi mujib",
+        "wadi ghul",
     ]
     if any(ex in q for ex in exclusions):
         return False

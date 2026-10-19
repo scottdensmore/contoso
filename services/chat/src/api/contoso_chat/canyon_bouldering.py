@@ -326,6 +326,19 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "intertidal cobble",
         "storm-berm cobble",
         "mucilage slip",
+        "flash flood",
+        "flash-flood",
+        "slot canyon flood",
+        "escape ledge",
+        "escape-ledge",
+        "hydrograph",
+        "blue-sky flood",
+        "blue sky flood",
+        "flood bore",
+        "buckskin gulch",
+        "little wild horse",
+        "wadi mujib",
+        "wadi ghul",
     ]
     if any(ex in q for ex in exclusions):
         return None
