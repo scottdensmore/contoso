@@ -138,6 +138,10 @@ from contoso_chat.tephra_navigation import (
     format_tephra_navigation_response,
     is_tephra_navigation_query,
 )
+from contoso_chat.tiankeng_descent import (
+    format_tiankeng_descent_response,
+    is_tiankeng_descent_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -613,3 +617,16 @@ def handle_sandur_crossing_intent(
     }
 
 
+def handle_tiankeng_descent_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format karst tiankeng & vertical cloud-forest rim descent intent in the cascade."""
+    if not is_tiankeng_descent_query(question):
+        return None
+    info = format_tiankeng_descent_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tiankeng_descent_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }

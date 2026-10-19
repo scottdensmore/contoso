@@ -481,6 +481,11 @@ from .tephra_navigation import (
     detect_tephra_navigation_intent,
     format_tephra_navigation_response,
 )
+from .tiankeng_descent import (
+    build_tiankeng_descent_prompt,
+    detect_tiankeng_descent_intent,
+    format_tiankeng_descent_response,
+)
 from .trade_in import (
     build_trade_in_prompt,
     detect_trade_in_intent,
@@ -843,6 +848,7 @@ async def generate_llm_response(
     flash_flood_slot_prompt: str = "",
     krummholz_bushwhack_prompt: str = "",
     sandur_crossing_prompt: str = "",
+    tiankeng_descent_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
     glacier_ski_traverse_prompt: str = "",
@@ -1045,6 +1051,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
         if sandur_crossing_prompt:
             local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
+        if tiankeng_descent_prompt:
+            local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
         if cryokarst_speleology_prompt:
             local_system = f"{local_system}\n\n{cryokarst_speleology_prompt}"
         if canopy_bryophyte_prompt:
@@ -1314,6 +1322,8 @@ async def generate_llm_response(
             prompt_parts.append(krummholz_bushwhack_prompt)
         if sandur_crossing_prompt:
             prompt_parts.append(sandur_crossing_prompt)
+        if tiankeng_descent_prompt:
+            prompt_parts.append(tiankeng_descent_prompt)
         if cryokarst_speleology_prompt:
             prompt_parts.append(cryokarst_speleology_prompt)
         if canopy_bryophyte_prompt:
@@ -1967,6 +1977,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if sandur_crossing_intent:
         sandur_crossing_prompt = build_sandur_crossing_prompt(question)
         sandur_crossing_info_payload = dict(format_sandur_crossing_response(question))
+
+    tiankeng_descent_intent = detect_tiankeng_descent_intent(question)
+    tiankeng_descent_prompt = ""
+    tiankeng_descent_info_payload: dict[str, Any] | None = None
+    if tiankeng_descent_intent:
+        tiankeng_descent_prompt = build_tiankeng_descent_prompt(question)
+        tiankeng_descent_info_payload = dict(format_tiankeng_descent_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2802,6 +2819,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
     if sandur_crossing_prompt:
         llm_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
+    if tiankeng_descent_prompt:
+        llm_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
 
     answer = await generate_llm_response(
         question,
@@ -2953,6 +2972,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["krummholz_bushwhack_info"] = krummholz_bushwhack_info_payload
     if sandur_crossing_intent and sandur_crossing_info_payload:
         response_payload["sandur_crossing_info"] = sandur_crossing_info_payload
+    if tiankeng_descent_intent and tiankeng_descent_info_payload:
+        response_payload["tiankeng_descent_info"] = tiankeng_descent_info_payload
     if foraging_intent and foraging_info_payload:
         response_payload["foraging_info"] = foraging_info_payload
     if stargazing_intent and stargazing_info_payload:
@@ -3142,6 +3163,7 @@ def generate_llm_response_stream(
     flash_flood_slot_prompt: str = "",
     krummholz_bushwhack_prompt: str = "",
     sandur_crossing_prompt: str = "",
+    tiankeng_descent_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
     wildlife_prompt: str = "",
@@ -3342,6 +3364,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{krummholz_bushwhack_prompt}"
         if sandur_crossing_prompt:
             local_system = f"{local_system}\n\n{sandur_crossing_prompt}"
+        if tiankeng_descent_prompt:
+            local_system = f"{local_system}\n\n{tiankeng_descent_prompt}"
         if foraging_prompt:
             local_system = f"{local_system}\n\n{foraging_prompt}"
         if stargazing_prompt:
@@ -3556,6 +3580,8 @@ def generate_llm_response_stream(
             prompt_parts.append(krummholz_bushwhack_prompt)
         if sandur_crossing_prompt:
             prompt_parts.append(sandur_crossing_prompt)
+        if tiankeng_descent_prompt:
+            prompt_parts.append(tiankeng_descent_prompt)
         if foraging_prompt:
             prompt_parts.append(foraging_prompt)
         if stargazing_prompt:
@@ -4031,6 +4057,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if sandur_crossing_intent:
         sandur_crossing_prompt = build_sandur_crossing_prompt(question)
         sandur_crossing_info_payload = dict(format_sandur_crossing_response(question))
+
+    tiankeng_descent_intent = detect_tiankeng_descent_intent(question)
+    tiankeng_descent_prompt = ""
+    tiankeng_descent_info_payload: dict[str, Any] | None = None
+    if tiankeng_descent_intent:
+        tiankeng_descent_prompt = build_tiankeng_descent_prompt(question)
+        tiankeng_descent_info_payload = dict(format_tiankeng_descent_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -4938,6 +4971,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sandur_crossing_info_payload, event_name: sandur_crossing_info_payload})}\n\n"
         if event_name != "sandur_crossing_info":
             yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sandur_crossing_info_payload})}\n\n"
+    if tiankeng_descent_intent and tiankeng_descent_info_payload:
+        event_name = (
+            tiankeng_descent_info_payload.get("action", "tiankeng_descent_info")
+            if isinstance(tiankeng_descent_info_payload, dict)
+            else "tiankeng_descent_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(tiankeng_descent_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'tiankeng_descent_info': tiankeng_descent_info_payload, event_name: tiankeng_descent_info_payload})}\n\n"
+        if event_name != "tiankeng_descent_info":
+            yield f"data: {json.dumps({'event': 'tiankeng_descent_info', 'tiankeng_descent_info': tiankeng_descent_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -5885,6 +5928,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["krummholz_bushwhack_prompt"] = krummholz_bushwhack_prompt
     if sandur_crossing_prompt:
         stream_kwargs["sandur_crossing_prompt"] = sandur_crossing_prompt
+    if tiankeng_descent_prompt:
+        stream_kwargs["tiankeng_descent_prompt"] = tiankeng_descent_prompt
 
     for chunk in generate_llm_response_stream(
         question,

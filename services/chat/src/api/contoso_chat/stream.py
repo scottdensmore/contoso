@@ -139,6 +139,10 @@ from contoso_chat.tephra_navigation import (
     format_tephra_navigation_response,
     is_tephra_navigation_query,
 )
+from contoso_chat.tiankeng_descent import (
+    format_tiankeng_descent_response,
+    is_tiankeng_descent_query,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -1067,4 +1071,24 @@ async def generate_sandur_crossing_stream_events(
     yield "data: [DONE]\n\n"
 
 
+async def generate_tiankeng_descent_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for karst tiankeng & vertical cloud-forest rim descent queries."""
+    if not is_tiankeng_descent_query(question):
+        return
 
+    td_payload = dict(format_tiankeng_descent_response(question))
+    answer = str(td_payload.get("answer", ""))
+    event_name = str(td_payload.get("action", "tiankeng_descent_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(td_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tiankeng_descent_info': td_payload, event_name: td_payload})}\n\n"
+    if event_name != "tiankeng_descent_info":
+        yield f"data: {json.dumps({'event': 'tiankeng_descent_info', 'tiankeng_descent_info': td_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
