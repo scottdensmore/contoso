@@ -447,6 +447,23 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
         "bandera ice cave",
         "lofthellir",
         "hoarfrost ceiling",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(gx in q for gx in glacier_mountaineering_exclusions):
         return None

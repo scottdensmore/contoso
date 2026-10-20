@@ -470,6 +470,23 @@ def detect_caving_intent(message: str) -> Optional[CavingIntent]:
         "bandera ice cave",
         "lofthellir",
         "hoarfrost ceiling",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(cx in q for cx in cryokarst_exclusions):
         return None

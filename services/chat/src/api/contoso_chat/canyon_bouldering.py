@@ -361,6 +361,22 @@ def detect_canyon_bouldering_intent(query: str) -> Optional[BoulderingIntent]:
         "chiribiquete",
         "gran sabana",
         "pseudokarst",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "megatalus",
+        "moss bridge",
+        "cold-trap",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(ex in q for ex in exclusions):
         return None

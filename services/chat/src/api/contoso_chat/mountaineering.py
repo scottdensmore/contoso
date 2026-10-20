@@ -418,6 +418,23 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "glaciar de escombros",
         "val muragl",
         "dos lenguas",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(ex in q or ex in q_norm for ex in rock_glacier_exclusions):
         return None

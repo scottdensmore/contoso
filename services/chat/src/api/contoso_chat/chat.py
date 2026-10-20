@@ -150,6 +150,10 @@ from contoso_chat.solfatara_navigation import (
     format_solfatara_navigation_response,
     is_solfatara_navigation_query,
 )
+from contoso_chat.talus_cold_trap import (
+    format_talus_cold_trap_response,
+    is_talus_cold_trap_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -817,6 +821,21 @@ def handle_barnacle_ledge_intent(
     answer = str(info.get("answer", ""))
     return {
         "barnacle_ledge_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_talus_cold_trap_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subalpine boulder-talus air-draft ice cave & cold-trap block-field intent in the cascade."""
+    if not is_talus_cold_trap_query(question):
+        return None
+    info = format_talus_cold_trap_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "talus_cold_trap_info": dict(info),
         "action": info.get("action"),
         "answer": answer,
     }

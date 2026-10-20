@@ -843,6 +843,23 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "proglacial conductivity",
         "subglacial tremor",
         "proglacial canyon",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
