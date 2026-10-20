@@ -10,6 +10,10 @@ from contoso_chat.bamboo_thicket import (
     format_bamboo_thicket_response,
     is_bamboo_thicket_query,
 )
+from contoso_chat.barnacle_ledge import (
+    format_barnacle_ledge_response,
+    is_barnacle_ledge_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -798,6 +802,21 @@ def handle_jokulhlaup_escape_intent(
     answer = str(info.get("answer", ""))
     return {
         "jokulhlaup_escape_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_barnacle_ledge_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format coastal intertidal sabellariid worm-reef & barnacle-encrusted basalt ledge intent in the cascade."""
+    if not is_barnacle_ledge_query(question):
+        return None
+    info = format_barnacle_ledge_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "barnacle_ledge_info": dict(info),
         "action": info.get("action"),
         "answer": answer,
     }

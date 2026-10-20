@@ -33,6 +33,11 @@ from .bamboo_thicket import (
     detect_bamboo_thicket_intent,
     format_bamboo_thicket_response,
 )
+from .barnacle_ledge import (
+    build_barnacle_ledge_prompt,
+    detect_barnacle_ledge_intent,
+    format_barnacle_ledge_response,
+)
 from .beachcombing import (
     build_beachcombing_prompt,
     detect_beachcombing_intent,
@@ -902,6 +907,7 @@ async def generate_llm_response(
     bamboo_thicket_prompt: str = "",
     salar_pressure_ridge_prompt: str = "",
     jokulhlaup_escape_prompt: str = "",
+    barnacle_ledge_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1123,6 +1129,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
         if jokulhlaup_escape_prompt:
             local_system = f"{local_system}\n\n{jokulhlaup_escape_prompt}"
+        if barnacle_ledge_prompt:
+            local_system = f"{local_system}\n\n{barnacle_ledge_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1412,6 +1420,8 @@ async def generate_llm_response(
             prompt_parts.append(salar_pressure_ridge_prompt)
         if jokulhlaup_escape_prompt:
             prompt_parts.append(jokulhlaup_escape_prompt)
+        if barnacle_ledge_prompt:
+            prompt_parts.append(barnacle_ledge_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2140,6 +2150,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         jokulhlaup_escape_info_payload = dict(format_jokulhlaup_escape_response(question))
         jokulhlaup_escape_prompt = build_jokulhlaup_escape_prompt(
             jokulhlaup_escape_info_payload
+        )
+
+    barnacle_ledge_intent = detect_barnacle_ledge_intent(question)
+    barnacle_ledge_prompt = ""
+    barnacle_ledge_info_payload: dict[str, Any] | None = None
+    if barnacle_ledge_intent:
+        barnacle_ledge_info_payload = dict(format_barnacle_ledge_response(question))
+        barnacle_ledge_prompt = build_barnacle_ledge_prompt(
+            barnacle_ledge_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -2994,6 +3013,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
     if jokulhlaup_escape_prompt:
         llm_kwargs["jokulhlaup_escape_prompt"] = jokulhlaup_escape_prompt
+    if barnacle_ledge_prompt:
+        llm_kwargs["barnacle_ledge_prompt"] = barnacle_ledge_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3165,6 +3186,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["salar_pressure_ridge_info"] = salar_pressure_ridge_info_payload
     if jokulhlaup_escape_intent and jokulhlaup_escape_info_payload:
         response_payload["jokulhlaup_escape_info"] = jokulhlaup_escape_info_payload
+    if barnacle_ledge_intent and barnacle_ledge_info_payload:
+        response_payload["barnacle_ledge_info"] = barnacle_ledge_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3365,6 +3388,7 @@ def generate_llm_response_stream(
     bamboo_thicket_prompt: str = "",
     salar_pressure_ridge_prompt: str = "",
     jokulhlaup_escape_prompt: str = "",
+    barnacle_ledge_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3584,6 +3608,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
         if jokulhlaup_escape_prompt:
             local_system = f"{local_system}\n\n{jokulhlaup_escape_prompt}"
+        if barnacle_ledge_prompt:
+            local_system = f"{local_system}\n\n{barnacle_ledge_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3818,6 +3844,8 @@ def generate_llm_response_stream(
             prompt_parts.append(salar_pressure_ridge_prompt)
         if jokulhlaup_escape_prompt:
             prompt_parts.append(jokulhlaup_escape_prompt)
+        if barnacle_ledge_prompt:
+            prompt_parts.append(barnacle_ledge_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4368,6 +4396,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         jokulhlaup_escape_info_payload = dict(format_jokulhlaup_escape_response(question))
         jokulhlaup_escape_prompt = build_jokulhlaup_escape_prompt(
             jokulhlaup_escape_info_payload
+        )
+
+    barnacle_ledge_intent = detect_barnacle_ledge_intent(question)
+    barnacle_ledge_prompt = ""
+    barnacle_ledge_info_payload: dict[str, Any] | None = None
+    if barnacle_ledge_intent:
+        barnacle_ledge_info_payload = dict(format_barnacle_ledge_response(question))
+        barnacle_ledge_prompt = build_barnacle_ledge_prompt(
+            barnacle_ledge_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -5376,6 +5413,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': jokulhlaup_escape_info_payload, event_name: jokulhlaup_escape_info_payload})}\n\n"
         if event_name != "jokulhlaup_escape_info":
             yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': jokulhlaup_escape_info_payload})}\n\n"
+    if barnacle_ledge_intent and barnacle_ledge_info_payload:
+        event_name = (
+            barnacle_ledge_info_payload.get("action", "barnacle_ledge_info")
+            if isinstance(barnacle_ledge_info_payload, dict)
+            else "barnacle_ledge_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(barnacle_ledge_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'barnacle_ledge_info': barnacle_ledge_info_payload, event_name: barnacle_ledge_info_payload})}\n\n"
+        if event_name != "barnacle_ledge_info":
+            yield f"data: {json.dumps({'event': 'barnacle_ledge_info', 'barnacle_ledge_info': barnacle_ledge_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6341,6 +6388,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
     if jokulhlaup_escape_prompt:
         stream_kwargs["jokulhlaup_escape_prompt"] = jokulhlaup_escape_prompt
+    if barnacle_ledge_prompt:
+        stream_kwargs["barnacle_ledge_prompt"] = barnacle_ledge_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
