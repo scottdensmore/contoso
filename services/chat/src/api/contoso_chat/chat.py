@@ -142,6 +142,10 @@ from contoso_chat.tepui_navigation import (
     format_tepui_navigation_response,
     is_tepui_navigation_query,
 )
+from contoso_chat.thermokarst_tundra import (
+    format_thermokarst_tundra_response,
+    is_thermokarst_tundra_query,
+)
 from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
@@ -706,6 +710,22 @@ def handle_yardang_navigation_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_thermokarst_tundra_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format Arctic polygon-tundra ice-wedge trough & thermokarst thaw-slump navigation intent in the cascade."""
+    if not is_thermokarst_tundra_query(question):
+        return None
+    info = format_thermokarst_tundra_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "thermokarst_tundra_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 
 

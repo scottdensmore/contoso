@@ -689,6 +689,23 @@ def is_paramo_navigation_query(query: str) -> bool:
             "brocchinia",
             "heliamphora",
             "stegolepis",
+            "thermokarst",
+            "ice-wedge",
+            "ice wedge",
+            "polygon tundra",
+            "polygon-tundra",
+            "thaw-slump",
+            "thaw slump",
+            "retrogressive thaw",
+            "batagaika",
+            "tuktoyaktuk",
+            "pingo",
+            "yedoma",
+            "eriophorum",
+            "alas depression",
+            "drunken forest",
+            "noatak",
+            "bykovsky",
         )
     ):
         return False

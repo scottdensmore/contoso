@@ -651,6 +651,23 @@ def is_aufeis_crossing_query(query: str) -> bool:
             "kaskawulsh",
             "rakaia braids",
             "jokulhlaup outwash",
+            "thermokarst",
+            "ice-wedge",
+            "ice wedge",
+            "polygon tundra",
+            "polygon-tundra",
+            "thaw-slump",
+            "thaw slump",
+            "retrogressive thaw",
+            "batagaika",
+            "tuktoyaktuk",
+            "pingo",
+            "yedoma",
+            "eriophorum",
+            "alas depression",
+            "drunken forest",
+            "noatak",
+            "bykovsky",
         )
     ):
         return False

@@ -662,6 +662,23 @@ def is_rock_glacier_navigation_query(query: str) -> bool:
             "skeiðarársandur",
             "kaskawulsh",
             "rakaia braids",
+            "thermokarst tundra",
+            "ice-wedge",
+            "ice wedge",
+            "polygon tundra",
+            "polygon-tundra",
+            "thaw-slump",
+            "thaw slump",
+            "retrogressive thaw",
+            "batagaika",
+            "tuktoyaktuk",
+            "pingo",
+            "yedoma",
+            "eriophorum",
+            "alas depression",
+            "drunken forest",
+            "noatak",
+            "bykovsky",
         )
     ):
         return False

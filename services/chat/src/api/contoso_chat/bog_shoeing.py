@@ -657,6 +657,23 @@ def detect_bog_shoeing_intent(message: str) -> bool:
         "brocchinia",
         "heliamphora",
         "stegolepis",
+        "thermokarst",
+        "ice-wedge",
+        "ice wedge",
+        "polygon tundra",
+        "polygon-tundra",
+        "thaw-slump",
+        "thaw slump",
+        "retrogressive thaw",
+        "batagaika",
+        "tuktoyaktuk",
+        "pingo",
+        "yedoma",
+        "eriophorum",
+        "alas depression",
+        "drunken forest",
+        "noatak",
+        "bykovsky",
     ]
     if any(ex in q for ex in exclusions):
         return False
