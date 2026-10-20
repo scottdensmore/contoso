@@ -708,6 +708,9 @@ from contoso_chat.routers.pothole_escape import router as pothole_escape_router
 from contoso_chat.routers.rock_glacier_navigation import (
     router as rock_glacier_navigation_router,
 )
+from contoso_chat.routers.salar_pressure_ridge import (
+    router as salar_pressure_ridge_router,
+)
 from contoso_chat.routers.salt_pan_navigation import (
     router as salt_pan_navigation_router,
 )
@@ -778,6 +781,10 @@ from contoso_chat.safety import (
     list_emergency_protocols,
     record_beacon_checkin,
     register_safety_beacon,
+)
+from contoso_chat.salar_pressure_ridge import (
+    detect_salar_pressure_ridge_intent,
+    format_salar_pressure_ridge_response,
 )
 from contoso_chat.salt_pan_navigation import (
     detect_salt_pan_navigation_intent,
@@ -1655,6 +1662,24 @@ app.include_router(
 logger.info(
     "Registered Montane Bamboo-Thicket (Chusquea / Sasa) & Cloud-Forest Ridge-Crest Bushwhacking router (/bamboo-thicket, /api/bamboo-thicket, /api/v1/bamboo-thicket)"
 )
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/api/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/api/v1/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+logger.info(
+    "Registered High-Altitude Salar Brine-Pool & Polygonal Halite Pressure-Ridge Trekking router (/salar-pressure-ridge, /api/salar-pressure-ridge, /api/v1/salar-pressure-ridge)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1962,6 +1987,7 @@ async def create_response(request: ChatRequest):
             thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
             cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
             bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
+            salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2418,6 +2444,10 @@ async def create_response(request: ChatRequest):
                 bt_info = dict(format_bamboo_thicket_response(request.question))
                 mock_payload["bamboo_thicket_info"] = bt_info
                 mock_payload["answer"] = str(bt_info.get("answer", ""))
+            if salar_pressure_ridge_intent:
+                spr_info = dict(format_salar_pressure_ridge_response(request.question))
+                mock_payload["salar_pressure_ridge_info"] = spr_info
+                mock_payload["answer"] = str(spr_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2943,6 +2973,7 @@ async def create_response_stream(request: ChatRequest):
                 thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
                 cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
                 bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
+                salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3466,6 +3497,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bt_payload, event_name: bt_payload})}\n\n"
                     if event_name != "bamboo_thicket_info":
                         yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bt_payload})}\n\n"
+                if salar_pressure_ridge_intent:
+                    spr_payload = dict(format_salar_pressure_ridge_response(request.question))
+                    event_name = str(spr_payload.get("action", "salar_pressure_ridge_info"))
+                    yield f"event: metadata\ndata: {json.dumps(spr_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': spr_payload, event_name: spr_payload})}\n\n"
+                    if event_name != "salar_pressure_ridge_info":
+                        yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': spr_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4361,6 +4399,9 @@ async def create_response_stream(request: ChatRequest):
                 elif bamboo_thicket_intent:
                     bt_resp = format_bamboo_thicket_response(request.question)
                     mock_chunks = [str(bt_resp.get("answer", ""))]
+                elif salar_pressure_ridge_intent:
+                    spr_resp = format_salar_pressure_ridge_response(request.question)
+                    mock_chunks = [str(spr_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4766,6 +4807,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_thermokarst_tundra_intent(request.question)
                 or detect_cenote_halocline_intent(request.question)
                 or detect_bamboo_thicket_intent(request.question)
+                or detect_salar_pressure_ridge_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

@@ -620,6 +620,20 @@ def detect_crevasse_pulk_intent(message: str) -> bool:
         "icing sheet",
         "ulakhan-taryn",
         "candle ice",
+        "salar",
+        "uyuni",
+        "atacama",
+        "arizaro",
+        "chalviri",
+        "cono de arita",
+        "ojos del salar",
+        "halite",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "packsled",
     ]
     if any(ex in q for ex in exclusions):
         return False
