@@ -458,11 +458,7 @@ def get_kelp_freediving_sites(
     if not stratum:
         return all_sites
     norm = stratum.strip().lower()
-    return [
-        s
-        for s in all_sites
-        if s.dominant_stratum.lower() == norm
-    ]
+    return [s for s in all_sites if s.dominant_stratum.lower() == norm]
 
 
 def get_kelp_freediving_site(site_id: str) -> Optional[KelpFreedivingSite]:
@@ -498,7 +494,12 @@ def calculate_kelp_freediving_dynamics(
     surge_penalty_sec = query.surge_velocity_ms * 22.0
     depth_transit_sec = query.target_depth_meters * 1.8
     safe_bottom_time_seconds = int(
-        round(max(20.0, min(110.0, (95.0 * temp_factor) - surge_penalty_sec - (depth_transit_sec * 0.4))))
+        round(
+            max(
+                20.0,
+                min(110.0, (95.0 * temp_factor) - surge_penalty_sec - (depth_transit_sec * 0.4)),
+            )
+        )
     )
 
     # Stipe entanglement risk (%)
@@ -533,7 +534,8 @@ def calculate_kelp_freediving_dynamics(
 
     taxa_bonus = (
         0.04
-        if DominantKelpTaxa.MACROCYSTIS_PYRIFERA_GIANT_KELP.value in str(query.dominant_taxa).lower()
+        if DominantKelpTaxa.MACROCYSTIS_PYRIFERA_GIANT_KELP.value
+        in str(query.dominant_taxa).lower()
         else 0.02
     )
     temp_nutrient_bonus = 0.03 if 9.0 <= query.water_temp_celsius <= 14.5 else -0.02
@@ -643,11 +645,14 @@ def detect_kelp_freediving_intent(message: str) -> bool:
         "fortescue bay",
     ]
 
-    is_explicit_kelp = any(k in q for k in kelp_keywords) or any(
-        sm in q for sm in site_matches
-    )
-    if not is_explicit_kelp and "point lobos" in q and any(
-        w in q for w in ["kelp", "freediv", "free-div", "apnea", "canopy", "wetsuit", "buoyancy"]
+    is_explicit_kelp = any(k in q for k in kelp_keywords) or any(sm in q for sm in site_matches)
+    if (
+        not is_explicit_kelp
+        and "point lobos" in q
+        and any(
+            w in q
+            for w in ["kelp", "freediv", "free-div", "apnea", "canopy", "wetsuit", "buoyancy"]
+        )
     ):
         is_explicit_kelp = True
 
@@ -679,6 +684,26 @@ def detect_kelp_freediving_intent(message: str) -> bool:
         "lava tube",
         "biospeleology",
         "troglobite",
+        "cenote",
+        "cenotes",
+        "halocline",
+        "anchialine",
+        "schlieren",
+        "ox bel ha",
+        "ox-bel-ha",
+        "angelita",
+        "sac actun",
+        "sac-actun",
+        "pet cembalo",
+        "dan's cave",
+        "dans cave",
+        "sawmill sink",
+        "abaco",
+        "meromictic",
+        "tannic",
+        "chemocline",
+        "pycnocline",
+        "blue hole",
     ]
 
     if not is_explicit_kelp:
@@ -732,7 +757,13 @@ def extract_kelp_freediving_intent(message: str) -> KelpFreedivingIntent:
         matched_site_id = "point-lobos-carmel-pinnacles"
     elif "channel islands" in q or "anacapa" in q or "cathedral cove" in q:
         matched_site_id = "channel-islands-anacapa-cathedral-cove"
-    elif "false bay" in q or "millers point" in q or "miller's point" in q or "seaforest" in q or "ecklonia" in q:
+    elif (
+        "false bay" in q
+        or "millers point" in q
+        or "miller's point" in q
+        or "seaforest" in q
+        or "ecklonia" in q
+    ):
         matched_site_id = "false-bay-millers-point-great-african-seaforest"
     elif "barkley sound" in q or "broken group" in q or "nereocystis" in q or "bull kelp" in q:
         matched_site_id = "barkley-sound-broken-group-bull-kelp"
@@ -908,9 +939,7 @@ def format_kelp_freediving_response(
         return FormattedKelpFreedivingResponse(answer, calc_info)
 
     if resolved_action == "gear_checklist":
-        checklist = (
-            message if isinstance(message, list) else get_kelp_freediving_gear()
-        )
+        checklist = message if isinstance(message, list) else get_kelp_freediving_gear()
         items_str = "; ".join(f"{g.name} ({g.description})" for g in checklist)
         answer = (
             f"Mandatory Coastal Intertidal Kelp Forest Free-Diving & Holdfast Survey Gear Checklist ({len(checklist)} items): "
@@ -1031,9 +1060,7 @@ def kelp_freediving_tool(
     **kwargs: Any,
 ) -> Any:
     if action in ("calculate", "calculate_dynamics") or query is not None:
-        calc_q = query or KelpFreedivingQuery(
-            site_id=site_id or "point-lobos-carmel-pinnacles"
-        )
+        calc_q = query or KelpFreedivingQuery(site_id=site_id or "point-lobos-carmel-pinnacles")
         res = calculate_kelp_freediving_dynamics(calc_q)
         formatted = format_kelp_freediving_response("calculate", res)
         return dict(formatted._data)

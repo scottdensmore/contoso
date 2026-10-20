@@ -27,6 +27,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cenote_halocline import (
+    format_cenote_halocline_response,
+    is_cenote_halocline_query,
+)
 from contoso_chat.cobble_spit_trekking import (
     format_cobble_spit_trekking_response,
     is_cobble_spit_trekking_query,
@@ -1229,5 +1233,24 @@ async def generate_thermokarst_tundra_stream_events(
     yield "data: [DONE]\n\n"
 
 
+async def generate_cenote_halocline_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subterranean cenote halocline & anchialine phreatic cave-passage navigation queries."""
+    if not is_cenote_halocline_query(question):
+        return
 
+    ch_payload = dict(format_cenote_halocline_response(question))
+    answer = str(ch_payload.get("answer", ""))
+    event_name = str(ch_payload.get("action", "cenote_halocline_info"))
 
+    yield f"event: metadata\ndata: {json.dumps(ch_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': ch_payload, event_name: ch_payload})}\n\n"
+    if event_name != "cenote_halocline_info":
+        yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': ch_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"

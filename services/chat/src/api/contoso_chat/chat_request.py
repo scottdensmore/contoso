@@ -93,6 +93,11 @@ from .caving import (
     detect_caving_intent,
     format_caving_response,
 )
+from .cenote_halocline import (
+    build_cenote_halocline_prompt,
+    detect_cenote_halocline_intent,
+    format_cenote_halocline_response,
+)
 from .climbing import (
     build_climbing_prompt,
     detect_climbing_intent,
@@ -878,6 +883,7 @@ async def generate_llm_response(
     tepui_navigation_prompt: str = "",
     yardang_navigation_prompt: str = "",
     thermokarst_tundra_prompt: str = "",
+    cenote_halocline_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1091,6 +1097,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{yardang_navigation_prompt}"
         if thermokarst_tundra_prompt:
             local_system = f"{local_system}\n\n{thermokarst_tundra_prompt}"
+        if cenote_halocline_prompt:
+            local_system = f"{local_system}\n\n{cenote_halocline_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1372,6 +1380,8 @@ async def generate_llm_response(
             prompt_parts.append(yardang_navigation_prompt)
         if thermokarst_tundra_prompt:
             prompt_parts.append(thermokarst_tundra_prompt)
+        if cenote_halocline_prompt:
+            prompt_parts.append(cenote_halocline_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2069,6 +2079,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if thermokarst_tundra_intent:
         thermokarst_tundra_prompt = build_thermokarst_tundra_prompt(question)
         thermokarst_tundra_info_payload = dict(format_thermokarst_tundra_response(question))
+
+    cenote_halocline_intent = detect_cenote_halocline_intent(question)
+    cenote_halocline_prompt = ""
+    cenote_halocline_info_payload: dict[str, Any] | None = None
+    if cenote_halocline_intent:
+        cenote_halocline_prompt = build_cenote_halocline_prompt(question)
+        cenote_halocline_info_payload = dict(format_cenote_halocline_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2914,6 +2931,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["yardang_navigation_prompt"] = yardang_navigation_prompt
     if thermokarst_tundra_prompt:
         llm_kwargs["thermokarst_tundra_prompt"] = thermokarst_tundra_prompt
+    if cenote_halocline_prompt:
+        llm_kwargs["cenote_halocline_prompt"] = cenote_halocline_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3077,6 +3096,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["yardang_navigation_info"] = yardang_navigation_info_payload
     if thermokarst_tundra_intent and thermokarst_tundra_info_payload:
         response_payload["thermokarst_tundra_info"] = thermokarst_tundra_info_payload
+    if cenote_halocline_intent and cenote_halocline_info_payload:
+        response_payload["cenote_halocline_info"] = cenote_halocline_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3273,6 +3294,7 @@ def generate_llm_response_stream(
     tepui_navigation_prompt: str = "",
     yardang_navigation_prompt: str = "",
     thermokarst_tundra_prompt: str = "",
+    cenote_halocline_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3484,6 +3506,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{yardang_navigation_prompt}"
         if thermokarst_tundra_prompt:
             local_system = f"{local_system}\n\n{thermokarst_tundra_prompt}"
+        if cenote_halocline_prompt:
+            local_system = f"{local_system}\n\n{cenote_halocline_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3710,6 +3734,8 @@ def generate_llm_response_stream(
             prompt_parts.append(yardang_navigation_prompt)
         if thermokarst_tundra_prompt:
             prompt_parts.append(thermokarst_tundra_prompt)
+        if cenote_halocline_prompt:
+            prompt_parts.append(cenote_halocline_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4229,6 +4255,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if thermokarst_tundra_intent:
         thermokarst_tundra_prompt = build_thermokarst_tundra_prompt(question)
         thermokarst_tundra_info_payload = dict(format_thermokarst_tundra_response(question))
+
+    cenote_halocline_intent = detect_cenote_halocline_intent(question)
+    cenote_halocline_prompt = ""
+    cenote_halocline_info_payload: dict[str, Any] | None = None
+    if cenote_halocline_intent:
+        cenote_halocline_prompt = build_cenote_halocline_prompt(question)
+        cenote_halocline_info_payload = dict(format_cenote_halocline_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -5196,6 +5229,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': thermokarst_tundra_info_payload, event_name: thermokarst_tundra_info_payload})}\n\n"
         if event_name != "thermokarst_tundra_info":
             yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': thermokarst_tundra_info_payload})}\n\n"
+    if cenote_halocline_intent and cenote_halocline_info_payload:
+        event_name = (
+            cenote_halocline_info_payload.get("action", "cenote_halocline_info")
+            if isinstance(cenote_halocline_info_payload, dict)
+            else "cenote_halocline_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(cenote_halocline_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': cenote_halocline_info_payload, event_name: cenote_halocline_info_payload})}\n\n"
+        if event_name != "cenote_halocline_info":
+            yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': cenote_halocline_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6153,6 +6196,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["yardang_navigation_prompt"] = yardang_navigation_prompt
     if thermokarst_tundra_prompt:
         stream_kwargs["thermokarst_tundra_prompt"] = thermokarst_tundra_prompt
+    if cenote_halocline_prompt:
+        stream_kwargs["cenote_halocline_prompt"] = cenote_halocline_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

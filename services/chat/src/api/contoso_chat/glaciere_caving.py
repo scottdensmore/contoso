@@ -390,7 +390,9 @@ def calculate_glaciere_caving(
 
     # 2. Crampon shear safety factor: ratio of effective spike-and-friction shear resistance to slope sin/tan demand
     slope_rad = math.radians(max(2.0, floor_ice_slope_deg))
-    crampon_bite_bonus = 0.52 if cave_air_temp_c <= 0.0 else max(0.22, 0.45 - cave_air_temp_c * 0.035)
+    crampon_bite_bonus = (
+        0.52 if cave_air_temp_c <= 0.0 else max(0.22, 0.45 - cave_air_temp_c * 0.035)
+    )
     effective_resistance = (ice_friction_coefficient + crampon_bite_bonus) * math.cos(slope_rad)
     shear_demand = math.sin(slope_rad) + (0.015 * meltwater_film_mm)
     crampon_shear_safety_factor = round(
@@ -631,6 +633,26 @@ _GLACIERE_EXCLUSIONS: tuple[str, ...] = (
     "sarisarinama",
     "sarisariñama",
     "sima humboldt",
+    "cenote",
+    "cenotes",
+    "halocline",
+    "anchialine",
+    "schlieren",
+    "ox bel ha",
+    "ox-bel-ha",
+    "angelita",
+    "sac actun",
+    "sac-actun",
+    "pet cembalo",
+    "dan's cave",
+    "dans cave",
+    "sawmill sink",
+    "abaco",
+    "meromictic",
+    "tannic",
+    "chemocline",
+    "pycnocline",
+    "blue hole",
 )
 
 
@@ -672,7 +694,12 @@ def extract_glaciere_caving_params(query: str) -> dict[str, Any]:
         or "new mexico" in q_lower
     ):
         matched_site = get_site_by_id("bandera-ice-cave-el-malpais-usa")
-    elif "lofthellir" in q_lower or "myvatn" in q_lower or "mývatn" in q_lower or "iceland" in q_lower:
+    elif (
+        "lofthellir" in q_lower
+        or "myvatn" in q_lower
+        or "mývatn" in q_lower
+        or "iceland" in q_lower
+    ):
         matched_site = get_site_by_id("lofthellir-lava-glaciere-iceland")
 
     slope = float(matched_site["default_floor_ice_slope_deg"]) if matched_site else 18.0
@@ -683,7 +710,9 @@ def extract_glaciere_caving_params(query: str) -> dict[str, Any]:
 
     has_explicit_numbers = False
 
-    slope_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:deg|degree|degrees|°)\s*(?:floor|ice|slope)?", q_lower)
+    slope_match = re.search(
+        r"(\d+(?:\.\d+)?)\s*(?:deg|degree|degrees|°)\s*(?:floor|ice|slope)?", q_lower
+    )
     if slope_match:
         val = float(slope_match.group(1))
         if 0.0 <= val <= 60.0:
@@ -748,7 +777,14 @@ def format_glaciere_caving_response(query: str) -> dict[str, Any]:
         params["has_explicit_numbers"]
         or any(
             w in q_lower
-            for w in ("calculate", "calculator", "safety factor", "friction", "shear", "traction for")
+            for w in (
+                "calculate",
+                "calculator",
+                "safety factor",
+                "friction",
+                "shear",
+                "traction for",
+            )
         )
     )
 
@@ -793,7 +829,11 @@ def format_glaciere_caving_response(query: str) -> dict[str, Any]:
 
 def build_glaciere_caving_prompt(query: str = "") -> str:
     """Build system prompt context for LLM calls involving subterranean glacière cave navigation."""
-    info = format_glaciere_caving_response(query) if query else format_glaciere_caving_response("glaciere")
+    info = (
+        format_glaciere_caving_response(query)
+        if query
+        else format_glaciere_caving_response("glaciere")
+    )
     calc: dict[str, Any] = info["calculation"]
     matched_site: dict[str, Any] | None = info.get("matched_site")
 

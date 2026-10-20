@@ -26,6 +26,10 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cenote_halocline import (
+    format_cenote_halocline_response,
+    is_cenote_halocline_query,
+)
 from contoso_chat.cobble_spit_trekking import (
     format_cobble_spit_trekking_response,
     is_cobble_spit_trekking_query,
@@ -727,5 +731,16 @@ def handle_thermokarst_tundra_intent(
     }
 
 
-
-
+def handle_cenote_halocline_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subterranean cenote halocline & anchialine phreatic cave-passage navigation intent in the cascade."""
+    if not is_cenote_halocline_query(question):
+        return None
+    info = format_cenote_halocline_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "cenote_halocline_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }

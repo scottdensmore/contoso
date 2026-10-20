@@ -312,24 +312,14 @@ def filter_sites(
 
     if morphology:
         m_lower = morphology.strip().lower().replace("_", "-").replace("ê", "e")
-        results = [
-            s
-            for s in results
-            if str(s["morphology"]).lower().replace("ê", "e") == m_lower
-        ]
+        results = [s for s in results if str(s["morphology"]).lower().replace("ê", "e") == m_lower]
 
     if difficulty:
         d_lower = difficulty.strip().lower()
         results = [s for s in results if str(s["difficulty"]).lower() == d_lower]
 
     if search:
-        q_lower = (
-            search.strip()
-            .lower()
-            .replace("ê", "e")
-            .replace("é", "e")
-            .replace("è", "e")
-        )
+        q_lower = search.strip().lower().replace("ê", "e").replace("é", "e").replace("è", "e")
         results = [
             s
             for s in results
@@ -434,9 +424,7 @@ def calculate_tsingy_labyrinth(
         or spire_height_m >= 95.0
     ):
         risk_level: TsingyRiskLevel = "critical"
-        scrambling_class: TsingyScramblingClass = (
-            "class-5-abort-razor-spire-thermal-lockout"
-        )
+        scrambling_class: TsingyScramblingClass = "class-5-abort-razor-spire-thermal-lockout"
     elif (
         blade_edge_radius_mm <= 1.0
         or cord_cut_through_risk_pct >= 50.0
@@ -605,6 +593,26 @@ _TSINGY_LABYRINTH_EXCLUSIONS: tuple[str, ...] = (
     "sarisarinama",
     "sarisariñama",
     "sima humboldt",
+    "cenote",
+    "cenotes",
+    "halocline",
+    "anchialine",
+    "schlieren",
+    "ox bel ha",
+    "ox-bel-ha",
+    "angelita",
+    "sac actun",
+    "sac-actun",
+    "pet cembalo",
+    "dan's cave",
+    "dans cave",
+    "sawmill sink",
+    "abaco",
+    "meromictic",
+    "tannic",
+    "chemocline",
+    "pycnocline",
+    "blue hole",
     # Alpine via ferrata & night via ferrata exclusions (via_ferrata.py, night_via_ferrata.py)
     "telluride via ferrata",
     "ouray via ferrata",
@@ -740,19 +748,11 @@ def extract_tsingy_labyrinth_params(query: str) -> dict[str, Any]:
     elif "madagascar" in q_lower:
         matched_site = get_site_by_id("bemaraha-grand-tsingy-madagascar")
 
-    blade_mm = (
-        float(matched_site["default_blade_edge_radius_mm"]) if matched_site else 1.8
-    )
+    blade_mm = float(matched_site["default_blade_edge_radius_mm"]) if matched_site else 1.8
     spire_m = float(matched_site["default_spire_height_m"]) if matched_site else 42.0
-    temp_c = (
-        float(matched_site["default_rock_surface_temp_c"]) if matched_site else 44.0
-    )
-    gap_m = (
-        float(matched_site["default_diaclase_gap_width_m"]) if matched_site else 1.4
-    )
-    humidity_pct = (
-        float(matched_site["default_ambient_humidity_pct"]) if matched_site else 65.0
-    )
+    temp_c = float(matched_site["default_rock_surface_temp_c"]) if matched_site else 44.0
+    gap_m = float(matched_site["default_diaclase_gap_width_m"]) if matched_site else 1.4
+    humidity_pct = float(matched_site["default_ambient_humidity_pct"]) if matched_site else 65.0
 
     has_explicit_numbers = False
 

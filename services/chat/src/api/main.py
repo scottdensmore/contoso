@@ -161,6 +161,10 @@ from contoso_chat.caving import (
     get_caving_route_by_id,
     get_caving_routes,
 )
+from contoso_chat.cenote_halocline import (
+    detect_cenote_halocline_intent,
+    format_cenote_halocline_response,
+)
 from contoso_chat.climbing import (
     CragModel,
     RackCalcRequest,
@@ -651,6 +655,9 @@ from contoso_chat.routers.canopy_bryophyte import (
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
+from contoso_chat.routers.cenote_halocline import (
+    router as cenote_halocline_router,
+)
 from contoso_chat.routers.cobble_spit_trekking import (
     router as cobble_spit_trekking_router,
 )
@@ -1605,6 +1612,24 @@ app.include_router(
 logger.info(
     "Registered Arctic Polygon-Tundra Ice-Wedge Trough & Thermokarst Thaw-Slump Navigation router (/thermokarst-tundra, /api/thermokarst-tundra, /api/v1/thermokarst-tundra)"
 )
+app.include_router(
+    cenote_halocline_router,
+    prefix="/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+app.include_router(
+    cenote_halocline_router,
+    prefix="/api/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+app.include_router(
+    cenote_halocline_router,
+    prefix="/api/v1/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+logger.info(
+    "Registered Subterranean Cenote Halocline & Anchialine Phreatic Cave-Passage Navigation router (/cenote-halocline, /api/cenote-halocline, /api/v1/cenote-halocline)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1910,6 +1935,7 @@ async def create_response(request: ChatRequest):
             tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
             yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
             thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
+            cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2358,6 +2384,10 @@ async def create_response(request: ChatRequest):
                 tt_info = dict(format_thermokarst_tundra_response(request.question))
                 mock_payload["thermokarst_tundra_info"] = tt_info
                 mock_payload["answer"] = str(tt_info.get("answer", ""))
+            if cenote_halocline_intent:
+                ch_info = dict(format_cenote_halocline_response(request.question))
+                mock_payload["cenote_halocline_info"] = ch_info
+                mock_payload["answer"] = str(ch_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2881,6 +2911,7 @@ async def create_response_stream(request: ChatRequest):
                 tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
                 yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
                 thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
+                cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3390,6 +3421,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': tt_payload, event_name: tt_payload})}\n\n"
                     if event_name != "thermokarst_tundra_info":
                         yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': tt_payload})}\n\n"
+                if cenote_halocline_intent:
+                    ch_payload = dict(format_cenote_halocline_response(request.question))
+                    event_name = str(ch_payload.get("action", "cenote_halocline_info"))
+                    yield f"event: metadata\ndata: {json.dumps(ch_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': ch_payload, event_name: ch_payload})}\n\n"
+                    if event_name != "cenote_halocline_info":
+                        yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': ch_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4279,6 +4317,9 @@ async def create_response_stream(request: ChatRequest):
                 elif thermokarst_tundra_intent:
                     tt_resp = format_thermokarst_tundra_response(request.question)
                     mock_chunks = [str(tt_resp.get("answer", ""))]
+                elif cenote_halocline_intent:
+                    ch_resp = format_cenote_halocline_response(request.question)
+                    mock_chunks = [str(ch_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4682,6 +4723,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_tepui_navigation_intent(request.question)
                 or detect_yardang_navigation_intent(request.question)
                 or detect_thermokarst_tundra_intent(request.question)
+                or detect_cenote_halocline_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
