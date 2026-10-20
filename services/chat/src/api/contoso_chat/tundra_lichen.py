@@ -689,6 +689,23 @@ def detect_tundra_lichen_intent(message: str) -> bool:
         "katabatic",
         "williwaw",
         "seal wallow",
+        "thermokarst",
+        "ice-wedge",
+        "ice wedge",
+        "polygon tundra",
+        "polygon-tundra",
+        "thaw-slump",
+        "thaw slump",
+        "retrogressive thaw",
+        "batagaika",
+        "tuktoyaktuk",
+        "pingo",
+        "yedoma",
+        "eriophorum",
+        "alas depression",
+        "drunken forest",
+        "noatak",
+        "bykovsky",
     ]
     if any(ex in q for ex in exclusions):
         return False

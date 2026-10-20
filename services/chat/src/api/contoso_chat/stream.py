@@ -143,6 +143,10 @@ from contoso_chat.tepui_navigation import (
     format_tepui_navigation_response,
     is_tepui_navigation_query,
 )
+from contoso_chat.thermokarst_tundra import (
+    format_thermokarst_tundra_response,
+    is_thermokarst_tundra_query,
+)
 from contoso_chat.tiankeng_descent import (
     format_tiankeng_descent_response,
     is_tiankeng_descent_query,
@@ -1200,6 +1204,30 @@ async def generate_yardang_navigation_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_thermokarst_tundra_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for Arctic polygon-tundra ice-wedge trough & thermokarst thaw-slump navigation queries."""
+    if not is_thermokarst_tundra_query(question):
+        return
+
+    tt_payload = dict(format_thermokarst_tundra_response(question))
+    answer = str(tt_payload.get("answer", ""))
+    event_name = str(tt_payload.get("action", "thermokarst_tundra_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tt_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': tt_payload, event_name: tt_payload})}\n\n"
+    if event_name != "thermokarst_tundra_info":
+        yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': tt_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
 

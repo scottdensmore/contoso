@@ -601,6 +601,23 @@ _SANDUR_CROSSING_EXCLUSIONS: tuple[str, ...] = (
     "oar frame",
     "oarlock",
     "groover",
+    "thermokarst",
+    "ice-wedge",
+    "ice wedge",
+    "polygon tundra",
+    "polygon-tundra",
+    "thaw-slump",
+    "thaw slump",
+    "retrogressive thaw",
+    "batagaika",
+    "tuktoyaktuk",
+    "pingo",
+    "yedoma",
+    "eriophorum",
+    "alas depression",
+    "drunken forest",
+    "noatak",
+    "bykovsky",
 )
 
 

@@ -719,6 +719,9 @@ from contoso_chat.routers.tephra_navigation import (
 from contoso_chat.routers.tepui_navigation import (
     router as tepui_navigation_router,
 )
+from contoso_chat.routers.thermokarst_tundra import (
+    router as thermokarst_tundra_router,
+)
 from contoso_chat.routers.tiankeng_descent import (
     router as tiankeng_descent_router,
 )
@@ -924,6 +927,10 @@ from contoso_chat.tephra_navigation import (
 from contoso_chat.tepui_navigation import (
     detect_tepui_navigation_intent,
     format_tepui_navigation_response,
+)
+from contoso_chat.thermokarst_tundra import (
+    detect_thermokarst_tundra_intent,
+    format_thermokarst_tundra_response,
 )
 from contoso_chat.tiankeng_descent import (
     detect_tiankeng_descent_intent,
@@ -1580,6 +1587,24 @@ app.include_router(
 logger.info(
     "Registered Aeolian Yardang & Mega-Dune Slip-Face Star-Dune Desert Navigation router (/yardang-navigation, /api/yardang-navigation, /api/v1/yardang-navigation)"
 )
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/api/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/api/v1/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+logger.info(
+    "Registered Arctic Polygon-Tundra Ice-Wedge Trough & Thermokarst Thaw-Slump Navigation router (/thermokarst-tundra, /api/thermokarst-tundra, /api/v1/thermokarst-tundra)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1884,6 +1909,7 @@ async def create_response(request: ChatRequest):
             tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
             tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
             yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
+            thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2328,6 +2354,10 @@ async def create_response(request: ChatRequest):
                 yn_info = dict(format_yardang_navigation_response(request.question))
                 mock_payload["yardang_navigation_info"] = yn_info
                 mock_payload["answer"] = str(yn_info.get("answer", ""))
+            if thermokarst_tundra_intent:
+                tt_info = dict(format_thermokarst_tundra_response(request.question))
+                mock_payload["thermokarst_tundra_info"] = tt_info
+                mock_payload["answer"] = str(tt_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2850,6 +2880,7 @@ async def create_response_stream(request: ChatRequest):
                 tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
                 tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
                 yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
+                thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3352,6 +3383,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yn_payload, event_name: yn_payload})}\n\n"
                     if event_name != "yardang_navigation_info":
                         yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yn_payload})}\n\n"
+                if thermokarst_tundra_intent:
+                    tt_payload = dict(format_thermokarst_tundra_response(request.question))
+                    event_name = str(tt_payload.get("action", "thermokarst_tundra_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tt_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': tt_payload, event_name: tt_payload})}\n\n"
+                    if event_name != "thermokarst_tundra_info":
+                        yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': tt_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4238,6 +4276,9 @@ async def create_response_stream(request: ChatRequest):
                 elif yardang_navigation_intent:
                     yn_resp = format_yardang_navigation_response(request.question)
                     mock_chunks = [str(yn_resp.get("answer", ""))]
+                elif thermokarst_tundra_intent:
+                    tt_resp = format_thermokarst_tundra_response(request.question)
+                    mock_chunks = [str(tt_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4640,6 +4681,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_tsingy_labyrinth_intent(request.question)
                 or detect_tepui_navigation_intent(request.question)
                 or detect_yardang_navigation_intent(request.question)
+                or detect_thermokarst_tundra_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

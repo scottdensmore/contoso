@@ -486,6 +486,11 @@ from .tepui_navigation import (
     detect_tepui_navigation_intent,
     format_tepui_navigation_response,
 )
+from .thermokarst_tundra import (
+    build_thermokarst_tundra_prompt,
+    detect_thermokarst_tundra_intent,
+    format_thermokarst_tundra_response,
+)
 from .tiankeng_descent import (
     build_tiankeng_descent_prompt,
     detect_tiankeng_descent_intent,
@@ -872,6 +877,7 @@ async def generate_llm_response(
     tsingy_labyrinth_prompt: str = "",
     tepui_navigation_prompt: str = "",
     yardang_navigation_prompt: str = "",
+    thermokarst_tundra_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1083,6 +1089,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{tepui_navigation_prompt}"
         if yardang_navigation_prompt:
             local_system = f"{local_system}\n\n{yardang_navigation_prompt}"
+        if thermokarst_tundra_prompt:
+            local_system = f"{local_system}\n\n{thermokarst_tundra_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1362,6 +1370,8 @@ async def generate_llm_response(
             prompt_parts.append(tepui_navigation_prompt)
         if yardang_navigation_prompt:
             prompt_parts.append(yardang_navigation_prompt)
+        if thermokarst_tundra_prompt:
+            prompt_parts.append(thermokarst_tundra_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2052,6 +2062,13 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if yardang_navigation_intent:
         yardang_navigation_prompt = build_yardang_navigation_prompt(question)
         yardang_navigation_info_payload = dict(format_yardang_navigation_response(question))
+
+    thermokarst_tundra_intent = detect_thermokarst_tundra_intent(question)
+    thermokarst_tundra_prompt = ""
+    thermokarst_tundra_info_payload: dict[str, Any] | None = None
+    if thermokarst_tundra_intent:
+        thermokarst_tundra_prompt = build_thermokarst_tundra_prompt(question)
+        thermokarst_tundra_info_payload = dict(format_thermokarst_tundra_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2895,6 +2912,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["tepui_navigation_prompt"] = tepui_navigation_prompt
     if yardang_navigation_prompt:
         llm_kwargs["yardang_navigation_prompt"] = yardang_navigation_prompt
+    if thermokarst_tundra_prompt:
+        llm_kwargs["thermokarst_tundra_prompt"] = thermokarst_tundra_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3056,6 +3075,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["tepui_navigation_info"] = tepui_navigation_info_payload
     if yardang_navigation_intent and yardang_navigation_info_payload:
         response_payload["yardang_navigation_info"] = yardang_navigation_info_payload
+    if thermokarst_tundra_intent and thermokarst_tundra_info_payload:
+        response_payload["thermokarst_tundra_info"] = thermokarst_tundra_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3251,6 +3272,7 @@ def generate_llm_response_stream(
     tsingy_labyrinth_prompt: str = "",
     tepui_navigation_prompt: str = "",
     yardang_navigation_prompt: str = "",
+    thermokarst_tundra_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3460,6 +3482,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{tepui_navigation_prompt}"
         if yardang_navigation_prompt:
             local_system = f"{local_system}\n\n{yardang_navigation_prompt}"
+        if thermokarst_tundra_prompt:
+            local_system = f"{local_system}\n\n{thermokarst_tundra_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3684,6 +3708,8 @@ def generate_llm_response_stream(
             prompt_parts.append(tepui_navigation_prompt)
         if yardang_navigation_prompt:
             prompt_parts.append(yardang_navigation_prompt)
+        if thermokarst_tundra_prompt:
+            prompt_parts.append(thermokarst_tundra_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4196,6 +4222,13 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if yardang_navigation_intent:
         yardang_navigation_prompt = build_yardang_navigation_prompt(question)
         yardang_navigation_info_payload = dict(format_yardang_navigation_response(question))
+
+    thermokarst_tundra_intent = detect_thermokarst_tundra_intent(question)
+    thermokarst_tundra_prompt = ""
+    thermokarst_tundra_info_payload: dict[str, Any] | None = None
+    if thermokarst_tundra_intent:
+        thermokarst_tundra_prompt = build_thermokarst_tundra_prompt(question)
+        thermokarst_tundra_info_payload = dict(format_thermokarst_tundra_response(question))
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -5153,6 +5186,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yardang_navigation_info_payload, event_name: yardang_navigation_info_payload})}\n\n"
         if event_name != "yardang_navigation_info":
             yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yardang_navigation_info_payload})}\n\n"
+    if thermokarst_tundra_intent and thermokarst_tundra_info_payload:
+        event_name = (
+            thermokarst_tundra_info_payload.get("action", "thermokarst_tundra_info")
+            if isinstance(thermokarst_tundra_info_payload, dict)
+            else "thermokarst_tundra_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(thermokarst_tundra_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': thermokarst_tundra_info_payload, event_name: thermokarst_tundra_info_payload})}\n\n"
+        if event_name != "thermokarst_tundra_info":
+            yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': thermokarst_tundra_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6108,6 +6151,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["tepui_navigation_prompt"] = tepui_navigation_prompt
     if yardang_navigation_prompt:
         stream_kwargs["yardang_navigation_prompt"] = yardang_navigation_prompt
+    if thermokarst_tundra_prompt:
+        stream_kwargs["thermokarst_tundra_prompt"] = thermokarst_tundra_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

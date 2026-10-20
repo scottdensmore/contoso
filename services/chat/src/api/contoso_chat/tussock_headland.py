@@ -633,6 +633,26 @@ _TUSSOCK_HEADLAND_EXCLUSIONS: tuple[str, ...] = (
     "rattlesnake",
     "bear spray",
     "yellowstone",
+    # Arctic polygon-tundra & thermokarst exclusions (thermokarst_tundra.py)
+    "thermokarst",
+    "ice-wedge",
+    "ice wedge",
+    "polygon tundra",
+    "polygon-tundra",
+    "thaw-slump",
+    "thaw slump",
+    "retrogressive thaw",
+    "batagaika",
+    "tuktoyaktuk",
+    "pingo",
+    "yedoma",
+    "eriophorum",
+    "cottongrass",
+    "alas depression",
+    "drunken forest",
+    "noatak",
+    "bykovsky",
+    "brooks range",
 )
 
 
