@@ -425,6 +425,19 @@ def detect_canyoneering_intent(query: str) -> Optional[CanyoneeringIntent]:
         "wadi mujib",
         "wadi ghul",
         "garganta del cares",
+        "jokulhlaup",
+        "jökulhlaup",
+        "grimsvotn",
+        "grímsvötn",
+        "suicide basin",
+        "lago cachet",
+        "kyagar",
+        "shaksgam",
+        "ice-dammed",
+        "ice dammed",
+        "glacial lake outburst",
+        "glof",
+        "proglacial canyon",
     ]
     if any(w in q for w in exclusions):
         if not ("pothole" in q and not any(g in q for g in ["ghost anchor", "sandtrap", "cheater stick"]) and any(k in q for k in ["canyoneering harness", "choprock canyon", "pothole escape kit requirements"])):

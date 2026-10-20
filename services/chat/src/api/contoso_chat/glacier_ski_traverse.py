@@ -734,6 +734,22 @@ def detect_glacier_ski_traverse_intent(message: str) -> bool:
         "glaciar de escombros",
         "val muragl",
         "dos lenguas",
+        "jokulhlaup",
+        "jökulhlaup",
+        "grimsvotn",
+        "grímsvötn",
+        "skeidararjokull",
+        "skeiðarárjökull",
+        "suicide basin",
+        "mendenhall",
+        "lago cachet",
+        "glaciar colonia",
+        "kyagar",
+        "shaksgam",
+        "ice-dammed",
+        "ice dammed",
+        "glacial lake outburst",
+        "glof",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

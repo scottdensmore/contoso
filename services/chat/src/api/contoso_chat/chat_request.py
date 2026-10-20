@@ -222,6 +222,11 @@ from .ice_climbing import (
     detect_ice_climbing_intent,
     format_ice_climbing_response,
 )
+from .jokulhlaup_escape import (
+    build_jokulhlaup_escape_prompt,
+    detect_jokulhlaup_escape_intent,
+    format_jokulhlaup_escape_response,
+)
 from .kelp_freediving import (
     build_kelp_freediving_prompt,
     detect_kelp_freediving_intent,
@@ -896,6 +901,7 @@ async def generate_llm_response(
     cenote_halocline_prompt: str = "",
     bamboo_thicket_prompt: str = "",
     salar_pressure_ridge_prompt: str = "",
+    jokulhlaup_escape_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1115,6 +1121,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{bamboo_thicket_prompt}"
         if salar_pressure_ridge_prompt:
             local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
+        if jokulhlaup_escape_prompt:
+            local_system = f"{local_system}\n\n{jokulhlaup_escape_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1402,6 +1410,8 @@ async def generate_llm_response(
             prompt_parts.append(bamboo_thicket_prompt)
         if salar_pressure_ridge_prompt:
             prompt_parts.append(salar_pressure_ridge_prompt)
+        if jokulhlaup_escape_prompt:
+            prompt_parts.append(jokulhlaup_escape_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2121,6 +2131,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         salar_pressure_ridge_info_payload = dict(format_salar_pressure_ridge_response(question))
         salar_pressure_ridge_prompt = build_salar_pressure_ridge_prompt(
             salar_pressure_ridge_info_payload
+        )
+
+    jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(question)
+    jokulhlaup_escape_prompt = ""
+    jokulhlaup_escape_info_payload: dict[str, Any] | None = None
+    if jokulhlaup_escape_intent:
+        jokulhlaup_escape_info_payload = dict(format_jokulhlaup_escape_response(question))
+        jokulhlaup_escape_prompt = build_jokulhlaup_escape_prompt(
+            jokulhlaup_escape_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -2973,6 +2992,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["bamboo_thicket_prompt"] = bamboo_thicket_prompt
     if salar_pressure_ridge_prompt:
         llm_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
+    if jokulhlaup_escape_prompt:
+        llm_kwargs["jokulhlaup_escape_prompt"] = jokulhlaup_escape_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3142,6 +3163,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["bamboo_thicket_info"] = bamboo_thicket_info_payload
     if salar_pressure_ridge_intent and salar_pressure_ridge_info_payload:
         response_payload["salar_pressure_ridge_info"] = salar_pressure_ridge_info_payload
+    if jokulhlaup_escape_intent and jokulhlaup_escape_info_payload:
+        response_payload["jokulhlaup_escape_info"] = jokulhlaup_escape_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3341,6 +3364,7 @@ def generate_llm_response_stream(
     cenote_halocline_prompt: str = "",
     bamboo_thicket_prompt: str = "",
     salar_pressure_ridge_prompt: str = "",
+    jokulhlaup_escape_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3558,6 +3582,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{bamboo_thicket_prompt}"
         if salar_pressure_ridge_prompt:
             local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
+        if jokulhlaup_escape_prompt:
+            local_system = f"{local_system}\n\n{jokulhlaup_escape_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3790,6 +3816,8 @@ def generate_llm_response_stream(
             prompt_parts.append(bamboo_thicket_prompt)
         if salar_pressure_ridge_prompt:
             prompt_parts.append(salar_pressure_ridge_prompt)
+        if jokulhlaup_escape_prompt:
+            prompt_parts.append(jokulhlaup_escape_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4331,6 +4359,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         salar_pressure_ridge_info_payload = dict(format_salar_pressure_ridge_response(question))
         salar_pressure_ridge_prompt = build_salar_pressure_ridge_prompt(
             salar_pressure_ridge_info_payload
+        )
+
+    jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(question)
+    jokulhlaup_escape_prompt = ""
+    jokulhlaup_escape_info_payload: dict[str, Any] | None = None
+    if jokulhlaup_escape_intent:
+        jokulhlaup_escape_info_payload = dict(format_jokulhlaup_escape_response(question))
+        jokulhlaup_escape_prompt = build_jokulhlaup_escape_prompt(
+            jokulhlaup_escape_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -5329,6 +5366,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': salar_pressure_ridge_info_payload, event_name: salar_pressure_ridge_info_payload})}\n\n"
         if event_name != "salar_pressure_ridge_info":
             yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': salar_pressure_ridge_info_payload})}\n\n"
+    if jokulhlaup_escape_intent and jokulhlaup_escape_info_payload:
+        event_name = (
+            jokulhlaup_escape_info_payload.get("action", "jokulhlaup_escape_info")
+            if isinstance(jokulhlaup_escape_info_payload, dict)
+            else "jokulhlaup_escape_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(jokulhlaup_escape_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': jokulhlaup_escape_info_payload, event_name: jokulhlaup_escape_info_payload})}\n\n"
+        if event_name != "jokulhlaup_escape_info":
+            yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': jokulhlaup_escape_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6292,6 +6339,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["bamboo_thicket_prompt"] = bamboo_thicket_prompt
     if salar_pressure_ridge_prompt:
         stream_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
+    if jokulhlaup_escape_prompt:
+        stream_kwargs["jokulhlaup_escape_prompt"] = jokulhlaup_escape_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

@@ -668,6 +668,22 @@ def is_aufeis_crossing_query(query: str) -> bool:
             "drunken forest",
             "noatak",
             "bykovsky",
+            "jokulhlaup",
+            "jökulhlaup",
+            "grimsvotn",
+            "grímsvötn",
+            "skeidararjokull",
+            "skeiðarárjökull",
+            "suicide basin",
+            "mendenhall",
+            "lago cachet",
+            "glaciar colonia",
+            "kyagar",
+            "shaksgam",
+            "ice-dammed",
+            "ice dammed",
+            "glacial lake outburst",
+            "glof",
         )
     ):
         return False

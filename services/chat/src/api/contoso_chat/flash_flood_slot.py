@@ -616,6 +616,23 @@ _FLASH_FLOOD_SLOT_EXCLUSIONS: tuple[str, ...] = (
     "borkou",
     "ennedi",
     "aeolian corridor",
+    "jokulhlaup",
+    "jökulhlaup",
+    "grimsvotn",
+    "grímsvötn",
+    "skeidararjokull",
+    "skeiðarárjökull",
+    "suicide basin",
+    "mendenhall",
+    "lago cachet",
+    "glaciar colonia",
+    "kyagar",
+    "shaksgam",
+    "ice-dammed",
+    "ice dammed",
+    "glacial lake outburst",
+    "glof",
+    "proglacial canyon",
 )
 
 

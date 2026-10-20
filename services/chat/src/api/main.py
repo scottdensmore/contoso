@@ -405,6 +405,10 @@ from contoso_chat.ice_climbing import (
     get_ice_climbing_route_by_id,
     get_ice_climbing_routes,
 )
+from contoso_chat.jokulhlaup_escape import (
+    detect_jokulhlaup_escape_intent,
+    format_jokulhlaup_escape_response,
+)
 from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
@@ -681,6 +685,9 @@ from contoso_chat.routers.glacier_ski_traverse import (
 )
 from contoso_chat.routers.glaciere_caving import (
     router as glaciere_caving_router,
+)
+from contoso_chat.routers.jokulhlaup_escape import (
+    router as jokulhlaup_escape_router,
 )
 from contoso_chat.routers.kelp_freediving import (
     router as kelp_freediving_router,
@@ -1680,6 +1687,24 @@ app.include_router(
 logger.info(
     "Registered High-Altitude Salar Brine-Pool & Polygonal Halite Pressure-Ridge Trekking router (/salar-pressure-ridge, /api/salar-pressure-ridge, /api/v1/salar-pressure-ridge)"
 )
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/api/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/api/v1/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+logger.info(
+    "Registered Subglacial Jökulhlaup Ice-Dammed Lake Outburst & Proglacial Canyon Escape router (/jokulhlaup-escape, /api/jokulhlaup-escape, /api/v1/jokulhlaup-escape)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1988,6 +2013,7 @@ async def create_response(request: ChatRequest):
             cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
             bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
             salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
+            jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2448,6 +2474,10 @@ async def create_response(request: ChatRequest):
                 spr_info = dict(format_salar_pressure_ridge_response(request.question))
                 mock_payload["salar_pressure_ridge_info"] = spr_info
                 mock_payload["answer"] = str(spr_info.get("answer", ""))
+            if jokulhlaup_escape_intent:
+                je_info = dict(format_jokulhlaup_escape_response(request.question))
+                mock_payload["jokulhlaup_escape_info"] = je_info
+                mock_payload["answer"] = str(je_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2974,6 +3004,7 @@ async def create_response_stream(request: ChatRequest):
                 cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
                 bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
                 salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
+                jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3504,6 +3535,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': spr_payload, event_name: spr_payload})}\n\n"
                     if event_name != "salar_pressure_ridge_info":
                         yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': spr_payload})}\n\n"
+                if jokulhlaup_escape_intent:
+                    je_payload = dict(format_jokulhlaup_escape_response(request.question))
+                    event_name = str(je_payload.get("action", "jokulhlaup_escape_info"))
+                    yield f"event: metadata\ndata: {json.dumps(je_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': je_payload, event_name: je_payload})}\n\n"
+                    if event_name != "jokulhlaup_escape_info":
+                        yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': je_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4402,6 +4440,9 @@ async def create_response_stream(request: ChatRequest):
                 elif salar_pressure_ridge_intent:
                     spr_resp = format_salar_pressure_ridge_response(request.question)
                     mock_chunks = [str(spr_resp.get("answer", ""))]
+                elif jokulhlaup_escape_intent:
+                    je_resp = format_jokulhlaup_escape_response(request.question)
+                    mock_chunks = [str(je_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4808,6 +4849,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_cenote_halocline_intent(request.question)
                 or detect_bamboo_thicket_intent(request.question)
                 or detect_salar_pressure_ridge_intent(request.question)
+                or detect_jokulhlaup_escape_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
