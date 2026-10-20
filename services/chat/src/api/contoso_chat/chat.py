@@ -62,6 +62,10 @@ from contoso_chat.glaciere_caving import (
     format_glaciere_caving_response,
     is_glaciere_caving_query,
 )
+from contoso_chat.jokulhlaup_escape import (
+    format_jokulhlaup_escape_response,
+    is_jokulhlaup_escape_query,
+)
 from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
@@ -782,5 +786,21 @@ def handle_salar_pressure_ridge_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_jokulhlaup_escape_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subglacial jökulhlaup ice-dammed lake outburst & proglacial canyon escape intent in the cascade."""
+    if not is_jokulhlaup_escape_query(question):
+        return None
+    info = format_jokulhlaup_escape_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "jokulhlaup_escape_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 

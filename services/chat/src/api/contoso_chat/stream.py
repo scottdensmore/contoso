@@ -63,6 +63,10 @@ from contoso_chat.glaciere_caving import (
     format_glaciere_caving_response,
     is_glaciere_caving_query,
 )
+from contoso_chat.jokulhlaup_escape import (
+    format_jokulhlaup_escape_response,
+    is_jokulhlaup_escape_query,
+)
 from contoso_chat.kelp_freediving import (
     detect_kelp_freediving_intent,
     format_kelp_freediving_response,
@@ -1308,5 +1312,29 @@ async def generate_salar_pressure_ridge_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_jokulhlaup_escape_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subglacial jökulhlaup ice-dammed lake outburst & proglacial canyon escape queries."""
+    if not is_jokulhlaup_escape_query(question):
+        return
+
+    je_payload = dict(format_jokulhlaup_escape_response(question))
+    answer = str(je_payload.get("answer", ""))
+    event_name = str(je_payload.get("action", "jokulhlaup_escape_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(je_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': je_payload, event_name: je_payload})}\n\n"
+    if event_name != "jokulhlaup_escape_info":
+        yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': je_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 

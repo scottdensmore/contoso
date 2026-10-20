@@ -544,6 +544,20 @@ def is_tephra_navigation_query(query: str) -> bool:
             "borkou",
             "ennedi",
             "aeolian corridor",
+            "jokulhlaup",
+            "jökulhlaup",
+            "grimsvotn",
+            "grímsvötn",
+            "skeidararjokull",
+            "skeiðarárjökull",
+            "suicide basin",
+            "lago cachet",
+            "kyagar",
+            "shaksgam",
+            "ice-dammed",
+            "ice dammed",
+            "glacial lake outburst",
+            "glof",
         )
     ):
         return False

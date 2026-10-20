@@ -629,6 +629,21 @@ def is_solfatara_navigation_query(query: str) -> bool:
             "brine eye",
             "brine pool",
             "mirabilite",
+            "jokulhlaup",
+            "jökulhlaup",
+            "grimsvotn",
+            "grímsvötn",
+            "skeidararjokull",
+            "skeiðarárjökull",
+            "suicide basin",
+            "lago cachet",
+            "kyagar",
+            "shaksgam",
+            "ice-dammed",
+            "ice dammed",
+            "glacial lake outburst",
+            "glof",
+            "proglacial canyon",
         )
     ):
         return False
