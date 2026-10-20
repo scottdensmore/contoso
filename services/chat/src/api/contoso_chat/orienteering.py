@@ -420,6 +420,18 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
         "culm",
         "punji stump",
         "montane bamboo",
+        "atacama",
+        "arizaro",
+        "chalviri",
+        "cono de arita",
+        "incahuasi",
+        "ojos del salar",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "packsled",
     ]
     if any(k in q for k in salt_pan_exclusions):
         return None

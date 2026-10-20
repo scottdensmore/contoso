@@ -110,6 +110,10 @@ from contoso_chat.rock_glacier_navigation import (
     format_rock_glacier_navigation_response,
     is_rock_glacier_navigation_query,
 )
+from contoso_chat.salar_pressure_ridge import (
+    format_salar_pressure_ridge_response,
+    is_salar_pressure_ridge_query,
+)
 from contoso_chat.salt_pan_navigation import (
     format_salt_pan_navigation_response,
     is_salt_pan_navigation_query,
@@ -763,4 +767,20 @@ def handle_bamboo_thicket_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_salar_pressure_ridge_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format high-altitude salar brine-pool & polygonal halite pressure-ridge trekking intent in the cascade."""
+    if not is_salar_pressure_ridge_query(question):
+        return None
+    info = format_salar_pressure_ridge_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "salar_pressure_ridge_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 

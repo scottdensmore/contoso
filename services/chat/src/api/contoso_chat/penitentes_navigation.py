@@ -582,6 +582,19 @@ def is_penitentes_navigation_query(query: str) -> bool:
         "refund",
         "return label",
         "shipping tracking",
+        "salar",
+        "halite",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "cono de arita",
+        "arizaro",
+        "atacama",
+        "chalviri",
+        "uyuni",
+        "ojos del salar",
     )
     if any(ex in q for ex in ecommerce_exclusions):
         return False

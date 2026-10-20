@@ -574,6 +574,10 @@ _EXCLUSION_PATTERNS: tuple[str, ...] = (
     "jokulhlaup",
     "wattwanderung",
     "wadden",
+    "salar",
+    "halite",
+    "brine",
+    "mirabilite",
 )
 
 

@@ -111,6 +111,10 @@ from contoso_chat.rock_glacier_navigation import (
     format_rock_glacier_navigation_response,
     is_rock_glacier_navigation_query,
 )
+from contoso_chat.salar_pressure_ridge import (
+    format_salar_pressure_ridge_response,
+    is_salar_pressure_ridge_query,
+)
 from contoso_chat.salt_pan_navigation import (
     format_salt_pan_navigation_response,
     is_salt_pan_navigation_query,
@@ -1281,4 +1285,28 @@ async def generate_bamboo_thicket_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_salar_pressure_ridge_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for high-altitude salar brine-pool & polygonal halite pressure-ridge queries."""
+    if not is_salar_pressure_ridge_query(question):
+        return
+
+    spr_payload = dict(format_salar_pressure_ridge_response(question))
+    answer = str(spr_payload.get("answer", ""))
+    event_name = str(spr_payload.get("action", "salar_pressure_ridge_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(spr_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': spr_payload, event_name: spr_payload})}\n\n"
+    if event_name != "salar_pressure_ridge_info":
+        yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': spr_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 

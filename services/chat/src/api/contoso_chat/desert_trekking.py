@@ -444,6 +444,18 @@ def detect_desert_trekking_intent(message: str) -> Optional[DesertTrekkingIntent
         "star-dune",
         "mega-dune",
         "slip-face",
+        "atacama",
+        "arizaro",
+        "chalviri",
+        "cono de arita",
+        "incahuasi",
+        "ojos del salar",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "halite",
     ]
     if any(k in q for k in trail_weather_exclusions):
         return None

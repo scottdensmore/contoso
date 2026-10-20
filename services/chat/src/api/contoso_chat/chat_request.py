@@ -392,6 +392,11 @@ from .safety import (
     detect_safety_intent,
     format_safety_response,
 )
+from .salar_pressure_ridge import (
+    build_salar_pressure_ridge_prompt,
+    detect_salar_pressure_ridge_intent,
+    format_salar_pressure_ridge_response,
+)
 from .salt_pan_navigation import (
     build_salt_pan_navigation_prompt,
     detect_salt_pan_navigation_intent,
@@ -890,6 +895,7 @@ async def generate_llm_response(
     thermokarst_tundra_prompt: str = "",
     cenote_halocline_prompt: str = "",
     bamboo_thicket_prompt: str = "",
+    salar_pressure_ridge_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1107,6 +1113,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{cenote_halocline_prompt}"
         if bamboo_thicket_prompt:
             local_system = f"{local_system}\n\n{bamboo_thicket_prompt}"
+        if salar_pressure_ridge_prompt:
+            local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1392,6 +1400,8 @@ async def generate_llm_response(
             prompt_parts.append(cenote_halocline_prompt)
         if bamboo_thicket_prompt:
             prompt_parts.append(bamboo_thicket_prompt)
+        if salar_pressure_ridge_prompt:
+            prompt_parts.append(salar_pressure_ridge_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2103,6 +2113,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
     if bamboo_thicket_intent:
         bamboo_thicket_prompt = build_bamboo_thicket_prompt(question)
         bamboo_thicket_info_payload = dict(format_bamboo_thicket_response(question))
+
+    salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(question)
+    salar_pressure_ridge_prompt = ""
+    salar_pressure_ridge_info_payload: dict[str, Any] | None = None
+    if salar_pressure_ridge_intent:
+        salar_pressure_ridge_info_payload = dict(format_salar_pressure_ridge_response(question))
+        salar_pressure_ridge_prompt = build_salar_pressure_ridge_prompt(
+            salar_pressure_ridge_info_payload
+        )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -2952,6 +2971,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["cenote_halocline_prompt"] = cenote_halocline_prompt
     if bamboo_thicket_prompt:
         llm_kwargs["bamboo_thicket_prompt"] = bamboo_thicket_prompt
+    if salar_pressure_ridge_prompt:
+        llm_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3119,6 +3140,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["cenote_halocline_info"] = cenote_halocline_info_payload
     if bamboo_thicket_intent and bamboo_thicket_info_payload:
         response_payload["bamboo_thicket_info"] = bamboo_thicket_info_payload
+    if salar_pressure_ridge_intent and salar_pressure_ridge_info_payload:
+        response_payload["salar_pressure_ridge_info"] = salar_pressure_ridge_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3317,6 +3340,7 @@ def generate_llm_response_stream(
     thermokarst_tundra_prompt: str = "",
     cenote_halocline_prompt: str = "",
     bamboo_thicket_prompt: str = "",
+    salar_pressure_ridge_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3532,6 +3556,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{cenote_halocline_prompt}"
         if bamboo_thicket_prompt:
             local_system = f"{local_system}\n\n{bamboo_thicket_prompt}"
+        if salar_pressure_ridge_prompt:
+            local_system = f"{local_system}\n\n{salar_pressure_ridge_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3762,6 +3788,8 @@ def generate_llm_response_stream(
             prompt_parts.append(cenote_halocline_prompt)
         if bamboo_thicket_prompt:
             prompt_parts.append(bamboo_thicket_prompt)
+        if salar_pressure_ridge_prompt:
+            prompt_parts.append(salar_pressure_ridge_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4295,6 +4323,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
     if bamboo_thicket_intent:
         bamboo_thicket_prompt = build_bamboo_thicket_prompt(question)
         bamboo_thicket_info_payload = dict(format_bamboo_thicket_response(question))
+
+    salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(question)
+    salar_pressure_ridge_prompt = ""
+    salar_pressure_ridge_info_payload: dict[str, Any] | None = None
+    if salar_pressure_ridge_intent:
+        salar_pressure_ridge_info_payload = dict(format_salar_pressure_ridge_response(question))
+        salar_pressure_ridge_prompt = build_salar_pressure_ridge_prompt(
+            salar_pressure_ridge_info_payload
+        )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
     canyon_bouldering_prompt = ""
@@ -5282,6 +5319,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bamboo_thicket_info_payload, event_name: bamboo_thicket_info_payload})}\n\n"
         if event_name != "bamboo_thicket_info":
             yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bamboo_thicket_info_payload})}\n\n"
+    if salar_pressure_ridge_intent and salar_pressure_ridge_info_payload:
+        event_name = (
+            salar_pressure_ridge_info_payload.get("action", "salar_pressure_ridge_info")
+            if isinstance(salar_pressure_ridge_info_payload, dict)
+            else "salar_pressure_ridge_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(salar_pressure_ridge_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': salar_pressure_ridge_info_payload, event_name: salar_pressure_ridge_info_payload})}\n\n"
+        if event_name != "salar_pressure_ridge_info":
+            yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': salar_pressure_ridge_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6243,6 +6290,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["cenote_halocline_prompt"] = cenote_halocline_prompt
     if bamboo_thicket_prompt:
         stream_kwargs["bamboo_thicket_prompt"] = bamboo_thicket_prompt
+    if salar_pressure_ridge_prompt:
+        stream_kwargs["salar_pressure_ridge_prompt"] = salar_pressure_ridge_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

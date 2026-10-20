@@ -412,6 +412,21 @@ def detect_acclimatization_intent(query: str) -> Optional[AcclimatizationIntent]
         "sumapaz",
         "el angel",
         "cushion bog",
+        "salar",
+        "uyuni",
+        "atacama",
+        "arizaro",
+        "chalviri",
+        "cono de arita",
+        "incahuasi",
+        "ojos del salar",
+        "halite",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "packsled",
     ]
     if any(ex in q for ex in exclusions):
         return None

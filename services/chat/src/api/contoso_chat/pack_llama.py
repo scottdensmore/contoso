@@ -339,6 +339,21 @@ def detect_pack_llama_intent(text: str) -> Optional[PackLlamaIntent]:
         "sumapaz",
         "el angel",
         "cushion bog",
+        "salar",
+        "uyuni",
+        "atacama",
+        "arizaro",
+        "chalviri",
+        "cono de arita",
+        "incahuasi",
+        "ojos del salar",
+        "halite",
+        "pressure ridge",
+        "pressure-ridge",
+        "brine eye",
+        "brine pool",
+        "mirabilite",
+        "packsled",
     ]
     if any(k in q for k in exclusions):
         return None
