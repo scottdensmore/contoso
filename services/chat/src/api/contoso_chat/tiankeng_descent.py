@@ -671,6 +671,27 @@ _TIANKENG_DESCENT_EXCLUSIONS: tuple[str, ...] = (
     "table-mountain quartzite",
     "brocchinia",
     "cyanobacteria biofilm",
+    # Gypsum-karst dissolution maze exclusions (gypsum_karst.py)
+    "gypsum karst",
+    "gypsum-karst",
+    "gypsum_karst",
+    "gypsum maze",
+    "evaporite karst",
+    "anhydrite hydration",
+    "hydration dome",
+    "optimisticeskaja",
+    "optymistychna",
+    "ozerna",
+    "podolia",
+    "vena del gesso",
+    "spipola",
+    "acquafredda",
+    "yesos de sorbas",
+    "sorbas",
+    "covadura",
+    "parks ranch",
+    "parks-ranch",
+    "swallowtail selenite",
 )
 
 

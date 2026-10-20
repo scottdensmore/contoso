@@ -66,6 +66,10 @@ from contoso_chat.glaciere_caving import (
     format_glaciere_caving_response,
     is_glaciere_caving_query,
 )
+from contoso_chat.gypsum_karst import (
+    format_gypsum_karst_response,
+    is_gypsum_karst_query,
+)
 from contoso_chat.jokulhlaup_escape import (
     format_jokulhlaup_escape_response,
     is_jokulhlaup_escape_query,
@@ -841,4 +845,16 @@ def handle_talus_cold_trap_intent(
     }
 
 
-
+def handle_gypsum_karst_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subterranean gypsum-karst dissolution maze & evaporite breakdown-hall intent in the cascade."""
+    if not is_gypsum_karst_query(question):
+        return None
+    info = format_gypsum_karst_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "gypsum_karst_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }

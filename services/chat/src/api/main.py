@@ -360,6 +360,10 @@ from contoso_chat.gold_prospecting import (
     get_prospecting_site,
     get_prospecting_sites,
 )
+from contoso_chat.gypsum_karst import (
+    detect_gypsum_karst_intent,
+    format_gypsum_karst_response,
+)
 from contoso_chat.highline import (
     HighlineGearRequirement,
     HighlineSpanModel,
@@ -692,6 +696,9 @@ from contoso_chat.routers.glacier_ski_traverse import (
 )
 from contoso_chat.routers.glaciere_caving import (
     router as glaciere_caving_router,
+)
+from contoso_chat.routers.gypsum_karst import (
+    router as gypsum_karst_router,
 )
 from contoso_chat.routers.jokulhlaup_escape import (
     router as jokulhlaup_escape_router,
@@ -1755,6 +1762,24 @@ app.include_router(
 logger.info(
     "Registered Subalpine Boulder-Talus Air-Draft Ice Cave & Cold-Trap Block-Field Navigation router (/talus-cold-trap, /api/talus-cold-trap, /api/v1/talus-cold-trap)"
 )
+app.include_router(
+    gypsum_karst_router,
+    prefix="/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+app.include_router(
+    gypsum_karst_router,
+    prefix="/api/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+app.include_router(
+    gypsum_karst_router,
+    prefix="/api/v1/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+logger.info(
+    "Registered Subterranean Gypsum-Karst Dissolution Maze & Evaporite Breakdown-Hall Speleology router (/gypsum-karst, /api/gypsum-karst, /api/v1/gypsum-karst)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2066,6 +2091,7 @@ async def create_response(request: ChatRequest):
             jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
             barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
             talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
+            gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2538,6 +2564,10 @@ async def create_response(request: ChatRequest):
                 tct_info = dict(format_talus_cold_trap_response(request.question))
                 mock_payload["talus_cold_trap_info"] = tct_info
                 mock_payload["answer"] = str(tct_info.get("answer", ""))
+            if gypsum_karst_intent:
+                gk_info = dict(format_gypsum_karst_response(request.question))
+                mock_payload["gypsum_karst_info"] = gk_info
+                mock_payload["answer"] = str(gk_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3067,6 +3097,7 @@ async def create_response_stream(request: ChatRequest):
                 jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
                 barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
                 talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
+                gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3618,6 +3649,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'talus_cold_trap_info': tct_payload, event_name: tct_payload})}\n\n"
                     if event_name != "talus_cold_trap_info":
                         yield f"data: {json.dumps({'event': 'talus_cold_trap_info', 'talus_cold_trap_info': tct_payload})}\n\n"
+                if gypsum_karst_intent:
+                    gk_payload = dict(format_gypsum_karst_response(request.question))
+                    event_name = str(gk_payload.get("action", "gypsum_karst_info"))
+                    yield f"event: metadata\ndata: {json.dumps(gk_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
+                    if event_name != "gypsum_karst_info":
+                        yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4525,6 +4563,9 @@ async def create_response_stream(request: ChatRequest):
                 elif talus_cold_trap_intent:
                     tct_resp = format_talus_cold_trap_response(request.question)
                     mock_chunks = [str(tct_resp.get("answer", ""))]
+                elif gypsum_karst_intent:
+                    gk_resp = format_gypsum_karst_response(request.question)
+                    mock_chunks = [str(gk_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4934,6 +4975,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_jokulhlaup_escape_intent(request.question)
                 or detect_barnacle_ledge_intent(request.question)
                 or detect_talus_cold_trap_intent(request.question)
+                or detect_gypsum_karst_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
