@@ -294,13 +294,9 @@ def calculate_cave_diving_gas(req: CaveDivingRequest) -> CaveDivingResponse:
             "for siphon current fighting, buddy air sharing, and complex line entanglement delays."
         )
     elif norm_rule == "rule_of_quarters":
-        gas_management_advisory = (
-            "Rule of Quarters applied: 1/4th gas for inbound penetration, 3/4ths held in reserve for silt-out navigation and flow resistance."
-        )
+        gas_management_advisory = "Rule of Quarters applied: 1/4th gas for inbound penetration, 3/4ths held in reserve for silt-out navigation and flow resistance."
     else:
-        gas_management_advisory = (
-            "Standard Rule of Thirds applied: 1/3rd gas for penetration, 1/3rd for return exit, and 1/3rd emergency buddy reserve."
-        )
+        gas_management_advisory = "Standard Rule of Thirds applied: 1/3rd gas for penetration, 1/3rd for return exit, and 1/3rd emergency buddy reserve."
 
     # Decompression advisory
     if site.max_depth_m >= 35:
@@ -314,9 +310,7 @@ def calculate_cave_diving_gas(req: CaveDivingRequest) -> CaveDivingResponse:
             "stage safety decompression cylinders at cave entrance / cavern zone."
         )
     else:
-        decompression_advisory = (
-            f"Shallow karst conduit ({site.max_depth_m}m). Complete standard 3-minute safety stop at 5m with continuous physical line contact."
-        )
+        decompression_advisory = f"Shallow karst conduit ({site.max_depth_m}m). Complete standard 3-minute safety stop at 5m with continuous physical line contact."
 
     return CaveDivingResponse(
         site_id=site.site_id,
@@ -408,6 +402,27 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "devil's punchbowl",
         "air compression blast",
         "littoral cave",
+        "cenote",
+        "cenotes",
+        "halocline",
+        "anchialine",
+        "schlieren",
+        "ox bel ha",
+        "ox-bel-ha",
+        "angelita",
+        "sac actun",
+        "sac-actun",
+        "pet cembalo",
+        "dos ojos",
+        "dan's cave",
+        "dans cave",
+        "sawmill sink",
+        "abaco",
+        "meromictic",
+        "tannic",
+        "chemocline",
+        "pycnocline",
+        "blue hole",
     ]
     if any(ex in q for ex in exclusions):
         return None
@@ -507,7 +522,9 @@ def detect_cave_diving_intent(text: str) -> Optional[CaveDivingIntent]:
         "cookies",
     ]
 
-    has_gear_explicit = any(k in q for k in ["gear", "gear checklist", "equipment list", "gear list"])
+    has_gear_explicit = any(
+        k in q for k in ["gear", "gear checklist", "equipment list", "gear list"]
+    )
     if any(k in q for k in calc_keywords) and not has_gear_explicit:
         action = "calculate_gas"
     elif any(k in q for k in gear_keywords):

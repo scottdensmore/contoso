@@ -401,9 +401,7 @@ def calculate_sea_cave_pneumatic_safety(
             f"tide_height_above_mllw_m ({tide_height_above_mllw_m}) must be between -1.5 and 5.0 m."
         )
     if not (5.0 <= chamber_length_m <= 250.0):
-        raise ValueError(
-            f"chamber_length_m ({chamber_length_m}) must be between 5.0 and 250.0 m."
-        )
+        raise ValueError(f"chamber_length_m ({chamber_length_m}) must be between 5.0 and 250.0 m.")
 
     morphology_seal_bonus: dict[str, float] = {
         "dual_portal_littoral_through_arch": -0.10,
@@ -440,19 +438,14 @@ def calculate_sea_cave_pneumatic_safety(
 
     # 1. Portal piston-seal probability (0.01 to 0.99)
     fill_ratio = shoaled_crest_amplitude_m / effective_clearance_m
-    raw_seal_prob = (
-        (fill_ratio / (1.0 + fill_ratio)) * 0.92
-        + morphology_seal_bonus[morphology]
-    )
+    raw_seal_prob = (fill_ratio / (1.0 + fill_ratio)) * 0.92 + morphology_seal_bonus[morphology]
     if (
         morphology == "dual_portal_littoral_through_arch"
         and significant_wave_height_m <= 1.0
         and portal_ceiling_clearance_m >= 3.5
     ):
         raw_seal_prob = min(raw_seal_prob, 0.18)
-    portal_piston_seal_probability = round(
-        max(0.01, min(0.99, raw_seal_prob)), 3
-    )
+    portal_piston_seal_probability = round(max(0.01, min(0.99, raw_seal_prob)), 3)
 
     # 2. Pneumatic overpressure (kPa) inside chamber
     length_compression_factor = (chamber_length_m / 50.0) ** 0.38
@@ -465,9 +458,7 @@ def calculate_sea_cave_pneumatic_safety(
         * length_compression_factor
         * morphology_pressure_factor[morphology]
     )
-    pneumatic_overpressure_kpa = round(
-        max(0.5, min(140.0, raw_overpressure_kpa)), 1
-    )
+    pneumatic_overpressure_kpa = round(max(0.5, min(140.0, raw_overpressure_kpa)), 1)
 
     # 3. Clapotis & backwash rebound surge velocity (m/s)
     raw_surge_velocity_ms = (
@@ -477,9 +468,7 @@ def calculate_sea_cave_pneumatic_safety(
         * ((swell_period_seconds / 10.0) ** 0.42)
         * (0.85 + 0.45 * portal_piston_seal_probability)
     )
-    rebound_surge_velocity_ms = round(
-        max(0.3, min(14.5, raw_surge_velocity_ms)), 2
-    )
+    rebound_surge_velocity_ms = round(max(0.3, min(14.5, raw_surge_velocity_ms)), 2)
 
     # 4. Safe inter-set lull window (seconds) available to enter and exit
     transit_penalty_s = chamber_length_m * 0.42
@@ -490,9 +479,7 @@ def calculate_sea_cave_pneumatic_safety(
         - (significant_wave_height_m * 14.0)
         - (transit_penalty_s * 0.35)
     )
-    safe_set_lull_window_seconds = round(
-        max(5.0, min(240.0, raw_lull_window_s)), 1
-    )
+    safe_set_lull_window_seconds = round(max(5.0, min(240.0, raw_lull_window_s)), 1)
 
     # 5. Classify SeaCavePneumaticSafetyStatus
     safety_status: SeaCavePneumaticSafetyStatus
@@ -664,6 +651,26 @@ def is_sea_cave_pneumatics_query(query: str) -> bool:
             "sarisarinama",
             "sarisariñama",
             "sima humboldt",
+            "cenote",
+            "cenotes",
+            "halocline",
+            "anchialine",
+            "schlieren",
+            "ox bel ha",
+            "ox-bel-ha",
+            "angelita",
+            "sac actun",
+            "sac-actun",
+            "pet cembalo",
+            "dan's cave",
+            "dans cave",
+            "sawmill sink",
+            "abaco",
+            "meromictic",
+            "tannic",
+            "chemocline",
+            "pycnocline",
+            "blue hole",
         )
     ):
         return False
@@ -749,18 +756,10 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
                 params["morphology"] = site["morphology"]
                 params["wave_regime"] = site["wave_regime"]
                 params["traversal_mode"] = site["traversal_mode"]
-                params["portal_ceiling_clearance_m"] = site[
-                    "portal_ceiling_clearance_m"
-                ]
-                params["significant_wave_height_m"] = site[
-                    "typical_significant_wave_height_m"
-                ]
-                params["swell_period_seconds"] = site[
-                    "typical_swell_period_seconds"
-                ]
-                params["chamber_convergence_ratio"] = site[
-                    "chamber_convergence_ratio"
-                ]
+                params["portal_ceiling_clearance_m"] = site["portal_ceiling_clearance_m"]
+                params["significant_wave_height_m"] = site["typical_significant_wave_height_m"]
+                params["swell_period_seconds"] = site["typical_swell_period_seconds"]
+                params["chamber_convergence_ratio"] = site["chamber_convergence_ratio"]
                 params["chamber_length_m"] = site["chamber_length_m"]
             break
 
@@ -772,9 +771,7 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
     ):
         params["morphology"] = "constricted_pneumatic_blowhole_shaft"
     elif (
-        "convergent_basalt_surge_slot" in q
-        or "basalt surge slot" in q
-        or "convergent basalt" in q
+        "convergent_basalt_surge_slot" in q or "basalt surge slot" in q or "convergent basalt" in q
     ):
         params["morphology"] = "convergent_basalt_surge_slot"
     elif (
@@ -790,19 +787,11 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
         or "through arch" in q
     ):
         params["morphology"] = "dual_portal_littoral_through_arch"
-    elif (
-        "boulder_choked_collapse_doline" in q
-        or "collapse doline" in q
-        or "boulder-choked" in q
-    ):
+    elif "boulder_choked_collapse_doline" in q or "collapse doline" in q or "boulder-choked" in q:
         params["morphology"] = "boulder_choked_collapse_doline"
 
     # Override wave_regime if explicitly mentioned
-    if (
-        "infragravity_sneaker_wave_group_22s" in q
-        or "infragravity" in q
-        or "sneaker wave" in q
-    ):
+    if "infragravity_sneaker_wave_group_22s" in q or "infragravity" in q or "sneaker wave" in q:
         params["wave_regime"] = "infragravity_sneaker_wave_group_22s"
     elif (
         "long_period_forerunner_swell_17s" in q
@@ -811,10 +800,7 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
         or "long-period" in q
     ):
         params["wave_regime"] = "long_period_forerunner_swell_17s"
-    elif (
-        "moderate_groundswell_12s" in q
-        or "moderate groundswell" in q
-    ):
+    elif "moderate_groundswell_12s" in q or "moderate groundswell" in q:
         params["wave_regime"] = "moderate_groundswell_12s"
     elif (
         "short_period_wind_chop_8s" in q
@@ -825,17 +811,9 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
         params["wave_regime"] = "short_period_wind_chop_8s"
 
     # Override traversal_mode if explicitly mentioned
-    if (
-        "rope_belayed_rim_standoff_observation" in q
-        or "rope belayed" in q
-        or "rim standoff" in q
-    ):
+    if "rope_belayed_rim_standoff_observation" in q or "rope belayed" in q or "rim standoff" in q:
         params["traversal_mode"] = "rope_belayed_rim_standoff_observation"
-    elif (
-        "inflatable_rescue_sled_recon" in q
-        or "rescue sled" in q
-        or "inflatable sled" in q
-    ):
+    elif "inflatable_rescue_sled_recon" in q or "rescue sled" in q or "inflatable sled" in q:
         params["traversal_mode"] = "inflatable_rescue_sled_recon"
     elif (
         "helmeted_coasteer_swim_and_scramble" in q
@@ -843,11 +821,7 @@ def extract_sea_cave_pneumatics_params(query: str) -> dict[str, Any]:
         or "swim and scramble" in q
     ):
         params["traversal_mode"] = "helmeted_coasteer_swim_and_scramble"
-    elif (
-        "sit_on_top_sea_kayak_sprint" in q
-        or "kayak sprint" in q
-        or "sit-on-top" in q
-    ):
+    elif "sit_on_top_sea_kayak_sprint" in q or "kayak sprint" in q or "sit-on-top" in q:
         params["traversal_mode"] = "sit_on_top_sea_kayak_sprint"
 
     # Extract portal ceiling clearance (m)
@@ -939,16 +913,10 @@ def format_sea_cave_pneumatics_response(
             morphology=params["morphology"],
             wave_regime=params["wave_regime"],
             traversal_mode=params["traversal_mode"],
-            portal_ceiling_clearance_m=float(
-                params["portal_ceiling_clearance_m"]
-            ),
-            significant_wave_height_m=float(
-                params["significant_wave_height_m"]
-            ),
+            portal_ceiling_clearance_m=float(params["portal_ceiling_clearance_m"]),
+            significant_wave_height_m=float(params["significant_wave_height_m"]),
             swell_period_seconds=float(params["swell_period_seconds"]),
-            chamber_convergence_ratio=float(
-                params["chamber_convergence_ratio"]
-            ),
+            chamber_convergence_ratio=float(params["chamber_convergence_ratio"]),
             tide_height_above_mllw_m=float(params["tide_height_above_mllw_m"]),
             chamber_length_m=float(params["chamber_length_m"]),
         )
@@ -960,9 +928,7 @@ def format_sea_cave_pneumatics_response(
             "gear_checklist": gear_list,
         }
         if params["site_id"]:
-            matched_site = get_sea_cave_pneumatic_site_by_id(
-                str(params["site_id"])
-            )
+            matched_site = get_sea_cave_pneumatic_site_by_id(str(params["site_id"]))
             if matched_site is not None:
                 calc_info["site"] = dict(matched_site)
 
@@ -991,18 +957,10 @@ def format_sea_cave_pneumatics_response(
                 morphology=site["morphology"],
                 wave_regime=site["wave_regime"],
                 traversal_mode=site["traversal_mode"],
-                portal_ceiling_clearance_m=float(
-                    site["portal_ceiling_clearance_m"]
-                ),
-                significant_wave_height_m=float(
-                    site["typical_significant_wave_height_m"]
-                ),
-                swell_period_seconds=float(
-                    site["typical_swell_period_seconds"]
-                ),
-                chamber_convergence_ratio=float(
-                    site["chamber_convergence_ratio"]
-                ),
+                portal_ceiling_clearance_m=float(site["portal_ceiling_clearance_m"]),
+                significant_wave_height_m=float(site["typical_significant_wave_height_m"]),
+                swell_period_seconds=float(site["typical_swell_period_seconds"]),
+                chamber_convergence_ratio=float(site["chamber_convergence_ratio"]),
                 tide_height_above_mllw_m=0.6,
                 chamber_length_m=float(site["chamber_length_m"]),
             )
@@ -1010,9 +968,7 @@ def format_sea_cave_pneumatics_response(
                 "action": "sea_cave_pneumatics_lookup",
                 "site": dict(site),
                 "baseline_calculation": dict(site_calc),
-                "gear_checklist": [
-                    dict(g) for g in get_sea_cave_pneumatic_gear_checklist()
-                ],
+                "gear_checklist": [dict(g) for g in get_sea_cave_pneumatic_gear_checklist()],
             }
             answer = (
                 f"### {site['name']} ({site['region']})\n\n"
@@ -1041,8 +997,7 @@ def format_sea_cave_pneumatics_response(
         for s in sites_list
     )
     gear_bullets = "\n".join(
-        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}"
-        for g in gear_list
+        f"- **{g['name']}** (`{g['category']}`): {g['rationale']}" for g in gear_list
     )
     answer = (
         "### Coastal Blowhole, Surge Channel & Sea-Cave Pneumatic Wave-Hazard Navigation Guide\n\n"
