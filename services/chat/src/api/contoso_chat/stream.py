@@ -151,6 +151,10 @@ from contoso_chat.solfatara_navigation import (
     format_solfatara_navigation_response,
     is_solfatara_navigation_query,
 )
+from contoso_chat.talus_cold_trap import (
+    format_talus_cold_trap_response,
+    is_talus_cold_trap_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
@@ -1362,6 +1366,30 @@ async def generate_barnacle_ledge_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_talus_cold_trap_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subalpine boulder-talus air-draft ice cave & cold-trap block-field queries."""
+    if not is_talus_cold_trap_query(question):
+        return
+
+    tct_payload = dict(format_talus_cold_trap_response(question))
+    answer = str(tct_payload.get("answer", ""))
+    event_name = str(tct_payload.get("action", "talus_cold_trap_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tct_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'talus_cold_trap_info': tct_payload, event_name: tct_payload})}\n\n"
+    if event_name != "talus_cold_trap_info":
+        yield f"data: {json.dumps({'event': 'talus_cold_trap_info', 'talus_cold_trap_info': tct_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
 

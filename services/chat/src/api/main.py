@@ -743,6 +743,9 @@ from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
 from contoso_chat.routers.solfatara_navigation import (
     router as solfatara_navigation_router,
 )
+from contoso_chat.routers.talus_cold_trap import (
+    router as talus_cold_trap_router,
+)
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
 from contoso_chat.routers.tephra_navigation import (
     router as tephra_navigation_router,
@@ -950,6 +953,10 @@ from contoso_chat.stores import (
     get_all_stores,
     get_store_by_id,
     search_stores,
+)
+from contoso_chat.talus_cold_trap import (
+    detect_talus_cold_trap_intent,
+    format_talus_cold_trap_response,
 )
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
@@ -1730,6 +1737,24 @@ app.include_router(
 logger.info(
     "Registered Coastal Intertidal Sabellariid Worm-Reef & Barnacle-Encrusted Basalt Ledge Traversing router (/barnacle-ledge, /api/barnacle-ledge, /api/v1/barnacle-ledge)"
 )
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/api/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/api/v1/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+logger.info(
+    "Registered Subalpine Boulder-Talus Air-Draft Ice Cave & Cold-Trap Block-Field Navigation router (/talus-cold-trap, /api/talus-cold-trap, /api/v1/talus-cold-trap)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2040,6 +2065,7 @@ async def create_response(request: ChatRequest):
             salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
             jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
             barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
+            talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2508,6 +2534,10 @@ async def create_response(request: ChatRequest):
                 bl_info = dict(format_barnacle_ledge_response(request.question))
                 mock_payload["barnacle_ledge_info"] = bl_info
                 mock_payload["answer"] = str(bl_info.get("answer", ""))
+            if talus_cold_trap_intent:
+                tct_info = dict(format_talus_cold_trap_response(request.question))
+                mock_payload["talus_cold_trap_info"] = tct_info
+                mock_payload["answer"] = str(tct_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3036,6 +3066,7 @@ async def create_response_stream(request: ChatRequest):
                 salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
                 jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
                 barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
+                talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3580,6 +3611,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'barnacle_ledge_info': bl_payload, event_name: bl_payload})}\n\n"
                     if event_name != "barnacle_ledge_info":
                         yield f"data: {json.dumps({'event': 'barnacle_ledge_info', 'barnacle_ledge_info': bl_payload})}\n\n"
+                if talus_cold_trap_intent:
+                    tct_payload = dict(format_talus_cold_trap_response(request.question))
+                    event_name = str(tct_payload.get("action", "talus_cold_trap_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tct_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'talus_cold_trap_info': tct_payload, event_name: tct_payload})}\n\n"
+                    if event_name != "talus_cold_trap_info":
+                        yield f"data: {json.dumps({'event': 'talus_cold_trap_info', 'talus_cold_trap_info': tct_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4484,6 +4522,9 @@ async def create_response_stream(request: ChatRequest):
                 elif barnacle_ledge_intent:
                     bl_resp = format_barnacle_ledge_response(request.question)
                     mock_chunks = [str(bl_resp.get("answer", ""))]
+                elif talus_cold_trap_intent:
+                    tct_resp = format_talus_cold_trap_response(request.question)
+                    mock_chunks = [str(tct_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4892,6 +4933,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_salar_pressure_ridge_intent(request.question)
                 or detect_jokulhlaup_escape_intent(request.question)
                 or detect_barnacle_ledge_intent(request.question)
+                or detect_talus_cold_trap_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

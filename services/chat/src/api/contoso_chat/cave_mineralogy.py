@@ -618,6 +618,21 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "chemocline",
         "pycnocline",
         "blue hole",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(k in q for k in exclusions):
         return None
