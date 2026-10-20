@@ -391,6 +391,28 @@ def detect_water_intent(query: str) -> Optional[WaterIntent]:
     """Detects backcountry water logistics, hydration calculation, filtration, or reporting intents."""
     q_lower = query.lower()
 
+    if any(
+        gk in q_lower
+        for gk in (
+            "gypsum karst",
+            "gypsum-karst",
+            "gypsum_karst",
+            "gypsum maze",
+            "evaporite karst",
+            "anhydrite hydration",
+            "anhydrite swelling",
+            "hydration dome",
+            "optimisticeskaja",
+            "optymistychna",
+            "vena del gesso",
+            "spipola",
+            "yesos de sorbas",
+            "sorbas",
+            "parks ranch",
+        )
+    ):
+        return None
+
     # Keywords indicative of water domain
     water_keywords = [
         "water source",

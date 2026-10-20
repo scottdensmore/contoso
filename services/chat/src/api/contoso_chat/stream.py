@@ -67,6 +67,10 @@ from contoso_chat.glaciere_caving import (
     format_glaciere_caving_response,
     is_glaciere_caving_query,
 )
+from contoso_chat.gypsum_karst import (
+    format_gypsum_karst_response,
+    is_gypsum_karst_query,
+)
 from contoso_chat.jokulhlaup_escape import (
     format_jokulhlaup_escape_response,
     is_jokulhlaup_escape_query,
@@ -1391,6 +1395,25 @@ async def generate_talus_cold_trap_stream_events(
     yield "data: [DONE]\n\n"
 
 
+async def generate_gypsum_karst_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subterranean gypsum-karst dissolution maze & evaporite breakdown-hall queries."""
+    if not is_gypsum_karst_query(question):
+        return
 
+    gk_payload = dict(format_gypsum_karst_response(question))
+    answer = str(gk_payload.get("answer", ""))
+    event_name = str(gk_payload.get("action", "gypsum_karst_info"))
 
+    yield f"event: metadata\ndata: {json.dumps(gk_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
+    if event_name != "gypsum_karst_info":
+        yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
 
