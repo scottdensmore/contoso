@@ -11,6 +11,10 @@ from contoso_chat.bamboo_thicket import (
     format_bamboo_thicket_response,
     is_bamboo_thicket_query,
 )
+from contoso_chat.barnacle_ledge import (
+    format_barnacle_ledge_response,
+    is_barnacle_ledge_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -1335,6 +1339,30 @@ async def generate_jokulhlaup_escape_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_barnacle_ledge_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for coastal intertidal sabellariid worm-reef & barnacle-encrusted basalt ledge queries."""
+    if not is_barnacle_ledge_query(question):
+        return
+
+    bl_payload = dict(format_barnacle_ledge_response(question))
+    answer = str(bl_payload.get("answer", ""))
+    event_name = str(bl_payload.get("action", "barnacle_ledge_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(bl_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'barnacle_ledge_info': bl_payload, event_name: bl_payload})}\n\n"
+    if event_name != "barnacle_ledge_info":
+        yield f"data: {json.dumps({'event': 'barnacle_ledge_info', 'barnacle_ledge_info': bl_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
 

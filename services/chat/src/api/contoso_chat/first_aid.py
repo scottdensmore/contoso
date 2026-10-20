@@ -542,7 +542,40 @@ def detect_first_aid_intent(query: str) -> Optional[FirstAidIntent]:
     q_lower = query.lower()
 
     # Disregard wildlife, avalanche, and beacon queries handled by general safety module
-    if any(kw in q_lower for kw in ["bear", "cougar", "predator", "wildlife", "avalanche", "beacon check-in", "sbr-"]):
+    if any(
+        kw in q_lower
+        for kw in [
+            "bear",
+            "cougar",
+            "predator",
+            "wildlife",
+            "avalanche",
+            "beacon check-in",
+            "sbr-",
+            "barnacle ledge",
+            "barnacle-ledge",
+            "barnacle bench",
+            "barnacle shelf",
+            "barnacle-encrusted",
+            "barnacle encrusted",
+            "barnacle laceration",
+            "sabellariid",
+            "sabellaria",
+            "phragmatopoma",
+            "honeycomb worm",
+            "worm reef",
+            "worm-reef",
+            "cape perpetua",
+            "thor's well",
+            "thors well",
+            "duckpool",
+            "owen point",
+            "gooseneck barnacle",
+            "percebe",
+            "roncudo",
+            "basalt ledge",
+        ]
+    ):
         return None
 
     # Defer generic emergency protocol queries (without first aid context) to safety module
