@@ -421,6 +421,17 @@ def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
         "crampons",
         "packrafting",
         "nordic speedskating",
+        "bamboo thicket",
+        "bamboo-thicket",
+        "chusquea",
+        "sasa kurilensis",
+        "chishima-zasa",
+        "yushania",
+        "cerro kamuk",
+        "poroshiri-dake",
+        "culm",
+        "punji stump",
+        "montane bamboo",
     )
     if any(ex in q for ex in other_exclusions) and not has_explicit:
         return None

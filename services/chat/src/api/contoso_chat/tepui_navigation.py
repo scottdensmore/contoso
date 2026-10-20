@@ -670,6 +670,18 @@ _TEPUI_NAVIGATION_EXCLUSIONS: tuple[str, ...] = (
     "liberty bell",
     "smith rock",
     "trad climbing",
+    # Montane bamboo-thicket exclusions (bamboo_thicket.py)
+    "bamboo thicket",
+    "bamboo-thicket",
+    "chusquea",
+    "sasa kurilensis",
+    "chishima-zasa",
+    "yushania",
+    "cerro kamuk",
+    "poroshiri-dake",
+    "culm",
+    "punji stump",
+    "montane bamboo",
 )
 
 _EXPLICIT_TEPUI_PLATEAU_OVERRIDES: tuple[str, ...] = (

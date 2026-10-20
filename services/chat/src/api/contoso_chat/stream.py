@@ -7,6 +7,10 @@ from contoso_chat.aufeis_crossing import (
     format_aufeis_crossing_response,
     is_aufeis_crossing_query,
 )
+from contoso_chat.bamboo_thicket import (
+    format_bamboo_thicket_response,
+    is_bamboo_thicket_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -1254,3 +1258,27 @@ async def generate_cenote_halocline_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_bamboo_thicket_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for montane bamboo-thicket & cloud-forest ridge-crest bushwhacking queries."""
+    if not is_bamboo_thicket_query(question):
+        return
+
+    bt_payload = dict(format_bamboo_thicket_response(question))
+    answer = str(bt_payload.get("answer", ""))
+    event_name = str(bt_payload.get("action", "bamboo_thicket_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(bt_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bt_payload, event_name: bt_payload})}\n\n"
+    if event_name != "bamboo_thicket_info":
+        yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bt_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+

@@ -52,6 +52,10 @@ from contoso_chat.avalanche import (
     get_avalanche_zones,
     get_companion_rescue_protocol,
 )
+from contoso_chat.bamboo_thicket import (
+    detect_bamboo_thicket_intent,
+    format_bamboo_thicket_response,
+)
 from contoso_chat.beachcombing import (
     BeachcombingGearItemModel,
     BeachcombingRequest,
@@ -647,6 +651,9 @@ from contoso_chat.rock_glacier_navigation import (
 )
 from contoso_chat.routers.aufeis_crossing import (
     router as aufeis_crossing_router,
+)
+from contoso_chat.routers.bamboo_thicket import (
+    router as bamboo_thicket_router,
 )
 from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
 from contoso_chat.routers.canopy_bryophyte import (
@@ -1630,6 +1637,24 @@ app.include_router(
 logger.info(
     "Registered Subterranean Cenote Halocline & Anchialine Phreatic Cave-Passage Navigation router (/cenote-halocline, /api/cenote-halocline, /api/v1/cenote-halocline)"
 )
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/api/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/api/v1/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+logger.info(
+    "Registered Montane Bamboo-Thicket (Chusquea / Sasa) & Cloud-Forest Ridge-Crest Bushwhacking router (/bamboo-thicket, /api/bamboo-thicket, /api/v1/bamboo-thicket)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -1936,6 +1961,7 @@ async def create_response(request: ChatRequest):
             yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
             thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
             cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
+            bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2388,6 +2414,10 @@ async def create_response(request: ChatRequest):
                 ch_info = dict(format_cenote_halocline_response(request.question))
                 mock_payload["cenote_halocline_info"] = ch_info
                 mock_payload["answer"] = str(ch_info.get("answer", ""))
+            if bamboo_thicket_intent:
+                bt_info = dict(format_bamboo_thicket_response(request.question))
+                mock_payload["bamboo_thicket_info"] = bt_info
+                mock_payload["answer"] = str(bt_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -2912,6 +2942,7 @@ async def create_response_stream(request: ChatRequest):
                 yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
                 thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
                 cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
+                bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3428,6 +3459,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': ch_payload, event_name: ch_payload})}\n\n"
                     if event_name != "cenote_halocline_info":
                         yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': ch_payload})}\n\n"
+                if bamboo_thicket_intent:
+                    bt_payload = dict(format_bamboo_thicket_response(request.question))
+                    event_name = str(bt_payload.get("action", "bamboo_thicket_info"))
+                    yield f"event: metadata\ndata: {json.dumps(bt_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bt_payload, event_name: bt_payload})}\n\n"
+                    if event_name != "bamboo_thicket_info":
+                        yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bt_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4320,6 +4358,9 @@ async def create_response_stream(request: ChatRequest):
                 elif cenote_halocline_intent:
                     ch_resp = format_cenote_halocline_response(request.question)
                     mock_chunks = [str(ch_resp.get("answer", ""))]
+                elif bamboo_thicket_intent:
+                    bt_resp = format_bamboo_thicket_response(request.question)
+                    mock_chunks = [str(bt_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4724,6 +4765,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_yardang_navigation_intent(request.question)
                 or detect_thermokarst_tundra_intent(request.question)
                 or detect_cenote_halocline_intent(request.question)
+                or detect_bamboo_thicket_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

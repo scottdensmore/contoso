@@ -706,6 +706,21 @@ def is_paramo_navigation_query(query: str) -> bool:
             "drunken forest",
             "noatak",
             "bykovsky",
+            "bamboo thicket",
+            "bamboo-thicket",
+            "bamboo bushwhack",
+            "montane bamboo",
+            "chusquea",
+            "sasa kurilensis",
+            "chishima-zasa",
+            "yushania",
+            "guadua",
+            "cerro kamuk",
+            "poroshiri-dake",
+            "culm",
+            "punji stump",
+            "vilcabamba",
+            "rwenzori",
         )
     ):
         return False

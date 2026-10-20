@@ -665,6 +665,17 @@ def is_mangrove_labyrinth_query(query: str) -> bool:
             "intertidal cobble",
             "storm-berm cobble",
             "mucilage slip",
+            "bamboo thicket",
+            "bamboo-thicket",
+            "chusquea",
+            "sasa kurilensis",
+            "chishima-zasa",
+            "yushania",
+            "cerro kamuk",
+            "poroshiri-dake",
+            "culm",
+            "punji stump",
+            "montane bamboo",
         )
     ):
         return False
