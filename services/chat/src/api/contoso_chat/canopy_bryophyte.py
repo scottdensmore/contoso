@@ -604,6 +604,17 @@ def detect_canopy_bryophyte_intent(message: str) -> bool:
         "gran sabana",
         "brocchinia",
         "cyanobacteria biofilm",
+        "bamboo thicket",
+        "bamboo-thicket",
+        "chusquea",
+        "sasa kurilensis",
+        "chishima-zasa",
+        "yushania",
+        "cerro kamuk",
+        "poroshiri-dake",
+        "culm",
+        "punji stump",
+        "montane bamboo",
     ]
     if any(ex in q for ex in exclusions):
         return False

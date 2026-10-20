@@ -6,6 +6,10 @@ from contoso_chat.aufeis_crossing import (
     format_aufeis_crossing_response,
     is_aufeis_crossing_query,
 )
+from contoso_chat.bamboo_thicket import (
+    format_bamboo_thicket_response,
+    is_bamboo_thicket_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -744,3 +748,19 @@ def handle_cenote_halocline_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_bamboo_thicket_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format montane bamboo-thicket & cloud-forest ridge-crest bushwhacking intent in the cascade."""
+    if not is_bamboo_thicket_query(question):
+        return None
+    info = format_bamboo_thicket_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "bamboo_thicket_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

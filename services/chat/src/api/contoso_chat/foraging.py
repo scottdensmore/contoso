@@ -324,6 +324,17 @@ def detect_foraging_intent(query: str) -> Optional[ForagingIntent]:
             "fire ban",
             "lichen",
             "bryophyte",
+            "bamboo thicket",
+            "bamboo-thicket",
+            "chusquea",
+            "sasa kurilensis",
+            "chishima-zasa",
+            "yushania",
+            "cerro kamuk",
+            "poroshiri-dake",
+            "culm",
+            "punji stump",
+            "montane bamboo",
         ]
     ):
         return None

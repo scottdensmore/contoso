@@ -409,6 +409,17 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
         "star-dune",
         "mega-dune",
         "slip-face",
+        "bamboo thicket",
+        "bamboo-thicket",
+        "chusquea",
+        "sasa kurilensis",
+        "chishima-zasa",
+        "yushania",
+        "cerro kamuk",
+        "poroshiri-dake",
+        "culm",
+        "punji stump",
+        "montane bamboo",
     ]
     if any(k in q for k in salt_pan_exclusions):
         return None

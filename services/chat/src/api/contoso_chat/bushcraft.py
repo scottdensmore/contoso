@@ -348,6 +348,17 @@ def detect_bushcraft_intent(message: str) -> Optional[BushcraftIntent]:
             "slide alder",
             "cripplebrush",
             "timberline thicket",
+            "bamboo thicket",
+            "bamboo-thicket",
+            "chusquea",
+            "sasa kurilensis",
+            "chishima-zasa",
+            "yushania",
+            "cerro kamuk",
+            "poroshiri-dake",
+            "culm",
+            "punji stump",
+            "montane bamboo",
         ]
     ):
         return None
