@@ -436,6 +436,51 @@ def detect_lnt_intent(query: str) -> Optional[LntIntent]:
     """Detects inquiries regarding Leave No Trace principles, cathole depths, WAG bags, bear canisters, and waste rules."""
     q_lower = query.lower()
 
+    if any(
+        excl in q_lower
+        for excl in [
+            "subantarctic",
+            "poa flabellata",
+            "fortuna bay",
+            "south georgia",
+            "macquarie island",
+            "featherbed",
+            "enderby island",
+            "auckland islands",
+            "kerguelen",
+            "azorella",
+            "katabatic",
+            "williwaw",
+            "seal wallow",
+            "fur seal",
+            "elephant seal",
+            "virkon",
+            "barnacle ledge",
+            "barnacle-ledge",
+            "barnacle bench",
+            "barnacle shelf",
+            "barnacle-encrusted",
+            "barnacle encrusted",
+            "barnacle laceration",
+            "sabellariid",
+            "sabellaria",
+            "phragmatopoma",
+            "honeycomb worm",
+            "worm reef",
+            "worm-reef",
+            "cape perpetua",
+            "thor's well",
+            "thors well",
+            "duckpool",
+            "owen point",
+            "gooseneck barnacle",
+            "percebe",
+            "roncudo",
+            "basalt ledge",
+        ]
+    ):
+        return None
+
     lnt_triggers = [
         "leave no trace", "lnt", "principles of lnt", "7 principles", "seven principles",
         "outdoor ethics", "cathole", "cat hole", "catholes", "cat holes",

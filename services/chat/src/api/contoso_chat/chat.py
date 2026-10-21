@@ -2,6 +2,18 @@
 
 from typing import Any, Optional
 
+from contoso_chat.aufeis_crossing import (
+    format_aufeis_crossing_response,
+    is_aufeis_crossing_query,
+)
+from contoso_chat.bamboo_thicket import (
+    format_bamboo_thicket_response,
+    is_bamboo_thicket_query,
+)
+from contoso_chat.barnacle_ledge import (
+    format_barnacle_ledge_response,
+    is_barnacle_ledge_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -22,6 +34,14 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cenote_halocline import (
+    format_cenote_halocline_response,
+    is_cenote_halocline_query,
+)
+from contoso_chat.cobble_spit_trekking import (
+    format_cobble_spit_trekking_response,
+    is_cobble_spit_trekking_query,
+)
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
@@ -34,9 +54,41 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.flash_flood_slot import (
+    format_flash_flood_slot_response,
+    is_flash_flood_slot_query,
+)
 from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
+)
+from contoso_chat.glaciere_caving import (
+    format_glaciere_caving_response,
+    is_glaciere_caving_query,
+)
+from contoso_chat.gypsum_karst import (
+    format_gypsum_karst_response,
+    is_gypsum_karst_query,
+)
+from contoso_chat.jokulhlaup_escape import (
+    format_jokulhlaup_escape_response,
+    is_jokulhlaup_escape_query,
+)
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
+from contoso_chat.krummholz_bushwhack import (
+    format_krummholz_bushwhack_response,
+    is_krummholz_bushwhack_query,
+)
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
+from contoso_chat.mangrove_labyrinth import (
+    format_mangrove_labyrinth_response,
+    is_mangrove_labyrinth_query,
 )
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
@@ -54,21 +106,81 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.paramo_navigation import (
+    format_paramo_navigation_response,
+    is_paramo_navigation_query,
+)
+from contoso_chat.penitentes_navigation import (
+    format_penitentes_navigation_response,
+    is_penitentes_navigation_query,
+)
 from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
+)
+from contoso_chat.rock_glacier_navigation import (
+    format_rock_glacier_navigation_response,
+    is_rock_glacier_navigation_query,
+)
+from contoso_chat.salar_pressure_ridge import (
+    format_salar_pressure_ridge_response,
+    is_salar_pressure_ridge_query,
+)
+from contoso_chat.salt_pan_navigation import (
+    format_salt_pan_navigation_response,
+    is_salt_pan_navigation_query,
 )
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.sandur_crossing import (
+    format_sandur_crossing_response,
+    is_sandur_crossing_query,
+)
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
+from contoso_chat.sea_cave_pneumatics import (
+    format_sea_cave_pneumatics_response,
+    is_sea_cave_pneumatics_query,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
 )
+from contoso_chat.solfatara_navigation import (
+    format_solfatara_navigation_response,
+    is_solfatara_navigation_query,
+)
+from contoso_chat.talus_cold_trap import (
+    format_talus_cold_trap_response,
+    is_talus_cold_trap_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
+)
+from contoso_chat.tephra_navigation import (
+    format_tephra_navigation_response,
+    is_tephra_navigation_query,
+)
+from contoso_chat.tepui_navigation import (
+    format_tepui_navigation_response,
+    is_tepui_navigation_query,
+)
+from contoso_chat.thermokarst_tundra import (
+    format_thermokarst_tundra_response,
+    is_thermokarst_tundra_query,
+)
+from contoso_chat.tiankeng_descent import (
+    format_tiankeng_descent_response,
+    is_tiankeng_descent_query,
+)
+from contoso_chat.tsingy_labyrinth import (
+    format_tsingy_labyrinth_response,
+    is_tsingy_labyrinth_query,
 )
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
@@ -77,6 +189,14 @@ from contoso_chat.tundra_lichen import (
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
+)
+from contoso_chat.tussock_headland import (
+    format_tussock_headland_response,
+    is_tussock_headland_query,
+)
+from contoso_chat.yardang_navigation import (
+    format_yardang_navigation_response,
+    is_yardang_navigation_query,
 )
 from contoso_chat.zipline import (
     detect_zipline_intent,
@@ -179,6 +299,7 @@ def handle_falconry_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
 def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format turtle patrol intent in the cascade."""
     intent = detect_turtle_patrol_intent(question)
@@ -190,6 +311,7 @@ def handle_turtle_patrol_intent(question: str) -> Optional[dict[str, Any]]:
         "answer": formatted.get("answer", str(formatted)),
     }
 
+
 def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format night via ferrata intent in the cascade."""
     intent = detect_night_via_ferrata_intent(question)
@@ -200,6 +322,8 @@ def handle_night_via_ferrata_intent(question: str) -> Optional[dict[str, Any]]:
         "night_via_ferrata_info": formatted.get("night_via_ferrata_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
+
 def handle_canyon_bouldering_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format wilderness canyon bouldering intent in the cascade."""
     intent = detect_canyon_bouldering_intent(question)
@@ -233,6 +357,7 @@ def handle_bog_shoeing_intent(question: str) -> Optional[dict[str, Any]]:
         "bog_shoeing_info": formatted.get("bog_shoeing_info"),
         "answer": formatted.get("answer", str(formatted)),
     }
+
 
 def handle_crevasse_pulk_intent(question: str) -> Optional[dict[str, Any]]:
     """Detect and format crevasse pulk intent in the cascade."""
@@ -308,4 +433,428 @@ def handle_glacier_ski_traverse_intent(question: str) -> Optional[dict[str, Any]
     return {
         "glacier_ski_traverse_info": formatted.get("glacier_ski_traverse_info"),
         "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_scree_running_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format scree running intent in the cascade."""
+    if not detect_scree_running_intent(question):
+        return None
+    formatted = format_scree_running_response("scree_running", question)
+    return {
+        "scree_running_info": formatted.get("scree_running_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_lava_tube_biospeleology_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format lava tube biospeleology intent in the cascade."""
+    if not detect_lava_tube_biospeleology_intent(question):
+        return None
+    formatted = format_lava_tube_biospeleology_response("lava_tube_biospeleology", question)
+    return {
+        "lava_tube_biospeleology_info": formatted.get("lava_tube_biospeleology_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_kelp_freediving_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format kelp freediving intent in the cascade."""
+    if not detect_kelp_freediving_intent(question):
+        return None
+    formatted = format_kelp_freediving_response("kelp_freediving", question)
+    return {
+        "kelp_freediving_info": formatted.get("kelp_freediving_info"),
+        "answer": formatted.get("answer", str(formatted)),
+    }
+
+
+def handle_penitentes_navigation_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format penitentes navigation intent in the cascade."""
+    if not is_penitentes_navigation_query(question):
+        return None
+    answer, info = format_penitentes_navigation_response(question)
+    return {
+        "penitentes_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_solfatara_navigation_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format solfatara navigation intent in the cascade."""
+    if not is_solfatara_navigation_query(question):
+        return None
+    answer, info = format_solfatara_navigation_response(question)
+    return {
+        "solfatara_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_aufeis_crossing_intent(question: str) -> Optional[dict[str, Any]]:
+    """Detect and format aufeis crossing intent in the cascade."""
+    if not is_aufeis_crossing_query(question):
+        return None
+    answer, info = format_aufeis_crossing_response(question)
+    return {
+        "aufeis_crossing_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_salt_pan_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format salt pan navigation intent in the cascade."""
+    if not is_salt_pan_navigation_query(question):
+        return None
+    answer, info = format_salt_pan_navigation_response(question)
+    return {
+        "salt_pan_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_rock_glacier_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format rock glacier navigation intent in the cascade."""
+    if not is_rock_glacier_navigation_query(question):
+        return None
+    answer, info = format_rock_glacier_navigation_response(question)
+    return {
+        "rock_glacier_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_sea_cave_pneumatics_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format sea cave pneumatics intent in the cascade."""
+    if not is_sea_cave_pneumatics_query(question):
+        return None
+    answer, info = format_sea_cave_pneumatics_response(question)
+    return {
+        "sea_cave_pneumatics_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_mangrove_labyrinth_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format mangrove labyrinth intent in the cascade."""
+    if not is_mangrove_labyrinth_query(question):
+        return None
+    answer, info = format_mangrove_labyrinth_response(question)
+    return {
+        "mangrove_labyrinth_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_paramo_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format paramo navigation intent in the cascade."""
+    if not is_paramo_navigation_query(question):
+        return None
+    answer, info = format_paramo_navigation_response(question)
+    return {
+        "paramo_navigation_info": info,
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tephra_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format tephra navigation intent in the cascade."""
+    if not is_tephra_navigation_query(question):
+        return None
+    info = format_tephra_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tephra_navigation_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_glaciere_caving_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format glaciere caving intent in the cascade."""
+    if not is_glaciere_caving_query(question):
+        return None
+    info = format_glaciere_caving_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "glaciere_caving_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_cobble_spit_trekking_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format cobble spit trekking intent in the cascade."""
+    if not is_cobble_spit_trekking_query(question):
+        return None
+    info = format_cobble_spit_trekking_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "cobble_spit_trekking_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_flash_flood_slot_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format slot-canyon flash-flood intent in the cascade."""
+    if not is_flash_flood_slot_query(question):
+        return None
+    info = format_flash_flood_slot_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "flash_flood_slot_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_krummholz_bushwhack_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subalpine krummholz bushwhack intent in the cascade."""
+    if not is_krummholz_bushwhack_query(question):
+        return None
+    info = format_krummholz_bushwhack_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "krummholz_bushwhack_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_sandur_crossing_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format glacial outwash braided-river sandur crossing intent in the cascade."""
+    if not is_sandur_crossing_query(question):
+        return None
+    info = format_sandur_crossing_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "sandur_crossing_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tiankeng_descent_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format karst tiankeng & vertical cloud-forest rim descent intent in the cascade."""
+    if not is_tiankeng_descent_query(question):
+        return None
+    info = format_tiankeng_descent_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tiankeng_descent_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tussock_headland_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subantarctic tussock-grass peat bog & katabatic headland intent in the cascade."""
+    if not is_tussock_headland_query(question):
+        return None
+    info = format_tussock_headland_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tussock_headland_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tsingy_labyrinth_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format tropical tsingy pinnacle karst labyrinth & razor-limestone arête intent in the cascade."""
+    if not is_tsingy_labyrinth_query(question):
+        return None
+    info = format_tsingy_labyrinth_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tsingy_labyrinth_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_tepui_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format table-mountain quartzite tepui & sandstone fissure navigation intent in the cascade."""
+    if not is_tepui_navigation_query(question):
+        return None
+    info = format_tepui_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "tepui_navigation_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_yardang_navigation_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format aeolian yardang & mega-dune slip-face star-dune desert navigation intent in the cascade."""
+    if not is_yardang_navigation_query(question):
+        return None
+    info = format_yardang_navigation_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "yardang_navigation_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_thermokarst_tundra_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format Arctic polygon-tundra ice-wedge trough & thermokarst thaw-slump navigation intent in the cascade."""
+    if not is_thermokarst_tundra_query(question):
+        return None
+    info = format_thermokarst_tundra_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "thermokarst_tundra_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_cenote_halocline_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subterranean cenote halocline & anchialine phreatic cave-passage navigation intent in the cascade."""
+    if not is_cenote_halocline_query(question):
+        return None
+    info = format_cenote_halocline_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "cenote_halocline_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_bamboo_thicket_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format montane bamboo-thicket & cloud-forest ridge-crest bushwhacking intent in the cascade."""
+    if not is_bamboo_thicket_query(question):
+        return None
+    info = format_bamboo_thicket_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "bamboo_thicket_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_salar_pressure_ridge_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format high-altitude salar brine-pool & polygonal halite pressure-ridge trekking intent in the cascade."""
+    if not is_salar_pressure_ridge_query(question):
+        return None
+    info = format_salar_pressure_ridge_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "salar_pressure_ridge_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_jokulhlaup_escape_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subglacial jökulhlaup ice-dammed lake outburst & proglacial canyon escape intent in the cascade."""
+    if not is_jokulhlaup_escape_query(question):
+        return None
+    info = format_jokulhlaup_escape_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "jokulhlaup_escape_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_barnacle_ledge_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format coastal intertidal sabellariid worm-reef & barnacle-encrusted basalt ledge intent in the cascade."""
+    if not is_barnacle_ledge_query(question):
+        return None
+    info = format_barnacle_ledge_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "barnacle_ledge_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_talus_cold_trap_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subalpine boulder-talus air-draft ice cave & cold-trap block-field intent in the cascade."""
+    if not is_talus_cold_trap_query(question):
+        return None
+    info = format_talus_cold_trap_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "talus_cold_trap_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_gypsum_karst_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format subterranean gypsum-karst dissolution maze & evaporite breakdown-hall intent in the cascade."""
+    if not is_gypsum_karst_query(question):
+        return None
+    info = format_gypsum_karst_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "gypsum_karst_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
     }

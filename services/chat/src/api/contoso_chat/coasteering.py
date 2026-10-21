@@ -403,6 +403,98 @@ def detect_coasteering_intent(message: str) -> Optional[CoasteeringIntent]:
     if any(rx in q for rx in climbing_exclusions):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against Kelp forest freediving (kelp_freediving.py)
+    kelp_freediving_exclusions = [
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "kelp free diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
+        "stipe entanglement",
+        "great african seaforest",
+    ]
+    if any(kx in q for kx in kelp_freediving_exclusions):
+        return None
+
+    # CRITICAL DISAMBIGUATION: Strictly guard against Sea-cave pneumatics & blowholes (sea_cave_pneumatics.py)
+    sea_cave_pneumatics_exclusions = [
+        "blowhole",
+        "sea-cave",
+        "surge channel",
+        "pneumatic wave",
+        "clapotis",
+        "fingal",
+        "devils punchbowl",
+        "devil's punchbowl",
+        "air compression blast",
+        "littoral cave",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
+        "subantarctic",
+        "poa flabellata",
+        "fortuna bay",
+        "south georgia",
+        "macquarie island",
+        "featherbed",
+        "enderby island",
+        "auckland islands",
+        "kerguelen",
+        "azorella",
+        "katabatic",
+        "williwaw",
+        "seal wallow",
+        "barnacle ledge",
+        "barnacle-ledge",
+        "barnacle bench",
+        "barnacle-encrusted",
+        "barnacle encrusted",
+        "barnacle laceration",
+        "sabellariid",
+        "sabellaria",
+        "phragmatopoma",
+        "honeycomb worm",
+        "worm reef",
+        "worm-reef",
+        "cape perpetua",
+        "thor's well",
+        "thors well",
+        "duckpool",
+        "owen point",
+        "thrasher cove",
+        "gooseneck barnacle",
+        "percebe",
+        "roncudo",
+        "cabo vilan",
+        "cabo vilán",
+        "cabo percebes",
+        "costa da morte",
+        "basalt ledge",
+        "basalt bench",
+        "porphyra",
+    ]
+    if any(scx in q for scx in sea_cave_pneumatics_exclusions):
+        return None
+    if "sea cave" in q and "la jolla" not in q:
+        return None
+
     # Coasteering keywords
     coasteering_keywords = [
         "coasteering",

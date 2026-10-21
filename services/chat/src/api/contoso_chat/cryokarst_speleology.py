@@ -449,11 +449,7 @@ def get_cryokarst_sites(
     if not conduit_type:
         return all_sites
     norm = conduit_type.strip().lower()
-    return [
-        s
-        for s in all_sites
-        if s.conduit_type.lower() == norm
-    ]
+    return [s for s in all_sites if s.conduit_type.lower() == norm]
 
 
 def get_cryokarst_site(site_id: str) -> Optional[CryokarstSite]:
@@ -478,7 +474,11 @@ def calculate_cryokarst_dynamics(query: CryokarstDynamicsQuery) -> CryokarstDyna
     anchor_sys = str(query.anchor_system).lower()
     if CryokarstAnchorSystem.STANDARD_17CM.value in anchor_sys or "17cm" in anchor_sys:
         anchor_mult = 1.4
-    elif CryokarstAnchorSystem.V_THREAD_ABALAKOV.value in anchor_sys or "abalakov" in anchor_sys or "v_thread" in anchor_sys:
+    elif (
+        CryokarstAnchorSystem.V_THREAD_ABALAKOV.value in anchor_sys
+        or "abalakov" in anchor_sys
+        or "v_thread" in anchor_sys
+    ):
         anchor_mult = 0.65
     else:
         anchor_mult = 1.0
@@ -522,10 +522,7 @@ def calculate_cryokarst_dynamics(query: CryokarstDynamicsQuery) -> CryokarstDyna
             "EMERGENCY RETREAT PROTOCOL: Evacuate conduit immediately. Ascend vertical moulin shafts before afternoon diurnal solar surge "
             "to prevent entrapment from jokulhlaup outburst or hydraulic dam breach."
         )
-    elif (
-        jokulhlaup_outburst_risk_index >= 0.40
-        or query.ambient_ice_temp_c > -1.0
-    ):
+    elif jokulhlaup_outburst_risk_index >= 0.40 or query.ambient_ice_temp_c > -1.0:
         safety_triage = CryokarstSafetyTriage.CAUTION_DIURNAL_MELT_MONITORING.value
         anchor_rigging_advisory = (
             "CAUTION: Moderate creep displacement and active solar ablation. Inspect anchor collar melt rings hourly. "
@@ -597,11 +594,63 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "palmer-glacier-fumarole-ice-caves",
     ]
 
-    is_explicit_cryokarst = any(k in q for k in cryokarst_keywords) or any(sm in q for sm in site_matches)
+    is_explicit_cryokarst = any(k in q for k in cryokarst_keywords) or any(
+        sm in q for sm in site_matches
+    )
 
     exclusions = [
         "order #",
         "refund",
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+        "cenote",
+        "cenotes",
+        "halocline",
+        "anchialine",
+        "schlieren",
+        "ox bel ha",
+        "ox-bel-ha",
+        "angelita",
+        "sac actun",
+        "sac-actun",
+        "pet cembalo",
+        "dan's cave",
+        "dans cave",
+        "sawmill sink",
+        "abaco",
+        "meromictic",
+        "tannic",
+        "chemocline",
+        "pycnocline",
+        "blue hole",
+        "gypsum karst",
+        "gypsum-karst",
+        "gypsum_karst",
+        "gypsum maze",
+        "evaporite karst",
+        "anhydrite hydration",
+        "hydration dome",
+        "optimisticeskaja",
+        "optymistychna",
+        "ozerna",
+        "podolia",
+        "vena del gesso",
+        "spipola",
+        "acquafredda",
+        "yesos de sorbas",
+        "sorbas",
+        "covadura",
+        "parks ranch",
+        "parks-ranch",
+        "swallowtail selenite",
         "return label",
         "shipping tracking",
         "burro",
@@ -678,6 +727,43 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "spearhead traverse",
         "bagley icefield",
         "berner oberland",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
 
     # If it is not explicitly about cryokarst / glacier caves, apply all exclusions
@@ -686,7 +772,7 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
             return False
         return False
 
-    # When explicit cryokarst is present, still reject non-chat / order ecommerce queries
+    # When explicit cryokarst is present, still reject non-chat / order ecommerce queries or lava tube biospeleology
     ecommerce_exclusions = [
         "order #",
         "refund",
@@ -694,6 +780,106 @@ def detect_cryokarst_speleology_intent(message: str) -> bool:
         "shipping tracking",
         "rentals",
         "rental",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "ice filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "tennengebirge",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "candelaria",
+        "lofthellir",
+        "hoarfrost ceiling",
+        "firn-plug",
+        "jokulhlaup escape",
+        "jökulhlaup escape",
+        "jokulhlaup-escape",
+        "jokulhlaup_escape",
+        "grimsvotn",
+        "grímsvötn",
+        "skeidararjokull",
+        "skeiðarárjökull",
+        "vatnajokull",
+        "vatnajökull",
+        "suicide basin",
+        "klesteroa",
+        "mendenhall",
+        "lago cachet",
+        "cachet ii",
+        "glaciar colonia",
+        "kyagar",
+        "shaksgam",
+        "karakoram",
+        "ice-dammed",
+        "ice dammed",
+        "glacial lake outburst",
+        "glof",
+        "r-channel",
+        "röthlisberger",
+        "rothlisberger",
+        "ice dam drawdown",
+        "proglacial conductivity",
+        "subglacial tremor",
+        "proglacial canyon",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False
@@ -824,9 +1010,7 @@ def format_cryokarst_speleology_response(
             intent_obj = CryokarstSpeleologyIntent(action="gear_checklist")
         elif action in ("get_site", "site_detail", "detail"):
             site_id = (
-                message
-                if isinstance(message, str) and message in DEFAULT_CRYOKARST_SITES
-                else None
+                message if isinstance(message, str) and message in DEFAULT_CRYOKARST_SITES else None
             )
             intent_obj = CryokarstSpeleologyIntent(action="get_site", site_id=site_id)
         else:
@@ -924,8 +1108,7 @@ def format_cryokarst_speleology_response(
         else get_cryokarst_sites(conduit_type=intent_obj.conduit_type)
     )
     summary_str = "; ".join(
-        f"{s.title} ({s.region}, {s.depth_meters}m, conduit: {s.conduit_type})"
-        for s in sites
+        f"{s.title} ({s.region}, {s.depth_meters}m, conduit: {s.conduit_type})" for s in sites
     )
     answer = (
         f"Contoso Alpine Glacial Crevasse Ice Cave Exploration & Cryokarst Speleology Catalog ({len(sites)} sites): {summary_str}. "

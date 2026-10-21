@@ -339,8 +339,104 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "sled haul",
         "glacial sledging",
         "haul shaft",
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "spruce trap",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
     ]
     if any(ex in q_norm for ex in pulk_exclusions):
+        return None
+
+    scree_running_exclusions = [
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
+        "tephra",
+        "lapilli",
+        "ash fall",
+        "ashfall",
+        "volcanic ash",
+        "scoria scree",
+        "pumice scree",
+        "cristobalite",
+        "mount yasur",
+        "acatenango",
+        "tarawera",
+        "chaiten",
+    ]
+    if any(ex in q_norm for ex in scree_running_exclusions):
+        return None
+
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
+    ]
+    if any(ex in q or ex in q_norm for ex in penitentes_exclusions):
+        return None
+
+    rock_glacier_exclusions = [
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
+    ]
+    if any(ex in q or ex in q_norm for ex in rock_glacier_exclusions):
         return None
 
     # Disambiguation guards:

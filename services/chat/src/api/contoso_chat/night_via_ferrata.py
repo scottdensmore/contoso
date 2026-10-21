@@ -324,6 +324,19 @@ def detect_night_via_ferrata_intent(query: str) -> Optional[NightViaFerrataInten
         "sea turtle",
         "rentals",
         "rental",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
     ]
     if any(ex in q for ex in exclusions):
         return None

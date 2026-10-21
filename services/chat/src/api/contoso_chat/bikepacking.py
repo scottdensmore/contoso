@@ -303,6 +303,21 @@ def detect_bikepacking_intent(query: str) -> Optional[BikepackingIntent]:
     q = query.lower()
     q_norm = q.replace("-", " ")
 
+    salt_pan_exclusions = [
+        "salt pan",
+        "salt flat",
+        "salar",
+        "playa crust",
+        "halite crust",
+        "sebkha",
+        "chott",
+        "makgadikgadi",
+        "uyuni",
+        "fata morgana",
+    ]
+    if any(ex in q for ex in salt_pan_exclusions):
+        return None
+
     # Explicit triggers required to prevent hijacking general outdoor inquiries
     triggers = [
         "bikepacking",

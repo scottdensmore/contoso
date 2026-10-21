@@ -392,6 +392,18 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
         "moulin",
         "ice cave",
         "subglacial",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
     ]
     if any(ex in q for ex in cryokarst_exclusions):
         return None
@@ -411,6 +423,81 @@ def detect_glacier_intent(query: str) -> Optional[GlacierIntent]:
         "berner oberland",
     ]
     if any(ex in q for ex in glacier_ski_traverse_exclusions):
+        return None
+
+    # High-alpine snowfield sun-cup & penitentes crampon navigation exclusions
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+    ]
+    if any(ex in q for ex in penitentes_exclusions):
+        return None
+
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(ex in q for ex in aufeis_exclusions):
+        return None
+
+    rock_glacier_exclusions = [
+        "rock glacier",
+        "rock-glacier",
+        "periglacial",
+        "blockfield",
+        "felsenmeer",
+        "interstitial ice",
+        "active layer thaw",
+        "glaciar de escombros",
+        "val muragl",
+        "dos lenguas",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
+        "sheridan glacier",
+        "jokulhlaup",
+        "jökulhlaup",
+        "grimsvotn",
+        "grímsvötn",
+        "skeidararjokull",
+        "skeiðarárjökull",
+        "vatnajokull",
+        "vatnajökull",
+        "suicide basin",
+        "klesteroa",
+        "mendenhall",
+        "lago cachet",
+        "glaciar colonia",
+        "kyagar",
+        "shaksgam",
+        "ice-dammed",
+        "ice dammed",
+        "glacial lake outburst",
+        "glof",
+        "r-channel",
+        "proglacial canyon",
+        "subglacial outburst",
+    ]
+    if any(ex in q for ex in rock_glacier_exclusions):
         return None
 
     # Glacier navigation keywords

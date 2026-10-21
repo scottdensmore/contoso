@@ -295,6 +295,35 @@ def get_mandatory_gear_requirements() -> list[MandatoryGearRequirement]:
 def detect_trail_running_intent(query: str) -> Optional[TrailRunningIntent]:
     q_lower = query.lower()
 
+    scree_running_exclusions = [
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
+        "cobble spit",
+        "shingle spit",
+        "kelp-wrack",
+        "kelp wrack",
+        "boulder reef",
+        "dungeness spit",
+        "chesil beach",
+        "nelson boulder bank",
+        "farewell spit",
+        "intertidal cobble",
+        "storm-berm cobble",
+        "mucilage slip",
+    ]
+    if any(ex in q_lower for ex in scree_running_exclusions):
+        return None
+
     # Trail running specific keywords
     trail_running_keywords = [
         r"\btrail\s+run(?:ning)?\b",

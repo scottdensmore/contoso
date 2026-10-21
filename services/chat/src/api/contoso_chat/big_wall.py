@@ -329,6 +329,31 @@ def detect_big_wall_intent(message: str) -> Optional[BigWallIntent]:
     if any(e in q for e in ecommerce_exclusions):
         return None
 
+    # 1b. Karst tiankeng giant collapse sinkhole descent
+    tiankeng_exclusions = [
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "pseudokarst",
+    ]
+    if any(tx in q for tx in tiankeng_exclusions):
+        return None
+
     # 2. Gym climbing & indoor bouldering
     gym_exclusions = [
         "bouldering gym",

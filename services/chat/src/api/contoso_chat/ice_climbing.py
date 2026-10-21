@@ -435,6 +435,35 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
         "snow picket",
         "z-pulley",
         "z pulley",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "balch ice",
+        "balch-ice",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
     ]
     if any(gx in q for gx in glacier_mountaineering_exclusions):
         return None
@@ -449,6 +478,30 @@ def detect_ice_climbing_intent(message: str) -> Optional[IceClimbingIntent]:
         "type k",
     ]
     if any(vx in q for vx in via_ferrata_exclusions):
+        return None
+
+    penitentes_exclusions = [
+        "penitentes",
+        "nieves penitentes",
+        "sun-cup",
+        "suncup",
+        "sun cup",
+        "ablation blade",
+        "ablation spire",
+    ]
+    if any(px in q for px in penitentes_exclusions):
+        return None
+
+    aufeis_exclusions = [
+        "aufeis",
+        "naled",
+        "overflow ice",
+        "frost blister",
+        "icing sheet",
+        "ulakhan-taryn",
+        "candle ice",
+    ]
+    if any(ax in q for ax in aufeis_exclusions):
         return None
 
     # Waterfall ice climbing keywords

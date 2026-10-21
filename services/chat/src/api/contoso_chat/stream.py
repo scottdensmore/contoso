@@ -3,6 +3,18 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.aufeis_crossing import (
+    format_aufeis_crossing_response,
+    is_aufeis_crossing_query,
+)
+from contoso_chat.bamboo_thicket import (
+    format_bamboo_thicket_response,
+    is_bamboo_thicket_query,
+)
+from contoso_chat.barnacle_ledge import (
+    format_barnacle_ledge_response,
+    is_barnacle_ledge_query,
+)
 from contoso_chat.bog_shoeing import (
     detect_bog_shoeing_intent,
     format_bog_shoeing_response,
@@ -23,6 +35,14 @@ from contoso_chat.cave_mineralogy import (
     detect_cave_mineralogy_intent,
     format_cave_mineralogy_response,
 )
+from contoso_chat.cenote_halocline import (
+    format_cenote_halocline_response,
+    is_cenote_halocline_query,
+)
+from contoso_chat.cobble_spit_trekking import (
+    format_cobble_spit_trekking_response,
+    is_cobble_spit_trekking_query,
+)
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
     format_crevasse_pulk_response,
@@ -35,9 +55,41 @@ from contoso_chat.falconry import (
     detect_falconry_intent,
     format_falconry_response,
 )
+from contoso_chat.flash_flood_slot import (
+    format_flash_flood_slot_response,
+    is_flash_flood_slot_query,
+)
 from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
+)
+from contoso_chat.glaciere_caving import (
+    format_glaciere_caving_response,
+    is_glaciere_caving_query,
+)
+from contoso_chat.gypsum_karst import (
+    format_gypsum_karst_response,
+    is_gypsum_karst_query,
+)
+from contoso_chat.jokulhlaup_escape import (
+    format_jokulhlaup_escape_response,
+    is_jokulhlaup_escape_query,
+)
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
+from contoso_chat.krummholz_bushwhack import (
+    format_krummholz_bushwhack_response,
+    is_krummholz_bushwhack_query,
+)
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
+from contoso_chat.mangrove_labyrinth import (
+    format_mangrove_labyrinth_response,
+    is_mangrove_labyrinth_query,
 )
 from contoso_chat.mudflat_trekking import (
     detect_mudflat_intent,
@@ -55,21 +107,81 @@ from contoso_chat.pack_llama import (
     detect_pack_llama_intent,
     format_pack_llama_response,
 )
+from contoso_chat.paramo_navigation import (
+    format_paramo_navigation_response,
+    is_paramo_navigation_query,
+)
+from contoso_chat.penitentes_navigation import (
+    format_penitentes_navigation_response,
+    is_penitentes_navigation_query,
+)
 from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
+)
+from contoso_chat.rock_glacier_navigation import (
+    format_rock_glacier_navigation_response,
+    is_rock_glacier_navigation_query,
+)
+from contoso_chat.salar_pressure_ridge import (
+    format_salar_pressure_ridge_response,
+    is_salar_pressure_ridge_query,
+)
+from contoso_chat.salt_pan_navigation import (
+    format_salt_pan_navigation_response,
+    is_salt_pan_navigation_query,
 )
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
 )
+from contoso_chat.sandur_crossing import (
+    format_sandur_crossing_response,
+    is_sandur_crossing_query,
+)
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
+from contoso_chat.sea_cave_pneumatics import (
+    format_sea_cave_pneumatics_response,
+    is_sea_cave_pneumatics_query,
+)
 from contoso_chat.slickrock_burro import (
     detect_slickrock_burro_intent,
     format_slickrock_burro_response,
 )
+from contoso_chat.solfatara_navigation import (
+    format_solfatara_navigation_response,
+    is_solfatara_navigation_query,
+)
+from contoso_chat.talus_cold_trap import (
+    format_talus_cold_trap_response,
+    is_talus_cold_trap_query,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
+)
+from contoso_chat.tephra_navigation import (
+    format_tephra_navigation_response,
+    is_tephra_navigation_query,
+)
+from contoso_chat.tepui_navigation import (
+    format_tepui_navigation_response,
+    is_tepui_navigation_query,
+)
+from contoso_chat.thermokarst_tundra import (
+    format_thermokarst_tundra_response,
+    is_thermokarst_tundra_query,
+)
+from contoso_chat.tiankeng_descent import (
+    format_tiankeng_descent_response,
+    is_tiankeng_descent_query,
+)
+from contoso_chat.tsingy_labyrinth import (
+    format_tsingy_labyrinth_response,
+    is_tsingy_labyrinth_query,
 )
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
@@ -78,6 +190,14 @@ from contoso_chat.tundra_lichen import (
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
+)
+from contoso_chat.tussock_headland import (
+    format_tussock_headland_response,
+    is_tussock_headland_query,
+)
+from contoso_chat.yardang_navigation import (
+    format_yardang_navigation_response,
+    is_yardang_navigation_query,
 )
 from contoso_chat.zipline import (
     detect_zipline_intent,
@@ -292,6 +412,7 @@ async def generate_falconry_stream_events(question: str) -> AsyncGenerator[str, 
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events turtle_patrol_lookup and turtle_patrol_calculated when turtle patrol intent is handled."""
     intent = detect_turtle_patrol_intent(question)
@@ -317,6 +438,7 @@ async def generate_turtle_patrol_stream_events(question: str) -> AsyncGenerator[
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events night_via_ferrata_lookup and night_via_ferrata_calculated when night via ferrata intent is handled."""
     intent = detect_night_via_ferrata_intent(question)
@@ -341,6 +463,8 @@ async def generate_night_via_ferrata_stream_events(question: str) -> AsyncGenera
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' '})}\n\n"
     yield "data: [DONE]\n\n"
+
+
 async def generate_canyon_bouldering_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events canyon_bouldering_lookup and canyon_bouldering_calculated when canyon bouldering intent is handled."""
     intent = detect_canyon_bouldering_intent(question)
@@ -403,7 +527,8 @@ async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[st
 
     event_name = (
         "bog_shoeing_calculated"
-        if isinstance(bog_payload, dict) and bog_payload.get("action") in ("calculate", "calculate_flotation")
+        if isinstance(bog_payload, dict)
+        and bog_payload.get("action") in ("calculate", "calculate_flotation")
         else "bog_shoeing_lookup"
     )
 
@@ -417,6 +542,7 @@ async def generate_bog_shoeing_stream_events(question: str) -> AsyncGenerator[st
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events crevasse_pulk_lookup and crevasse_pulk_calculated when crevasse pulk intent is handled."""
     if not detect_crevasse_pulk_intent(question):
@@ -427,7 +553,8 @@ async def generate_crevasse_pulk_stream_events(question: str) -> AsyncGenerator[
 
     event_name = (
         "crevasse_pulk_calculated"
-        if isinstance(pulk_payload, dict) and pulk_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(pulk_payload, dict)
+        and pulk_payload.get("action") in ("calculate", "calculate_dynamics")
         else "crevasse_pulk_lookup"
     )
 
@@ -452,7 +579,8 @@ async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator
 
     event_name = (
         "pothole_escape_calculated"
-        if isinstance(pe_payload, dict) and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(pe_payload, dict)
+        and pe_payload.get("action") in ("calculate", "calculate_dynamics")
         else "pothole_escape_lookup"
     )
 
@@ -466,6 +594,7 @@ async def generate_pothole_escape_stream_events(question: str) -> AsyncGenerator
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
 
+
 async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[str, None]:
     """Yield SSE events tundra_lichen_lookup, tundra_lichen_calculated, and tundra_lichen_info when tundra lichen intent is handled."""
     if not detect_tundra_lichen_intent(question):
@@ -476,7 +605,8 @@ async def generate_tundra_lichen_stream_events(question: str) -> AsyncGenerator[
 
     event_name = (
         "tundra_lichen_calculated"
-        if isinstance(tl_payload, dict) and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(tl_payload, dict)
+        and tl_payload.get("action") in ("calculate", "calculate_dynamics")
         else "tundra_lichen_lookup"
     )
 
@@ -501,7 +631,8 @@ async def generate_cryokarst_speleology_stream_events(question: str) -> AsyncGen
 
     event_name = (
         "cryokarst_speleology_calculated"
-        if isinstance(cs_payload, dict) and cs_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(cs_payload, dict)
+        and cs_payload.get("action") in ("calculate", "calculate_dynamics")
         else "cryokarst_speleology_lookup"
     )
 
@@ -526,7 +657,8 @@ async def generate_slickrock_burro_stream_events(question: str) -> AsyncGenerato
 
     event_name = (
         "slickrock_burro_calculated"
-        if isinstance(sb_payload, dict) and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(sb_payload, dict)
+        and sb_payload.get("action") in ("calculate", "calculate_dynamics")
         else "slickrock_burro_lookup"
     )
 
@@ -551,7 +683,8 @@ async def generate_canopy_bryophyte_stream_events(question: str) -> AsyncGenerat
 
     event_name = (
         "canopy_bryophyte_calculated"
-        if isinstance(cb_payload, dict) and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(cb_payload, dict)
+        and cb_payload.get("action") in ("calculate", "calculate_dynamics")
         else "canopy_bryophyte_lookup"
     )
 
@@ -576,7 +709,8 @@ async def generate_glacier_ski_traverse_stream_events(question: str) -> AsyncGen
 
     event_name = (
         "glacier_ski_traverse_calculated"
-        if isinstance(gst_payload, dict) and gst_payload.get("action") in ("calculate", "calculate_dynamics")
+        if isinstance(gst_payload, dict)
+        and gst_payload.get("action") in ("calculate", "calculate_dynamics")
         else "glacier_ski_traverse_lookup"
     )
 
@@ -589,3 +723,697 @@ async def generate_glacier_ski_traverse_stream_events(question: str) -> AsyncGen
     for token in tokens:
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_scree_running_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events scree_running_calculated, scree_running_lookup, and scree_running_info when scree running intent is handled."""
+    if not detect_scree_running_intent(question):
+        return
+
+    formatted = format_scree_running_response("scree_running", question)
+    sr_payload = formatted.get("scree_running_info")
+
+    event_name = (
+        "scree_running_calculated"
+        if isinstance(sr_payload, dict)
+        and sr_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "scree_running_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
+    if event_name != "scree_running_info":
+        yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': sr_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_lava_tube_biospeleology_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events lava_tube_biospeleology_calculated, lava_tube_biospeleology_lookup, and lava_tube_biospeleology_info when lava tube biospeleology intent is handled."""
+    if not detect_lava_tube_biospeleology_intent(question):
+        return
+
+    formatted = format_lava_tube_biospeleology_response("lava_tube_biospeleology", question)
+    ltb_payload = formatted.get("lava_tube_biospeleology_info")
+
+    event_name = (
+        "lava_tube_biospeleology_calculated"
+        if isinstance(ltb_payload, dict)
+        and ltb_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "lava_tube_biospeleology_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
+    if event_name != "lava_tube_biospeleology_info":
+        yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': ltb_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_kelp_freediving_stream_events(question: str) -> AsyncGenerator[str, None]:
+    """Yield SSE events kelp_freediving_calculated, kelp_freediving_lookup, and kelp_freediving_info when kelp freediving intent is handled."""
+    if not detect_kelp_freediving_intent(question):
+        return
+
+    formatted = format_kelp_freediving_response("kelp_freediving", question)
+    kf_payload = formatted.get("kelp_freediving_info")
+
+    event_name = (
+        "kelp_freediving_calculated"
+        if isinstance(kf_payload, dict)
+        and kf_payload.get("action") in ("calculate", "calculate_dynamics")
+        else "kelp_freediving_lookup"
+    )
+
+    yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kf_payload, event_name: kf_payload})}\n\n"
+    if event_name != "kelp_freediving_info":
+        yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kf_payload})}\n\n"
+
+    answer = str(formatted.get("answer", ""))
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_penitentes_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for penitentes navigation queries."""
+    if not is_penitentes_navigation_query(question):
+        return
+
+    answer, pn_payload = format_penitentes_navigation_response(question)
+    event_name = str(pn_payload.get("action", "penitentes_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+    if event_name != "penitentes_navigation_info":
+        yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_solfatara_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for solfatara navigation queries."""
+    if not is_solfatara_navigation_query(question):
+        return
+
+    answer, sn_payload = format_solfatara_navigation_response(question)
+    event_name = str(sn_payload.get("action", "solfatara_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': sn_payload, event_name: sn_payload})}\n\n"
+    if event_name != "solfatara_navigation_info":
+        yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': sn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_aufeis_crossing_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for aufeis crossing queries."""
+    if not is_aufeis_crossing_query(question):
+        return
+
+    answer, ac_payload = format_aufeis_crossing_response(question)
+    event_name = str(ac_payload.get("action", "aufeis_crossing_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ac_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'aufeis_crossing_info': ac_payload, event_name: ac_payload})}\n\n"
+    if event_name != "aufeis_crossing_info":
+        yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': ac_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_salt_pan_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for salt pan navigation queries."""
+    if not is_salt_pan_navigation_query(question):
+        return
+
+    answer, sp_payload = format_salt_pan_navigation_response(question)
+    event_name = str(sp_payload.get("action", "salt_pan_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sp_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': sp_payload, event_name: sp_payload})}\n\n"
+    if event_name != "salt_pan_navigation_info":
+        yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_rock_glacier_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for rock glacier navigation queries."""
+    if not is_rock_glacier_navigation_query(question):
+        return
+
+    answer, rg_payload = format_rock_glacier_navigation_response(question)
+    event_name = str(rg_payload.get("action", "rock_glacier_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(rg_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
+    if event_name != "rock_glacier_navigation_info":
+        yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_sea_cave_pneumatics_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for sea cave pneumatics queries."""
+    if not is_sea_cave_pneumatics_query(question):
+        return
+
+    answer, scp_payload = format_sea_cave_pneumatics_response(question)
+    event_name = str(scp_payload.get("action", "sea_cave_pneumatics_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(scp_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': scp_payload, event_name: scp_payload})}\n\n"
+    if event_name != "sea_cave_pneumatics_info":
+        yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_mangrove_labyrinth_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for mangrove labyrinth queries."""
+    if not is_mangrove_labyrinth_query(question):
+        return
+
+    answer, ml_payload = format_mangrove_labyrinth_response(question)
+    event_name = str(ml_payload.get("action", "mangrove_labyrinth_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ml_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'mangrove_labyrinth_info': ml_payload, event_name: ml_payload})}\n\n"
+    if event_name != "mangrove_labyrinth_info":
+        yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': ml_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_paramo_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for paramo navigation queries."""
+    if not is_paramo_navigation_query(question):
+        return
+
+    answer, pn_payload = format_paramo_navigation_response(question)
+    event_name = str(pn_payload.get("action", "paramo_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+    if event_name != "paramo_navigation_info":
+        yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': pn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tephra_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for tephra navigation queries."""
+    if not is_tephra_navigation_query(question):
+        return
+
+    tn_payload = dict(format_tephra_navigation_response(question))
+    answer = str(tn_payload.get("answer", ""))
+    event_name = str(tn_payload.get("action", "tephra_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+    if event_name != "tephra_navigation_info":
+        yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_glaciere_caving_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for glacière caving queries."""
+    if not is_glaciere_caving_query(question):
+        return
+
+    gc_payload = dict(format_glaciere_caving_response(question))
+    answer = str(gc_payload.get("answer", ""))
+    event_name = str(gc_payload.get("action", "glaciere_caving_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(gc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': gc_payload, event_name: gc_payload})}\n\n"
+    if event_name != "glaciere_caving_info":
+        yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': gc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_cobble_spit_trekking_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for cobble spit trekking queries."""
+    if not is_cobble_spit_trekking_query(question):
+        return
+
+    cs_payload = dict(format_cobble_spit_trekking_response(question))
+    answer = str(cs_payload.get("answer", ""))
+    event_name = str(cs_payload.get("action", "cobble_spit_trekking_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(cs_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cs_payload, event_name: cs_payload})}\n\n"
+    if event_name != "cobble_spit_trekking_info":
+        yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cs_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_flash_flood_slot_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for slot-canyon flash-flood queries."""
+    if not is_flash_flood_slot_query(question):
+        return
+
+    ff_payload = dict(format_flash_flood_slot_response(question))
+    answer = str(ff_payload.get("answer", ""))
+    event_name = str(ff_payload.get("action", "flash_flood_slot_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ff_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': ff_payload, event_name: ff_payload})}\n\n"
+    if event_name != "flash_flood_slot_info":
+        yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': ff_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_krummholz_bushwhack_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subalpine krummholz bushwhack queries."""
+    if not is_krummholz_bushwhack_query(question):
+        return
+
+    kb_payload = dict(format_krummholz_bushwhack_response(question))
+    answer = str(kb_payload.get("answer", ""))
+    event_name = str(kb_payload.get("action", "krummholz_bushwhack_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(kb_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': kb_payload, event_name: kb_payload})}\n\n"
+    if event_name != "krummholz_bushwhack_info":
+        yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': kb_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_sandur_crossing_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for glacial outwash braided-river sandur crossing queries."""
+    if not is_sandur_crossing_query(question):
+        return
+
+    sc_payload = dict(format_sandur_crossing_response(question))
+    answer = str(sc_payload.get("answer", ""))
+    event_name = str(sc_payload.get("action", "sandur_crossing_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(sc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sc_payload, event_name: sc_payload})}\n\n"
+    if event_name != "sandur_crossing_info":
+        yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tiankeng_descent_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for karst tiankeng & vertical cloud-forest rim descent queries."""
+    if not is_tiankeng_descent_query(question):
+        return
+
+    td_payload = dict(format_tiankeng_descent_response(question))
+    answer = str(td_payload.get("answer", ""))
+    event_name = str(td_payload.get("action", "tiankeng_descent_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(td_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tiankeng_descent_info': td_payload, event_name: td_payload})}\n\n"
+    if event_name != "tiankeng_descent_info":
+        yield f"data: {json.dumps({'event': 'tiankeng_descent_info', 'tiankeng_descent_info': td_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tussock_headland_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subantarctic tussock-grass peat bog & katabatic headland queries."""
+    if not is_tussock_headland_query(question):
+        return
+
+    th_payload = dict(format_tussock_headland_response(question))
+    answer = str(th_payload.get("answer", ""))
+    event_name = str(th_payload.get("action", "tussock_headland_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(th_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tussock_headland_info': th_payload, event_name: th_payload})}\n\n"
+    if event_name != "tussock_headland_info":
+        yield f"data: {json.dumps({'event': 'tussock_headland_info', 'tussock_headland_info': th_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tsingy_labyrinth_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for tropical tsingy pinnacle karst labyrinth & razor-limestone arête queries."""
+    if not is_tsingy_labyrinth_query(question):
+        return
+
+    tl_payload = dict(format_tsingy_labyrinth_response(question))
+    answer = str(tl_payload.get("answer", ""))
+    event_name = str(tl_payload.get("action", "tsingy_labyrinth_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tl_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tl_payload, event_name: tl_payload})}\n\n"
+    if event_name != "tsingy_labyrinth_info":
+        yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tl_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_tepui_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for table-mountain quartzite tepui & sandstone fissure navigation queries."""
+    if not is_tepui_navigation_query(question):
+        return
+
+    tn_payload = dict(format_tepui_navigation_response(question))
+    answer = str(tn_payload.get("answer", ""))
+    event_name = str(tn_payload.get("action", "tepui_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'tepui_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+    if event_name != "tepui_navigation_info":
+        yield f"data: {json.dumps({'event': 'tepui_navigation_info', 'tepui_navigation_info': tn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_yardang_navigation_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for aeolian yardang & mega-dune slip-face star-dune desert navigation queries."""
+    if not is_yardang_navigation_query(question):
+        return
+
+    yn_payload = dict(format_yardang_navigation_response(question))
+    answer = str(yn_payload.get("answer", ""))
+    event_name = str(yn_payload.get("action", "yardang_navigation_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(yn_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yn_payload, event_name: yn_payload})}\n\n"
+    if event_name != "yardang_navigation_info":
+        yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yn_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_thermokarst_tundra_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for Arctic polygon-tundra ice-wedge trough & thermokarst thaw-slump navigation queries."""
+    if not is_thermokarst_tundra_query(question):
+        return
+
+    tt_payload = dict(format_thermokarst_tundra_response(question))
+    answer = str(tt_payload.get("answer", ""))
+    event_name = str(tt_payload.get("action", "thermokarst_tundra_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tt_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': tt_payload, event_name: tt_payload})}\n\n"
+    if event_name != "thermokarst_tundra_info":
+        yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': tt_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_cenote_halocline_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subterranean cenote halocline & anchialine phreatic cave-passage navigation queries."""
+    if not is_cenote_halocline_query(question):
+        return
+
+    ch_payload = dict(format_cenote_halocline_response(question))
+    answer = str(ch_payload.get("answer", ""))
+    event_name = str(ch_payload.get("action", "cenote_halocline_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ch_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': ch_payload, event_name: ch_payload})}\n\n"
+    if event_name != "cenote_halocline_info":
+        yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': ch_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_bamboo_thicket_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for montane bamboo-thicket & cloud-forest ridge-crest bushwhacking queries."""
+    if not is_bamboo_thicket_query(question):
+        return
+
+    bt_payload = dict(format_bamboo_thicket_response(question))
+    answer = str(bt_payload.get("answer", ""))
+    event_name = str(bt_payload.get("action", "bamboo_thicket_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(bt_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bt_payload, event_name: bt_payload})}\n\n"
+    if event_name != "bamboo_thicket_info":
+        yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bt_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_salar_pressure_ridge_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for high-altitude salar brine-pool & polygonal halite pressure-ridge queries."""
+    if not is_salar_pressure_ridge_query(question):
+        return
+
+    spr_payload = dict(format_salar_pressure_ridge_response(question))
+    answer = str(spr_payload.get("answer", ""))
+    event_name = str(spr_payload.get("action", "salar_pressure_ridge_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(spr_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': spr_payload, event_name: spr_payload})}\n\n"
+    if event_name != "salar_pressure_ridge_info":
+        yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': spr_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_jokulhlaup_escape_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subglacial jökulhlaup ice-dammed lake outburst & proglacial canyon escape queries."""
+    if not is_jokulhlaup_escape_query(question):
+        return
+
+    je_payload = dict(format_jokulhlaup_escape_response(question))
+    answer = str(je_payload.get("answer", ""))
+    event_name = str(je_payload.get("action", "jokulhlaup_escape_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(je_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': je_payload, event_name: je_payload})}\n\n"
+    if event_name != "jokulhlaup_escape_info":
+        yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': je_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_barnacle_ledge_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for coastal intertidal sabellariid worm-reef & barnacle-encrusted basalt ledge queries."""
+    if not is_barnacle_ledge_query(question):
+        return
+
+    bl_payload = dict(format_barnacle_ledge_response(question))
+    answer = str(bl_payload.get("answer", ""))
+    event_name = str(bl_payload.get("action", "barnacle_ledge_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(bl_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'barnacle_ledge_info': bl_payload, event_name: bl_payload})}\n\n"
+    if event_name != "barnacle_ledge_info":
+        yield f"data: {json.dumps({'event': 'barnacle_ledge_info', 'barnacle_ledge_info': bl_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_talus_cold_trap_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subalpine boulder-talus air-draft ice cave & cold-trap block-field queries."""
+    if not is_talus_cold_trap_query(question):
+        return
+
+    tct_payload = dict(format_talus_cold_trap_response(question))
+    answer = str(tct_payload.get("answer", ""))
+    event_name = str(tct_payload.get("action", "talus_cold_trap_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(tct_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'talus_cold_trap_info': tct_payload, event_name: tct_payload})}\n\n"
+    if event_name != "talus_cold_trap_info":
+        yield f"data: {json.dumps({'event': 'talus_cold_trap_info', 'talus_cold_trap_info': tct_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_gypsum_karst_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for subterranean gypsum-karst dissolution maze & evaporite breakdown-hall queries."""
+    if not is_gypsum_karst_query(question):
+        return
+
+    gk_payload = dict(format_gypsum_karst_response(question))
+    answer = str(gk_payload.get("answer", ""))
+    event_name = str(gk_payload.get("action", "gypsum_karst_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(gk_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
+    if event_name != "gypsum_karst_info":
+        yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+

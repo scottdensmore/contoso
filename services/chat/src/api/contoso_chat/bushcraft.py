@@ -332,6 +332,37 @@ def detect_bushcraft_intent(message: str) -> Optional[BushcraftIntent]:
     if any(k in q for k in ["refund", "order #", "return label", "tracking", "promo code", "shipping"]):
         return None
 
+    # 6. Krummholz & dwarf-conifer bushwhacking exclusions
+    if any(
+        k in q
+        for k in [
+            "krummholz",
+            "bushwhack",
+            "bushwhacking",
+            "dwarf conifer",
+            "dwarf-conifer",
+            "spruce trap",
+            "latschenkiefer",
+            "pinus mugo",
+            "hai-matsu",
+            "slide alder",
+            "cripplebrush",
+            "timberline thicket",
+            "bamboo thicket",
+            "bamboo-thicket",
+            "chusquea",
+            "sasa kurilensis",
+            "chishima-zasa",
+            "yushania",
+            "cerro kamuk",
+            "poroshiri-dake",
+            "culm",
+            "punji stump",
+            "montane bamboo",
+        ]
+    ):
+        return None
+
     # Core Bushcraft Keywords
     bushcraft_keywords = [
         "bushcraft",

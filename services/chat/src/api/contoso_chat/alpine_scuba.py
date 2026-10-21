@@ -478,6 +478,44 @@ def detect_alpine_scuba_intent(message: str) -> AlpineScubaIntent:
     ):
         return AlpineScubaIntent(intent_detected=False, site_id=None, action="", confidence=0.0)
 
+    # 5. Kelp forest freediving guard
+    kelp_freediving_terms = [
+        "kelp forest",
+        "kelp freediving",
+        "kelp free-diving",
+        "holdfast",
+        "haptera",
+        "macrocystis",
+        "nereocystis",
+        "bull kelp",
+        "giant kelp",
+        "pneumatocyst",
+        "urchin barren",
+        "kelp crawl",
+        "cenote",
+        "cenotes",
+        "halocline",
+        "anchialine",
+        "schlieren",
+        "ox bel ha",
+        "ox-bel-ha",
+        "angelita",
+        "sac actun",
+        "sac-actun",
+        "pet cembalo",
+        "dan's cave",
+        "dans cave",
+        "sawmill sink",
+        "abaco",
+        "meromictic",
+        "tannic",
+        "chemocline",
+        "pycnocline",
+        "blue hole",
+    ]
+    if any(kf in q for kf in kelp_freediving_terms):
+        return AlpineScubaIntent(intent_detected=False, site_id=None, action="", confidence=0.0)
+
     # Scuba / Alpine diving keywords
     scuba_keywords = [
         "altitude diving",

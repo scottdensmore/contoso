@@ -468,26 +468,18 @@ def calculate_mineral_accretion(query: MineralAccretionQuery) -> MineralAccretio
             "CRITICAL SPELEOTHEM DESICCATION RISK: Subterranean microclimate desiccation or undersaturation detected. "
             "Mineral dissolution and accretion halt imminent. Cease traffic immediately."
         )
-        monitoring_protocol = (
-            "Halt caver transit; seal microclimate corridors; deploy high-precision acoustic drip arrays and hydrochemical loggers."
-        )
+        monitoring_protocol = "Halt caver transit; seal microclimate corridors; deploy high-precision acoustic drip arrays and hydrochemical loggers."
     elif calcite_saturation_index < 0.2:
         triage_status = "caution_low_saturation"
         conservation_advisory = (
             "LOW CARBONATE SATURATION CAUTION: Calcite saturation index is marginal. "
             "Microclimate fluctuations or caver respiration may trigger crystal etching."
         )
-        monitoring_protocol = (
-            "Enforce strict scientific perimeter limits; monitor daily splash pool pH and conductivity; require powder-free survey gloves."
-        )
+        monitoring_protocol = "Enforce strict scientific perimeter limits; monitor daily splash pool pH and conductivity; require powder-free survey gloves."
     else:
         triage_status = "nominal_active_mineralization"
-        conservation_advisory = (
-            "NOMINAL ACTIVE MINERAL ACCRETION: Favorable supersaturation and hydrodynamic drip agitation supporting active speleothem accretion."
-        )
-        monitoring_protocol = (
-            "Continue routine non-contact laser photogrammetry; maintain undisturbed aerosol drip zone and zero-touch scientific protocol."
-        )
+        conservation_advisory = "NOMINAL ACTIVE MINERAL ACCRETION: Favorable supersaturation and hydrodynamic drip agitation supporting active speleothem accretion."
+        monitoring_protocol = "Continue routine non-contact laser photogrammetry; maintain undisturbed aerosol drip zone and zero-touch scientific protocol."
 
     return MineralAccretionResult(
         site_id=site.id,
@@ -507,6 +499,16 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
     exclusions = [
         "order #",
         "refund",
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
         "return label",
         "shipping tracking",
         "burro",
@@ -548,6 +550,118 @@ def detect_cave_mineralogy_intent(message: str) -> Optional[CaveMineralogyIntent
         "smoke",
         "rentals",
         "rental",
+        "lava tube",
+        "biospeleology",
+        "troglomorphic",
+        "troglobite",
+        "kazumura",
+        "lavacicle",
+        "pahoehoe",
+        "actinobacterial",
+        "lava tube gold",
+        "root curtain",
+        "ape cave",
+        "undara",
+        "manjanggul",
+        "cueva de los verdes",
+        "solfatara",
+        "fumarole",
+        "mofette",
+        "geyserite",
+        "sinter crust",
+        "mudpot",
+        "h2s",
+        "hydrogen sulfide",
+        "sulfur dioxide",
+        "glaciere",
+        "glacière",
+        "ice-filled lava tube",
+        "cold-trap",
+        "cold trap",
+        "balch effect",
+        "eisriesenwelt",
+        "scarisoara",
+        "scărișoara",
+        "bandera ice cave",
+        "lofthellir",
+        "hoarfrost ceiling",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
+        "cenote",
+        "cenotes",
+        "halocline",
+        "anchialine",
+        "schlieren",
+        "ox bel ha",
+        "ox-bel-ha",
+        "angelita",
+        "sac actun",
+        "sac-actun",
+        "pet cembalo",
+        "dan's cave",
+        "dans cave",
+        "sawmill sink",
+        "abaco",
+        "meromictic",
+        "tannic",
+        "chemocline",
+        "pycnocline",
+        "blue hole",
+        "talus cold trap",
+        "talus-cold-trap",
+        "algific",
+        "mahoosuc",
+        "king ravine",
+        "indian pass",
+        "anorthosite",
+        "talus ice",
+        "pseudokarst",
+        "megatalus",
+        "moss bridge",
+        "kamenec",
+        "naděje",
+        "phonolite",
+        "driftless",
+        "gypsum karst",
+        "gypsum-karst",
+        "gypsum_karst",
+        "gypsum maze",
+        "gypsum cave",
+        "evaporite karst",
+        "evaporite maze",
+        "breakdown-hall",
+        "breakdown hall",
+        "anhydrite hydration",
+        "anhydrite swelling",
+        "hydration dome",
+        "optimisticeskaja",
+        "optymistychna",
+        "ozerna",
+        "podolia",
+        "vena del gesso",
+        "spipola",
+        "acquafredda",
+        "yesos de sorbas",
+        "sorbas",
+        "covadura",
+        "parks ranch",
+        "parks-ranch",
+        "yeso-castile",
+        "swallowtail selenite",
+        "selenite karst",
+        "ceiling slab peel",
+        "ceiling bed thickness",
     ]
     if any(k in q for k in exclusions):
         return None
@@ -713,18 +827,14 @@ def format_cave_mineralogy_response(
     elif isinstance(intent, str):
         if intent == "cave_mineralogy" and isinstance(data, str):
             detected = detect_cave_mineralogy_intent(data)
-            intent_obj = (
-                detected if detected else CaveMineralogyIntent(action="sites_list")
-            )
+            intent_obj = detected if detected else CaveMineralogyIntent(action="sites_list")
         elif intent in ("calculate_accretion", "calculate"):
             intent_obj = CaveMineralogyIntent(action="calculate_accretion")
         elif intent in ("gear_checklist", "gear"):
             intent_obj = CaveMineralogyIntent(action="gear_checklist")
         elif intent in ("site_detail", "detail"):
             site_id = (
-                data
-                if isinstance(data, str) and data in DEFAULT_CAVE_MINERALOGY_SITES
-                else None
+                data if isinstance(data, str) and data in DEFAULT_CAVE_MINERALOGY_SITES else None
             )
             intent_obj = CaveMineralogyIntent(action="site_detail", site_id=site_id)
         else:
@@ -827,8 +937,7 @@ def format_cave_mineralogy_response(
         )
     )
     summary_str = "; ".join(
-        f"{s.name} ({s.region}, {s.speleothem_type}, {s.conservation_status})"
-        for s in sites
+        f"{s.name} ({s.region}, {s.speleothem_type}, {s.conservation_status})" for s in sites
     )
     answer = (
         f"Contoso Karst Mineralogy & Speleothem Survey Catalog ({len(sites)} sites): {summary_str}. "
@@ -884,9 +993,7 @@ def cave_mineralogy_tool(
     **kwargs: Any,
 ) -> Any:
     if action in ("calculate", "calculate_accretion") or query is not None:
-        calc_q = query or MineralAccretionQuery(
-            site_id=site_id or "carlsbad-rookery-chamber"
-        )
+        calc_q = query or MineralAccretionQuery(site_id=site_id or "carlsbad-rookery-chamber")
         res = calculate_mineral_accretion(calc_q)
         formatted = format_cave_mineralogy_response("calculate_accretion", res)
         return dict(formatted._data)

@@ -37,6 +37,10 @@ from contoso_chat.alpine_scuba import (
     get_alpine_scuba_site_by_id,
     get_alpine_scuba_sites,
 )
+from contoso_chat.aufeis_crossing import (
+    detect_aufeis_crossing_intent,
+    format_aufeis_crossing_response,
+)
 from contoso_chat.avalanche import (
     AvalancheZoneModel,
     SlopeAssessmentRequest,
@@ -47,6 +51,14 @@ from contoso_chat.avalanche import (
     get_avalanche_zone_by_id,
     get_avalanche_zones,
     get_companion_rescue_protocol,
+)
+from contoso_chat.bamboo_thicket import (
+    detect_bamboo_thicket_intent,
+    format_bamboo_thicket_response,
+)
+from contoso_chat.barnacle_ledge import (
+    detect_barnacle_ledge_intent,
+    format_barnacle_ledge_response,
 )
 from contoso_chat.beachcombing import (
     BeachcombingGearItemModel,
@@ -157,6 +169,10 @@ from contoso_chat.caving import (
     get_caving_route_by_id,
     get_caving_routes,
 )
+from contoso_chat.cenote_halocline import (
+    detect_cenote_halocline_intent,
+    format_cenote_halocline_response,
+)
 from contoso_chat.climbing import (
     CragModel,
     RackCalcRequest,
@@ -179,6 +195,10 @@ from contoso_chat.coasteering import (
     get_coasteering_gear,
     get_coasteering_route_by_id,
     get_coasteering_routes,
+)
+from contoso_chat.cobble_spit_trekking import (
+    detect_cobble_spit_trekking_intent,
+    format_cobble_spit_trekking_response,
 )
 from contoso_chat.crevasse_pulk import (
     detect_crevasse_pulk_intent,
@@ -277,6 +297,10 @@ from contoso_chat.first_aid import (
     get_medical_condition_by_id,
     get_medical_conditions,
 )
+from contoso_chat.flash_flood_slot import (
+    detect_flash_flood_slot_intent,
+    format_flash_flood_slot_response,
+)
 from contoso_chat.fly_fishing import (
     FishingLocationModel,
     FlyFishingGearRegulationsResponse,
@@ -320,6 +344,10 @@ from contoso_chat.glacier_ski_traverse import (
     detect_glacier_ski_traverse_intent,
     format_glacier_ski_traverse_response,
 )
+from contoso_chat.glaciere_caving import (
+    detect_glaciere_caving_intent,
+    format_glaciere_caving_response,
+)
 from contoso_chat.gold_prospecting import (
     PlacerRequest,
     PlacerResponse,
@@ -331,6 +359,10 @@ from contoso_chat.gold_prospecting import (
     get_prospecting_gear,
     get_prospecting_site,
     get_prospecting_sites,
+)
+from contoso_chat.gypsum_karst import (
+    detect_gypsum_karst_intent,
+    format_gypsum_karst_response,
 )
 from contoso_chat.highline import (
     HighlineGearRequirement,
@@ -381,6 +413,22 @@ from contoso_chat.ice_climbing import (
     get_ice_climbing_route_by_id,
     get_ice_climbing_routes,
 )
+from contoso_chat.jokulhlaup_escape import (
+    detect_jokulhlaup_escape_intent,
+    format_jokulhlaup_escape_response,
+)
+from contoso_chat.kelp_freediving import (
+    detect_kelp_freediving_intent,
+    format_kelp_freediving_response,
+)
+from contoso_chat.krummholz_bushwhack import (
+    detect_krummholz_bushwhack_intent,
+    format_krummholz_bushwhack_response,
+)
+from contoso_chat.lava_tube_biospeleology import (
+    detect_lava_tube_biospeleology_intent,
+    format_lava_tube_biospeleology_response,
+)
 from contoso_chat.leave_no_trace import (
     LntPrincipleModel,
     PackOutCalcRequest,
@@ -394,6 +442,10 @@ from contoso_chat.leave_no_trace import (
     format_lnt_response,
     get_lnt_principles,
     get_wilderness_zones,
+)
+from contoso_chat.mangrove_labyrinth import (
+    detect_mangrove_labyrinth_intent,
+    format_mangrove_labyrinth_response,
 )
 from contoso_chat.mountain_weather import (
     MountainWeatherRequest,
@@ -483,6 +535,14 @@ from contoso_chat.packrafting import (
     get_packraft_gear,
     get_packraft_route_by_id,
     get_packraft_routes,
+)
+from contoso_chat.paramo_navigation import (
+    detect_paramo_navigation_intent,
+    format_paramo_navigation_response,
+)
+from contoso_chat.penitentes_navigation import (
+    detect_penitentes_navigation_intent,
+    format_penitentes_navigation_response,
 )
 from contoso_chat.permits import (
     ParkPassInfo,
@@ -597,6 +657,19 @@ from contoso_chat.river_sup import (
     get_river_sup_run_by_id,
     get_river_sup_runs,
 )
+from contoso_chat.rock_glacier_navigation import (
+    detect_rock_glacier_navigation_intent,
+    format_rock_glacier_navigation_response,
+)
+from contoso_chat.routers.aufeis_crossing import (
+    router as aufeis_crossing_router,
+)
+from contoso_chat.routers.bamboo_thicket import (
+    router as bamboo_thicket_router,
+)
+from contoso_chat.routers.barnacle_ledge import (
+    router as barnacle_ledge_router,
+)
 from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
 from contoso_chat.routers.canopy_bryophyte import (
     router as canopy_bryophyte_router,
@@ -604,28 +677,107 @@ from contoso_chat.routers.canopy_bryophyte import (
 from contoso_chat.routers.canyon_bouldering import router as canyon_bouldering_router
 from contoso_chat.routers.cave_diving import router as cave_diving_router
 from contoso_chat.routers.cave_mineralogy import router as cave_mineralogy_router
+from contoso_chat.routers.cenote_halocline import (
+    router as cenote_halocline_router,
+)
+from contoso_chat.routers.cobble_spit_trekking import (
+    router as cobble_spit_trekking_router,
+)
 from contoso_chat.routers.crevasse_pulk import router as crevasse_pulk_router
 from contoso_chat.routers.cryokarst_speleology import (
     router as cryokarst_speleology_router,
 )
 from contoso_chat.routers.falconry import router as falconry_router
+from contoso_chat.routers.flash_flood_slot import (
+    router as flash_flood_slot_router,
+)
 from contoso_chat.routers.glacier_ski_traverse import (
     router as glacier_ski_traverse_router,
+)
+from contoso_chat.routers.glaciere_caving import (
+    router as glaciere_caving_router,
+)
+from contoso_chat.routers.gypsum_karst import (
+    router as gypsum_karst_router,
+)
+from contoso_chat.routers.jokulhlaup_escape import (
+    router as jokulhlaup_escape_router,
+)
+from contoso_chat.routers.kelp_freediving import (
+    router as kelp_freediving_router,
+)
+from contoso_chat.routers.krummholz_bushwhack import (
+    router as krummholz_bushwhack_router,
+)
+from contoso_chat.routers.lava_tube_biospeleology import (
+    router as lava_tube_biospeleology_router,
+)
+from contoso_chat.routers.mangrove_labyrinth import (
+    router as mangrove_labyrinth_router,
 )
 from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
+from contoso_chat.routers.paramo_navigation import (
+    router as paramo_navigation_router,
+)
+from contoso_chat.routers.penitentes_navigation import (
+    router as penitentes_navigation_router,
+)
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
+from contoso_chat.routers.rock_glacier_navigation import (
+    router as rock_glacier_navigation_router,
+)
+from contoso_chat.routers.salar_pressure_ridge import (
+    router as salar_pressure_ridge_router,
+)
+from contoso_chat.routers.salt_pan_navigation import (
+    router as salt_pan_navigation_router,
+)
 from contoso_chat.routers.sandboarding import router as sandboarding_router
+from contoso_chat.routers.sandur_crossing import (
+    router as sandur_crossing_router,
+)
+from contoso_chat.routers.scree_running import router as scree_running_router
+from contoso_chat.routers.sea_cave_pneumatics import (
+    router as sea_cave_pneumatics_router,
+)
 from contoso_chat.routers.slickrock_burro import (
     router as slickrock_burro_router,
 )
 from contoso_chat.routers.smoke_advisory import router as smoke_advisory_router
+from contoso_chat.routers.solfatara_navigation import (
+    router as solfatara_navigation_router,
+)
+from contoso_chat.routers.talus_cold_trap import (
+    router as talus_cold_trap_router,
+)
 from contoso_chat.routers.telemark_skiing import router as telemark_skiing_router
+from contoso_chat.routers.tephra_navigation import (
+    router as tephra_navigation_router,
+)
+from contoso_chat.routers.tepui_navigation import (
+    router as tepui_navigation_router,
+)
+from contoso_chat.routers.thermokarst_tundra import (
+    router as thermokarst_tundra_router,
+)
+from contoso_chat.routers.tiankeng_descent import (
+    router as tiankeng_descent_router,
+)
+from contoso_chat.routers.tsingy_labyrinth import (
+    router as tsingy_labyrinth_router,
+)
 from contoso_chat.routers.tundra_lichen import router as tundra_lichen_router
 from contoso_chat.routers.turtle_patrol import router as turtle_patrol_router
+from contoso_chat.routers.tussock_headland import (
+    router as tussock_headland_router,
+)
 from contoso_chat.routers.weather_station import router as weather_station_router
+from contoso_chat.routers.yardang_navigation import (
+    router as yardang_navigation_router,
+)
 from contoso_chat.routers.zipline import router as zipline_router
 from contoso_chat.routes import (
     RouteExportRequest,
@@ -654,9 +806,29 @@ from contoso_chat.safety import (
     record_beacon_checkin,
     register_safety_beacon,
 )
+from contoso_chat.salar_pressure_ridge import (
+    detect_salar_pressure_ridge_intent,
+    format_salar_pressure_ridge_response,
+)
+from contoso_chat.salt_pan_navigation import (
+    detect_salt_pan_navigation_intent,
+    format_salt_pan_navigation_response,
+)
 from contoso_chat.sandboarding import (
     detect_sandboarding_intent,
     format_sandboarding_response,
+)
+from contoso_chat.sandur_crossing import (
+    detect_sandur_crossing_intent,
+    format_sandur_crossing_response,
+)
+from contoso_chat.scree_running import (
+    detect_scree_running_intent,
+    format_scree_running_response,
+)
+from contoso_chat.sea_cave_pneumatics import (
+    detect_sea_cave_pneumatics_intent,
+    format_sea_cave_pneumatics_response,
 )
 from contoso_chat.sea_kayaking import (
     SeaKayakGearRequirement,
@@ -755,6 +927,10 @@ from contoso_chat.snowshoe_mountaineering import (
     get_snowshoe_route,
     get_snowshoe_routes,
 )
+from contoso_chat.solfatara_navigation import (
+    detect_solfatara_navigation_intent,
+    format_solfatara_navigation_response,
+)
 from contoso_chat.stargazing import (
     MeteorShowerModel,
     ObservingSiteModel,
@@ -785,9 +961,29 @@ from contoso_chat.stores import (
     get_store_by_id,
     search_stores,
 )
+from contoso_chat.talus_cold_trap import (
+    detect_talus_cold_trap_intent,
+    format_talus_cold_trap_response,
+)
 from contoso_chat.telemark_skiing import (
     detect_telemark_intent,
     format_telemark_response,
+)
+from contoso_chat.tephra_navigation import (
+    detect_tephra_navigation_intent,
+    format_tephra_navigation_response,
+)
+from contoso_chat.tepui_navigation import (
+    detect_tepui_navigation_intent,
+    format_tepui_navigation_response,
+)
+from contoso_chat.thermokarst_tundra import (
+    detect_thermokarst_tundra_intent,
+    format_thermokarst_tundra_response,
+)
+from contoso_chat.tiankeng_descent import (
+    detect_tiankeng_descent_intent,
+    format_tiankeng_descent_response,
 )
 from contoso_chat.trade_in import (
     EligibleBrandModel,
@@ -852,6 +1048,10 @@ from contoso_chat.trip_planner import (
     generate_wilderness_trip_plan,
     get_trip_templates,
 )
+from contoso_chat.tsingy_labyrinth import (
+    detect_tsingy_labyrinth_intent,
+    format_tsingy_labyrinth_response,
+)
 from contoso_chat.tundra_lichen import (
     detect_tundra_lichen_intent,
     format_tundra_lichen_response,
@@ -859,6 +1059,10 @@ from contoso_chat.tundra_lichen import (
 from contoso_chat.turtle_patrol import (
     detect_turtle_patrol_intent,
     format_turtle_patrol_response,
+)
+from contoso_chat.tussock_headland import (
+    detect_tussock_headland_intent,
+    format_tussock_headland_response,
 )
 from contoso_chat.via_ferrata import (
     RiggingPlanRequest,
@@ -972,6 +1176,10 @@ from contoso_chat.wildlife import (
     get_wildlife_species,
     get_wildlife_species_by_id,
 )
+from contoso_chat.yardang_navigation import (
+    detect_yardang_navigation_intent,
+    format_yardang_navigation_response,
+)
 from contoso_chat.zipline import (
     detect_zipline_intent,
     format_zipline_response,
@@ -981,7 +1189,7 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from local_provider_health import evaluate_local_provider_health
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 # Import our real chat logic (simplified)
 try:
@@ -1081,6 +1289,26 @@ app.include_router(
     tags=["cryokarst-speleology"],
 )
 app.include_router(
+    lava_tube_biospeleology_router,
+    prefix="/lava-tube-biospeleology",
+    tags=["lava-tube-biospeleology"],
+)
+app.include_router(
+    lava_tube_biospeleology_router,
+    prefix="/api/lava-tube-biospeleology",
+    tags=["lava-tube-biospeleology"],
+)
+app.include_router(
+    kelp_freediving_router,
+    prefix="/kelp-freediving",
+    tags=["kelp-freediving"],
+)
+app.include_router(
+    kelp_freediving_router,
+    prefix="/api/kelp-freediving",
+    tags=["kelp-freediving"],
+)
+app.include_router(
     canopy_bryophyte_router,
     prefix="/canopy-bryophyte",
     tags=["canopy-bryophyte"],
@@ -1112,6 +1340,448 @@ app.include_router(
 )
 app.include_router(tundra_lichen_router, prefix="/tundra-lichen", tags=["tundra-lichen"])
 app.include_router(tundra_lichen_router, prefix="/api/tundra-lichen", tags=["tundra-lichen"])
+app.include_router(
+    penitentes_navigation_router,
+    prefix="/penitentes-navigation",
+    tags=["penitentes-navigation"],
+)
+app.include_router(
+    penitentes_navigation_router,
+    prefix="/api/penitentes-navigation",
+    tags=["penitentes-navigation"],
+)
+app.include_router(
+    solfatara_navigation_router,
+    prefix="/solfatara-navigation",
+    tags=["solfatara-navigation"],
+)
+app.include_router(
+    solfatara_navigation_router,
+    prefix="/api/solfatara-navigation",
+    tags=["solfatara-navigation"],
+)
+app.include_router(
+    aufeis_crossing_router,
+    prefix="/aufeis-crossing",
+    tags=["aufeis-crossing"],
+)
+app.include_router(
+    aufeis_crossing_router,
+    prefix="/api/aufeis-crossing",
+    tags=["aufeis-crossing"],
+)
+logger.info(
+    "Registered Subarctic River Aufeis & Overflow Ice Sheet Crossing router (/aufeis-crossing, /api/aufeis-crossing)"
+)
+app.include_router(
+    salt_pan_navigation_router,
+    prefix="/salt-pan-navigation",
+    tags=["salt-pan-navigation"],
+)
+app.include_router(
+    salt_pan_navigation_router,
+    prefix="/api/salt-pan-navigation",
+    tags=["salt-pan-navigation"],
+)
+logger.info(
+    "Registered Arid Playas & Salt Pan Crust Navigation router (/salt-pan-navigation, /api/salt-pan-navigation)"
+)
+app.include_router(
+    rock_glacier_navigation_router,
+    prefix="/rock-glacier-navigation",
+    tags=["rock-glacier-navigation"],
+)
+app.include_router(
+    rock_glacier_navigation_router,
+    prefix="/api/rock-glacier-navigation",
+    tags=["rock-glacier-navigation"],
+)
+logger.info(
+    "Registered High-Alpine Talus & Boulder-Field Periglacial Rock-Glacier Navigation router (/rock-glacier-navigation, /api/rock-glacier-navigation)"
+)
+app.include_router(
+    sea_cave_pneumatics_router,
+    prefix="/sea-cave-pneumatics",
+    tags=["sea-cave-pneumatics"],
+)
+app.include_router(
+    sea_cave_pneumatics_router,
+    prefix="/api/sea-cave-pneumatics",
+    tags=["sea-cave-pneumatics"],
+)
+logger.info(
+    "Registered Coastal Blowhole, Surge Channel & Sea-Cave Pneumatic Wave-Hazard Navigation router (/sea-cave-pneumatics, /api/sea-cave-pneumatics)"
+)
+app.include_router(
+    mangrove_labyrinth_router,
+    prefix="/mangrove-labyrinth",
+    tags=["mangrove-labyrinth"],
+)
+app.include_router(
+    mangrove_labyrinth_router,
+    prefix="/api/mangrove-labyrinth",
+    tags=["mangrove-labyrinth"],
+)
+logger.info(
+    "Registered Sub-Canopy Mangroves & Pneumatophore Prop-Root Tidal Labyrinth Navigation router (/mangrove-labyrinth, /api/mangrove-labyrinth)"
+)
+app.include_router(
+    paramo_navigation_router,
+    prefix="/paramo-navigation",
+    tags=["paramo-navigation"],
+)
+app.include_router(
+    paramo_navigation_router,
+    prefix="/api/paramo-navigation",
+    tags=["paramo-navigation"],
+)
+logger.info(
+    "Registered High-Altitude Páramo & Frailejón Cushion-Bog Moorland Navigation router (/paramo-navigation, /api/paramo-navigation)"
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/api/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+app.include_router(
+    tephra_navigation_router,
+    prefix="/api/v1/tephra-navigation",
+    tags=["tephra-navigation"],
+)
+logger.info(
+    "Registered Volcanic Tephra, Ash-Fall & Lapilli Scree Slope Descent & Respirator router (/tephra-navigation, /api/tephra-navigation, /api/v1/tephra-navigation)"
+)
+app.include_router(
+    glaciere_caving_router,
+    prefix="/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+app.include_router(
+    glaciere_caving_router,
+    prefix="/api/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+app.include_router(
+    glaciere_caving_router,
+    prefix="/api/v1/glaciere-caving",
+    tags=["glaciere-caving"],
+)
+logger.info(
+    "Registered Subterranean Ice-Filled Lava Tube & Permafrost Glacière Cave Navigation router (/glaciere-caving, /api/glaciere-caving, /api/v1/glaciere-caving)"
+)
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/api/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+app.include_router(
+    cobble_spit_trekking_router,
+    prefix="/api/v1/cobble-spit-trekking",
+    tags=["cobble-spit-trekking"],
+)
+logger.info(
+    "Registered Coastal Kelp-Wrack Boulder Reef & Intertidal Cobble Spit Trekking router (/cobble-spit-trekking, /api/cobble-spit-trekking, /api/v1/cobble-spit-trekking)"
+)
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/api/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+app.include_router(
+    flash_flood_slot_router,
+    prefix="/api/v1/flash-flood-slot",
+    tags=["flash-flood-slot"],
+)
+logger.info(
+    "Registered High-Desert Slot-Canyon Ephemeral Flash-Flood Hydrograph & Escape-Ledge Navigation router (/flash-flood-slot, /api/flash-flood-slot, /api/v1/flash-flood-slot)"
+)
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/api/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+app.include_router(
+    krummholz_bushwhack_router,
+    prefix="/api/v1/krummholz-bushwhack",
+    tags=["krummholz-bushwhack"],
+)
+logger.info(
+    "Registered Subalpine Krummholz & Wind-Sculpted Dwarf-Conifer Thicket Bushwhacking router (/krummholz-bushwhack, /api/krummholz-bushwhack, /api/v1/krummholz-bushwhack)"
+)
+app.include_router(
+    sandur_crossing_router,
+    prefix="/sandur-crossing",
+    tags=["sandur-crossing"],
+)
+app.include_router(
+    sandur_crossing_router,
+    prefix="/api/sandur-crossing",
+    tags=["sandur-crossing"],
+)
+app.include_router(
+    sandur_crossing_router,
+    prefix="/api/v1/sandur-crossing",
+    tags=["sandur-crossing"],
+)
+logger.info(
+    "Registered Glacial Outwash Braided-River Sandur & Quicksand Silt-Bar Crossing router (/sandur-crossing, /api/sandur-crossing, /api/v1/sandur-crossing)"
+)
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/api/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+app.include_router(
+    tiankeng_descent_router,
+    prefix="/api/v1/tiankeng-descent",
+    tags=["tiankeng-descent"],
+)
+logger.info(
+    "Registered Karst Tiankeng (Giant Collapse Sinkhole) & Vertical Cloud-Forest Rim Descent router (/tiankeng-descent, /api/tiankeng-descent, /api/v1/tiankeng-descent)"
+)
+app.include_router(
+    tussock_headland_router,
+    prefix="/tussock-headland",
+    tags=["tussock-headland"],
+)
+app.include_router(
+    tussock_headland_router,
+    prefix="/api/tussock-headland",
+    tags=["tussock-headland"],
+)
+app.include_router(
+    tussock_headland_router,
+    prefix="/api/v1/tussock-headland",
+    tags=["tussock-headland"],
+)
+logger.info(
+    "Registered Subantarctic Tussock-Grass Peat Bog & Katabatic Headland Navigation router (/tussock-headland, /api/tussock-headland, /api/v1/tussock-headland)"
+)
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/api/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+app.include_router(
+    tsingy_labyrinth_router,
+    prefix="/api/v1/tsingy-labyrinth",
+    tags=["tsingy-labyrinth"],
+)
+logger.info(
+    "Registered Tropical Tsingy (Pinnacle Karst Labyrinth) & Razor-Limestone Arête Scrambling router (/tsingy-labyrinth, /api/tsingy-labyrinth, /api/v1/tsingy-labyrinth)"
+)
+app.include_router(
+    tepui_navigation_router,
+    prefix="/tepui-navigation",
+    tags=["tepui-navigation"],
+)
+app.include_router(
+    tepui_navigation_router,
+    prefix="/api/tepui-navigation",
+    tags=["tepui-navigation"],
+)
+app.include_router(
+    tepui_navigation_router,
+    prefix="/api/v1/tepui-navigation",
+    tags=["tepui-navigation"],
+)
+logger.info(
+    "Registered Table-Mountain Quartzite Tepui & High-Plateau Sandstone Fissure Navigation router (/tepui-navigation, /api/tepui-navigation, /api/v1/tepui-navigation)"
+)
+app.include_router(
+    yardang_navigation_router,
+    prefix="/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+app.include_router(
+    yardang_navigation_router,
+    prefix="/api/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+app.include_router(
+    yardang_navigation_router,
+    prefix="/api/v1/yardang-navigation",
+    tags=["yardang-navigation"],
+)
+logger.info(
+    "Registered Aeolian Yardang & Mega-Dune Slip-Face Star-Dune Desert Navigation router (/yardang-navigation, /api/yardang-navigation, /api/v1/yardang-navigation)"
+)
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/api/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+app.include_router(
+    thermokarst_tundra_router,
+    prefix="/api/v1/thermokarst-tundra",
+    tags=["thermokarst-tundra"],
+)
+logger.info(
+    "Registered Arctic Polygon-Tundra Ice-Wedge Trough & Thermokarst Thaw-Slump Navigation router (/thermokarst-tundra, /api/thermokarst-tundra, /api/v1/thermokarst-tundra)"
+)
+app.include_router(
+    cenote_halocline_router,
+    prefix="/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+app.include_router(
+    cenote_halocline_router,
+    prefix="/api/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+app.include_router(
+    cenote_halocline_router,
+    prefix="/api/v1/cenote-halocline",
+    tags=["cenote-halocline"],
+)
+logger.info(
+    "Registered Subterranean Cenote Halocline & Anchialine Phreatic Cave-Passage Navigation router (/cenote-halocline, /api/cenote-halocline, /api/v1/cenote-halocline)"
+)
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/api/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+app.include_router(
+    bamboo_thicket_router,
+    prefix="/api/v1/bamboo-thicket",
+    tags=["bamboo-thicket"],
+)
+logger.info(
+    "Registered Montane Bamboo-Thicket (Chusquea / Sasa) & Cloud-Forest Ridge-Crest Bushwhacking router (/bamboo-thicket, /api/bamboo-thicket, /api/v1/bamboo-thicket)"
+)
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/api/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+app.include_router(
+    salar_pressure_ridge_router,
+    prefix="/api/v1/salar-pressure-ridge",
+    tags=["salar-pressure-ridge"],
+)
+logger.info(
+    "Registered High-Altitude Salar Brine-Pool & Polygonal Halite Pressure-Ridge Trekking router (/salar-pressure-ridge, /api/salar-pressure-ridge, /api/v1/salar-pressure-ridge)"
+)
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/api/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+app.include_router(
+    jokulhlaup_escape_router,
+    prefix="/api/v1/jokulhlaup-escape",
+    tags=["jokulhlaup-escape"],
+)
+logger.info(
+    "Registered Subglacial Jökulhlaup Ice-Dammed Lake Outburst & Proglacial Canyon Escape router (/jokulhlaup-escape, /api/jokulhlaup-escape, /api/v1/jokulhlaup-escape)"
+)
+app.include_router(
+    barnacle_ledge_router,
+    prefix="/barnacle-ledge",
+    tags=["barnacle-ledge"],
+)
+app.include_router(
+    barnacle_ledge_router,
+    prefix="/api/barnacle-ledge",
+    tags=["barnacle-ledge"],
+)
+app.include_router(
+    barnacle_ledge_router,
+    prefix="/api/v1/barnacle-ledge",
+    tags=["barnacle-ledge"],
+)
+logger.info(
+    "Registered Coastal Intertidal Sabellariid Worm-Reef & Barnacle-Encrusted Basalt Ledge Traversing router (/barnacle-ledge, /api/barnacle-ledge, /api/v1/barnacle-ledge)"
+)
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/api/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+app.include_router(
+    talus_cold_trap_router,
+    prefix="/api/v1/talus-cold-trap",
+    tags=["talus-cold-trap"],
+)
+logger.info(
+    "Registered Subalpine Boulder-Talus Air-Draft Ice Cave & Cold-Trap Block-Field Navigation router (/talus-cold-trap, /api/talus-cold-trap, /api/v1/talus-cold-trap)"
+)
+app.include_router(
+    gypsum_karst_router,
+    prefix="/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+app.include_router(
+    gypsum_karst_router,
+    prefix="/api/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+app.include_router(
+    gypsum_karst_router,
+    prefix="/api/v1/gypsum-karst",
+    tags=["gypsum-karst"],
+)
+logger.info(
+    "Registered Subterranean Gypsum-Karst Dissolution Maze & Evaporite Breakdown-Hall Speleology router (/gypsum-karst, /api/gypsum-karst, /api/v1/gypsum-karst)"
+)
+app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
+app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
 
 # Middleware for request logging
@@ -1199,6 +1869,16 @@ class ChatRequest(BaseModel):
     chat_history: Optional[Any] = "[]"
     session_id: Optional[str] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_message_to_question(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "question" not in data:
+            if "message" in data and data["message"] is not None:
+                data = {**data, "question": data["message"]}
+            elif "query" in data and data["query"] is not None:
+                data = {**data, "question": data["query"]}
+        return data
+
 
 @app.get("/")
 async def root():
@@ -1212,6 +1892,7 @@ async def root():
 
 
 @app.get("/health")
+@app.get("/api/health")
 @app.get("/healthz")
 @app.get("/ready")
 async def health():
@@ -1287,6 +1968,9 @@ async def health_dependencies():
 
 @app.post("/chat")
 @app.post("/api/chat")
+@app.post("/api/v1/chat")
+@app.post("/api/chat/message")
+@app.post("/api/v1/chat/message")
 @app.post("/api/create_response")
 @app.post("/api/chat/service/create_response")
 async def create_response(request: ChatRequest):
@@ -1374,11 +2058,41 @@ async def create_response(request: ChatRequest):
             canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
             mudflat_intent = detect_mudflat_intent(request.question)
             climbing_intent = detect_climbing_intent(request.question)
+            lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(request.question)
+            kelp_freediving_intent = detect_kelp_freediving_intent(request.question)
             cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
             canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
             glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
+            scree_running_intent = detect_scree_running_intent(request.question)
             slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
             tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
+            penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
+            solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
+            aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
+            salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
+            rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(request.question)
+            sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
+            mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
+            paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
+            tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
+            glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
+            cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
+            flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
+            krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
+            sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
+            tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
+            tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
+            tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
+            yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
+            thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
+            cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
+            bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
+            salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
+            jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
+            barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
+            talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
+            gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
+            tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
             wildlife_intent = detect_wildlife_intent(request.question)
@@ -1682,22 +2396,28 @@ async def create_response(request: ChatRequest):
                 formatted_cb = format_canyon_bouldering_response(
                     canyon_bouldering_intent, request.question
                 )
-                mock_payload["canyon_bouldering_info"] = formatted_cb.get(
-                    "canyon_bouldering_info"
-                )
+                mock_payload["canyon_bouldering_info"] = formatted_cb.get("canyon_bouldering_info")
                 mock_payload["answer"] = formatted_cb.get("answer", mock_payload["answer"])
             if mudflat_intent:
-                formatted_mf = format_mudflat_response(
-                    mudflat_intent, request.question
-                )
-                mock_payload["mudflat_trekking_info"] = formatted_mf.get(
-                    "mudflat_trekking_info"
-                )
+                formatted_mf = format_mudflat_response(mudflat_intent, request.question)
+                mock_payload["mudflat_trekking_info"] = formatted_mf.get("mudflat_trekking_info")
                 mock_payload["answer"] = formatted_mf.get("answer", mock_payload["answer"])
             if climbing_intent and not adventure_intent:
                 formatted_climbing = format_climbing_response(climbing_intent)
                 mock_payload["climbing_info"] = formatted_climbing.get("climbing_info")
                 mock_payload["answer"] = formatted_climbing.get("answer", mock_payload["answer"])
+            if lava_tube_biospeleology_intent:
+                formatted_ltb = format_lava_tube_biospeleology_response(
+                    "lava_tube_biospeleology", request.question
+                )
+                mock_payload["lava_tube_biospeleology_info"] = formatted_ltb.get(
+                    "lava_tube_biospeleology_info"
+                )
+                mock_payload["answer"] = formatted_ltb.get("answer", mock_payload["answer"])
+            if kelp_freediving_intent:
+                formatted_kf = format_kelp_freediving_response("kelp_freediving", request.question)
+                mock_payload["kelp_freediving_info"] = formatted_kf.get("kelp_freediving_info")
+                mock_payload["answer"] = formatted_kf.get("answer", mock_payload["answer"])
             if cryokarst_speleology_intent:
                 formatted_cryokarst = format_cryokarst_speleology_response(
                     "cryokarst_speleology", request.question
@@ -1705,9 +2425,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["cryokarst_speleology_info"] = formatted_cryokarst.get(
                     "cryokarst_speleology_info"
                 )
-                mock_payload["answer"] = formatted_cryokarst.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_cryokarst.get("answer", mock_payload["answer"])
             if canopy_bryophyte_intent:
                 formatted_canopy_bryo = format_canopy_bryophyte_response(
                     "canopy_bryophyte", request.question
@@ -1715,9 +2433,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["canopy_bryophyte_info"] = formatted_canopy_bryo.get(
                     "canopy_bryophyte_info"
                 )
-                mock_payload["answer"] = formatted_canopy_bryo.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_canopy_bryo.get("answer", mock_payload["answer"])
             if glacier_ski_traverse_intent:
                 formatted_gst = format_glacier_ski_traverse_response(
                     "glacier_ski_traverse", request.question
@@ -1725,9 +2441,11 @@ async def create_response(request: ChatRequest):
                 mock_payload["glacier_ski_traverse_info"] = formatted_gst.get(
                     "glacier_ski_traverse_info"
                 )
-                mock_payload["answer"] = formatted_gst.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_gst.get("answer", mock_payload["answer"])
+            if scree_running_intent:
+                formatted_sr = format_scree_running_response("scree_running", request.question)
+                mock_payload["scree_running_info"] = formatted_sr.get("scree_running_info")
+                mock_payload["answer"] = formatted_sr.get("answer", mock_payload["answer"])
             if slickrock_burro_intent:
                 formatted_slickrock = format_slickrock_burro_response(
                     "slickrock_burro", request.question
@@ -1735,9 +2453,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["slickrock_burro_info"] = formatted_slickrock.get(
                     "slickrock_burro_info"
                 )
-                mock_payload["answer"] = formatted_slickrock.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_slickrock.get("answer", mock_payload["answer"])
             if tundra_lichen_intent:
                 formatted_tundra_lichen = format_tundra_lichen_response(
                     "tundra_lichen", request.question
@@ -1748,6 +2464,114 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_tundra_lichen.get(
                     "answer", mock_payload["answer"]
                 )
+            if penitentes_navigation_intent:
+                pn_answer, pn_info = format_penitentes_navigation_response(request.question)
+                mock_payload["penitentes_navigation_info"] = pn_info
+                mock_payload["answer"] = pn_answer
+            if solfatara_navigation_intent:
+                sn_answer, sn_info = format_solfatara_navigation_response(request.question)
+                mock_payload["solfatara_navigation_info"] = sn_info
+                mock_payload["answer"] = sn_answer
+            if aufeis_crossing_intent:
+                ac_answer, ac_info = format_aufeis_crossing_response(request.question)
+                mock_payload["aufeis_crossing_info"] = ac_info
+                mock_payload["answer"] = ac_answer
+            if salt_pan_navigation_intent:
+                sp_answer, sp_info = format_salt_pan_navigation_response(request.question)
+                mock_payload["salt_pan_navigation_info"] = sp_info
+                mock_payload["answer"] = sp_answer
+            if rock_glacier_navigation_intent:
+                rg_answer, rg_info = format_rock_glacier_navigation_response(request.question)
+                mock_payload["rock_glacier_navigation_info"] = rg_info
+                mock_payload["answer"] = rg_answer
+            if sea_cave_pneumatics_intent:
+                scp_answer, scp_info = format_sea_cave_pneumatics_response(request.question)
+                mock_payload["sea_cave_pneumatics_info"] = scp_info
+                mock_payload["answer"] = scp_answer
+            if mangrove_labyrinth_intent:
+                ml_answer, ml_info = format_mangrove_labyrinth_response(request.question)
+                mock_payload["mangrove_labyrinth_info"] = ml_info
+                mock_payload["answer"] = ml_answer
+            if paramo_navigation_intent:
+                prm_answer, prm_info = format_paramo_navigation_response(request.question)
+                mock_payload["paramo_navigation_info"] = prm_info
+                mock_payload["answer"] = prm_answer
+            if tephra_navigation_intent:
+                tn_info = dict(format_tephra_navigation_response(request.question))
+                mock_payload["tephra_navigation_info"] = tn_info
+                mock_payload["answer"] = str(tn_info.get("answer", ""))
+            if glaciere_caving_intent:
+                gc_info = dict(format_glaciere_caving_response(request.question))
+                mock_payload["glaciere_caving_info"] = gc_info
+                mock_payload["answer"] = str(gc_info.get("answer", ""))
+            if cobble_spit_trekking_intent:
+                cs_info = dict(format_cobble_spit_trekking_response(request.question))
+                mock_payload["cobble_spit_trekking_info"] = cs_info
+                mock_payload["answer"] = str(cs_info.get("answer", ""))
+            if flash_flood_slot_intent:
+                ff_info = dict(format_flash_flood_slot_response(request.question))
+                mock_payload["flash_flood_slot_info"] = ff_info
+                mock_payload["answer"] = str(ff_info.get("answer", ""))
+            if krummholz_bushwhack_intent:
+                kb_info = dict(format_krummholz_bushwhack_response(request.question))
+                mock_payload["krummholz_bushwhack_info"] = kb_info
+                mock_payload["answer"] = str(kb_info.get("answer", ""))
+            if sandur_crossing_intent:
+                sc_info = dict(format_sandur_crossing_response(request.question))
+                mock_payload["sandur_crossing_info"] = sc_info
+                mock_payload["answer"] = str(sc_info.get("answer", ""))
+            if tiankeng_descent_intent:
+                td_info = dict(format_tiankeng_descent_response(request.question))
+                mock_payload["tiankeng_descent_info"] = td_info
+                mock_payload["answer"] = str(td_info.get("answer", ""))
+            if tsingy_labyrinth_intent:
+                tl_info = dict(format_tsingy_labyrinth_response(request.question))
+                mock_payload["tsingy_labyrinth_info"] = tl_info
+                mock_payload["answer"] = str(tl_info.get("answer", ""))
+            if tepui_navigation_intent:
+                tn_info = dict(format_tepui_navigation_response(request.question))
+                mock_payload["tepui_navigation_info"] = tn_info
+                mock_payload["answer"] = str(tn_info.get("answer", ""))
+            if yardang_navigation_intent:
+                yn_info = dict(format_yardang_navigation_response(request.question))
+                mock_payload["yardang_navigation_info"] = yn_info
+                mock_payload["answer"] = str(yn_info.get("answer", ""))
+            if thermokarst_tundra_intent:
+                tt_info = dict(format_thermokarst_tundra_response(request.question))
+                mock_payload["thermokarst_tundra_info"] = tt_info
+                mock_payload["answer"] = str(tt_info.get("answer", ""))
+            if cenote_halocline_intent:
+                ch_info = dict(format_cenote_halocline_response(request.question))
+                mock_payload["cenote_halocline_info"] = ch_info
+                mock_payload["answer"] = str(ch_info.get("answer", ""))
+            if bamboo_thicket_intent:
+                bt_info = dict(format_bamboo_thicket_response(request.question))
+                mock_payload["bamboo_thicket_info"] = bt_info
+                mock_payload["answer"] = str(bt_info.get("answer", ""))
+            if salar_pressure_ridge_intent:
+                spr_info = dict(format_salar_pressure_ridge_response(request.question))
+                mock_payload["salar_pressure_ridge_info"] = spr_info
+                mock_payload["answer"] = str(spr_info.get("answer", ""))
+            if jokulhlaup_escape_intent:
+                je_info = dict(format_jokulhlaup_escape_response(request.question))
+                mock_payload["jokulhlaup_escape_info"] = je_info
+                mock_payload["answer"] = str(je_info.get("answer", ""))
+            if barnacle_ledge_intent:
+                bl_info = dict(format_barnacle_ledge_response(request.question))
+                mock_payload["barnacle_ledge_info"] = bl_info
+                mock_payload["answer"] = str(bl_info.get("answer", ""))
+            if talus_cold_trap_intent:
+                tct_info = dict(format_talus_cold_trap_response(request.question))
+                mock_payload["talus_cold_trap_info"] = tct_info
+                mock_payload["answer"] = str(tct_info.get("answer", ""))
+            if gypsum_karst_intent:
+                gk_info = dict(format_gypsum_karst_response(request.question))
+                mock_payload["gypsum_karst_info"] = gk_info
+                mock_payload["answer"] = str(gk_info.get("answer", ""))
+            if tussock_headland_intent:
+                th_info = dict(format_tussock_headland_response(request.question))
+                mock_payload["tussock_headland_info"] = th_info
+                mock_payload["answer"] = str(th_info.get("answer", ""))
             if foraging_intent and not tundra_lichen_intent:
                 formatted_foraging = format_foraging_response(foraging_intent)
                 mock_payload["foraging_info"] = formatted_foraging.get("foraging_info")
@@ -1803,9 +2627,7 @@ async def create_response(request: ChatRequest):
                     "pothole_escape", request.question
                 )
                 mock_payload["pothole_escape_info"] = formatted_pothole.get("pothole_escape_info")
-                mock_payload["answer"] = formatted_pothole.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_pothole.get("answer", mock_payload["answer"])
             if canyoneering_intent and not pothole_escape_intent:
                 formatted_canyoneering = format_canyoneering_response(canyoneering_intent)
                 mock_payload["canyoneering_info"] = formatted_canyoneering.get("canyoneering_info")
@@ -1828,9 +2650,7 @@ async def create_response(request: ChatRequest):
                 formatted_nvf = format_night_via_ferrata_response(
                     night_via_ferrata_intent, request.question
                 )
-                mock_payload["night_via_ferrata_info"] = formatted_nvf.get(
-                    "night_via_ferrata_info"
-                )
+                mock_payload["night_via_ferrata_info"] = formatted_nvf.get("night_via_ferrata_info")
                 mock_payload["answer"] = formatted_nvf.get("answer", mock_payload["answer"])
             if via_ferrata_intent:
                 formatted_via_ferrata = format_via_ferrata_response(via_ferrata_intent)
@@ -1847,15 +2667,9 @@ async def create_response(request: ChatRequest):
                 mock_payload["bushcraft_info"] = formatted_bushcraft.get("bushcraft_info")
                 mock_payload["answer"] = formatted_bushcraft.get("answer", mock_payload["answer"])
             if cave_mineralogy_intent:
-                formatted_cm = format_cave_mineralogy_response(
-                    "cave_mineralogy", request.question
-                )
-                mock_payload["cave_mineralogy_info"] = formatted_cm.get(
-                    "cave_mineralogy_info"
-                )
-                mock_payload["answer"] = formatted_cm.get(
-                    "answer", mock_payload["answer"]
-                )
+                formatted_cm = format_cave_mineralogy_response("cave_mineralogy", request.question)
+                mock_payload["cave_mineralogy_info"] = formatted_cm.get("cave_mineralogy_info")
+                mock_payload["answer"] = formatted_cm.get("answer", mock_payload["answer"])
             if caving_intent:
                 formatted_caving = format_caving_response(caving_intent)
                 mock_payload["caving_info"] = formatted_caving.get("caving_info")
@@ -1891,9 +2705,7 @@ async def create_response(request: ChatRequest):
                 mock_payload["shelter_info"] = formatted_shelter.get("shelter_info")
                 mock_payload["answer"] = formatted_shelter.get("answer", mock_payload["answer"])
             if crevasse_pulk_intent:
-                formatted_pulk = format_crevasse_pulk_response(
-                    "crevasse_pulk", request.question
-                )
+                formatted_pulk = format_crevasse_pulk_response("crevasse_pulk", request.question)
                 mock_payload["crevasse_pulk_info"] = formatted_pulk.get("crevasse_pulk_info")
                 mock_payload["answer"] = formatted_pulk.get("answer", mock_payload["answer"])
             if glacier_intent:
@@ -2018,20 +2830,16 @@ async def create_response(request: ChatRequest):
                 mock_payload["answer"] = formatted_cave.get("answer", mock_payload["answer"])
             if telemark_intent:
                 formatted_telemark = format_telemark_response(telemark_intent)
-                mock_payload["telemark_skiing_info"] = formatted_telemark.get("telemark_skiing_info")
+                mock_payload["telemark_skiing_info"] = formatted_telemark.get(
+                    "telemark_skiing_info"
+                )
                 mock_payload["answer"] = formatted_telemark.get("answer", mock_payload["answer"])
             if falconry_intent:
-                formatted_falconry = format_falconry_response(
-                    falconry_intent, request.question
-                )
+                formatted_falconry = format_falconry_response(falconry_intent, request.question)
                 mock_payload["falconry_info"] = formatted_falconry.get("falconry_info")
-                mock_payload["answer"] = formatted_falconry.get(
-                    "answer", mock_payload["answer"]
-                )
+                mock_payload["answer"] = formatted_falconry.get("answer", mock_payload["answer"])
             if bog_shoeing_intent:
-                formatted_bog = format_bog_shoeing_response(
-                    "bog_shoeing", request.question
-                )
+                formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                 mock_payload["bog_shoeing_info"] = formatted_bog.get("bog_shoeing_info")
                 mock_payload["answer"] = formatted_bog.get("answer", mock_payload["answer"])
             if snowshoe_intent:
@@ -2151,6 +2959,8 @@ async def create_response(request: ChatRequest):
 
 @app.post("/chat/stream")
 @app.post("/api/chat/stream")
+@app.post("/api/v1/stream")
+@app.post("/api/v1/chat/stream")
 @app.post("/api/create_response/stream")
 @app.post("/api/chat/service/create_response/stream")
 async def create_response_stream(request: ChatRequest):
@@ -2203,6 +3013,8 @@ async def create_response_stream(request: ChatRequest):
                         except (json.JSONDecodeError, TypeError) as exc:
                             logger.debug("Ignoring non-JSON SSE chunk: %s", exc)
                         yield chunk
+                    elif chunk.startswith("event: "):
+                        yield chunk
                     else:
                         accumulated_chunks.append(chunk)
                         yield f"data: {json.dumps({'chunk': chunk})}\n\n"
@@ -2248,11 +3060,45 @@ async def create_response_stream(request: ChatRequest):
                 canyon_bouldering_intent = detect_canyon_bouldering_intent(request.question)
                 mudflat_intent = detect_mudflat_intent(request.question)
                 climbing_intent = detect_climbing_intent(request.question)
+                lava_tube_biospeleology_intent = detect_lava_tube_biospeleology_intent(
+                    request.question
+                )
+                kelp_freediving_intent = detect_kelp_freediving_intent(request.question)
                 cryokarst_speleology_intent = detect_cryokarst_speleology_intent(request.question)
                 canopy_bryophyte_intent = detect_canopy_bryophyte_intent(request.question)
                 glacier_ski_traverse_intent = detect_glacier_ski_traverse_intent(request.question)
+                scree_running_intent = detect_scree_running_intent(request.question)
                 slickrock_burro_intent = detect_slickrock_burro_intent(request.question)
                 tundra_lichen_intent = detect_tundra_lichen_intent(request.question)
+                penitentes_navigation_intent = detect_penitentes_navigation_intent(request.question)
+                solfatara_navigation_intent = detect_solfatara_navigation_intent(request.question)
+                aufeis_crossing_intent = detect_aufeis_crossing_intent(request.question)
+                salt_pan_navigation_intent = detect_salt_pan_navigation_intent(request.question)
+                rock_glacier_navigation_intent = detect_rock_glacier_navigation_intent(
+                    request.question
+                )
+                sea_cave_pneumatics_intent = detect_sea_cave_pneumatics_intent(request.question)
+                mangrove_labyrinth_intent = detect_mangrove_labyrinth_intent(request.question)
+                paramo_navigation_intent = detect_paramo_navigation_intent(request.question)
+                tephra_navigation_intent = detect_tephra_navigation_intent(request.question)
+                glaciere_caving_intent = detect_glaciere_caving_intent(request.question)
+                cobble_spit_trekking_intent = detect_cobble_spit_trekking_intent(request.question)
+                flash_flood_slot_intent = detect_flash_flood_slot_intent(request.question)
+                krummholz_bushwhack_intent = detect_krummholz_bushwhack_intent(request.question)
+                sandur_crossing_intent = detect_sandur_crossing_intent(request.question)
+                tiankeng_descent_intent = detect_tiankeng_descent_intent(request.question)
+                tsingy_labyrinth_intent = detect_tsingy_labyrinth_intent(request.question)
+                tepui_navigation_intent = detect_tepui_navigation_intent(request.question)
+                yardang_navigation_intent = detect_yardang_navigation_intent(request.question)
+                thermokarst_tundra_intent = detect_thermokarst_tundra_intent(request.question)
+                cenote_halocline_intent = detect_cenote_halocline_intent(request.question)
+                bamboo_thicket_intent = detect_bamboo_thicket_intent(request.question)
+                salar_pressure_ridge_intent = detect_salar_pressure_ridge_intent(request.question)
+                jokulhlaup_escape_intent = detect_jokulhlaup_escape_intent(request.question)
+                barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
+                talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
+                gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
+                tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
                 wildlife_intent = detect_wildlife_intent(request.question)
@@ -2462,9 +3308,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "canyon_bouldering_info":
                         yield f"data: {json.dumps({'event': 'canyon_bouldering_info', 'canyon_bouldering_info': cb_payload})}\n\n"
                 if mudflat_intent:
-                    formatted_mf = format_mudflat_response(
-                        mudflat_intent, request.question
-                    )
+                    formatted_mf = format_mudflat_response(mudflat_intent, request.question)
                     mf_payload = formatted_mf.get("mudflat_trekking_info")
                     event_map = {
                         "routes_list": "mudflat_trekking_lookup",
@@ -2474,24 +3318,50 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "mudflat_trekking_lookup",
                         "gear": "mudflat_trekking_lookup",
                     }
-                    event_name = event_map.get(
-                        mudflat_intent.action, "mudflat_trekking_lookup"
-                    )
+                    event_name = event_map.get(mudflat_intent.action, "mudflat_trekking_lookup")
                     yield f"data: {json.dumps({'event': event_name, 'mudflat_trekking_info': mf_payload, event_name: mf_payload})}\n\n"
                     if event_name != "mudflat_trekking_info":
                         yield f"data: {json.dumps({'event': 'mudflat_trekking_info', 'mudflat_trekking_info': mf_payload})}\n\n"
                 if climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     yield f"data: {json.dumps({'event': 'climbing_info', 'climbing_info': formatted_climbing.get('climbing_info')})}\n\n"
+                if lava_tube_biospeleology_intent:
+                    formatted_ltb = format_lava_tube_biospeleology_response(
+                        "lava_tube_biospeleology", request.question
+                    )
+                    ltb_payload = formatted_ltb.get("lava_tube_biospeleology_info")
+                    event_name = "lava_tube_biospeleology_lookup"
+                    if isinstance(ltb_payload, dict) and ltb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
+                    ):
+                        event_name = "lava_tube_biospeleology_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'lava_tube_biospeleology_info': ltb_payload, event_name: ltb_payload})}\n\n"
+                    if event_name != "lava_tube_biospeleology_info":
+                        yield f"data: {json.dumps({'event': 'lava_tube_biospeleology_info', 'lava_tube_biospeleology_info': ltb_payload})}\n\n"
+                if kelp_freediving_intent:
+                    formatted_kf = format_kelp_freediving_response(
+                        "kelp_freediving", request.question
+                    )
+                    kf_payload = formatted_kf.get("kelp_freediving_info")
+                    event_name = "kelp_freediving_lookup"
+                    if isinstance(kf_payload, dict) and kf_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
+                    ):
+                        event_name = "kelp_freediving_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'kelp_freediving_info': kf_payload, event_name: kf_payload})}\n\n"
+                    if event_name != "kelp_freediving_info":
+                        yield f"data: {json.dumps({'event': 'kelp_freediving_info', 'kelp_freediving_info': kf_payload})}\n\n"
                 if cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question
                     )
                     cs_payload = formatted_cryokarst.get("cryokarst_speleology_info")
                     event_name = "cryokarst_speleology_lookup"
-                    if (
-                        isinstance(cs_payload, dict)
-                        and cs_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cs_payload, dict) and cs_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "cryokarst_speleology_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'cryokarst_speleology_info': cs_payload, event_name: cs_payload})}\n\n"
@@ -2503,9 +3373,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cb_payload = formatted_canopy_bryo.get("canopy_bryophyte_info")
                     event_name = "canopy_bryophyte_lookup"
-                    if (
-                        isinstance(cb_payload, dict)
-                        and cb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cb_payload, dict) and cb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "canopy_bryophyte_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'canopy_bryophyte_info': cb_payload, event_name: cb_payload})}\n\n"
@@ -2517,23 +3387,35 @@ async def create_response_stream(request: ChatRequest):
                     )
                     gst_payload = formatted_gst.get("glacier_ski_traverse_info")
                     event_name = "glacier_ski_traverse_lookup"
-                    if (
-                        isinstance(gst_payload, dict)
-                        and gst_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(gst_payload, dict) and gst_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "glacier_ski_traverse_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'glacier_ski_traverse_info': gst_payload, event_name: gst_payload})}\n\n"
                     if event_name != "glacier_ski_traverse_info":
                         yield f"data: {json.dumps({'event': 'glacier_ski_traverse_info', 'glacier_ski_traverse_info': gst_payload})}\n\n"
+                if scree_running_intent:
+                    formatted_sr = format_scree_running_response("scree_running", request.question)
+                    sr_payload = formatted_sr.get("scree_running_info")
+                    event_name = "scree_running_lookup"
+                    if isinstance(sr_payload, dict) and sr_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
+                    ):
+                        event_name = "scree_running_calculated"
+                    yield f"data: {json.dumps({'event': event_name, 'scree_running_info': sr_payload, event_name: sr_payload})}\n\n"
+                    if event_name != "scree_running_info":
+                        yield f"data: {json.dumps({'event': 'scree_running_info', 'scree_running_info': sr_payload})}\n\n"
                 if slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question
                     )
                     sb_payload = formatted_slickrock.get("slickrock_burro_info")
                     event_name = "slickrock_burro_lookup"
-                    if (
-                        isinstance(sb_payload, dict)
-                        and sb_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(sb_payload, dict) and sb_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "slickrock_burro_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'slickrock_burro_info': sb_payload, event_name: sb_payload})}\n\n"
@@ -2545,14 +3427,235 @@ async def create_response_stream(request: ChatRequest):
                     )
                     tl_payload = formatted_tundra_lichen.get("tundra_lichen_info")
                     event_name = "tundra_lichen_lookup"
-                    if (
-                        isinstance(tl_payload, dict)
-                        and tl_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(tl_payload, dict) and tl_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "tundra_lichen_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'tundra_lichen_info': tl_payload, event_name: tl_payload})}\n\n"
                     if event_name != "tundra_lichen_info":
                         yield f"data: {json.dumps({'event': 'tundra_lichen_info', 'tundra_lichen_info': tl_payload})}\n\n"
+                if penitentes_navigation_intent:
+                    _, pn_payload = format_penitentes_navigation_response(request.question)
+                    event_name = (
+                        pn_payload.get("action", "penitentes_navigation_info")
+                        if isinstance(pn_payload, dict)
+                        else "penitentes_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(pn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'penitentes_navigation_info': pn_payload, event_name: pn_payload})}\n\n"
+                    if event_name != "penitentes_navigation_info":
+                        yield f"data: {json.dumps({'event': 'penitentes_navigation_info', 'penitentes_navigation_info': pn_payload})}\n\n"
+                if solfatara_navigation_intent:
+                    _, sn_payload = format_solfatara_navigation_response(request.question)
+                    event_name = (
+                        sn_payload.get("action", "solfatara_navigation_info")
+                        if isinstance(sn_payload, dict)
+                        else "solfatara_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(sn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'solfatara_navigation_info': sn_payload, event_name: sn_payload})}\n\n"
+                    if event_name != "solfatara_navigation_info":
+                        yield f"data: {json.dumps({'event': 'solfatara_navigation_info', 'solfatara_navigation_info': sn_payload})}\n\n"
+                if aufeis_crossing_intent:
+                    _, ac_payload = format_aufeis_crossing_response(request.question)
+                    event_name = (
+                        ac_payload.get("action", "aufeis_crossing_info")
+                        if isinstance(ac_payload, dict)
+                        else "aufeis_crossing_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(ac_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'aufeis_crossing_info': ac_payload, event_name: ac_payload})}\n\n"
+                    if event_name != "aufeis_crossing_info":
+                        yield f"data: {json.dumps({'event': 'aufeis_crossing_info', 'aufeis_crossing_info': ac_payload})}\n\n"
+                if salt_pan_navigation_intent:
+                    _, sp_payload = format_salt_pan_navigation_response(request.question)
+                    event_name = (
+                        sp_payload.get("action", "salt_pan_navigation_info")
+                        if isinstance(sp_payload, dict)
+                        else "salt_pan_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(sp_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'salt_pan_navigation_info': sp_payload, event_name: sp_payload})}\n\n"
+                    if event_name != "salt_pan_navigation_info":
+                        yield f"data: {json.dumps({'event': 'salt_pan_navigation_info', 'salt_pan_navigation_info': sp_payload})}\n\n"
+                if rock_glacier_navigation_intent:
+                    _, rg_payload = format_rock_glacier_navigation_response(request.question)
+                    event_name = (
+                        rg_payload.get("action", "rock_glacier_navigation_info")
+                        if isinstance(rg_payload, dict)
+                        else "rock_glacier_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(rg_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'rock_glacier_navigation_info': rg_payload, event_name: rg_payload})}\n\n"
+                    if event_name != "rock_glacier_navigation_info":
+                        yield f"data: {json.dumps({'event': 'rock_glacier_navigation_info', 'rock_glacier_navigation_info': rg_payload})}\n\n"
+                if sea_cave_pneumatics_intent:
+                    _, scp_payload = format_sea_cave_pneumatics_response(request.question)
+                    event_name = (
+                        scp_payload.get("action", "sea_cave_pneumatics_info")
+                        if isinstance(scp_payload, dict)
+                        else "sea_cave_pneumatics_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(scp_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'sea_cave_pneumatics_info': scp_payload, event_name: scp_payload})}\n\n"
+                    if event_name != "sea_cave_pneumatics_info":
+                        yield f"data: {json.dumps({'event': 'sea_cave_pneumatics_info', 'sea_cave_pneumatics_info': scp_payload})}\n\n"
+                if mangrove_labyrinth_intent:
+                    _, ml_payload = format_mangrove_labyrinth_response(request.question)
+                    event_name = (
+                        ml_payload.get("action", "mangrove_labyrinth_info")
+                        if isinstance(ml_payload, dict)
+                        else "mangrove_labyrinth_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(ml_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'mangrove_labyrinth_info': ml_payload, event_name: ml_payload})}\n\n"
+                    if event_name != "mangrove_labyrinth_info":
+                        yield f"data: {json.dumps({'event': 'mangrove_labyrinth_info', 'mangrove_labyrinth_info': ml_payload})}\n\n"
+                if paramo_navigation_intent:
+                    _, prm_payload = format_paramo_navigation_response(request.question)
+                    event_name = (
+                        prm_payload.get("action", "paramo_navigation_info")
+                        if isinstance(prm_payload, dict)
+                        else "paramo_navigation_info"
+                    )
+                    yield f"event: metadata\ndata: {json.dumps(prm_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'paramo_navigation_info': prm_payload, event_name: prm_payload})}\n\n"
+                    if event_name != "paramo_navigation_info":
+                        yield f"data: {json.dumps({'event': 'paramo_navigation_info', 'paramo_navigation_info': prm_payload})}\n\n"
+                if tephra_navigation_intent:
+                    tn_payload = dict(format_tephra_navigation_response(request.question))
+                    event_name = str(tn_payload.get("action", "tephra_navigation_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tephra_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+                    if event_name != "tephra_navigation_info":
+                        yield f"data: {json.dumps({'event': 'tephra_navigation_info', 'tephra_navigation_info': tn_payload})}\n\n"
+                if glaciere_caving_intent:
+                    gc_payload = dict(format_glaciere_caving_response(request.question))
+                    event_name = str(gc_payload.get("action", "glaciere_caving_info"))
+                    yield f"event: metadata\ndata: {json.dumps(gc_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'glaciere_caving_info': gc_payload, event_name: gc_payload})}\n\n"
+                    if event_name != "glaciere_caving_info":
+                        yield f"data: {json.dumps({'event': 'glaciere_caving_info', 'glaciere_caving_info': gc_payload})}\n\n"
+                if cobble_spit_trekking_intent:
+                    cs_payload = dict(format_cobble_spit_trekking_response(request.question))
+                    event_name = str(cs_payload.get("action", "cobble_spit_trekking_info"))
+                    yield f"event: metadata\ndata: {json.dumps(cs_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'cobble_spit_trekking_info': cs_payload, event_name: cs_payload})}\n\n"
+                    if event_name != "cobble_spit_trekking_info":
+                        yield f"data: {json.dumps({'event': 'cobble_spit_trekking_info', 'cobble_spit_trekking_info': cs_payload})}\n\n"
+                if flash_flood_slot_intent:
+                    ff_payload = dict(format_flash_flood_slot_response(request.question))
+                    event_name = str(ff_payload.get("action", "flash_flood_slot_info"))
+                    yield f"event: metadata\ndata: {json.dumps(ff_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'flash_flood_slot_info': ff_payload, event_name: ff_payload})}\n\n"
+                    if event_name != "flash_flood_slot_info":
+                        yield f"data: {json.dumps({'event': 'flash_flood_slot_info', 'flash_flood_slot_info': ff_payload})}\n\n"
+                if krummholz_bushwhack_intent:
+                    kb_payload = dict(format_krummholz_bushwhack_response(request.question))
+                    event_name = str(kb_payload.get("action", "krummholz_bushwhack_info"))
+                    yield f"event: metadata\ndata: {json.dumps(kb_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'krummholz_bushwhack_info': kb_payload, event_name: kb_payload})}\n\n"
+                    if event_name != "krummholz_bushwhack_info":
+                        yield f"data: {json.dumps({'event': 'krummholz_bushwhack_info', 'krummholz_bushwhack_info': kb_payload})}\n\n"
+                if sandur_crossing_intent:
+                    sc_payload = dict(format_sandur_crossing_response(request.question))
+                    event_name = str(sc_payload.get("action", "sandur_crossing_info"))
+                    yield f"event: metadata\ndata: {json.dumps(sc_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'sandur_crossing_info': sc_payload, event_name: sc_payload})}\n\n"
+                    if event_name != "sandur_crossing_info":
+                        yield f"data: {json.dumps({'event': 'sandur_crossing_info', 'sandur_crossing_info': sc_payload})}\n\n"
+                if tiankeng_descent_intent:
+                    td_payload = dict(format_tiankeng_descent_response(request.question))
+                    event_name = str(td_payload.get("action", "tiankeng_descent_info"))
+                    yield f"event: metadata\ndata: {json.dumps(td_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tiankeng_descent_info': td_payload, event_name: td_payload})}\n\n"
+                    if event_name != "tiankeng_descent_info":
+                        yield f"data: {json.dumps({'event': 'tiankeng_descent_info', 'tiankeng_descent_info': td_payload})}\n\n"
+                if tussock_headland_intent:
+                    th_payload = dict(format_tussock_headland_response(request.question))
+                    event_name = str(th_payload.get("action", "tussock_headland_info"))
+                    yield f"event: metadata\ndata: {json.dumps(th_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tussock_headland_info': th_payload, event_name: th_payload})}\n\n"
+                    if event_name != "tussock_headland_info":
+                        yield f"data: {json.dumps({'event': 'tussock_headland_info', 'tussock_headland_info': th_payload})}\n\n"
+                if tsingy_labyrinth_intent:
+                    tl_payload = dict(format_tsingy_labyrinth_response(request.question))
+                    event_name = str(tl_payload.get("action", "tsingy_labyrinth_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tl_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tsingy_labyrinth_info': tl_payload, event_name: tl_payload})}\n\n"
+                    if event_name != "tsingy_labyrinth_info":
+                        yield f"data: {json.dumps({'event': 'tsingy_labyrinth_info', 'tsingy_labyrinth_info': tl_payload})}\n\n"
+                if tepui_navigation_intent:
+                    tn_payload = dict(format_tepui_navigation_response(request.question))
+                    event_name = str(tn_payload.get("action", "tepui_navigation_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'tepui_navigation_info': tn_payload, event_name: tn_payload})}\n\n"
+                    if event_name != "tepui_navigation_info":
+                        yield f"data: {json.dumps({'event': 'tepui_navigation_info', 'tepui_navigation_info': tn_payload})}\n\n"
+                if yardang_navigation_intent:
+                    yn_payload = dict(format_yardang_navigation_response(request.question))
+                    event_name = str(yn_payload.get("action", "yardang_navigation_info"))
+                    yield f"event: metadata\ndata: {json.dumps(yn_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'yardang_navigation_info': yn_payload, event_name: yn_payload})}\n\n"
+                    if event_name != "yardang_navigation_info":
+                        yield f"data: {json.dumps({'event': 'yardang_navigation_info', 'yardang_navigation_info': yn_payload})}\n\n"
+                if thermokarst_tundra_intent:
+                    tt_payload = dict(format_thermokarst_tundra_response(request.question))
+                    event_name = str(tt_payload.get("action", "thermokarst_tundra_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tt_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'thermokarst_tundra_info': tt_payload, event_name: tt_payload})}\n\n"
+                    if event_name != "thermokarst_tundra_info":
+                        yield f"data: {json.dumps({'event': 'thermokarst_tundra_info', 'thermokarst_tundra_info': tt_payload})}\n\n"
+                if cenote_halocline_intent:
+                    ch_payload = dict(format_cenote_halocline_response(request.question))
+                    event_name = str(ch_payload.get("action", "cenote_halocline_info"))
+                    yield f"event: metadata\ndata: {json.dumps(ch_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'cenote_halocline_info': ch_payload, event_name: ch_payload})}\n\n"
+                    if event_name != "cenote_halocline_info":
+                        yield f"data: {json.dumps({'event': 'cenote_halocline_info', 'cenote_halocline_info': ch_payload})}\n\n"
+                if bamboo_thicket_intent:
+                    bt_payload = dict(format_bamboo_thicket_response(request.question))
+                    event_name = str(bt_payload.get("action", "bamboo_thicket_info"))
+                    yield f"event: metadata\ndata: {json.dumps(bt_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'bamboo_thicket_info': bt_payload, event_name: bt_payload})}\n\n"
+                    if event_name != "bamboo_thicket_info":
+                        yield f"data: {json.dumps({'event': 'bamboo_thicket_info', 'bamboo_thicket_info': bt_payload})}\n\n"
+                if salar_pressure_ridge_intent:
+                    spr_payload = dict(format_salar_pressure_ridge_response(request.question))
+                    event_name = str(spr_payload.get("action", "salar_pressure_ridge_info"))
+                    yield f"event: metadata\ndata: {json.dumps(spr_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'salar_pressure_ridge_info': spr_payload, event_name: spr_payload})}\n\n"
+                    if event_name != "salar_pressure_ridge_info":
+                        yield f"data: {json.dumps({'event': 'salar_pressure_ridge_info', 'salar_pressure_ridge_info': spr_payload})}\n\n"
+                if jokulhlaup_escape_intent:
+                    je_payload = dict(format_jokulhlaup_escape_response(request.question))
+                    event_name = str(je_payload.get("action", "jokulhlaup_escape_info"))
+                    yield f"event: metadata\ndata: {json.dumps(je_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'jokulhlaup_escape_info': je_payload, event_name: je_payload})}\n\n"
+                    if event_name != "jokulhlaup_escape_info":
+                        yield f"data: {json.dumps({'event': 'jokulhlaup_escape_info', 'jokulhlaup_escape_info': je_payload})}\n\n"
+                if barnacle_ledge_intent:
+                    bl_payload = dict(format_barnacle_ledge_response(request.question))
+                    event_name = str(bl_payload.get("action", "barnacle_ledge_info"))
+                    yield f"event: metadata\ndata: {json.dumps(bl_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'barnacle_ledge_info': bl_payload, event_name: bl_payload})}\n\n"
+                    if event_name != "barnacle_ledge_info":
+                        yield f"data: {json.dumps({'event': 'barnacle_ledge_info', 'barnacle_ledge_info': bl_payload})}\n\n"
+                if talus_cold_trap_intent:
+                    tct_payload = dict(format_talus_cold_trap_response(request.question))
+                    event_name = str(tct_payload.get("action", "talus_cold_trap_info"))
+                    yield f"event: metadata\ndata: {json.dumps(tct_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'talus_cold_trap_info': tct_payload, event_name: tct_payload})}\n\n"
+                    if event_name != "talus_cold_trap_info":
+                        yield f"data: {json.dumps({'event': 'talus_cold_trap_info', 'talus_cold_trap_info': tct_payload})}\n\n"
+                if gypsum_karst_intent:
+                    gk_payload = dict(format_gypsum_karst_response(request.question))
+                    event_name = str(gk_payload.get("action", "gypsum_karst_info"))
+                    yield f"event: metadata\ndata: {json.dumps(gk_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
+                    if event_name != "gypsum_karst_info":
+                        yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -2589,9 +3692,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     pe_payload = formatted_pothole.get("pothole_escape_info")
                     event_name = "pothole_escape_lookup"
-                    if (
-                        isinstance(pe_payload, dict)
-                        and pe_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(pe_payload, dict) and pe_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "pothole_escape_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'pothole_escape_info': pe_payload, event_name: pe_payload})}\n\n"
@@ -2642,7 +3745,10 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cm_payload = formatted_cm.get("cave_mineralogy_info")
                     event_name = "cave_mineralogy_lookup"
-                    if isinstance(cm_payload, dict) and cm_payload.get("action") in ("calculate", "calculate_accretion"):
+                    if isinstance(cm_payload, dict) and cm_payload.get("action") in (
+                        "calculate",
+                        "calculate_accretion",
+                    ):
                         event_name = "cave_mineralogy_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'cave_mineralogy_info': cm_payload, event_name: cm_payload})}\n\n"
                     if event_name != "cave_mineralogy_info":
@@ -2732,9 +3838,9 @@ async def create_response_stream(request: ChatRequest):
                     )
                     cp_payload = formatted_pulk.get("crevasse_pulk_info")
                     event_name = "crevasse_pulk_lookup"
-                    if (
-                        isinstance(cp_payload, dict)
-                        and cp_payload.get("action") in ("calculate", "calculate_dynamics")
+                    if isinstance(cp_payload, dict) and cp_payload.get("action") in (
+                        "calculate",
+                        "calculate_dynamics",
                     ):
                         event_name = "crevasse_pulk_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'crevasse_pulk_info': cp_payload, event_name: cp_payload})}\n\n"
@@ -2992,7 +4098,9 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "pack_goat_info":
                         yield f"data: {json.dumps({'event': 'pack_goat_info', 'pack_goat_info': goat_payload})}\n\n"
                 if pack_llama_intent:
-                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    formatted_llama = format_pack_llama_response(
+                        pack_llama_intent, request.question
+                    )
                     llama_payload = formatted_llama.get("pack_llama_info")
                     action_to_event = {
                         "routes_list": "pack_llama_lookup",
@@ -3070,7 +4178,9 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "cave_diving_lookup",
                         "gear": "cave_diving_lookup",
                     }
-                    event_name = action_to_event.get(cave_diving_intent.action, "cave_diving_lookup")
+                    event_name = action_to_event.get(
+                        cave_diving_intent.action, "cave_diving_lookup"
+                    )
                     yield f"data: {json.dumps({'event': event_name, 'cave_diving_info': cave_payload, event_name: cave_payload})}\n\n"
                     if event_name != "cave_diving_info":
                         yield f"data: {json.dumps({'event': 'cave_diving_info', 'cave_diving_info': cave_payload})}\n\n"
@@ -3090,9 +4200,7 @@ async def create_response_stream(request: ChatRequest):
                     if event_name != "telemark_skiing_info":
                         yield f"data: {json.dumps({'event': 'telemark_skiing_info', 'telemark_skiing_info': tele_payload})}\n\n"
                 if falconry_intent:
-                    formatted_falconry = format_falconry_response(
-                        falconry_intent, request.question
-                    )
+                    formatted_falconry = format_falconry_response(falconry_intent, request.question)
                     falconry_payload = formatted_falconry.get("falconry_info")
                     action_to_event = {
                         "grounds_list": "falconry_lookup",
@@ -3102,21 +4210,17 @@ async def create_response_stream(request: ChatRequest):
                         "gear_checklist": "falconry_lookup",
                         "gear": "falconry_lookup",
                     }
-                    event_name = action_to_event.get(
-                        falconry_intent.action, "falconry_lookup"
-                    )
+                    event_name = action_to_event.get(falconry_intent.action, "falconry_lookup")
                     yield f"data: {json.dumps({'event': event_name, 'falconry_info': falconry_payload, event_name: falconry_payload})}\n\n"
                     if event_name != "falconry_info":
                         yield f"data: {json.dumps({'event': 'falconry_info', 'falconry_info': falconry_payload})}\n\n"
                 if bog_shoeing_intent:
-                    formatted_bog = format_bog_shoeing_response(
-                        "bog_shoeing", request.question
-                    )
+                    formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                     bs_payload = formatted_bog.get("bog_shoeing_info")
                     event_name = "bog_shoeing_lookup"
-                    if (
-                        isinstance(bs_payload, dict)
-                        and bs_payload.get("action") in ("calculate", "calculate_flotation")
+                    if isinstance(bs_payload, dict) and bs_payload.get("action") in (
+                        "calculate",
+                        "calculate_flotation",
                     ):
                         event_name = "bog_shoeing_calculated"
                     yield f"data: {json.dumps({'event': event_name, 'bog_shoeing_info': bs_payload, event_name: bs_payload})}\n\n"
@@ -3393,19 +4497,96 @@ async def create_response_stream(request: ChatRequest):
                 elif ski_tour_intent:
                     formatted_tour = format_ski_tour_response(ski_tour_intent)
                     mock_chunks = [str(formatted_tour.get("answer", ""))]
+                elif rock_glacier_navigation_intent:
+                    rg_answer, _ = format_rock_glacier_navigation_response(request.question)
+                    mock_chunks = [str(rg_answer)]
+                elif sea_cave_pneumatics_intent:
+                    scp_answer, _ = format_sea_cave_pneumatics_response(request.question)
+                    mock_chunks = [str(scp_answer)]
+                elif mangrove_labyrinth_intent:
+                    ml_answer, _ = format_mangrove_labyrinth_response(request.question)
+                    mock_chunks = [str(ml_answer)]
+                elif paramo_navigation_intent:
+                    prm_answer, _ = format_paramo_navigation_response(request.question)
+                    mock_chunks = [str(prm_answer)]
+                elif tephra_navigation_intent:
+                    tn_resp = format_tephra_navigation_response(request.question)
+                    mock_chunks = [str(tn_resp.get("answer", ""))]
+                elif glaciere_caving_intent:
+                    gc_resp = format_glaciere_caving_response(request.question)
+                    mock_chunks = [str(gc_resp.get("answer", ""))]
+                elif cobble_spit_trekking_intent:
+                    cs_resp = format_cobble_spit_trekking_response(request.question)
+                    mock_chunks = [str(cs_resp.get("answer", ""))]
+                elif flash_flood_slot_intent:
+                    ff_resp = format_flash_flood_slot_response(request.question)
+                    mock_chunks = [str(ff_resp.get("answer", ""))]
+                elif krummholz_bushwhack_intent:
+                    kb_resp = format_krummholz_bushwhack_response(request.question)
+                    mock_chunks = [str(kb_resp.get("answer", ""))]
+                elif sandur_crossing_intent:
+                    sc_resp = format_sandur_crossing_response(request.question)
+                    mock_chunks = [str(sc_resp.get("answer", ""))]
+                elif tiankeng_descent_intent:
+                    td_resp = format_tiankeng_descent_response(request.question)
+                    mock_chunks = [str(td_resp.get("answer", ""))]
+                elif tussock_headland_intent:
+                    th_resp = format_tussock_headland_response(request.question)
+                    mock_chunks = [str(th_resp.get("answer", ""))]
+                elif tsingy_labyrinth_intent:
+                    tl_resp = format_tsingy_labyrinth_response(request.question)
+                    mock_chunks = [str(tl_resp.get("answer", ""))]
+                elif tepui_navigation_intent:
+                    tn_resp = format_tepui_navigation_response(request.question)
+                    mock_chunks = [str(tn_resp.get("answer", ""))]
+                elif yardang_navigation_intent:
+                    yn_resp = format_yardang_navigation_response(request.question)
+                    mock_chunks = [str(yn_resp.get("answer", ""))]
+                elif thermokarst_tundra_intent:
+                    tt_resp = format_thermokarst_tundra_response(request.question)
+                    mock_chunks = [str(tt_resp.get("answer", ""))]
+                elif cenote_halocline_intent:
+                    ch_resp = format_cenote_halocline_response(request.question)
+                    mock_chunks = [str(ch_resp.get("answer", ""))]
+                elif bamboo_thicket_intent:
+                    bt_resp = format_bamboo_thicket_response(request.question)
+                    mock_chunks = [str(bt_resp.get("answer", ""))]
+                elif salar_pressure_ridge_intent:
+                    spr_resp = format_salar_pressure_ridge_response(request.question)
+                    mock_chunks = [str(spr_resp.get("answer", ""))]
+                elif jokulhlaup_escape_intent:
+                    je_resp = format_jokulhlaup_escape_response(request.question)
+                    mock_chunks = [str(je_resp.get("answer", ""))]
+                elif barnacle_ledge_intent:
+                    bl_resp = format_barnacle_ledge_response(request.question)
+                    mock_chunks = [str(bl_resp.get("answer", ""))]
+                elif talus_cold_trap_intent:
+                    tct_resp = format_talus_cold_trap_response(request.question)
+                    mock_chunks = [str(tct_resp.get("answer", ""))]
+                elif gypsum_karst_intent:
+                    gk_resp = format_gypsum_karst_response(request.question)
+                    mock_chunks = [str(gk_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
                     )
                     mock_chunks = [str(formatted_cb.get("answer", ""))]
                 elif mudflat_intent:
-                    formatted_mf = format_mudflat_response(
-                        mudflat_intent, request.question
-                    )
+                    formatted_mf = format_mudflat_response(mudflat_intent, request.question)
                     mock_chunks = [str(formatted_mf.get("answer", ""))]
                 elif climbing_intent and not adventure_intent:
                     formatted_climbing = format_climbing_response(climbing_intent)
                     mock_chunks = [str(formatted_climbing.get("answer", ""))]
+                elif lava_tube_biospeleology_intent:
+                    formatted_ltb = format_lava_tube_biospeleology_response(
+                        "lava_tube_biospeleology", request.question
+                    )
+                    mock_chunks = [str(formatted_ltb.get("answer", ""))]
+                elif kelp_freediving_intent:
+                    formatted_kf = format_kelp_freediving_response(
+                        "kelp_freediving", request.question
+                    )
+                    mock_chunks = [str(formatted_kf.get("answer", ""))]
                 elif cryokarst_speleology_intent:
                     formatted_cryokarst = format_cryokarst_speleology_response(
                         "cryokarst_speleology", request.question
@@ -3421,6 +4602,9 @@ async def create_response_stream(request: ChatRequest):
                         "glacier_ski_traverse", request.question
                     )
                     mock_chunks = [str(formatted_gst.get("answer", ""))]
+                elif scree_running_intent:
+                    formatted_sr = format_scree_running_response("scree_running", request.question)
+                    mock_chunks = [str(formatted_sr.get("answer", ""))]
                 elif slickrock_burro_intent:
                     formatted_slickrock = format_slickrock_burro_response(
                         "slickrock_burro", request.question
@@ -3431,6 +4615,18 @@ async def create_response_stream(request: ChatRequest):
                         "tundra_lichen", request.question
                     )
                     mock_chunks = [str(formatted_tundra_lichen.get("answer", ""))]
+                elif penitentes_navigation_intent:
+                    pn_answer, _ = format_penitentes_navigation_response(request.question)
+                    mock_chunks = [str(pn_answer)]
+                elif solfatara_navigation_intent:
+                    sn_answer, _ = format_solfatara_navigation_response(request.question)
+                    mock_chunks = [str(sn_answer)]
+                elif aufeis_crossing_intent:
+                    ac_answer, _ = format_aufeis_crossing_response(request.question)
+                    mock_chunks = [str(ac_answer)]
+                elif salt_pan_navigation_intent:
+                    sp_answer, _ = format_salt_pan_navigation_response(request.question)
+                    mock_chunks = [str(sp_answer)]
                 elif foraging_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     mock_chunks = [str(formatted_foraging.get("answer", ""))]
@@ -3527,7 +4723,9 @@ async def create_response_stream(request: ChatRequest):
                     formatted_goat = format_pack_goat_response(pack_goat_intent, request.question)
                     mock_chunks = [str(formatted_goat.get("answer", ""))]
                 elif pack_llama_intent:
-                    formatted_llama = format_pack_llama_response(pack_llama_intent, request.question)
+                    formatted_llama = format_pack_llama_response(
+                        pack_llama_intent, request.question
+                    )
                     mock_chunks = [str(formatted_llama.get("answer", ""))]
                 elif zipline_intent:
                     formatted_zip = format_zipline_response(zipline_intent, request.question)
@@ -3549,14 +4747,10 @@ async def create_response_stream(request: ChatRequest):
                     formatted_telemark = format_telemark_response(telemark_intent)
                     mock_chunks = [str(formatted_telemark.get("answer", ""))]
                 elif falconry_intent:
-                    formatted_falconry = format_falconry_response(
-                        falconry_intent, request.question
-                    )
+                    formatted_falconry = format_falconry_response(falconry_intent, request.question)
                     mock_chunks = [str(formatted_falconry.get("answer", ""))]
                 elif bog_shoeing_intent:
-                    formatted_bog = format_bog_shoeing_response(
-                        "bog_shoeing", request.question
-                    )
+                    formatted_bog = format_bog_shoeing_response("bog_shoeing", request.question)
                     mock_chunks = [str(formatted_bog.get("answer", ""))]
                 elif snowshoe_intent:
                     formatted_snowshoe = format_snowshoe_response(snowshoe_intent, request.question)
@@ -3755,6 +4949,36 @@ async def create_response_stream(request: ChatRequest):
                     order_tracking=captured_order_tracking,
                 )
 
+            if (
+                detect_penitentes_navigation_intent(request.question)
+                or detect_solfatara_navigation_intent(request.question)
+                or detect_aufeis_crossing_intent(request.question)
+                or detect_salt_pan_navigation_intent(request.question)
+                or detect_rock_glacier_navigation_intent(request.question)
+                or detect_sea_cave_pneumatics_intent(request.question)
+                or detect_mangrove_labyrinth_intent(request.question)
+                or detect_paramo_navigation_intent(request.question)
+                or detect_tephra_navigation_intent(request.question)
+                or detect_glaciere_caving_intent(request.question)
+                or detect_cobble_spit_trekking_intent(request.question)
+                or detect_flash_flood_slot_intent(request.question)
+                or detect_krummholz_bushwhack_intent(request.question)
+                or detect_sandur_crossing_intent(request.question)
+                or detect_tiankeng_descent_intent(request.question)
+                or detect_tsingy_labyrinth_intent(request.question)
+                or detect_tepui_navigation_intent(request.question)
+                or detect_yardang_navigation_intent(request.question)
+                or detect_thermokarst_tundra_intent(request.question)
+                or detect_cenote_halocline_intent(request.question)
+                or detect_bamboo_thicket_intent(request.question)
+                or detect_salar_pressure_ridge_intent(request.question)
+                or detect_jokulhlaup_escape_intent(request.question)
+                or detect_barnacle_ledge_intent(request.question)
+                or detect_talus_cold_trap_intent(request.question)
+                or detect_gypsum_karst_intent(request.question)
+                or detect_tussock_headland_intent(request.question)
+            ):
+                yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             logger.error(

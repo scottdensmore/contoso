@@ -452,6 +452,44 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
     if any(re.search(rf"\b{re.escape(w)}\b", q) for w in exclude_words):
         return None
 
+    # CRITICAL DISAMBIGUATION: Strictly guard against karst tiankeng descent in tiankeng_descent.py!
+    tiankeng_exclusions = [
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+        "tsingy",
+        "bemaraha",
+        "ankarana",
+        "rillenkarren",
+        "razor limestone",
+        "razor-limestone",
+        "gunung api",
+        "mulu pinnacles",
+        "shilin",
+        "naigu",
+        "stone forest",
+        "diaclase",
+        "pinnacle karst",
+        "tepui",
+        "roraima",
+        "auyan-tepui",
+        "auyán-tepui",
+        "kukenan",
+        "kukenán",
+        "chiribiquete",
+        "gran sabana",
+        "pseudokarst",
+    ]
+    if any(tx in q for tx in tiankeng_exclusions):
+        return None
+
     # CRITICAL DISAMBIGUATION: Strictly guard against canyon bouldering in canyon_bouldering.py!
     canyon_bouldering_exclusions = [
         "canyon bouldering",
@@ -473,6 +511,23 @@ def detect_climbing_intent(query: str) -> Optional[ClimbingIntent]:
         "hueco tanks",
     ]
     if any(cb_ex in q for cb_ex in canyon_bouldering_exclusions):
+        return None
+
+    scree_running_exclusions = [
+        "scree running",
+        "scree descent",
+        "scree slide",
+        "talus run",
+        "pea scree",
+        "shale scree",
+        "heel plunge",
+        "mount sneffels",
+        "wastwater screes",
+        "mount stephen talus",
+        "scree gaiters",
+        "scree gaiter",
+    ]
+    if any(sr_ex in q for sr_ex in scree_running_exclusions):
         return None
 
     climbing_patterns = [

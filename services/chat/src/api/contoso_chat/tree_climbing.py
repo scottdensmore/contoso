@@ -323,6 +323,39 @@ def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
     if any(k in q for k in canopy_bryophyte_keywords):
         return None
 
+    krummholz_bushwhack_keywords = (
+        "krummholz",
+        "bushwhack",
+        "bushwhacking",
+        "dwarf conifer",
+        "dwarf-conifer",
+        "spruce trap",
+        "spruce traps",
+        "latschenkiefer",
+        "pinus mugo",
+        "hai-matsu",
+        "slide alder",
+        "cripplebrush",
+        "timberline thicket",
+    )
+    if any(k in q for k in krummholz_bushwhack_keywords):
+        return None
+
+    tiankeng_keywords = (
+        "tiankeng",
+        "giant sinkhole",
+        "collapse sinkhole",
+        "mega-doline",
+        "xiaozhai",
+        "dashiwei",
+        "golondrinas",
+        "sarisarinama",
+        "sarisariñama",
+        "sima humboldt",
+    )
+    if any(k in q for k in tiankeng_keywords):
+        return None
+
     tree_climbing_explicit = (
         "tree climbing",
         "climbing tree",
@@ -388,6 +421,17 @@ def detect_tree_climbing_intent(message: str) -> Optional[TreeClimbingIntent]:
         "crampons",
         "packrafting",
         "nordic speedskating",
+        "bamboo thicket",
+        "bamboo-thicket",
+        "chusquea",
+        "sasa kurilensis",
+        "chishima-zasa",
+        "yushania",
+        "cerro kamuk",
+        "poroshiri-dake",
+        "culm",
+        "punji stump",
+        "montane bamboo",
     )
     if any(ex in q for ex in other_exclusions) and not has_explicit:
         return None

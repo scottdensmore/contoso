@@ -346,6 +346,32 @@ def detect_river_sup_intent(query: str) -> Optional[RiverSupIntent]:
         "avalanche forecast",
     ]
 
+    mangrove_exclusions = [
+        "mangrove",
+        "pneumatophore",
+        "prop root",
+        "prop-root",
+        "rhizophora",
+        "avicennia",
+        "hell bay",
+        "sundarbans",
+        "oyster encrusted",
+        "sandur",
+        "braided river",
+        "braided-river",
+        "glacial outwash",
+        "outwash plain",
+        "silt-bar",
+        "quicksand silt",
+        "glacial flour quicksand",
+        "skeidararsandur",
+        "skeiðarársandur",
+        "kaskawulsh",
+        "rakaia braids",
+    ]
+    if any(ex in q for ex in mangrove_exclusions):
+        return None
+
     for m in flatwater_markers + kayak_markers + canoe_markers + unrelated_markers:
         if m in q:
             # Check if there is an explicit river SUP marker overriding
