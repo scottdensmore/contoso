@@ -217,7 +217,7 @@ class CheckDependencyPolicyTests(unittest.TestCase):
         """Issue #312: aiplatform 2.x pins require google-cloud-storage >= 3.0.0."""
         constraints_path = REPO_ROOT / "services/chat/constraints.txt"
         constraints_text = constraints_path.read_text(encoding="utf-8")
-        self.assertIn("google-cloud-aiplatform==2.3.0", constraints_text)
+        self.assertIn("google-cloud-aiplatform==2.5.0", constraints_text)
 
         # Verify policy documentation mentions Issue #312 and google-cloud-storage
         req_core_path = REPO_ROOT / "services/chat/src/api/requirements-core.txt"

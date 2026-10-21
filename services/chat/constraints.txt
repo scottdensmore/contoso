@@ -1,8 +1,8 @@
 asyncpg==0.32.0
 chromadb==1.5.9
 fastapi==0.143.0
-google-auth==2.59.1
-google-cloud-aiplatform==2.3.0
+google-auth==2.62.0
+google-cloud-aiplatform==2.5.0
 google-cloud-discoveryengine==0.20.5
 httpx2==2.13.1
 jsonlines==4.0.0
