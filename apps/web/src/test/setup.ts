@@ -1,5 +1,7 @@
-import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import * as matchers from '@testing-library/jest-dom/matchers'
+import { expect, vi } from 'vitest'
+
+expect.extend(matchers)
 
 // jsdom implements no media queries at all, so `window.matchMedia` is simply
 // absent and any component that asks about the viewport throws on mount rather
