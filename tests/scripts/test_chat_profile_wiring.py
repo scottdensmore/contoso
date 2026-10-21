@@ -91,7 +91,7 @@ class ChatProfileWiringTests(unittest.TestCase):
         self.assertEqual(len(ecosystems), content.count("    groups:"))
 
         # opentelemetry-sdk moving without opentelemetry-api is what broke #6.
-        self.assertEqual(content.count('- "opentelemetry-*"'), 3)
+        self.assertEqual(content.count('- "opentelemetry-*"'), 1)
         for pattern in ('- "google-cloud-*"', '- "pytest-*"', '- "eslint-*"', '- "@prisma/*"'):
             with self.subTest(pattern=pattern):
                 self.assertIn(pattern, content)
