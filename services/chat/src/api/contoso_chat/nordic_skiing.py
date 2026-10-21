@@ -412,6 +412,18 @@ def detect_nordic_skiing_intent(query: str) -> Optional[NordicSkiingIntent]:
         "icing sheet",
         "ulakhan-taryn",
         "candle ice",
+        "aapa",
+        "aapasuo",
+        "palsa",
+        "string bog",
+        "string-bog",
+        "flark",
+        "rimpi",
+        "suosukset",
+        "viiankiaapa",
+        "tavvavuoma",
+        "sutton ridges",
+        "pasvik",
     ]
     if any(ex in q for ex in aufeis_exclusions):
         return None

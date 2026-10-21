@@ -3,6 +3,10 @@
 import json
 from typing import AsyncGenerator
 
+from contoso_chat.aapa_palsa_mire import (
+    format_aapa_palsa_mire_response,
+    is_aapa_palsa_mire_query,
+)
 from contoso_chat.aufeis_crossing import (
     format_aufeis_crossing_response,
     is_aufeis_crossing_query,
@@ -1410,6 +1414,29 @@ async def generate_gypsum_karst_stream_events(
     yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
     if event_name != "gypsum_karst_info":
         yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
+
+async def generate_aapa_palsa_mire_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for boreal string-bog (aapa mire) flark-pool & palsa permafrost-mound crossing queries."""
+    if not is_aapa_palsa_mire_query(question):
+        return
+
+    apm_payload = dict(format_aapa_palsa_mire_response(question))
+    answer = str(apm_payload.get("answer", ""))
+    event_name = str(apm_payload.get("action", "aapa_palsa_mire_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(apm_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'aapa_palsa_mire_info': apm_payload, event_name: apm_payload})}\n\n"
+    if event_name != "aapa_palsa_mire_info":
+        yield f"data: {json.dumps({'event': 'aapa_palsa_mire_info', 'aapa_palsa_mire_info': apm_payload})}\n\n"
 
     tokens = answer.split(" ")
     for token in tokens:

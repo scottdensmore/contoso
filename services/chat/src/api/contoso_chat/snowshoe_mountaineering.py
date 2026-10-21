@@ -279,6 +279,18 @@ def detect_snowshoe_intent(message: str) -> Optional[SnowshoeIntent]:
         "slide alder",
         "cripplebrush",
         "timberline thicket",
+        "aapa",
+        "aapasuo",
+        "palsa",
+        "string bog",
+        "string-bog",
+        "flark",
+        "rimpi",
+        "suosukset",
+        "viiankiaapa",
+        "tavvavuoma",
+        "sutton ridges",
+        "pasvik",
     ]
     if any(ex in q for ex in exclusions):
         return None

@@ -5,6 +5,10 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+from contoso_chat.aapa_palsa_mire import (
+    detect_aapa_palsa_mire_intent,
+    format_aapa_palsa_mire_response,
+)
 from contoso_chat.acclimatization import (
     AcclimatizationPlanRequest,
     AcclimatizationPlanResponse,
@@ -660,6 +664,9 @@ from contoso_chat.river_sup import (
 from contoso_chat.rock_glacier_navigation import (
     detect_rock_glacier_navigation_intent,
     format_rock_glacier_navigation_response,
+)
+from contoso_chat.routers.aapa_palsa_mire import (
+    router as aapa_palsa_mire_router,
 )
 from contoso_chat.routers.aufeis_crossing import (
     router as aufeis_crossing_router,
@@ -1780,6 +1787,24 @@ app.include_router(
 logger.info(
     "Registered Subterranean Gypsum-Karst Dissolution Maze & Evaporite Breakdown-Hall Speleology router (/gypsum-karst, /api/gypsum-karst, /api/v1/gypsum-karst)"
 )
+app.include_router(
+    aapa_palsa_mire_router,
+    prefix="/aapa-palsa-mire",
+    tags=["aapa-palsa-mire"],
+)
+app.include_router(
+    aapa_palsa_mire_router,
+    prefix="/api/aapa-palsa-mire",
+    tags=["aapa-palsa-mire"],
+)
+app.include_router(
+    aapa_palsa_mire_router,
+    prefix="/api/v1/aapa-palsa-mire",
+    tags=["aapa-palsa-mire"],
+)
+logger.info(
+    "Registered Boreal String-Bog (Aapa Mire) Flark-Pool & Palsa Permafrost-Mound Crossing router (/aapa-palsa-mire, /api/aapa-palsa-mire, /api/v1/aapa-palsa-mire)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2092,6 +2117,7 @@ async def create_response(request: ChatRequest):
             barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
             talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
             gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
+            aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2568,6 +2594,10 @@ async def create_response(request: ChatRequest):
                 gk_info = dict(format_gypsum_karst_response(request.question))
                 mock_payload["gypsum_karst_info"] = gk_info
                 mock_payload["answer"] = str(gk_info.get("answer", ""))
+            if aapa_palsa_mire_intent:
+                apm_info = dict(format_aapa_palsa_mire_response(request.question))
+                mock_payload["aapa_palsa_mire_info"] = apm_info
+                mock_payload["answer"] = str(apm_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3098,6 +3128,7 @@ async def create_response_stream(request: ChatRequest):
                 barnacle_ledge_intent = detect_barnacle_ledge_intent(request.question)
                 talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
                 gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
+                aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3656,6 +3687,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gk_payload, event_name: gk_payload})}\n\n"
                     if event_name != "gypsum_karst_info":
                         yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gk_payload})}\n\n"
+                if aapa_palsa_mire_intent:
+                    apm_payload = dict(format_aapa_palsa_mire_response(request.question))
+                    event_name = str(apm_payload.get("action", "aapa_palsa_mire_info"))
+                    yield f"event: metadata\ndata: {json.dumps(apm_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'aapa_palsa_mire_info': apm_payload, event_name: apm_payload})}\n\n"
+                    if event_name != "aapa_palsa_mire_info":
+                        yield f"data: {json.dumps({'event': 'aapa_palsa_mire_info', 'aapa_palsa_mire_info': apm_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4566,6 +4604,9 @@ async def create_response_stream(request: ChatRequest):
                 elif gypsum_karst_intent:
                     gk_resp = format_gypsum_karst_response(request.question)
                     mock_chunks = [str(gk_resp.get("answer", ""))]
+                elif aapa_palsa_mire_intent:
+                    apm_resp = format_aapa_palsa_mire_response(request.question)
+                    mock_chunks = [str(apm_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -4976,6 +5017,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_barnacle_ledge_intent(request.question)
                 or detect_talus_cold_trap_intent(request.question)
                 or detect_gypsum_karst_intent(request.question)
+                or detect_aapa_palsa_mire_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"
