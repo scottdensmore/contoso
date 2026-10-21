@@ -45,7 +45,7 @@ services:
       - CHAT_ENDPOINT=http://chat:8000/api/create_response
       - CHAT_API_KEY=${CHAT_API_KEY:-dummy}
   db:
-    image: postgres:15
+    image: postgres:18
     restart: always
     # Postgres reports "started" well before it accepts connections. Without
     # this, dependents race the socket and fail with P1001.
