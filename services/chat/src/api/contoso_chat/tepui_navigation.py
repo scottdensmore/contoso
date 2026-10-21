@@ -682,6 +682,27 @@ _TEPUI_NAVIGATION_EXCLUSIONS: tuple[str, ...] = (
     "culm",
     "punji stump",
     "montane bamboo",
+    # Tropical laterite duricrust & bauxite ferricrete exclusions (laterite_duricrust.py)
+    "laterite",
+    "duricrust",
+    "ferricrete",
+    "bauxite",
+    "bowal",
+    "bowé",
+    "cuirasse",
+    "canga",
+    "serra dos carajas",
+    "serra dos carajás",
+    "fouta djallon",
+    "mitchell plateau",
+    "ngauwudu",
+    "kaas plateau",
+    "panchgani",
+    "pisolite",
+    "pisolitic",
+    "buckshot gravel",
+    "saprolite",
+    "aluminocrete",
 )
 
 _EXPLICIT_TEPUI_PLATEAU_OVERRIDES: tuple[str, ...] = (
