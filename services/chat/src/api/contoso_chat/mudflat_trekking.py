@@ -387,6 +387,17 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "basalt ledge",
         "basalt bench",
         "porphyra",
+        "aapa",
+        "aapasuo",
+        "palsa",
+        "string bog",
+        "string-bog",
+        "flark",
+        "rimpi",
+        "viiankiaapa",
+        "tavvavuoma",
+        "sutton ridges",
+        "pasvik",
     ]
     if any(ex in q for ex in exclusions):
         return None

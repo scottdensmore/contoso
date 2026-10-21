@@ -2,6 +2,10 @@
 
 from typing import Any, Optional
 
+from contoso_chat.aapa_palsa_mire import (
+    format_aapa_palsa_mire_response,
+    is_aapa_palsa_mire_query,
+)
 from contoso_chat.aufeis_crossing import (
     format_aufeis_crossing_response,
     is_aufeis_crossing_query,
@@ -855,6 +859,21 @@ def handle_gypsum_karst_intent(
     answer = str(info.get("answer", ""))
     return {
         "gypsum_karst_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
+
+def handle_aapa_palsa_mire_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format boreal string-bog (aapa mire) flark-pool & palsa permafrost-mound crossing intent in the cascade."""
+    if not is_aapa_palsa_mire_query(question):
+        return None
+    info = format_aapa_palsa_mire_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "aapa_palsa_mire_info": dict(info),
         "action": info.get("action"),
         "answer": answer,
     }

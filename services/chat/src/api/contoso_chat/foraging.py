@@ -363,6 +363,17 @@ def detect_foraging_intent(query: str) -> Optional[ForagingIntent]:
             "costa da morte",
             "basalt ledge",
             "basalt bench",
+            "aapa",
+            "aapasuo",
+            "palsa",
+            "string bog",
+            "string-bog",
+            "flark",
+            "rimpi",
+            "viiankiaapa",
+            "tavvavuoma",
+            "sutton ridges",
+            "pasvik",
         ]
     ):
         return None

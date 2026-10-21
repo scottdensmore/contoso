@@ -3,6 +3,11 @@ import os
 import re
 from typing import Any
 
+from .aapa_palsa_mire import (
+    build_aapa_palsa_mire_prompt,
+    detect_aapa_palsa_mire_intent,
+    format_aapa_palsa_mire_response,
+)
 from .acclimatization import (
     build_acclimatization_prompt,
     detect_acclimatization_intent,
@@ -920,6 +925,7 @@ async def generate_llm_response(
     barnacle_ledge_prompt: str = "",
     talus_cold_trap_prompt: str = "",
     gypsum_karst_prompt: str = "",
+    aapa_palsa_mire_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1147,6 +1153,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{talus_cold_trap_prompt}"
         if gypsum_karst_prompt:
             local_system = f"{local_system}\n\n{gypsum_karst_prompt}"
+        if aapa_palsa_mire_prompt:
+            local_system = f"{local_system}\n\n{aapa_palsa_mire_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1442,6 +1450,8 @@ async def generate_llm_response(
             prompt_parts.append(talus_cold_trap_prompt)
         if gypsum_karst_prompt:
             prompt_parts.append(gypsum_karst_prompt)
+        if aapa_palsa_mire_prompt:
+            prompt_parts.append(aapa_palsa_mire_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2197,6 +2207,15 @@ async def get_response(customer_id, question, chat_history: Any = None):
         gypsum_karst_info_payload = dict(format_gypsum_karst_response(question))
         gypsum_karst_prompt = build_gypsum_karst_prompt(
             gypsum_karst_info_payload
+        )
+
+    aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(question)
+    aapa_palsa_mire_prompt = ""
+    aapa_palsa_mire_info_payload: dict[str, Any] | None = None
+    if aapa_palsa_mire_intent:
+        aapa_palsa_mire_info_payload = dict(format_aapa_palsa_mire_response(question))
+        aapa_palsa_mire_prompt = build_aapa_palsa_mire_prompt(
+            aapa_palsa_mire_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -3057,6 +3076,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["talus_cold_trap_prompt"] = talus_cold_trap_prompt
     if gypsum_karst_prompt:
         llm_kwargs["gypsum_karst_prompt"] = gypsum_karst_prompt
+    if aapa_palsa_mire_prompt:
+        llm_kwargs["aapa_palsa_mire_prompt"] = aapa_palsa_mire_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3234,6 +3255,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["talus_cold_trap_info"] = talus_cold_trap_info_payload
     if gypsum_karst_intent and gypsum_karst_info_payload:
         response_payload["gypsum_karst_info"] = gypsum_karst_info_payload
+    if aapa_palsa_mire_intent and aapa_palsa_mire_info_payload:
+        response_payload["aapa_palsa_mire_info"] = aapa_palsa_mire_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3437,6 +3460,7 @@ def generate_llm_response_stream(
     barnacle_ledge_prompt: str = "",
     talus_cold_trap_prompt: str = "",
     gypsum_karst_prompt: str = "",
+    aapa_palsa_mire_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3662,6 +3686,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{talus_cold_trap_prompt}"
         if gypsum_karst_prompt:
             local_system = f"{local_system}\n\n{gypsum_karst_prompt}"
+        if aapa_palsa_mire_prompt:
+            local_system = f"{local_system}\n\n{aapa_palsa_mire_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3902,6 +3928,8 @@ def generate_llm_response_stream(
             prompt_parts.append(talus_cold_trap_prompt)
         if gypsum_karst_prompt:
             prompt_parts.append(gypsum_karst_prompt)
+        if aapa_palsa_mire_prompt:
+            prompt_parts.append(aapa_palsa_mire_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4479,6 +4507,15 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         gypsum_karst_info_payload = dict(format_gypsum_karst_response(question))
         gypsum_karst_prompt = build_gypsum_karst_prompt(
             gypsum_karst_info_payload
+        )
+
+    aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(question)
+    aapa_palsa_mire_prompt = ""
+    aapa_palsa_mire_info_payload: dict[str, Any] | None = None
+    if aapa_palsa_mire_intent:
+        aapa_palsa_mire_info_payload = dict(format_aapa_palsa_mire_response(question))
+        aapa_palsa_mire_prompt = build_aapa_palsa_mire_prompt(
+            aapa_palsa_mire_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -5517,6 +5554,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'gypsum_karst_info': gypsum_karst_info_payload, event_name: gypsum_karst_info_payload})}\n\n"
         if event_name != "gypsum_karst_info":
             yield f"data: {json.dumps({'event': 'gypsum_karst_info', 'gypsum_karst_info': gypsum_karst_info_payload})}\n\n"
+    if aapa_palsa_mire_intent and aapa_palsa_mire_info_payload:
+        event_name = (
+            aapa_palsa_mire_info_payload.get("action", "aapa_palsa_mire_info")
+            if isinstance(aapa_palsa_mire_info_payload, dict)
+            else "aapa_palsa_mire_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(aapa_palsa_mire_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'aapa_palsa_mire_info': aapa_palsa_mire_info_payload, event_name: aapa_palsa_mire_info_payload})}\n\n"
+        if event_name != "aapa_palsa_mire_info":
+            yield f"data: {json.dumps({'event': 'aapa_palsa_mire_info', 'aapa_palsa_mire_info': aapa_palsa_mire_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6488,6 +6535,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["talus_cold_trap_prompt"] = talus_cold_trap_prompt
     if gypsum_karst_prompt:
         stream_kwargs["gypsum_karst_prompt"] = gypsum_karst_prompt
+    if aapa_palsa_mire_prompt:
+        stream_kwargs["aapa_palsa_mire_prompt"] = aapa_palsa_mire_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
