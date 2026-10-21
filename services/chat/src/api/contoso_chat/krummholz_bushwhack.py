@@ -629,6 +629,27 @@ _KRUMMHOLZ_BUSHWHACK_EXCLUSIONS: tuple[str, ...] = (
     "katabatic",
     "williwaw",
     "seal wallow",
+    # Tropical laterite duricrust & bauxite ferricrete exclusions (laterite_duricrust.py)
+    "laterite",
+    "duricrust",
+    "ferricrete",
+    "bauxite",
+    "bowal",
+    "bowé",
+    "cuirasse",
+    "canga",
+    "serra dos carajas",
+    "serra dos carajás",
+    "fouta djallon",
+    "mitchell plateau",
+    "ngauwudu",
+    "kaas plateau",
+    "panchgani",
+    "pisolite",
+    "pisolitic",
+    "buckshot gravel",
+    "saprolite",
+    "aluminocrete",
 )
 
 

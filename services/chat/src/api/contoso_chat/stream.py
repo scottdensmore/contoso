@@ -87,6 +87,10 @@ from contoso_chat.krummholz_bushwhack import (
     format_krummholz_bushwhack_response,
     is_krummholz_bushwhack_query,
 )
+from contoso_chat.laterite_duricrust import (
+    format_laterite_duricrust_response,
+    is_laterite_duricrust_query,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -1443,4 +1447,28 @@ async def generate_aapa_palsa_mire_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_laterite_duricrust_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for tropical laterite duricrust mesa & bauxite ferricrete scarp-edge bushwhacking queries."""
+    if not is_laterite_duricrust_query(question):
+        return
+
+    ld_payload = dict(format_laterite_duricrust_response(question))
+    answer = str(ld_payload.get("answer", ""))
+    event_name = str(ld_payload.get("action", "laterite_duricrust_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(ld_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'laterite_duricrust_info': ld_payload, event_name: ld_payload})}\n\n"
+    if event_name != "laterite_duricrust_info":
+        yield f"data: {json.dumps({'event': 'laterite_duricrust_info', 'laterite_duricrust_info': ld_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 

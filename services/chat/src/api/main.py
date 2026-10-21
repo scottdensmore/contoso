@@ -429,6 +429,10 @@ from contoso_chat.krummholz_bushwhack import (
     detect_krummholz_bushwhack_intent,
     format_krummholz_bushwhack_response,
 )
+from contoso_chat.laterite_duricrust import (
+    detect_laterite_duricrust_intent,
+    format_laterite_duricrust_response,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -715,6 +719,9 @@ from contoso_chat.routers.kelp_freediving import (
 )
 from contoso_chat.routers.krummholz_bushwhack import (
     router as krummholz_bushwhack_router,
+)
+from contoso_chat.routers.laterite_duricrust import (
+    router as laterite_duricrust_router,
 )
 from contoso_chat.routers.lava_tube_biospeleology import (
     router as lava_tube_biospeleology_router,
@@ -1805,6 +1812,24 @@ app.include_router(
 logger.info(
     "Registered Boreal String-Bog (Aapa Mire) Flark-Pool & Palsa Permafrost-Mound Crossing router (/aapa-palsa-mire, /api/aapa-palsa-mire, /api/v1/aapa-palsa-mire)"
 )
+app.include_router(
+    laterite_duricrust_router,
+    prefix="/laterite-duricrust",
+    tags=["laterite-duricrust"],
+)
+app.include_router(
+    laterite_duricrust_router,
+    prefix="/api/laterite-duricrust",
+    tags=["laterite-duricrust"],
+)
+app.include_router(
+    laterite_duricrust_router,
+    prefix="/api/v1/laterite-duricrust",
+    tags=["laterite-duricrust"],
+)
+logger.info(
+    "Registered Tropical Laterite Duricrust Mesa & Bauxite Ferricrete Scarp-Edge Bushwhacking router (/laterite-duricrust, /api/laterite-duricrust, /api/v1/laterite-duricrust)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2118,6 +2143,7 @@ async def create_response(request: ChatRequest):
             talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
             gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
             aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
+            laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2598,6 +2624,10 @@ async def create_response(request: ChatRequest):
                 apm_info = dict(format_aapa_palsa_mire_response(request.question))
                 mock_payload["aapa_palsa_mire_info"] = apm_info
                 mock_payload["answer"] = str(apm_info.get("answer", ""))
+            if laterite_duricrust_intent:
+                ld_info = dict(format_laterite_duricrust_response(request.question))
+                mock_payload["laterite_duricrust_info"] = ld_info
+                mock_payload["answer"] = str(ld_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3129,6 +3159,7 @@ async def create_response_stream(request: ChatRequest):
                 talus_cold_trap_intent = detect_talus_cold_trap_intent(request.question)
                 gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
                 aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
+                laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3694,6 +3725,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'aapa_palsa_mire_info': apm_payload, event_name: apm_payload})}\n\n"
                     if event_name != "aapa_palsa_mire_info":
                         yield f"data: {json.dumps({'event': 'aapa_palsa_mire_info', 'aapa_palsa_mire_info': apm_payload})}\n\n"
+                if laterite_duricrust_intent:
+                    ld_payload = dict(format_laterite_duricrust_response(request.question))
+                    event_name = str(ld_payload.get("action", "laterite_duricrust_info"))
+                    yield f"event: metadata\ndata: {json.dumps(ld_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'laterite_duricrust_info': ld_payload, event_name: ld_payload})}\n\n"
+                    if event_name != "laterite_duricrust_info":
+                        yield f"data: {json.dumps({'event': 'laterite_duricrust_info', 'laterite_duricrust_info': ld_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4607,6 +4645,9 @@ async def create_response_stream(request: ChatRequest):
                 elif aapa_palsa_mire_intent:
                     apm_resp = format_aapa_palsa_mire_response(request.question)
                     mock_chunks = [str(apm_resp.get("answer", ""))]
+                elif laterite_duricrust_intent:
+                    ld_resp = format_laterite_duricrust_response(request.question)
+                    mock_chunks = [str(ld_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -5018,6 +5059,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_talus_cold_trap_intent(request.question)
                 or detect_gypsum_karst_intent(request.question)
                 or detect_aapa_palsa_mire_intent(request.question)
+                or detect_laterite_duricrust_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

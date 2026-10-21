@@ -281,6 +281,15 @@ def detect_gold_prospecting_intent(message: str) -> Optional[ProspectingIntent]:
         "rental",
         "snowshoe",
         "trapping",
+        "laterite",
+        "duricrust",
+        "ferricrete",
+        "bauxite",
+        "bowal",
+        "canga",
+        "carajás",
+        "carajas",
+        "pisolitic",
     ]
     if any(ex in q for ex in exclusions):
         return None

@@ -86,6 +86,10 @@ from contoso_chat.krummholz_bushwhack import (
     format_krummholz_bushwhack_response,
     is_krummholz_bushwhack_query,
 )
+from contoso_chat.laterite_duricrust import (
+    format_laterite_duricrust_response,
+    is_laterite_duricrust_query,
+)
 from contoso_chat.lava_tube_biospeleology import (
     detect_lava_tube_biospeleology_intent,
     format_lava_tube_biospeleology_response,
@@ -877,3 +881,19 @@ def handle_aapa_palsa_mire_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_laterite_duricrust_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format tropical laterite duricrust mesa & bauxite ferricrete scarp-edge bushwhacking intent in the cascade."""
+    if not is_laterite_duricrust_query(question):
+        return None
+    info = format_laterite_duricrust_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "laterite_duricrust_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+

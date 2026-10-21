@@ -686,6 +686,27 @@ _TSINGY_LABYRINTH_EXCLUSIONS: tuple[str, ...] = (
     "pseudokarst",
     "brocchinia",
     "cyanobacteria biofilm",
+    # Tropical laterite duricrust & bauxite ferricrete exclusions (laterite_duricrust.py)
+    "laterite",
+    "duricrust",
+    "ferricrete",
+    "bauxite",
+    "bowal",
+    "bowé",
+    "cuirasse",
+    "canga",
+    "serra dos carajas",
+    "serra dos carajás",
+    "fouta djallon",
+    "mitchell plateau",
+    "ngauwudu",
+    "kaas plateau",
+    "panchgani",
+    "pisolite",
+    "pisolitic",
+    "buckshot gravel",
+    "saprolite",
+    "aluminocrete",
 )
 
 

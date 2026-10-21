@@ -300,6 +300,8 @@ def detect_mountain_weather_intent(message: str) -> Optional[MountainWeatherInte
         "subantarctic", "poa flabellata", "fortuna bay", "south georgia",
         "macquarie island", "featherbed", "enderby island", "auckland islands",
         "kerguelen", "azorella", "katabatic", "williwaw", "seal wallow",
+        "laterite", "duricrust", "ferricrete", "bauxite", "bowal", "bowé",
+        "canga", "carajás", "carajas", "pisolitic", "fouta djallon",
     ]):
         return None
 
