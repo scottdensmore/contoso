@@ -4,7 +4,7 @@
 # size budget.
 
 # ---- deps: full dependency tree, needed only to build ----
-FROM node:26-alpine AS deps
+FROM node:22-alpine AS deps
 
 # Install dependencies needed for sharp and prisma
 RUN apk add --no-cache libc6-compat
@@ -14,7 +14,7 @@ COPY apps/web/package*.json ./
 RUN npm ci --no-audit --no-fund
 
 # ---- builder: generate the Prisma client and build Next.js ----
-FROM node:26-alpine AS builder
+FROM node:22-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
 
@@ -46,7 +46,7 @@ RUN npx prisma generate --generator client --schema prisma/schema.prisma
 RUN NEXT_BUILD_SKIP_DB=1 npm run build
 
 # ---- runner: production runtime ----
-FROM node:26-alpine AS runner
+FROM node:22-alpine AS runner
 
 RUN apk add --no-cache libc6-compat
 
