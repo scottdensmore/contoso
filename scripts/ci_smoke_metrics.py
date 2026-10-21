@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -177,7 +177,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    timestamp = args.timestamp or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+    timestamp = args.timestamp or datetime.now(UTC).replace(microsecond=0).isoformat()
     budget_failed = str(args.budget_failed).strip() == "1"
 
     metrics = parse_metrics_file(Path(args.metrics_file))
