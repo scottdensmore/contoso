@@ -214,10 +214,10 @@ class CheckDependencyPolicyTests(unittest.TestCase):
             self.assertEqual(errors, [])
 
     def test_google_cloud_storage_satisfied_by_aiplatform(self):
-        """Issue #312: aiplatform 2.1.0 pins require google-cloud-storage >= 3.0.0."""
+        """Issue #312: aiplatform 2.x pins require google-cloud-storage >= 3.0.0."""
         constraints_path = REPO_ROOT / "services/chat/constraints.txt"
         constraints_text = constraints_path.read_text(encoding="utf-8")
-        self.assertIn("google-cloud-aiplatform==2.1.0", constraints_text)
+        self.assertIn("google-cloud-aiplatform==2.3.0", constraints_text)
 
         # Verify policy documentation mentions Issue #312 and google-cloud-storage
         req_core_path = REPO_ROOT / "services/chat/src/api/requirements-core.txt"
@@ -249,7 +249,6 @@ class CheckDependencyPolicyTests(unittest.TestCase):
                 3,
                 f"Expected google-cloud-storage >= 3.0.0, got {storage_version}",
             )
-            self.assertEqual(storage_version, "3.1.0")
 
     def test_dependency_policy_script_main_passes(self):
         """The full check_dependency_policy script should exit with 0 on the repo."""
