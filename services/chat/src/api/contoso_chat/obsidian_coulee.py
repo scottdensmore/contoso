@@ -677,11 +677,28 @@ def is_obsidian_coulee_query(query: str) -> bool:
         return False
     q = query.lower()
 
+    if any(excl in q for excl in _ADJACENT_DOMAIN_EXCLUSIONS) and not any(
+        kw in q
+        for kw in (
+            "obsidian coulee",
+            "obsidian-coulee",
+            "obsidian_coulee",
+            "big obsidian flow",
+            "newberry caldera",
+            "glass mountain",
+            "medicine lake",
+            "panum crater",
+            "mono-inyo",
+            "hrafntinnusker",
+            "torfajokull",
+            "torfajökull",
+        )
+    ):
+        return False
+
     if any(kw in q for kw in _STRONG_OBSIDIAN_COULEE_KEYWORDS):
         return True
 
-    if any(excl in q for excl in _ADJACENT_DOMAIN_EXCLUSIONS):
-        return False
 
     context_hits = sum(1 for term in _CONTEXT_OBSIDIAN_TERMS if term in q)
     if context_hits >= 2:
