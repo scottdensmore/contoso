@@ -562,7 +562,6 @@ def is_tephra_navigation_query(query: str) -> bool:
             "obsidian-coulee",
             "obsidian flow",
             "obsidian-flow",
-            "obsidian dome",
             "obsidian ridge",
             "big obsidian flow",
             "newberry caldera",
