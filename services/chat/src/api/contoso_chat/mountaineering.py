@@ -350,6 +350,23 @@ def detect_mountaineering_intent(query: str) -> Optional[MountaineeringIntent]:
         "slide alder",
         "cripplebrush",
         "timberline thicket",
+        "obsidian coulee",
+        "obsidian flow",
+        "obsidian dome",
+        "obsidian ridge",
+        "big obsidian flow",
+        "newberry caldera",
+        "glass mountain",
+        "medicine lake",
+        "panum crater",
+        "mono inyo",
+        "hrafntinnusker",
+        "torfajokull",
+        "torfajökull",
+        "conchoidal fracture",
+        "volcanic glass",
+        "vitrophyre",
+        "rhyolite coulee",
     ]
     if any(ex in q_norm for ex in pulk_exclusions):
         return None

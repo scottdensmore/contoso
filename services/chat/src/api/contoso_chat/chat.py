@@ -106,6 +106,10 @@ from contoso_chat.night_via_ferrata import (
     detect_night_via_ferrata_intent,
     format_night_via_ferrata_response,
 )
+from contoso_chat.obsidian_coulee import (
+    format_obsidian_coulee_response,
+    is_obsidian_coulee_query,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -896,4 +900,20 @@ def handle_laterite_duricrust_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_obsidian_coulee_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format high-altitude volcanic obsidian-flow & glass-block coulee scrambling intent in the cascade."""
+    if not is_obsidian_coulee_query(question):
+        return None
+    info = format_obsidian_coulee_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "obsidian_coulee_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
