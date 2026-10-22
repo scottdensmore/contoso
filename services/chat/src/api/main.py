@@ -499,6 +499,10 @@ from contoso_chat.nordic_skiing import (
     get_nordic_trail_by_id,
     get_nordic_trails,
 )
+from contoso_chat.obsidian_coulee import (
+    detect_obsidian_coulee_intent,
+    format_obsidian_coulee_response,
+)
 from contoso_chat.order_tracking import detect_order_tracking_intent
 from contoso_chat.orienteering import (
     NavigationLegRequest,
@@ -731,6 +735,9 @@ from contoso_chat.routers.mangrove_labyrinth import (
 )
 from contoso_chat.routers.mudflat_trekking import router as mudflat_trekking_router
 from contoso_chat.routers.night_via_ferrata import router as night_via_ferrata_router
+from contoso_chat.routers.obsidian_coulee import (
+    router as obsidian_coulee_router,
+)
 from contoso_chat.routers.pack_goat import router as pack_goat_router
 from contoso_chat.routers.pack_llama import router as pack_llama_router
 from contoso_chat.routers.paramo_navigation import (
@@ -1830,6 +1837,24 @@ app.include_router(
 logger.info(
     "Registered Tropical Laterite Duricrust Mesa & Bauxite Ferricrete Scarp-Edge Bushwhacking router (/laterite-duricrust, /api/laterite-duricrust, /api/v1/laterite-duricrust)"
 )
+app.include_router(
+    obsidian_coulee_router,
+    prefix="/obsidian-coulee",
+    tags=["obsidian-coulee"],
+)
+app.include_router(
+    obsidian_coulee_router,
+    prefix="/api/obsidian-coulee",
+    tags=["obsidian-coulee"],
+)
+app.include_router(
+    obsidian_coulee_router,
+    prefix="/api/v1/obsidian-coulee",
+    tags=["obsidian-coulee"],
+)
+logger.info(
+    "Registered High-Altitude Volcanic Obsidian-Flow & Glass-Block Coulee Scrambling router (/obsidian-coulee, /api/obsidian-coulee, /api/v1/obsidian-coulee)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2144,6 +2169,7 @@ async def create_response(request: ChatRequest):
             gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
             aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
             laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
+            obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2628,6 +2654,10 @@ async def create_response(request: ChatRequest):
                 ld_info = dict(format_laterite_duricrust_response(request.question))
                 mock_payload["laterite_duricrust_info"] = ld_info
                 mock_payload["answer"] = str(ld_info.get("answer", ""))
+            if obsidian_coulee_intent:
+                oc_info = dict(format_obsidian_coulee_response(request.question))
+                mock_payload["obsidian_coulee_info"] = oc_info
+                mock_payload["answer"] = str(oc_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3160,6 +3190,7 @@ async def create_response_stream(request: ChatRequest):
                 gypsum_karst_intent = detect_gypsum_karst_intent(request.question)
                 aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
                 laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
+                obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3732,6 +3763,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'laterite_duricrust_info': ld_payload, event_name: ld_payload})}\n\n"
                     if event_name != "laterite_duricrust_info":
                         yield f"data: {json.dumps({'event': 'laterite_duricrust_info', 'laterite_duricrust_info': ld_payload})}\n\n"
+                if obsidian_coulee_intent:
+                    oc_payload = dict(format_obsidian_coulee_response(request.question))
+                    event_name = str(oc_payload.get("action", "obsidian_coulee_info"))
+                    yield f"event: metadata\ndata: {json.dumps(oc_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'obsidian_coulee_info': oc_payload, event_name: oc_payload})}\n\n"
+                    if event_name != "obsidian_coulee_info":
+                        yield f"data: {json.dumps({'event': 'obsidian_coulee_info', 'obsidian_coulee_info': oc_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4648,6 +4686,9 @@ async def create_response_stream(request: ChatRequest):
                 elif laterite_duricrust_intent:
                     ld_resp = format_laterite_duricrust_response(request.question)
                     mock_chunks = [str(ld_resp.get("answer", ""))]
+                elif obsidian_coulee_intent:
+                    oc_resp = format_obsidian_coulee_response(request.question)
+                    mock_chunks = [str(oc_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -5060,6 +5101,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_gypsum_karst_intent(request.question)
                 or detect_aapa_palsa_mire_intent(request.question)
                 or detect_laterite_duricrust_intent(request.question)
+                or detect_obsidian_coulee_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

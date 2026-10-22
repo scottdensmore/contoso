@@ -707,6 +707,27 @@ _TSINGY_LABYRINTH_EXCLUSIONS: tuple[str, ...] = (
     "buckshot gravel",
     "saprolite",
     "aluminocrete",
+    # High-altitude volcanic obsidian-flow & glass-block coulee exclusions (obsidian_coulee.py)
+    "obsidian coulee",
+    "obsidian-coulee",
+    "obsidian flow",
+    "obsidian-flow",
+    "obsidian dome",
+    "obsidian ridge",
+    "big obsidian flow",
+    "newberry caldera",
+    "glass mountain",
+    "medicine lake",
+    "panum crater",
+    "mono-inyo",
+    "hrafntinnusker",
+    "torfajokull",
+    "torfajökull",
+    "conchoidal fracture",
+    "conchoidal flake",
+    "volcanic glass",
+    "vitrophyre",
+    "rhyolite coulee",
 )
 
 

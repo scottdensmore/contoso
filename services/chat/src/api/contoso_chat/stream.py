@@ -107,6 +107,10 @@ from contoso_chat.night_via_ferrata import (
     detect_night_via_ferrata_intent,
     format_night_via_ferrata_response,
 )
+from contoso_chat.obsidian_coulee import (
+    format_obsidian_coulee_response,
+    is_obsidian_coulee_query,
+)
 from contoso_chat.pack_goat import (
     detect_pack_goat_intent,
     format_pack_goat_response,
@@ -1470,5 +1474,29 @@ async def generate_laterite_duricrust_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_obsidian_coulee_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for high-altitude volcanic obsidian-flow & glass-block coulee scrambling queries."""
+    if not is_obsidian_coulee_query(question):
+        return
+
+    oc_payload = dict(format_obsidian_coulee_response(question))
+    answer = str(oc_payload.get("answer", ""))
+    event_name = str(oc_payload.get("action", "obsidian_coulee_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(oc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'obsidian_coulee_info': oc_payload, event_name: oc_payload})}\n\n"
+    if event_name != "obsidian_coulee_info":
+        yield f"data: {json.dumps({'event': 'obsidian_coulee_info', 'obsidian_coulee_info': oc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
