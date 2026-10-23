@@ -76,6 +76,10 @@ from contoso_chat.beachcombing import (
     get_beachcombing_site,
     get_beachcombing_sites,
 )
+from contoso_chat.bentonite_badlands import (
+    detect_bentonite_badlands_intent,
+    format_bentonite_badlands_response,
+)
 from contoso_chat.big_wall import (
     BigWallGearRequirement,
     BigWallRouteModel,
@@ -688,6 +692,9 @@ from contoso_chat.routers.bamboo_thicket import (
 )
 from contoso_chat.routers.barnacle_ledge import (
     router as barnacle_ledge_router,
+)
+from contoso_chat.routers.bentonite_badlands import (
+    router as bentonite_badlands_router,
 )
 from contoso_chat.routers.bog_shoeing import router as bog_shoeing_router
 from contoso_chat.routers.canopy_bryophyte import (
@@ -1880,6 +1887,24 @@ app.include_router(
 logger.info(
     "Registered Coastal Fjord Quick-Clay (Kvikkleire) Marine-Terrace & Retrogressive Slump Navigation router (/quick-clay-terrace, /api/quick-clay-terrace, /api/v1/quick-clay-terrace)"
 )
+app.include_router(
+    bentonite_badlands_router,
+    prefix="/bentonite-badlands",
+    tags=["bentonite-badlands"],
+)
+app.include_router(
+    bentonite_badlands_router,
+    prefix="/api/bentonite-badlands",
+    tags=["bentonite-badlands"],
+)
+app.include_router(
+    bentonite_badlands_router,
+    prefix="/api/v1/bentonite-badlands",
+    tags=["bentonite-badlands"],
+)
+logger.info(
+    "Registered Arid Badlands Bentonite Popcorn-Clay & Piping-Tunnel Sinkhole Navigation router (/bentonite-badlands, /api/bentonite-badlands, /api/v1/bentonite-badlands)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2196,6 +2221,7 @@ async def create_response(request: ChatRequest):
             laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
             obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
             quick_clay_terrace_intent = detect_quick_clay_terrace_intent(request.question)
+            bentonite_badlands_intent = detect_bentonite_badlands_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2688,6 +2714,10 @@ async def create_response(request: ChatRequest):
                 qc_info = dict(format_quick_clay_terrace_response(request.question))
                 mock_payload["quick_clay_terrace_info"] = qc_info
                 mock_payload["answer"] = str(qc_info.get("answer", ""))
+            if bentonite_badlands_intent:
+                bb_info = dict(format_bentonite_badlands_response(request.question))
+                mock_payload["bentonite_badlands_info"] = bb_info
+                mock_payload["answer"] = str(bb_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3222,6 +3252,7 @@ async def create_response_stream(request: ChatRequest):
                 laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
                 obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
                 quick_clay_terrace_intent = detect_quick_clay_terrace_intent(request.question)
+                bentonite_badlands_intent = detect_bentonite_badlands_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3808,6 +3839,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'quick_clay_terrace_info': qc_payload, event_name: qc_payload})}\n\n"
                     if event_name != "quick_clay_terrace_info":
                         yield f"data: {json.dumps({'event': 'quick_clay_terrace_info', 'quick_clay_terrace_info': qc_payload})}\n\n"
+                if bentonite_badlands_intent:
+                    bb_payload = dict(format_bentonite_badlands_response(request.question))
+                    event_name = str(bb_payload.get("action", "bentonite_badlands_info"))
+                    yield f"event: metadata\ndata: {json.dumps(bb_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'bentonite_badlands_info': bb_payload, event_name: bb_payload})}\n\n"
+                    if event_name != "bentonite_badlands_info":
+                        yield f"data: {json.dumps({'event': 'bentonite_badlands_info', 'bentonite_badlands_info': bb_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4730,6 +4768,9 @@ async def create_response_stream(request: ChatRequest):
                 elif quick_clay_terrace_intent:
                     qc_resp = format_quick_clay_terrace_response(request.question)
                     mock_chunks = [str(qc_resp.get("answer", ""))]
+                elif bentonite_badlands_intent:
+                    bb_resp = format_bentonite_badlands_response(request.question)
+                    mock_chunks = [str(bb_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -5144,6 +5185,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_laterite_duricrust_intent(request.question)
                 or detect_obsidian_coulee_intent(request.question)
                 or detect_quick_clay_terrace_intent(request.question)
+                or detect_bentonite_badlands_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

@@ -696,6 +696,26 @@ _YARDANG_NAVIGATION_EXCLUSIONS: tuple[str, ...] = (
     "devils lake",
     "linville gorge",
     "chautauqua",
+    # Bentonite badlands exclusions (bentonite_badlands.py)
+    "bentonite",
+    "popcorn clay",
+    "popcorn-clay",
+    "piping tunnel",
+    "piping-tunnel",
+    "smectite",
+    "montmorillonite",
+    "gumbo clay",
+    "gumbo mud",
+    "sage creek",
+    "chadron formation",
+    "cainville",
+    "factory butte",
+    "mancos shale",
+    "bearpaw shale",
+    "red deer badlands",
+    "bardenas reales",
+    "pisquerra",
+    "castildetierra",
 )
 
 _EXPLICIT_YARDANG_OVERRIDES: tuple[str, ...] = (
