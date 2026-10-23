@@ -131,6 +131,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.quick_clay_terrace import (
+    format_quick_clay_terrace_response,
+    is_quick_clay_terrace_query,
+)
 from contoso_chat.rock_glacier_navigation import (
     format_rock_glacier_navigation_response,
     is_rock_glacier_navigation_query,
@@ -1497,6 +1501,30 @@ async def generate_obsidian_coulee_stream_events(
         yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
     yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
     yield "data: [DONE]\n\n"
+
+
+async def generate_quick_clay_terrace_stream_events(
+    question: str,
+) -> AsyncGenerator[str, None]:
+    """Yield SSE events for coastal fjord quick-clay marine-terrace & retrogressive slump navigation queries."""
+    if not is_quick_clay_terrace_query(question):
+        return
+
+    qc_payload = dict(format_quick_clay_terrace_response(question))
+    answer = str(qc_payload.get("answer", ""))
+    event_name = str(qc_payload.get("action", "quick_clay_terrace_info"))
+
+    yield f"event: metadata\ndata: {json.dumps(qc_payload)}\n\n"
+    yield f"data: {json.dumps({'event': event_name, 'quick_clay_terrace_info': qc_payload, event_name: qc_payload})}\n\n"
+    if event_name != "quick_clay_terrace_info":
+        yield f"data: {json.dumps({'event': 'quick_clay_terrace_info', 'quick_clay_terrace_info': qc_payload})}\n\n"
+
+    tokens = answer.split(" ")
+    for token in tokens:
+        yield f"data: {json.dumps({'event': 'token', 'token': token + ' ' if token else ''})}\n\n"
+    yield f"event: done\ndata: {json.dumps({'status': 'complete', 'action': event_name})}\n\n"
+    yield "data: [DONE]\n\n"
+
 
 
 

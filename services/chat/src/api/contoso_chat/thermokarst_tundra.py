@@ -605,6 +605,20 @@ _EXCLUSION_PATTERNS: tuple[str, ...] = (
     "injarvi",
     "neiden",
     "munkefjord",
+    "quick clay",
+    "quick-clay",
+    "kvikkleire",
+    "leda clay",
+    "leda-clay",
+    "champlain sea",
+    "laflamme sea",
+    "gauldalen",
+    "gjerdrum",
+    "romerike",
+    "lemieux",
+    "saint-jean-vianney",
+    "retrogressive slump",
+    "glaciomarine clay",
 )
 
 

@@ -790,6 +790,20 @@ def detect_scree_running_intent(message: str) -> bool:
         "volcanic glass",
         "vitrophyre",
         "rhyolite coulee",
+        "quick clay",
+        "quick-clay",
+        "kvikkleire",
+        "leda clay",
+        "leda-clay",
+        "champlain sea",
+        "laflamme sea",
+        "gauldalen",
+        "gjerdrum",
+        "romerike",
+        "lemieux",
+        "saint-jean-vianney",
+        "retrogressive slump",
+        "glaciomarine clay",
     ]
     if any(ex in q for ex in ecommerce_exclusions):
         return False

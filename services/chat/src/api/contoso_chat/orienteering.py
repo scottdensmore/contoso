@@ -495,6 +495,20 @@ def extract_orienteering_intent(message: str) -> Optional[OrienteeringIntent]:
         "buckshot gravel",
         "saprolite",
         "aluminocrete",
+        "quick clay",
+        "quick-clay",
+        "kvikkleire",
+        "leda clay",
+        "leda-clay",
+        "champlain sea",
+        "laflamme sea",
+        "gauldalen",
+        "gjerdrum",
+        "romerike",
+        "lemieux",
+        "saint-jean-vianney",
+        "retrogressive slump",
+        "glaciomarine clay",
     ]
     if any(k in q for k in salt_pan_exclusions):
         return None

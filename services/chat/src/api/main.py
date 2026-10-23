@@ -604,6 +604,10 @@ from contoso_chat.psicobloc import (
     get_psicobloc_crags,
     get_psicobloc_gear,
 )
+from contoso_chat.quick_clay_terrace import (
+    detect_quick_clay_terrace_intent,
+    format_quick_clay_terrace_response,
+)
 from contoso_chat.rentals import (
     RentalPackage,
     RentalQuoteRequest,
@@ -747,6 +751,9 @@ from contoso_chat.routers.penitentes_navigation import (
     router as penitentes_navigation_router,
 )
 from contoso_chat.routers.pothole_escape import router as pothole_escape_router
+from contoso_chat.routers.quick_clay_terrace import (
+    router as quick_clay_terrace_router,
+)
 from contoso_chat.routers.rock_glacier_navigation import (
     router as rock_glacier_navigation_router,
 )
@@ -1855,6 +1862,24 @@ app.include_router(
 logger.info(
     "Registered High-Altitude Volcanic Obsidian-Flow & Glass-Block Coulee Scrambling router (/obsidian-coulee, /api/obsidian-coulee, /api/v1/obsidian-coulee)"
 )
+app.include_router(
+    quick_clay_terrace_router,
+    prefix="/quick-clay-terrace",
+    tags=["quick-clay-terrace"],
+)
+app.include_router(
+    quick_clay_terrace_router,
+    prefix="/api/quick-clay-terrace",
+    tags=["quick-clay-terrace"],
+)
+app.include_router(
+    quick_clay_terrace_router,
+    prefix="/api/v1/quick-clay-terrace",
+    tags=["quick-clay-terrace"],
+)
+logger.info(
+    "Registered Coastal Fjord Quick-Clay (Kvikkleire) Marine-Terrace & Retrogressive Slump Navigation router (/quick-clay-terrace, /api/quick-clay-terrace, /api/v1/quick-clay-terrace)"
+)
 app.include_router(scree_running_router, prefix="/scree-running", tags=["scree-running"])
 app.include_router(scree_running_router, prefix="/api/scree-running", tags=["scree-running"])
 
@@ -2170,6 +2195,7 @@ async def create_response(request: ChatRequest):
             aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
             laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
             obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
+            quick_clay_terrace_intent = detect_quick_clay_terrace_intent(request.question)
             tussock_headland_intent = detect_tussock_headland_intent(request.question)
             foraging_intent = detect_foraging_intent(request.question)
             stargazing_intent = detect_stargazing_intent(request.question)
@@ -2658,6 +2684,10 @@ async def create_response(request: ChatRequest):
                 oc_info = dict(format_obsidian_coulee_response(request.question))
                 mock_payload["obsidian_coulee_info"] = oc_info
                 mock_payload["answer"] = str(oc_info.get("answer", ""))
+            if quick_clay_terrace_intent:
+                qc_info = dict(format_quick_clay_terrace_response(request.question))
+                mock_payload["quick_clay_terrace_info"] = qc_info
+                mock_payload["answer"] = str(qc_info.get("answer", ""))
             if tussock_headland_intent:
                 th_info = dict(format_tussock_headland_response(request.question))
                 mock_payload["tussock_headland_info"] = th_info
@@ -3191,6 +3221,7 @@ async def create_response_stream(request: ChatRequest):
                 aapa_palsa_mire_intent = detect_aapa_palsa_mire_intent(request.question)
                 laterite_duricrust_intent = detect_laterite_duricrust_intent(request.question)
                 obsidian_coulee_intent = detect_obsidian_coulee_intent(request.question)
+                quick_clay_terrace_intent = detect_quick_clay_terrace_intent(request.question)
                 tussock_headland_intent = detect_tussock_headland_intent(request.question)
                 foraging_intent = detect_foraging_intent(request.question)
                 stargazing_intent = detect_stargazing_intent(request.question)
@@ -3770,6 +3801,13 @@ async def create_response_stream(request: ChatRequest):
                     yield f"data: {json.dumps({'event': event_name, 'obsidian_coulee_info': oc_payload, event_name: oc_payload})}\n\n"
                     if event_name != "obsidian_coulee_info":
                         yield f"data: {json.dumps({'event': 'obsidian_coulee_info', 'obsidian_coulee_info': oc_payload})}\n\n"
+                if quick_clay_terrace_intent:
+                    qc_payload = dict(format_quick_clay_terrace_response(request.question))
+                    event_name = str(qc_payload.get("action", "quick_clay_terrace_info"))
+                    yield f"event: metadata\ndata: {json.dumps(qc_payload)}\n\n"
+                    yield f"data: {json.dumps({'event': event_name, 'quick_clay_terrace_info': qc_payload, event_name: qc_payload})}\n\n"
+                    if event_name != "quick_clay_terrace_info":
+                        yield f"data: {json.dumps({'event': 'quick_clay_terrace_info', 'quick_clay_terrace_info': qc_payload})}\n\n"
                 if foraging_intent and not tundra_lichen_intent:
                     formatted_foraging = format_foraging_response(foraging_intent)
                     yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': formatted_foraging.get('foraging_info')})}\n\n"
@@ -4689,6 +4727,9 @@ async def create_response_stream(request: ChatRequest):
                 elif obsidian_coulee_intent:
                     oc_resp = format_obsidian_coulee_response(request.question)
                     mock_chunks = [str(oc_resp.get("answer", ""))]
+                elif quick_clay_terrace_intent:
+                    qc_resp = format_quick_clay_terrace_response(request.question)
+                    mock_chunks = [str(qc_resp.get("answer", ""))]
                 elif canyon_bouldering_intent:
                     formatted_cb = format_canyon_bouldering_response(
                         canyon_bouldering_intent, request.question
@@ -5102,6 +5143,7 @@ async def create_response_stream(request: ChatRequest):
                 or detect_aapa_palsa_mire_intent(request.question)
                 or detect_laterite_duricrust_intent(request.question)
                 or detect_obsidian_coulee_intent(request.question)
+                or detect_quick_clay_terrace_intent(request.question)
                 or detect_tussock_headland_intent(request.question)
             ):
                 yield f"event: done\ndata: {json.dumps({'status': 'complete'})}\n\n"

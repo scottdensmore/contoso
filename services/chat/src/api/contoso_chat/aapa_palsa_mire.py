@@ -796,6 +796,20 @@ _OTHER_DOMAIN_EXCLUSIONS: tuple[str, ...] = (
     "overflow ice",
     "frost blister",
     "ulakhan-taryn",
+    "quick clay",
+    "quick-clay",
+    "kvikkleire",
+    "leda clay",
+    "leda-clay",
+    "champlain sea",
+    "laflamme sea",
+    "gauldalen",
+    "gjerdrum",
+    "romerike",
+    "lemieux",
+    "saint-jean-vianney",
+    "retrogressive slump",
+    "glaciomarine clay",
 )
 
 

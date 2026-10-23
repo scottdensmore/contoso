@@ -680,6 +680,20 @@ _OTHER_DOMAIN_EXCLUSIONS: tuple[str, ...] = (
     "vaseline glass",
     "uranium glass",
     "macrocystis",
+    "quick clay",
+    "quick-clay",
+    "kvikkleire",
+    "leda clay",
+    "leda-clay",
+    "champlain sea",
+    "laflamme sea",
+    "gauldalen",
+    "gjerdrum",
+    "romerike",
+    "lemieux",
+    "saint-jean-vianney",
+    "retrogressive slump",
+    "glaciomarine clay",
 )
 
 
