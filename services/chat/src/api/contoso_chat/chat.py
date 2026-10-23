@@ -130,6 +130,10 @@ from contoso_chat.pothole_escape import (
     detect_pothole_escape_intent,
     format_pothole_escape_response,
 )
+from contoso_chat.quick_clay_terrace import (
+    format_quick_clay_terrace_response,
+    is_quick_clay_terrace_query,
+)
 from contoso_chat.rock_glacier_navigation import (
     format_rock_glacier_navigation_response,
     is_rock_glacier_navigation_query,
@@ -915,5 +919,21 @@ def handle_obsidian_coulee_intent(
         "action": info.get("action"),
         "answer": answer,
     }
+
+
+def handle_quick_clay_terrace_intent(
+    question: str,
+) -> Optional[dict[str, Any]]:
+    """Detect and format coastal fjord quick-clay marine-terrace & retrogressive slump navigation intent in the cascade."""
+    if not is_quick_clay_terrace_query(question):
+        return None
+    info = format_quick_clay_terrace_response(question)
+    answer = str(info.get("answer", ""))
+    return {
+        "quick_clay_terrace_info": dict(info),
+        "action": info.get("action"),
+        "answer": answer,
+    }
+
 
 

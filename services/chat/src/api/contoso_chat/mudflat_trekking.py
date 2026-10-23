@@ -398,6 +398,20 @@ def detect_mudflat_intent(query: str) -> Optional[MudflatIntent]:
         "tavvavuoma",
         "sutton ridges",
         "pasvik",
+        "quick clay",
+        "quick-clay",
+        "kvikkleire",
+        "leda clay",
+        "leda-clay",
+        "champlain sea",
+        "laflamme sea",
+        "gauldalen",
+        "gjerdrum",
+        "romerike",
+        "lemieux",
+        "saint-jean-vianney",
+        "retrogressive slump",
+        "glaciomarine clay",
     ]
     if any(ex in q for ex in exclusions):
         return None

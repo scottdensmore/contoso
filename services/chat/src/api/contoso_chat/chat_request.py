@@ -371,6 +371,11 @@ from .psicobloc import (
     detect_psicobloc_intent,
     format_psicobloc_response,
 )
+from .quick_clay_terrace import (
+    build_quick_clay_terrace_prompt,
+    detect_quick_clay_terrace_intent,
+    format_quick_clay_terrace_response,
+)
 from .rentals import (
     build_rental_prompt,
     detect_rental_intent,
@@ -938,6 +943,7 @@ async def generate_llm_response(
     aapa_palsa_mire_prompt: str = "",
     laterite_duricrust_prompt: str = "",
     obsidian_coulee_prompt: str = "",
+    quick_clay_terrace_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1171,6 +1177,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{laterite_duricrust_prompt}"
         if obsidian_coulee_prompt:
             local_system = f"{local_system}\n\n{obsidian_coulee_prompt}"
+        if quick_clay_terrace_prompt:
+            local_system = f"{local_system}\n\n{quick_clay_terrace_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1472,6 +1480,8 @@ async def generate_llm_response(
             prompt_parts.append(laterite_duricrust_prompt)
         if obsidian_coulee_prompt:
             prompt_parts.append(obsidian_coulee_prompt)
+        if quick_clay_terrace_prompt:
+            prompt_parts.append(quick_clay_terrace_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2254,6 +2264,17 @@ async def get_response(customer_id, question, chat_history: Any = None):
         obsidian_coulee_info_payload = dict(format_obsidian_coulee_response(question))
         obsidian_coulee_prompt = build_obsidian_coulee_prompt(
             obsidian_coulee_info_payload
+        )
+
+    quick_clay_terrace_intent = detect_quick_clay_terrace_intent(question)
+    quick_clay_terrace_prompt = ""
+    quick_clay_terrace_info_payload: dict[str, Any] | None = None
+    if quick_clay_terrace_intent:
+        quick_clay_terrace_info_payload = dict(
+            format_quick_clay_terrace_response(question)
+        )
+        quick_clay_terrace_prompt = build_quick_clay_terrace_prompt(
+            quick_clay_terrace_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -3120,6 +3141,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["laterite_duricrust_prompt"] = laterite_duricrust_prompt
     if obsidian_coulee_prompt:
         llm_kwargs["obsidian_coulee_prompt"] = obsidian_coulee_prompt
+    if quick_clay_terrace_prompt:
+        llm_kwargs["quick_clay_terrace_prompt"] = quick_clay_terrace_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3303,6 +3326,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["laterite_duricrust_info"] = laterite_duricrust_info_payload
     if obsidian_coulee_intent and obsidian_coulee_info_payload:
         response_payload["obsidian_coulee_info"] = obsidian_coulee_info_payload
+    if quick_clay_terrace_intent and quick_clay_terrace_info_payload:
+        response_payload["quick_clay_terrace_info"] = quick_clay_terrace_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3509,6 +3534,7 @@ def generate_llm_response_stream(
     aapa_palsa_mire_prompt: str = "",
     laterite_duricrust_prompt: str = "",
     obsidian_coulee_prompt: str = "",
+    quick_clay_terrace_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3740,6 +3766,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{laterite_duricrust_prompt}"
         if obsidian_coulee_prompt:
             local_system = f"{local_system}\n\n{obsidian_coulee_prompt}"
+        if quick_clay_terrace_prompt:
+            local_system = f"{local_system}\n\n{quick_clay_terrace_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -3986,6 +4014,8 @@ def generate_llm_response_stream(
             prompt_parts.append(laterite_duricrust_prompt)
         if obsidian_coulee_prompt:
             prompt_parts.append(obsidian_coulee_prompt)
+        if quick_clay_terrace_prompt:
+            prompt_parts.append(quick_clay_terrace_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4590,6 +4620,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         obsidian_coulee_info_payload = dict(format_obsidian_coulee_response(question))
         obsidian_coulee_prompt = build_obsidian_coulee_prompt(
             obsidian_coulee_info_payload
+        )
+
+    quick_clay_terrace_intent = detect_quick_clay_terrace_intent(question)
+    quick_clay_terrace_prompt = ""
+    quick_clay_terrace_info_payload: dict[str, Any] | None = None
+    if quick_clay_terrace_intent:
+        quick_clay_terrace_info_payload = dict(
+            format_quick_clay_terrace_response(question)
+        )
+        quick_clay_terrace_prompt = build_quick_clay_terrace_prompt(
+            quick_clay_terrace_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -5658,6 +5699,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'obsidian_coulee_info': obsidian_coulee_info_payload, event_name: obsidian_coulee_info_payload})}\n\n"
         if event_name != "obsidian_coulee_info":
             yield f"data: {json.dumps({'event': 'obsidian_coulee_info', 'obsidian_coulee_info': obsidian_coulee_info_payload})}\n\n"
+    if quick_clay_terrace_intent and quick_clay_terrace_info_payload:
+        event_name = (
+            quick_clay_terrace_info_payload.get("action", "quick_clay_terrace_info")
+            if isinstance(quick_clay_terrace_info_payload, dict)
+            else "quick_clay_terrace_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(quick_clay_terrace_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'quick_clay_terrace_info': quick_clay_terrace_info_payload, event_name: quick_clay_terrace_info_payload})}\n\n"
+        if event_name != "quick_clay_terrace_info":
+            yield f"data: {json.dumps({'event': 'quick_clay_terrace_info', 'quick_clay_terrace_info': quick_clay_terrace_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6635,6 +6686,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["laterite_duricrust_prompt"] = laterite_duricrust_prompt
     if obsidian_coulee_prompt:
         stream_kwargs["obsidian_coulee_prompt"] = obsidian_coulee_prompt
+    if quick_clay_terrace_prompt:
+        stream_kwargs["quick_clay_terrace_prompt"] = quick_clay_terrace_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 

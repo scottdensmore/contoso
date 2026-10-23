@@ -704,6 +704,20 @@ def detect_bog_shoeing_intent(message: str) -> bool:
         "injarvi",
         "neiden",
         "munkefjord",
+        "quick clay",
+        "quick-clay",
+        "kvikkleire",
+        "leda clay",
+        "leda-clay",
+        "champlain sea",
+        "laflamme sea",
+        "gauldalen",
+        "gjerdrum",
+        "romerike",
+        "lemieux",
+        "saint-jean-vianney",
+        "retrogressive slump",
+        "glaciomarine clay",
     ]
     if any(ex in q for ex in exclusions):
         return False

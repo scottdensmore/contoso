@@ -682,6 +682,20 @@ _COBBLE_SPIT_EXCLUSIONS: tuple[str, ...] = (
     "basalt ledge",
     "basalt bench",
     "porphyra",
+    "quick clay",
+    "quick-clay",
+    "kvikkleire",
+    "leda clay",
+    "leda-clay",
+    "champlain sea",
+    "laflamme sea",
+    "gauldalen",
+    "gjerdrum",
+    "romerike",
+    "lemieux",
+    "saint-jean-vianney",
+    "retrogressive slump",
+    "glaciomarine clay",
 )
 
 

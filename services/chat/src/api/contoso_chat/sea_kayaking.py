@@ -416,6 +416,20 @@ def detect_sea_kayaking_intent(query: str) -> Optional[SeaKayakingIntent]:
         "basalt ledge",
         "basalt bench",
         "porphyra",
+        "quick clay",
+        "quick-clay",
+        "kvikkleire",
+        "leda clay",
+        "leda-clay",
+        "champlain sea",
+        "laflamme sea",
+        "gauldalen",
+        "gjerdrum",
+        "romerike",
+        "lemieux",
+        "saint-jean-vianney",
+        "retrogressive slump",
+        "glaciomarine clay",
     ]
     if any(u in q for u in unrelated):
         return None
