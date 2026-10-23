@@ -48,6 +48,11 @@ from .beachcombing import (
     detect_beachcombing_intent,
     format_beachcombing_response,
 )
+from .bentonite_badlands import (
+    build_bentonite_badlands_prompt,
+    detect_bentonite_badlands_intent,
+    format_bentonite_badlands_response,
+)
 from .big_wall import (
     build_big_wall_prompt,
     detect_big_wall_intent,
@@ -944,6 +949,7 @@ async def generate_llm_response(
     laterite_duricrust_prompt: str = "",
     obsidian_coulee_prompt: str = "",
     quick_clay_terrace_prompt: str = "",
+    bentonite_badlands_prompt: str = "",
     tussock_headland_prompt: str = "",
     cryokarst_speleology_prompt: str = "",
     canopy_bryophyte_prompt: str = "",
@@ -1179,6 +1185,8 @@ async def generate_llm_response(
             local_system = f"{local_system}\n\n{obsidian_coulee_prompt}"
         if quick_clay_terrace_prompt:
             local_system = f"{local_system}\n\n{quick_clay_terrace_prompt}"
+        if bentonite_badlands_prompt:
+            local_system = f"{local_system}\n\n{bentonite_badlands_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if cryokarst_speleology_prompt:
@@ -1482,6 +1490,8 @@ async def generate_llm_response(
             prompt_parts.append(obsidian_coulee_prompt)
         if quick_clay_terrace_prompt:
             prompt_parts.append(quick_clay_terrace_prompt)
+        if bentonite_badlands_prompt:
+            prompt_parts.append(bentonite_badlands_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if cryokarst_speleology_prompt:
@@ -2275,6 +2285,17 @@ async def get_response(customer_id, question, chat_history: Any = None):
         )
         quick_clay_terrace_prompt = build_quick_clay_terrace_prompt(
             quick_clay_terrace_info_payload
+        )
+
+    bentonite_badlands_intent = detect_bentonite_badlands_intent(question)
+    bentonite_badlands_prompt = ""
+    bentonite_badlands_info_payload: dict[str, Any] | None = None
+    if bentonite_badlands_intent:
+        bentonite_badlands_info_payload = dict(
+            format_bentonite_badlands_response(question)
+        )
+        bentonite_badlands_prompt = build_bentonite_badlands_prompt(
+            bentonite_badlands_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -3143,6 +3164,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         llm_kwargs["obsidian_coulee_prompt"] = obsidian_coulee_prompt
     if quick_clay_terrace_prompt:
         llm_kwargs["quick_clay_terrace_prompt"] = quick_clay_terrace_prompt
+    if bentonite_badlands_prompt:
+        llm_kwargs["bentonite_badlands_prompt"] = bentonite_badlands_prompt
     if tussock_headland_prompt:
         llm_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
@@ -3328,6 +3351,8 @@ async def get_response(customer_id, question, chat_history: Any = None):
         response_payload["obsidian_coulee_info"] = obsidian_coulee_info_payload
     if quick_clay_terrace_intent and quick_clay_terrace_info_payload:
         response_payload["quick_clay_terrace_info"] = quick_clay_terrace_info_payload
+    if bentonite_badlands_intent and bentonite_badlands_info_payload:
+        response_payload["bentonite_badlands_info"] = bentonite_badlands_info_payload
     if tussock_headland_intent and tussock_headland_info_payload:
         response_payload["tussock_headland_info"] = tussock_headland_info_payload
     if foraging_intent and foraging_info_payload:
@@ -3535,6 +3560,7 @@ def generate_llm_response_stream(
     laterite_duricrust_prompt: str = "",
     obsidian_coulee_prompt: str = "",
     quick_clay_terrace_prompt: str = "",
+    bentonite_badlands_prompt: str = "",
     tussock_headland_prompt: str = "",
     foraging_prompt: str = "",
     stargazing_prompt: str = "",
@@ -3768,6 +3794,8 @@ def generate_llm_response_stream(
             local_system = f"{local_system}\n\n{obsidian_coulee_prompt}"
         if quick_clay_terrace_prompt:
             local_system = f"{local_system}\n\n{quick_clay_terrace_prompt}"
+        if bentonite_badlands_prompt:
+            local_system = f"{local_system}\n\n{bentonite_badlands_prompt}"
         if tussock_headland_prompt:
             local_system = f"{local_system}\n\n{tussock_headland_prompt}"
         if foraging_prompt:
@@ -4016,6 +4044,8 @@ def generate_llm_response_stream(
             prompt_parts.append(obsidian_coulee_prompt)
         if quick_clay_terrace_prompt:
             prompt_parts.append(quick_clay_terrace_prompt)
+        if bentonite_badlands_prompt:
+            prompt_parts.append(bentonite_badlands_prompt)
         if tussock_headland_prompt:
             prompt_parts.append(tussock_headland_prompt)
         if foraging_prompt:
@@ -4631,6 +4661,17 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         )
         quick_clay_terrace_prompt = build_quick_clay_terrace_prompt(
             quick_clay_terrace_info_payload
+        )
+
+    bentonite_badlands_intent = detect_bentonite_badlands_intent(question)
+    bentonite_badlands_prompt = ""
+    bentonite_badlands_info_payload: dict[str, Any] | None = None
+    if bentonite_badlands_intent:
+        bentonite_badlands_info_payload = dict(
+            format_bentonite_badlands_response(question)
+        )
+        bentonite_badlands_prompt = build_bentonite_badlands_prompt(
+            bentonite_badlands_info_payload
         )
 
     canyon_bouldering_intent = detect_canyon_bouldering_intent(question)
@@ -5709,6 +5750,16 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         yield f"data: {json.dumps({'event': event_name, 'quick_clay_terrace_info': quick_clay_terrace_info_payload, event_name: quick_clay_terrace_info_payload})}\n\n"
         if event_name != "quick_clay_terrace_info":
             yield f"data: {json.dumps({'event': 'quick_clay_terrace_info', 'quick_clay_terrace_info': quick_clay_terrace_info_payload})}\n\n"
+    if bentonite_badlands_intent and bentonite_badlands_info_payload:
+        event_name = (
+            bentonite_badlands_info_payload.get("action", "bentonite_badlands_info")
+            if isinstance(bentonite_badlands_info_payload, dict)
+            else "bentonite_badlands_info"
+        )
+        yield f"event: metadata\ndata: {json.dumps(bentonite_badlands_info_payload)}\n\n"
+        yield f"data: {json.dumps({'event': event_name, 'bentonite_badlands_info': bentonite_badlands_info_payload, event_name: bentonite_badlands_info_payload})}\n\n"
+        if event_name != "bentonite_badlands_info":
+            yield f"data: {json.dumps({'event': 'bentonite_badlands_info', 'bentonite_badlands_info': bentonite_badlands_info_payload})}\n\n"
     if foraging_intent and foraging_info_payload:
         yield f"data: {json.dumps({'event': 'foraging_info', 'foraging_info': foraging_info_payload})}\n\n"
     if stargazing_intent and stargazing_info_payload:
@@ -6688,6 +6739,8 @@ async def get_response_stream(customer_id: str, question: str, chat_history: Any
         stream_kwargs["obsidian_coulee_prompt"] = obsidian_coulee_prompt
     if quick_clay_terrace_prompt:
         stream_kwargs["quick_clay_terrace_prompt"] = quick_clay_terrace_prompt
+    if bentonite_badlands_prompt:
+        stream_kwargs["bentonite_badlands_prompt"] = bentonite_badlands_prompt
     if tussock_headland_prompt:
         stream_kwargs["tussock_headland_prompt"] = tussock_headland_prompt
 
