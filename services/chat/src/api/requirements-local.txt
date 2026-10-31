@@ -1,5 +1,4 @@
 # Optional local LLM + vector search stack
-torch
+# Ollama inference uses LiteLLM; Chroma default embeddings use ONNX Runtime.
 litellm
 chromadb
-sentence-transformers
