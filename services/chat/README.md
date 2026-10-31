@@ -90,6 +90,11 @@ make -C services/chat dev
 
 - Core (default): `make -C services/chat setup` or `make -C services/chat setup-core`
 - Full (local-provider): `make -C services/chat setup-full`
+  installs LiteLLM for external Ollama inference and Chroma for vector search.
+  The existing `DefaultEmbeddingFunction` uses ONNX Runtime, not PyTorch or
+  sentence-transformers. This profile does not install those unused packages.
+  Chroma may still download its default ONNX model on the first embedding call;
+  dependency-only tests must use explicit embeddings and must not trigger that download.
 - Local-provider preflight: `make -C services/chat local-provider-check`
 - Local diagnostics: `make diagnose-chat-local` (root) or `make -C services/chat diagnose-chat-local`
 
@@ -115,6 +120,16 @@ make -C services/chat typecheck
 make -C services/chat quick-ci
 make -C services/chat ci
 ```
+
+After installing the full profile, validate installed dependency APIs without network
+or model downloads:
+
+```bash
+.venv/bin/python -m pytest services/chat/tests/integration/test_local_dependency_profile.py -v
+```
+
+These checks exercise real Chroma/LiteLLM APIs with deterministic inference and
+embedding fixtures. They do not replace a live Ollama or downloaded-model smoke.
 
 ## Environment
 

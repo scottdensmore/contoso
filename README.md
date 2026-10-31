@@ -201,7 +201,7 @@ npm run ci
 ## Chat Dependency Profiles
 
 - `core` (default): fastest local/CI path, no local LLM/vector libraries.
-- `full`: includes local LLM/vector libraries (`torch`, `litellm`, `chromadb`, `sentence-transformers`).
+- `full`: includes local LLM/vector libraries (`litellm`, `chromadb`).
 
 Use `core` for normal CI and contract checks:
 
