@@ -214,10 +214,14 @@ class CheckDependencyPolicyTests(unittest.TestCase):
             self.assertEqual(errors, [])
 
     def test_google_cloud_storage_satisfied_by_aiplatform(self):
-        """Issue #312: aiplatform 2.x pins require google-cloud-storage >= 3.0.0."""
+        """Issue #312: keep the resolved storage dependency at version 3 or newer."""
         constraints_path = REPO_ROOT / "services/chat/constraints.txt"
-        constraints_text = constraints_path.read_text(encoding="utf-8")
-        self.assertIn("google-cloud-aiplatform==2.5.0", constraints_text)
+        constraints, errors = dependency_policy.load_constraints(constraints_path)
+        self.assertEqual(errors, [])
+        self.assertIn("google-cloud-aiplatform", constraints)
+        # Keep the documented 2.x transitive-storage contract without duplicating
+        # the exact pin that Dependabot maintains in constraints.txt.
+        self.assertEqual(constraints["google-cloud-aiplatform"].split(".")[0], "2")
 
         # Verify policy documentation mentions Issue #312 and google-cloud-storage
         req_core_path = REPO_ROOT / "services/chat/src/api/requirements-core.txt"
