@@ -21,6 +21,8 @@ ENVIRONMENT=${ENVIRONMENT:-"dev"}
 REGION=${REGION:-"us-central1"}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+BUCKET_NAME="${PROJECT_ID}-tf-state"
+TF_DIR="${REPO_ROOT}/infrastructure/terraform"
 
 # Track results for final summary
 SUCCEEDED=()
@@ -104,6 +106,51 @@ if [ "$1" != "--force" ]; then
   fi
 fi
 
+# --- Verify the backend BEFORE changing deletion protection or resources ---
+# ENVIRONMENT names resources within the default workspace; it must not select
+# an unrelated workspace through TF_WORKSPACE or .terraform/environment.
+if [ ! -d "${TF_DIR}" ]; then
+  echo "Error: Terraform directory not found. No resources changed; state preserved."
+  exit 1
+fi
+if [ -n "${TF_WORKSPACE:-}" ] && [ "${TF_WORKSPACE}" != default ]; then
+  echo "Error: TF_WORKSPACE must be default. No resources changed; state preserved."
+  exit 1
+fi
+if ! SELECTED_WORKSPACE=$(terraform -chdir="${TF_DIR}" workspace show); then
+  echo "Error: Cannot verify the selected Terraform workspace. No resources changed; state preserved."
+  exit 1
+elif [ "${SELECTED_WORKSPACE}" != default ]; then
+  echo "Error: Selected Terraform workspace is not default. No resources changed; state preserved."
+  exit 1
+fi
+# Pin the verified selection for every later Terraform command, even if another
+# local process changes .terraform/environment while this script is running.
+export TF_WORKSPACE=default
+
+if ! gsutil ls -b "gs://${BUCKET_NAME}" >/dev/null; then
+  echo "Error: State bucket gs://${BUCKET_NAME} is missing or inaccessible. No resources changed."
+  exit 1
+fi
+if ! terraform -chdir="${TF_DIR}" init -input=false -reconfigure -backend-config="bucket=${BUCKET_NAME}"; then
+  echo "Error: Could not initialize Terraform. No resources changed; state preserved."
+  exit 1
+fi
+if ! WORKSPACES=$(terraform -chdir="${TF_DIR}" workspace list -no-color); then
+  echo "Error: Cannot verify Terraform workspaces. No resources changed; state preserved."
+  exit 1
+elif [ "$(printf '%s' "${WORKSPACES}" | tr -d '[:space:]')" != "*default" ]; then
+  echo "Error: Other or unexpected Terraform workspaces need review. No resources changed; state preserved."
+  exit 1
+fi
+if ! STATE_OBJECTS=$(gsutil ls -r "gs://${BUCKET_NAME}"); then
+  echo "Error: Cannot verify state bucket contents. No resources changed; state preserved."
+  exit 1
+elif ! state_bucket_is_dedicated "${STATE_OBJECTS}"; then
+  echo "Error: Other state objects or locks need review. No resources changed; state preserved."
+  exit 1
+fi
+
 # --- Set Project ---
 echo ""
 echo "Setting project to ${PROJECT_ID}..."
@@ -157,58 +204,43 @@ echo "════════════════════════�
 echo "Phase 2/4: Terraform destroy..."
 echo "═══════════════════════════════════════════════════════════"
 
-BUCKET_NAME="${PROJECT_ID}-tf-state"
-TF_DIR="${REPO_ROOT}/infrastructure/terraform"
 TF_SUCCEEDED=false
+if ! cd "${TF_DIR}"; then
+  echo "Error: Cannot enter Terraform directory. State preserved."
+  exit 1
+fi
 
-if [ -d "${TF_DIR}" ] && gsutil ls "gs://${BUCKET_NAME}" &>/dev/null; then
-  if ! cd "${TF_DIR}"; then
-    echo "Error: Cannot enter Terraform directory. State and resources preserved."
-    exit 1
-  fi
-
-  if terraform init -reconfigure -backend-config="bucket=${BUCKET_NAME}" 2>/dev/null; then
-    echo "Attempting to destroy infrastructure via Terraform..."
-    if terraform destroy -auto-approve \
-      -var="project_id=${PROJECT_ID}" \
-      -var="environment_name=${ENVIRONMENT}" \
-      -var="region=${REGION}" \
-      -var="enable_deletion_protection=false" \
-      -var="force_destroy=true" \
-      -var="create_datastore=true"; then
-      TF_SUCCEEDED=true
-      log_success "Terraform destroy"
-    else
-      echo ""
-      echo "Terraform destroy encountered errors. Retrying with all resources still tracked..."
-      # Never remove resources from state to make destroy pass. A failed delete
-      # must remain tracked so a later retry can recover it safely.
-
-      if terraform destroy -auto-approve \
-        -var="project_id=${PROJECT_ID}" \
-        -var="environment_name=${ENVIRONMENT}" \
-        -var="region=${REGION}" \
-        -var="enable_deletion_protection=false" \
-        -var="force_destroy=true" \
-        -var="create_datastore=true"; then
-        TF_SUCCEEDED=true
-        log_success "Terraform destroy (retry)"
-      else
-        log_fail "Terraform destroy" "failed after retry — Phase 3 will clean up remaining resources"
-      fi
-    fi
-  else
-    log_fail "Terraform init" "could not initialize — skipping to manual cleanup"
-  fi
-
-  cd "${REPO_ROOT}" || exit 1
+echo "Attempting to destroy infrastructure via Terraform..."
+if terraform destroy -auto-approve \
+  -var="project_id=${PROJECT_ID}" \
+  -var="environment_name=${ENVIRONMENT}" \
+  -var="region=${REGION}" \
+  -var="enable_deletion_protection=false" \
+  -var="force_destroy=true" \
+  -var="create_datastore=true"; then
+  TF_SUCCEEDED=true
+  log_success "Terraform destroy"
 else
-  if [ ! -d "${TF_DIR}" ]; then
-    log_fail "Terraform" "directory not found; state will be preserved"
+  echo ""
+  echo "Terraform destroy encountered errors. Retrying with all resources still tracked..."
+  # Never remove resources from state to make destroy pass. A failed delete
+  # must remain tracked so a later retry can recover it safely.
+
+  if terraform destroy -auto-approve \
+    -var="project_id=${PROJECT_ID}" \
+    -var="environment_name=${ENVIRONMENT}" \
+    -var="region=${REGION}" \
+    -var="enable_deletion_protection=false" \
+    -var="force_destroy=true" \
+    -var="create_datastore=true"; then
+    TF_SUCCEEDED=true
+    log_success "Terraform destroy (retry)"
   else
-    log_fail "Terraform" "state bucket gs://${BUCKET_NAME} is missing or inaccessible; cleanup cannot be verified"
+    log_fail "Terraform destroy" "failed after retry — Phase 3 will clean up remaining resources"
   fi
 fi
+
+cd "${REPO_ROOT}" || exit 1
 
 # ============================================================
 # Phase 3: Manual Cleanup (Final Sweep)

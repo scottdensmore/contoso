@@ -52,6 +52,8 @@ export PROJECT_ID="your-project-id"
 ```
 
 ### Teardown Phases:
+Before these phases, preflight requires the selected Terraform workspace to be `default`, initializes and verifies the backend, and rejects additional workspaces, unexpected objects, or state locks. A nondefault `TF_WORKSPACE` or saved local workspace selection stops the script before deletion protection or cloud resources are changed. The verified default workspace is pinned for the remainder of the script.
+
 1. **Disable Deletion Protection:** Unlocks Cloud SQL and Cloud Run.
 2. **Terraform Destroy:** Removes managed resources.
 3. **Manual Sweep:** Cleans up VPC peering and DataStores.

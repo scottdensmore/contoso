@@ -44,6 +44,11 @@ case "$tool $*" in
   "gcloud run services delete "*) exit 1 ;;
   "gcloud "*) echo "Unexpected gcloud command: $*" >&2; exit 97 ;;
   "gsutil ls -r gs://"*)
+    if [ -f "$OBJECTS_CHECKED" ]; then
+      printf '%s\n' "${AFTER_STATE_OBJECTS:-${STATE_OBJECTS:-gs://fixture-project-tf-state/terraform/state/default.tfstate}}"
+      exit "${AFTER_STATE_OBJECTS_EXIT:-${STATE_OBJECTS_EXIT:-0}}"
+    fi
+    : > "$OBJECTS_CHECKED"
     printf '%s\n' "${STATE_OBJECTS:-gs://fixture-project-tf-state/terraform/state/default.tfstate}"
     exit "${STATE_OBJECTS_EXIT:-0}" ;;
   "gsutil ls gs://"*|"gsutil ls -b gs://"*) exit "${BUCKET_LOOKUP_EXIT:-0}" ;;
@@ -51,8 +56,15 @@ case "$tool $*" in
     printf '%s' "${BUCKET_LIST:-}"
     exit "${BUCKET_LIST_EXIT:-0}" ;;
   "gsutil -m rm -r "*) exit "${BUCKET_DELETE_EXIT:-0}" ;;
-  "terraform init "*) exit "${INIT_EXIT:-0}" ;;
+  "terraform init "*|"terraform -chdir="*" init "*) exit "${INIT_EXIT:-0}" ;;
+  "terraform -chdir="*" workspace show")
+    printf '%s\n' "${TF_WORKSPACE:-${SELECTED_WORKSPACE:-default}}"
+    exit "${WORKSPACE_SHOW_EXIT:-0}" ;;
   "terraform destroy "*)
+    if [ "${TF_WORKSPACE:-}" != default ]; then
+      echo 'Unexpected unpinned workspace for destroy' >&2
+      exit 97
+    fi
     attempt=0
     [ ! -f "$ATTEMPTS" ] || read -r attempt < "$ATTEMPTS"
     attempt=$((attempt + 1))
@@ -61,6 +73,11 @@ case "$tool $*" in
     exit 0 ;;
   "terraform state rm "*) exit 0 ;;
   "terraform -chdir="*" workspace list -no-color")
+    if [ -f "$WORKSPACES_CHECKED" ]; then
+      printf '%s\n' "${AFTER_WORKSPACES:-${WORKSPACES:-* default}}"
+      exit "${AFTER_WORKSPACES_EXIT:-${WORKSPACES_EXIT:-0}}"
+    fi
+    : > "$WORKSPACES_CHECKED"
     printf '%s\n' "${WORKSPACES:-* default}"
     exit "${WORKSPACES_EXIT:-0}" ;;
   "terraform state list"|"terraform -chdir="*" state list")
@@ -111,6 +128,8 @@ def run_teardown(*, missing_tool=None, terraform_directory=True, **overrides):
             "REGION": "us-central1",
             "COMMAND_LOG": str(root / "commands.log"),
             "ATTEMPTS": str(root / "attempts"),
+            "WORKSPACES_CHECKED": str(root / "workspaces-checked"),
+            "OBJECTS_CHECKED": str(root / "objects-checked"),
             **{key: str(value) for key, value in overrides.items()},
         }
         completed = subprocess.run(
@@ -135,6 +154,43 @@ class TeardownStateSafetyTests(unittest.TestCase):
         self.assertNotIn(DEPLOYER_DELETE, commands)
         self.assertFalse(any("state rm" in command for command in commands), commands)
 
+    def assert_preflight_stops_cleanup(self, result, commands):
+        self.assert_preserved(result, commands)
+        self.assertNotIn("Phase 1/4", result.stdout)
+        for command in commands:
+            allowed = (
+                command.startswith(("gcloud projects describe ", "gsutil ls "))
+                or (command.startswith("terraform -chdir=") and any(
+                    marker in command for marker in (" workspace show", " workspace list", " init ")
+                ))
+            )
+            self.assertTrue(allowed, f"Command ran before successful preflight: {command}")
+
+    def test_nondefault_workspace_environment_stops_before_cleanup(self):
+        result, commands = run_teardown(TF_WORKSPACE="production")
+        self.assert_preflight_stops_cleanup(result, commands)
+        self.assertFalse(any(" init " in c for c in commands), commands)
+
+    def test_nondefault_local_workspace_stops_before_cleanup(self):
+        result, commands = run_teardown(SELECTED_WORKSPACE="production")
+        self.assert_preflight_stops_cleanup(result, commands)
+        self.assertFalse(any(" init " in c for c in commands), commands)
+
+    def test_unreadable_selected_workspace_stops_before_cleanup(self):
+        self.assert_preflight_stops_cleanup(*run_teardown(WORKSPACE_SHOW_EXIT=1))
+
+    def test_selected_workspace_change_during_init_stops_before_cleanup(self):
+        self.assert_preflight_stops_cleanup(*run_teardown(WORKSPACES="  default\n* production\n"))
+
+    def test_workspace_changes_after_preflight_preserve_state(self):
+        self.assert_preserved(*run_teardown(AFTER_WORKSPACES="* default\n  production\n"))
+
+    def test_state_locks_after_preflight_preserve_state(self):
+        self.assert_preserved(*run_teardown(AFTER_STATE_OBJECTS=(
+            "gs://fixture-project-tf-state/terraform/state/default.tfstate\n"
+            "gs://fixture-project-tf-state/terraform/state/default.tflock\n"
+        )))
+
     def test_destroy_failure_keeps_state_and_deployer_for_recovery(self):
         result, commands = run_teardown(DESTROY_FAILURES=2)
         self.assert_preserved(result, commands)
@@ -155,13 +211,13 @@ class TeardownStateSafetyTests(unittest.TestCase):
         self.assertLess(commands.index(STATE_DELETE), commands.index(DEPLOYER_DELETE))
 
     def test_init_failure_preserves_state(self):
-        self.assert_preserved(*run_teardown(INIT_EXIT=1))
+        self.assert_preflight_stops_cleanup(*run_teardown(INIT_EXIT=1))
 
     def test_inaccessible_bucket_is_not_reported_as_success(self):
-        self.assert_preserved(*run_teardown(BUCKET_LOOKUP_EXIT=1))
+        self.assert_preflight_stops_cleanup(*run_teardown(BUCKET_LOOKUP_EXIT=1))
 
     def test_missing_terraform_directory_preserves_state(self):
-        self.assert_preserved(*run_teardown(terraform_directory=False))
+        self.assert_preflight_stops_cleanup(*run_teardown(terraform_directory=False))
 
     def test_missing_tool_fails_before_cloud_changes(self):
         for tool in ("gsutil", "terraform", "gcloud"):
@@ -178,18 +234,18 @@ class TeardownStateSafetyTests(unittest.TestCase):
         self.assert_preserved(*run_teardown(STATE_LIST_EXIT=1))
 
     def test_other_workspaces_preserve_the_project_wide_bucket(self):
-        self.assert_preserved(*run_teardown(WORKSPACES="* default\n  production\n"))
+        self.assert_preflight_stops_cleanup(*run_teardown(WORKSPACES="* default\n  production\n"))
 
     def test_unreadable_workspaces_preserve_state(self):
-        self.assert_preserved(*run_teardown(WORKSPACES_EXIT=1))
+        self.assert_preflight_stops_cleanup(*run_teardown(WORKSPACES_EXIT=1))
 
     def test_unreadable_bucket_contents_preserve_state(self):
-        self.assert_preserved(*run_teardown(STATE_OBJECTS_EXIT=1))
+        self.assert_preflight_stops_cleanup(*run_teardown(STATE_OBJECTS_EXIT=1))
 
     def test_other_prefixes_and_state_locks_preserve_state(self):
         for object_name in ("other/default.tfstate", "terraform/state/default.tflock"):
             with self.subTest(object_name=object_name):
-                self.assert_preserved(*run_teardown(STATE_OBJECTS=(
+                self.assert_preflight_stops_cleanup(*run_teardown(STATE_OBJECTS=(
                     "gs://fixture-project-tf-state/terraform/state/default.tfstate\n"
                     f"gs://fixture-project-tf-state/{object_name}\n"
                 )))
