@@ -9,6 +9,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "infrastructure/scripts/teardown_project.sh"
 STATE_DELETE = "gsutil -m rm -r gs://fixture-project-tf-state"
+STATE_READ = "gsutil cat gs://fixture-project-tf-state/terraform/state/default.tfstate"
 DEPLOYER_DELETE = (
     "gcloud iam service-accounts delete "
     "terraform-deployer@fixture-project.iam.gserviceaccount.com --quiet"
@@ -43,13 +44,31 @@ case "$tool $*" in
   "gcloud run services update "*) exit 0 ;;
   "gcloud run services delete "*) exit 1 ;;
   "gcloud "*) echo "Unexpected gcloud command: $*" >&2; exit 97 ;;
+  "gsutil cat gs://fixture-project-tf-state/terraform/state/default.tfstate")
+    if [ "${STATE_OBJECTS+x}" = x ]; then
+      case "
+${STATE_OBJECTS}
+" in
+        *"
+gs://fixture-project-tf-state/terraform/state/default.tfstate
+"*) ;;
+        *) echo 'fixture: current state object not found' >&2; exit 1 ;;
+      esac
+    fi
+    if [ "${STATE_READ_EXIT:-0}" != 0 ]; then
+      printf '%s' "${STATE_READ_ERROR_BODY:-}"
+      echo 'fixture: current state missing or unreadable' >&2
+      exit "$STATE_READ_EXIT"
+    fi
+    printf '%s' "${STATE_CONTENT-fixture-private-state}"
+    exit 0 ;;
   "gsutil ls -r gs://"*)
     if [ -f "$OBJECTS_CHECKED" ]; then
-      printf '%s\n' "${AFTER_STATE_OBJECTS:-${STATE_OBJECTS:-gs://fixture-project-tf-state/terraform/state/default.tfstate}}"
+      printf '%s\n' "${AFTER_STATE_OBJECTS-${STATE_OBJECTS-gs://fixture-project-tf-state/terraform/state/default.tfstate}}"
       exit "${AFTER_STATE_OBJECTS_EXIT:-${STATE_OBJECTS_EXIT:-0}}"
     fi
     : > "$OBJECTS_CHECKED"
-    printf '%s\n' "${STATE_OBJECTS:-gs://fixture-project-tf-state/terraform/state/default.tfstate}"
+    printf '%s\n' "${STATE_OBJECTS-gs://fixture-project-tf-state/terraform/state/default.tfstate}"
     exit "${STATE_OBJECTS_EXIT:-0}" ;;
   "gsutil ls gs://"*|"gsutil ls -b gs://"*) exit "${BUCKET_LOOKUP_EXIT:-0}" ;;
   "gsutil ls")
@@ -113,7 +132,7 @@ def run_teardown(*, missing_tool=None, terraform_directory=True, **overrides):
             executable.chmod(0o755)
         # Only allow the script's harmless local utilities. A system PATH could
         # find real cloud CLIs when testing a missing tool on another machine.
-        for utility in ("dirname", "tr"):
+        for utility in ("dirname", "tr", "wc"):
             source = shutil.which(utility)
             if source is None:
                 raise RuntimeError(f"Required test utility is missing: {utility}")
@@ -160,11 +179,46 @@ class TeardownStateSafetyTests(unittest.TestCase):
         for command in commands:
             allowed = (
                 command.startswith(("gcloud projects describe ", "gsutil ls "))
+                or command == STATE_READ
                 or (command.startswith("terraform -chdir=") and any(
                     marker in command for marker in (" workspace show", " workspace list", " init ")
                 ))
             )
             self.assertTrue(allowed, f"Command ran before successful preflight: {command}")
+
+    def test_missing_current_state_stops_before_initialization(self):
+        result, commands = run_teardown(STATE_OBJECTS="")
+        self.assert_preflight_stops_cleanup(result, commands)
+        self.assertIn(STATE_READ, commands)
+        self.assertFalse(any(" init " in command for command in commands), commands)
+
+    def test_unreadable_current_state_preserves_recovery_versions(self):
+        # The bucket and snapshots may exist even though GET of the live state
+        # is denied or returns 404. Never initialize or recursively delete it.
+        for partial_body in ("", "fixture-private-state"):
+            with self.subTest(partial_read=bool(partial_body)):
+                result, commands = run_teardown(
+                    STATE_READ_EXIT=1, STATE_READ_ERROR_BODY=partial_body,
+                )
+                self.assert_preflight_stops_cleanup(result, commands)
+                self.assertFalse(any(" init " in command for command in commands), commands)
+                self.assertFalse(any(command.startswith("gsutil -m rm") for command in commands))
+                self.assertIn("recovery", result.stdout.lower())
+                self.assertNotIn("fixture-private-state", result.stdout + result.stderr)
+
+    def test_empty_current_state_stops_before_initialization(self):
+        for content in ("", " \n\t"):
+            with self.subTest(content=repr(content)):
+                result, commands = run_teardown(STATE_CONTENT=content)
+                self.assert_preflight_stops_cleanup(result, commands)
+                self.assertFalse(any(" init " in command for command in commands), commands)
+
+    def test_state_read_precedes_initialization_and_never_prints_contents(self):
+        result, commands = run_teardown()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        initialization = next(i for i, c in enumerate(commands) if " init " in c)
+        self.assertLess(commands.index(STATE_READ), initialization)
+        self.assertNotIn("fixture-private-state", result.stdout + result.stderr)
 
     def test_nondefault_workspace_environment_stops_before_cleanup(self):
         result, commands = run_teardown(TF_WORKSPACE="production")

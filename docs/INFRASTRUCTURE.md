@@ -61,6 +61,8 @@ Before these phases, preflight requires the selected Terraform workspace to be `
 
 If any step fails or cannot be verified, the script exits nonzero and retains the Terraform state bucket and deployer account for recovery. It never removes resource addresses from state to force a destroy retry to pass. Pending DataStore deletion also retains state; wait for deletion to complete before retrying.
 
+Before `terraform init`, the current `terraform/state/default.tfstate` object must already exist, be readable, and contain data. Missing, unreadable, or empty live state stops teardown without initializing a replacement or deleting recovery versions. Review and recover the correct state separately before retrying. State contents are never printed.
+
 The script requires `gcloud`, `gsutil`, `terraform`, and `curl` before making changes. Missing or inaccessible state is an error, not evidence of successful cleanup. A state bucket containing other workspaces, other prefixes, or a state lock is retained for manual review. Do not run concurrent infrastructure changes during teardown.
 
 The safety regression tests use local command doubles and do not access cloud resources:

@@ -132,6 +132,22 @@ if ! gsutil ls -b "gs://${BUCKET_NAME}" >/dev/null; then
   echo "Error: State bucket gs://${BUCKET_NAME} is missing or inaccessible. No resources changed."
   exit 1
 fi
+# GCS backend initialization can create an empty state when the live object is
+# absent. Verify the existing current object first, without printing its data
+# or falling back to an old generation. Keep recovery versions for review.
+# Count non-whitespace bytes rather than retaining secret-bearing state in a
+# shell variable. pipefail also rejects partial reads that end with an error.
+if ! TF_STATE_BYTES=$(set -o pipefail; gsutil cat "gs://${BUCKET_NAME}/terraform/state/default.tfstate" | tr -d '[:space:]' | wc -c); then
+  echo "Error: Current default Terraform state is missing or unreadable. No resources changed."
+  echo "Review the bucket's recovery versions before retrying; this script will not initialize a new state."
+  exit 1
+fi
+if [ "${TF_STATE_BYTES}" -eq 0 ]; then
+  echo "Error: Current default Terraform state is empty. No resources changed; recovery versions preserved."
+  exit 1
+fi
+unset TF_STATE_BYTES
+
 if ! terraform -chdir="${TF_DIR}" init -input=false -reconfigure -backend-config="bucket=${BUCKET_NAME}"; then
   echo "Error: Could not initialize Terraform. No resources changed; state preserved."
   exit 1
